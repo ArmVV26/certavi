@@ -1,0 +1,133 @@
+{
+  "app": {
+    "skipToContent": "Saltar al contenido",
+    "documentTitle": "{{page}} · Certavi"
+  },
+  "nav": {
+    "label": "Principal",
+    "today": "Hoy",
+    "calendar": "Calendario",
+    "routines": "Rutinas",
+    "progress": "Progreso",
+    "settings": "Ajustes"
+  },
+  "theme": {
+    "system": "Automático",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "toggle": {
+      "system": "Tema automático. Cambiar a claro",
+      "light": "Tema claro. Cambiar a oscuro",
+      "dark": "Tema oscuro. Cambiar a automático"
+    }
+  },
+  "pages": {
+    "comingSoon": "Próximamente",
+    "today": {
+      "title": "La sesión de hoy",
+      "text": "Aquí verás la rutina que toca y podrás empezarla, elegir otra o registrar una sesión libre."
+    },
+    "calendar": {
+      "title": "Tu calendario",
+      "text": "Aquí verás tus sesiones, actividades y semanas especiales de cada mes."
+    },
+    "routines": {
+      "title": "Tus rutinas",
+      "text": "Aquí podrás ver y editar tus rutinas, sus ejercicios y sus series."
+    },
+    "progress": {
+      "title": "Tu progreso",
+      "text": "Aquí verás las series por grupo muscular, tus récords y cómo evolucionan tus ejercicios."
+    }
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "text": "Esta dirección no existe en Certavi.",
+    "back": "Volver a Hoy"
+  },
+  "settings": {
+    "appearance": "Apariencia",
+    "theme": "Tema",
+    "language": "Idioma",
+    "languageNames": {
+      "es": "Español",
+      "en": "English"
+    },
+    "developer": "Desarrollo",
+    "uiCatalog": "Catálogo de componentes"
+  },
+  "sets": {
+    "warmupSymbol": "C",
+    "warmup": "Calentamiento"
+  },
+  "ui": {
+    "close": "Cerrar",
+    "increase": "Aumentar {{label}}",
+    "decrease": "Disminuir {{label}}",
+    "notifications": "Avisos"
+  },
+  "devUi": {
+    "title": "Componentes",
+    "intro": "Página interna para revisar los componentes base en claro y oscuro, en español e inglés.",
+    "buttons": "Botones",
+    "primary": "Empezar sesión",
+    "secondary": "Otra rutina",
+    "ghost": "Cancelar",
+    "danger": "Quitar serie",
+    "disabled": "Desactivado",
+    "large": "Botón grande",
+    "iconButtons": "Botones de icono",
+    "add": "Añadir serie",
+    "remove": "Quitar",
+    "chipsTags": "Chips y etiquetas",
+    "chipStraps": "Straps",
+    "chipBand": "Banda",
+    "chipCustom": "Creados por mí",
+    "tagPlates": "Placas",
+    "tagNew": "Nuevo",
+    "tagDone": "Hecho",
+    "tagNotCounting": "No cuenta",
+    "tagError": "Error",
+    "card": "Tarjeta",
+    "cardTitle": "Press inclinado con mancuernas",
+    "cardText": "Última vez: 30 kg × 8 · RIR 2",
+    "numberFields": "Campos numéricos",
+    "weight": "Peso",
+    "reps": "Repeticiones",
+    "weightHint": "Acepta coma decimal y 0 kg.",
+    "value": "Valor: {{value}}",
+    "empty": "vacío",
+    "segmented": "Selector segmentado",
+    "range": "Periodo",
+    "rangeWeek": "Esta semana",
+    "rangeLast": "Pasada",
+    "rangeAverage": "Media 4 sem.",
+    "switch": "Interruptor",
+    "sound": "Sonido al acabar el descanso",
+    "vibration": "Vibración",
+    "vibrationHint": "Solo en las sesiones de hoy.",
+    "dialog": "Diálogo",
+    "openDialog": "Quitar serie…",
+    "dialogTitle": "¿Quitar esta serie?",
+    "dialogText": "La serie 2 de Remo en T se quitará de esta sesión.",
+    "confirmRemove": "Quitar",
+    "cancel": "Cancelar",
+    "removed": "Serie quitada",
+    "restored": "Serie recuperada",
+    "undo": "Deshacer",
+    "sheet": "Hoja inferior",
+    "openSheet": "Añadir ejercicio",
+    "sheetTitle": "Añadir ejercicio",
+    "sheetText": "Aquí irán la búsqueda y los filtros del catálogo.",
+    "toast": "Avisos",
+    "showToast": "Mostrar aviso",
+    "toastSaved": "Guardado en el móvil",
+    "emptyState": "Estado vacío",
+    "emptyTitle": "Sin sesiones esta semana",
+    "emptyText": "Cuando registres una sesión aparecerá aquí.",
+    "emptyAction": "Empezar sesión",
+    "formats": "Fechas y números",
+    "today": "Hoy: {{date}}",
+    "number": "Número: {{value}}"
+  }
+}

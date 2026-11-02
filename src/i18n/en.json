@@ -1,0 +1,133 @@
+{
+  "app": {
+    "skipToContent": "Skip to content",
+    "documentTitle": "{{page}} · Certavi"
+  },
+  "nav": {
+    "label": "Main",
+    "today": "Today",
+    "calendar": "Calendar",
+    "routines": "Routines",
+    "progress": "Progress",
+    "settings": "Settings"
+  },
+  "theme": {
+    "system": "Automatic",
+    "light": "Light",
+    "dark": "Dark",
+    "toggle": {
+      "system": "Automatic theme. Switch to light",
+      "light": "Light theme. Switch to dark",
+      "dark": "Dark theme. Switch to automatic"
+    }
+  },
+  "pages": {
+    "comingSoon": "Coming soon",
+    "today": {
+      "title": "Today's session",
+      "text": "Here you will see the routine for today and start it, pick another one or log a free session."
+    },
+    "calendar": {
+      "title": "Your calendar",
+      "text": "Here you will see your sessions, activities and special weeks for each month."
+    },
+    "routines": {
+      "title": "Your routines",
+      "text": "Here you will view and edit your routines, their exercises and their sets."
+    },
+    "progress": {
+      "title": "Your progress",
+      "text": "Here you will see sets per muscle group, your records and how your exercises evolve."
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "text": "This address does not exist in Certavi.",
+    "back": "Back to Today"
+  },
+  "settings": {
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "language": "Language",
+    "languageNames": {
+      "es": "Español",
+      "en": "English"
+    },
+    "developer": "Developer",
+    "uiCatalog": "Component catalog"
+  },
+  "sets": {
+    "warmupSymbol": "W",
+    "warmup": "Warm-up"
+  },
+  "ui": {
+    "close": "Close",
+    "increase": "Increase {{label}}",
+    "decrease": "Decrease {{label}}",
+    "notifications": "Notifications"
+  },
+  "devUi": {
+    "title": "Components",
+    "intro": "Internal page to review the base components in light and dark, in Spanish and English.",
+    "buttons": "Buttons",
+    "primary": "Start session",
+    "secondary": "Another routine",
+    "ghost": "Cancel",
+    "danger": "Remove set",
+    "disabled": "Disabled",
+    "large": "Large button",
+    "iconButtons": "Icon buttons",
+    "add": "Add set",
+    "remove": "Remove",
+    "chipsTags": "Chips and tags",
+    "chipStraps": "Straps",
+    "chipBand": "Band",
+    "chipCustom": "Created by me",
+    "tagPlates": "Plates",
+    "tagNew": "New",
+    "tagDone": "Done",
+    "tagNotCounting": "Does not count",
+    "tagError": "Error",
+    "card": "Card",
+    "cardTitle": "Incline dumbbell press",
+    "cardText": "Last time: 30 kg × 8 · RIR 2",
+    "numberFields": "Number fields",
+    "weight": "Weight",
+    "reps": "Reps",
+    "weightHint": "Accepts a decimal comma or point, and 0 kg.",
+    "value": "Value: {{value}}",
+    "empty": "empty",
+    "segmented": "Segmented control",
+    "range": "Period",
+    "rangeWeek": "This week",
+    "rangeLast": "Last week",
+    "rangeAverage": "4-week avg.",
+    "switch": "Switch",
+    "sound": "Sound when rest ends",
+    "vibration": "Vibration",
+    "vibrationHint": "Only in today's sessions.",
+    "dialog": "Dialog",
+    "openDialog": "Remove set…",
+    "dialogTitle": "Remove this set?",
+    "dialogText": "Set 2 of T-bar row will be removed from this session.",
+    "confirmRemove": "Remove",
+    "cancel": "Cancel",
+    "removed": "Set removed",
+    "restored": "Set restored",
+    "undo": "Undo",
+    "sheet": "Bottom sheet",
+    "openSheet": "Add exercise",
+    "sheetTitle": "Add exercise",
+    "sheetText": "The catalog search and filters will go here.",
+    "toast": "Notifications",
+    "showToast": "Show notification",
+    "toastSaved": "Saved on this phone",
+    "emptyState": "Empty state",
+    "emptyTitle": "No sessions this week",
+    "emptyText": "When you log a session it will show up here.",
+    "emptyAction": "Start session",
+    "formats": "Dates and numbers",
+    "today": "Today: {{date}}",
+    "number": "Number: {{value}}"
+  }
+}

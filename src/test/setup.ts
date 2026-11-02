@@ -12,5 +12,6 @@ afterEach(() => {
   resetMatchMedia();
   localStorage.clear();
   delete document.documentElement.dataset.theme;
+  document.documentElement.lang = 'es';
   for (const meta of document.head.querySelectorAll('meta[name="theme-color"]')) meta.remove();
 });
