@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Tests
+coverage/
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+
+# Netlify
+.netlify/
+
+# Secrets and real user data — never commit
+.env
+.env.*
+backups/
+*.backup.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editors and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude Code local (per-user) settings
+.claude/settings.local.json

@@ -1,0 +1,10 @@
+dist
+coverage
+playwright-report
+test-results
+blob-report
+.netlify
+node_modules
+package-lock.json
+# Hand-maintained Spanish planning document; keep its formatting as written.
+context.md
