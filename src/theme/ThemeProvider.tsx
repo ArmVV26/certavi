@@ -1,11 +1,11 @@
 import { useCallback, useLayoutEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
+import { getLocalStorage } from '../data/deviceStorage';
 import { ThemeContext } from './ThemeContext';
 import type { ThemeContextValue } from './ThemeContext';
 import {
   DARK_SCHEME_QUERY,
   applyTheme,
-  getLocalStorage,
   nextThemePreference,
   readThemePreference,
   resolveTheme,
