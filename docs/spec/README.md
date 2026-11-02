@@ -1,0 +1,53 @@
+# Functional specification
+
+What Certavi does, described from the **user's point of view**.
+
+> This folder is the **only** source the `blind-tester` agent reads (together with the README
+> and the e2e tests). It must be enough to test a feature without seeing the code: describe
+> screens, visible texts, user actions and expected results — not components or functions.
+
+## Index
+
+| Spec                                                                                           | Status                                  | Phase |
+| ---------------------------------------------------------------------------------------------- | --------------------------------------- | ----- |
+| Smoke: the app loads and shows "Certavi"                                                       | ✅ covered by `tests/e2e/smoke.spec.ts` | 0     |
+| `theme-language-navigation.md` — theme (system/light/dark), language (es/en), navigation shell | ⏳                                      | 1     |
+| `rules.md` — training rules: 1RM, progression, weekly sets, records, deload, short week        | ⏳                                      | 2     |
+| `data-import-export.md` — import from gym_app, JSON/CSV export and import                      | ⏳                                      | 3     |
+| `sync.md` — sync key, status indicator, attempt log, server backups                            | ⏳                                      | 4     |
+| `today.md` — Today screen                                                                      | ⏳                                      | 5     |
+| `session.md` — active session                                                                  | ⏳                                      | 5     |
+| `exercises.md` — catalog, filters, custom exercises, exercise detail                           | ⏳                                      | 6     |
+| `routines.md` — routine viewer and editor                                                      | ⏳                                      | 6     |
+| `calendar.md` — calendar and week closing                                                      | ⏳                                      | 7     |
+| `progress.md` — progress screens and charts                                                    | ⏳                                      | 7     |
+| `blocks.md` — optional mobility / stretching / rehab blocks                                    | ⏳                                      | 7     |
+
+## Phase 0 acceptance criteria (smoke)
+
+- **Given** the app is opened at `/` on an iPhone-sized screen (390×844)
+- **Then** the browser tab title contains "Certavi"
+- **And** the page shows a main heading "Certavi".
+
+## How to write a spec
+
+One file per feature area. Each file contains:
+
+1. **Purpose** — one paragraph.
+2. **Screens and elements** — what the user sees, with the visible texts in Spanish and
+   English (or the i18n key when the text is not final).
+3. **Acceptance criteria** — numbered, in _Given / When / Then_ form, each one testable:
+
+   ```
+   AC-SESSION-03 · Remove a planned set
+   Given an active session with 3 planned working sets for "Remo en T"
+   When I remove the second set and confirm in the dialog
+   Then the exercise shows 2 working sets
+   And "Undo" is offered for a few seconds
+   ```
+
+4. **Edge cases** — offline, reload in the middle, 0 kg, empty input, undo, dark mode,
+   English, small screens.
+5. **Out of scope** — what this spec does not cover.
+
+Write the spec **before** implementing the feature.

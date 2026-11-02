@@ -3,7 +3,7 @@
 > Documento de arranque del proyecto **Certavi**, la reescritura de la app de registro de gimnasio (antes «Winter Arc · registro», repositorio `gym_app`).
 > Al crear el repositorio, este archivo se copia como `context.md` en la raíz. Desde ese momento es la **fuente de verdad del estado del proyecto**: qué está decidido, qué está hecho, qué falta y con qué prompt se arranca cada fase. Lo mantiene al día el agente de contexto.
 >
-> Última actualización: 1 nov 2026 · Estado: **Fase 0 pendiente**
+> Última actualización: 2 nov 2026 · Estado: **Fase 0 implementada y verificada; pendiente de commits, PR y tag `v0.1.0` por el usuario**
 
 ---
 
@@ -73,6 +73,18 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | SO de trabajo | **Windows** + VS Code | Afecta a finales de línea, puertos y scripts |
 | Imágenes de máquinas | **v2** (fotos propias desde el móvil) | Las imágenes de internet dan problemas de licencia y no coinciden con tu gimnasio |
 
+### 2.1 Decisiones de la Fase 0 (2026-11-02)
+
+| Tema | Decisión | Motivo |
+|---|---|---|
+| Licencia | **«All rights reserved»** mientras el repo sea privado; **MIT** al hacerlo público | Cierra la pregunta abierta de la licencia |
+| Versiones fijadas | Versiones exactas en `package.json`. **TypeScript 6.0.x** y **ESLint 9.x** | typescript-eslint exige TS `<6.1` (TS 7 aún no es usable); eslint-plugin-react y jsx-a11y no soportan ESLint 10 todavía |
+| Node | El proyecto se queda en **Node 22**: `.nvmrc` 22, CI con 22, `@types/node` 22, `engines` `>=22.22.2` | jsdom 30 exige `>=22.22.2`. El usuario desarrolla en local con Node 26.13.0: aceptado, eligió mantener 22 en el proyecto |
+| Script `typecheck` | **`tsc -b`** en lugar de `tsc --noEmit -p .` | El `tsconfig.json` raíz solo tiene referencias (`app`, `node`, `e2e`); con `-p .` no se comprobaría ningún archivo |
+| husky | Solo el hook **`commit-msg`** (commitlint); **sin `pre-commit`** | — |
+| Contrato sync v1 (borrador) | Cambios respecto a gym_app: campos `type`/`updatedAt`/`deleted`/`serverSeq` (antes `t`/`u`/`del`/`srv`); copias como `GET /api/v1/backups` y `GET /api/v1/backups/{date}`; códigos de error en lugar de frases en español; `CLAVE_SYNC` de mínimo 32 caracteres; la respuesta incluye `rejected` | Contrato limpio y portable a otro backend |
+| Archivos aplazados | `netlify.toml`, `public/robots.txt`, `netlify/functions/sync.ts` y `tests/mocks/sync-server.ts` se crean en su fase (4 / 8) | Solo se crea lo que la fase necesita |
+
 ---
 
 ## 3. Arquitectura
@@ -115,7 +127,7 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Gráficas | SVG propio, como ahora (sin dependencias pesadas) |
 | Backend | Netlify Functions en TypeScript + `@netlify/blobs` |
 | Tests | Vitest + React Testing Library (unitarios y de componentes), Playwright (end-to-end) |
-| Calidad | ESLint + Prettier + `tsc --noEmit`; husky + commitlint (valida tus mensajes de commit) |
+| Calidad | ESLint + Prettier + `tsc -b`; husky + commitlint (valida tus mensajes de commit) |
 | CI | GitHub Actions: lint, typecheck, test y build en cada PR a `dev` y `main` (2.000 minutos/mes gratis en repos privados) |
 
 ### 3.3 Estructura del repositorio
@@ -140,6 +152,7 @@ certavi/
 │  └─ migration.md           # mapeo desde gym_app
 ├─ netlify/functions/sync.ts
 ├─ public/                   # iconos, robots.txt, manifest (generado)
+├─ scripts/ports-check.mjs   # qué proceso ocupa 5173/4173/8888/8787
 ├─ src/
 │  ├─ domain/                # TS puro: entidades, reglas, catálogo, rutinas semilla. Sin React ni Dexie
 │  ├─ data/                  # Dexie, repositorios, SyncEngine, transporte, importador
@@ -156,6 +169,7 @@ certavi/
 ├─ CHANGELOG.md
 ├─ README.md
 ├─ netlify.toml
+├─ tsconfig.json             # solo referencias: tsconfig.app / .node / .e2e.json
 ├─ .gitattributes            # * text=auto eol=lf
 ├─ .editorconfig
 └─ .nvmrc                    # Node 22 LTS
@@ -411,7 +425,7 @@ Formato: `tipo(ámbito): descripción en inglés, imperativo, minúsculas`.
 | `build` | Vite, PWA, Netlify | `build(pwa): configure workbox precache` |
 | `perf` | Rendimiento | `perf(progress): memoize weekly totals` |
 
-- **Ámbitos**: `domain`, `data`, `sync`, `api`, `session`, `today`, `calendar`, `routines`, `exercises`, `progress`, `blocks`, `settings`, `ui`, `theme`, `i18n`, `pwa`, `claude`.
+- **Ámbitos**: `domain`, `data`, `sync`, `api`, `session`, `today`, `calendar`, `routines`, `exercises`, `progress`, `blocks`, `settings`, `ui`, `theme`, `i18n`, `pwa`, `claude`, `release` (commit de versión) y `deps` (dependencias). El ámbito es opcional.
 - **Cambios incompatibles**: `feat!:` o el pie `BREAKING CHANGE:`.
 - **Commits pequeños** y que compilen. Uno por idea.
 - commitlint rechaza los mensajes que no cumplen el formato.
@@ -597,13 +611,18 @@ dev           vite
 build         tsc -b && vite build
 preview       vite preview
 lint          eslint .
-typecheck     tsc --noEmit -p .
+typecheck     tsc -b
 test          vitest run
 test:watch    vitest
 e2e           playwright test
-ports:check   (script Node que dice qué ocupa 5173/4173/8888/8787)
+format        prettier --write .
+format:check  prettier --check .
+ports:check   node scripts/ports-check.mjs (dice qué ocupa 5173/4173/8888/8787)
 ports:kill    kill-port 5173 4173 8888 8787
+prepare       husky
 ```
+
+> `typecheck` es `tsc -b` y no `tsc --noEmit -p .` (decisión del 2026-11-02, sección 2.1): el `tsconfig.json` raíz solo contiene referencias, así que `-p .` no comprobaría nada.
 
 ---
 
@@ -637,6 +656,8 @@ Esto lo haces tú, una vez y a mano.
 6. **VS Code**: instala la extensión de Claude Code y abre la carpeta `certavi`.
 7. **Netlify**: todavía nada. El proyecto nuevo se crea en la Fase 4, cuando haya backend que desplegar.
 
+> **Nota (2026-11-02, Fase 0):** los hooks de husky solo se activan con un `npm install` / `npm ci` sin argumentos (script `prepare`), no al instalar paquetes concretos. En este repo se activaron con `npm run prepare`. El `core.autocrlf` de git del usuario ya está en `false`.
+
 ---
 
 ## 10. Hoja de ruta por fases
@@ -654,9 +675,16 @@ Cada fase sigue el mismo ciclo:
 
 ---
 
-### Fase 0 · Base del proyecto → `v0.1.0` ⏳
+### Fase 0 · Base del proyecto → `v0.1.0` 🚧
 
 **Rama**: `chore/project-setup`
+
+**Estado (2026-11-02)**: implementada y verificada; **pendiente de commits, PR y tag `v0.1.0` por el usuario** (pasa a ✅ al crear el tag).
+
+- Hecho: Vite 8 + React 19.3 + TypeScript 6.0.3 strict (`src/app/App.tsx`, `main.tsx`) y estructura de 3.3 con `.gitkeep`; `tsconfig.json` (referencias) + `tsconfig.app.json` + `tsconfig.node.json` + `tsconfig.e2e.json`; ESLint 9 flat (typescript-eslint `strictTypeChecked`, react, react-hooks, react-refresh, jsx-a11y, prettier); Prettier; Vitest 5 + RTL + jsdom 30 (`src/test/setup.ts`, `src/app/App.test.tsx`); Playwright 1.64 (chromium + webkit, 390×844, webServer `vite build` + `vite preview` en 4173 con `strictPort` y `reuseExistingServer: false`; `tests/e2e/smoke.spec.ts`); husky (solo `commit-msg`) + commitlint con los ámbitos de 7.2 más `release` y `deps`; scripts de 8.5 (incluidos `ports:check`, `ports:kill`, `format`, `format:check`); `.gitattributes`, `.editorconfig`, `.nvmrc` (22), `.gitignore`, `LICENSE`; CI `.github/workflows/ci.yml` (PR a `dev`/`main`: `npm ci`, lint, typecheck, test, build; `actions/checkout@v7`, `setup-node@v7`); `.claude/` (rules, settings con reglas deny/ask/allow para Bash **y** PowerShell, agentes y comandos); `CLAUDE.md`, `README.md`, `CHANGELOG.md`; `docs/spec/README.md`, `docs/api/sync-v1.md` (borrador), `docs/adr/0001` y `0002`, `docs/migration.md`, `docs/design/README.md`.
+- Verificado en Windows (Node 26.13.0 local): `lint` ✅, `typecheck` ✅, `test` ✅ (2 tests de componente), `build` ✅, `format:check` ✅, `e2e` ✅ (4 pasados: título + encabezado y sin scroll horizontal a 390 px, en chromium y webkit a 390×844), `ports:check` ✅ (todos libres tras e2e).
+- Permisos comprobados: `git commit --dry-run` denegado desde las herramientas Bash y PowerShell.
+- Decisiones de la fase: sección 2.1.
 
 **Objetivo**: proyecto vacío pero completo en herramientas: compila, testea, tiene CI, documentación y la configuración de Claude Code.
 
@@ -1016,12 +1044,12 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
 
 | Fecha | Fase | Qué | Versión |
 |---|---|---|---|
+| 2026-11-02 | 0 | Base del proyecto implementada y verificada (lint, typecheck, test, build, format:check, e2e en chromium + webkit, puertos libres; commit denegado a Claude). Decisiones en 2.1. Pendiente: commits, PR y tag por el usuario | `v0.1.0` (pendiente de tag) |
 | 2026-11-01 | — | Plan inicial y decisiones (este documento) | — |
 
-**Estado de fases**: 0 ⏳ · 1 ⏳ · 2 ⏳ · 3 ⏳ · 4 ⏳ · 5 ⏳ · 6 ⏳ · 7 ⏳ · 8 ⏳ · 9 ⏳
+**Estado de fases**: 0 🚧 (implementada y verificada, pendiente de commits, PR y tag `v0.1.0` por el usuario) · 1 ⏳ · 2 ⏳ · 3 ⏳ · 4 ⏳ · 5 ⏳ · 6 ⏳ · 7 ⏳ · 8 ⏳ · 9 ⏳
 
 **Preguntas abiertas**:
-- Licencia del repositorio (se decide en la Fase 0; propuesta: «All rights reserved» mientras sea privado y MIT al hacerlo público).
 - Equipo exacto de los ejercicios marcados con «?» en la tabla 4.3 (antes de la Fase 2).
 - ¿Straps también en el peso muerto rumano? (antes de la Fase 2).
 - Qué estiramientos van en el bloque «Estiramientos» (antes de la Fase 7).
