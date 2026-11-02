@@ -1,5 +1,7 @@
 // Theme preference (system | light | dark) and how it is applied to the document.
 // The preference is a device-only setting: it lives in localStorage and is never synced.
+import { getLocalStorage, readDeviceSetting, writeDeviceSetting } from '../data/deviceStorage';
+import type { ReadableStorage, WritableStorage } from '../data/deviceStorage';
 
 export const THEME_PREFERENCES = ['system', 'light', 'dark'] as const;
 export type ThemePreference = (typeof THEME_PREFERENCES)[number];
@@ -32,37 +34,17 @@ export function nextThemePreference(preference: ThemePreference): ThemePreferenc
   return THEME_PREFERENCES[(index + 1) % THEME_PREFERENCES.length] ?? 'system';
 }
 
-type ReadableStorage = Pick<Storage, 'getItem'>;
-type WritableStorage = Pick<Storage, 'setItem'>;
-
 /** Reads the saved preference. Missing, invalid or blocked storage (private mode) → 'system'. */
 export function readThemePreference(storage: ReadableStorage | null): ThemePreference {
-  try {
-    const value = storage?.getItem(THEME_STORAGE_KEY);
-    return isThemePreference(value) ? value : 'system';
-  } catch {
-    return 'system';
-  }
+  return readDeviceSetting(storage, THEME_STORAGE_KEY, isThemePreference, 'system');
 }
 
 /** Saves the preference. Returns false if storage is unavailable; the theme still applies. */
-export function writeThemePreference(storage: WritableStorage | null, preference: ThemePreference) {
-  try {
-    if (!storage) return false;
-    storage.setItem(THEME_STORAGE_KEY, preference);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/** localStorage, or null where accessing it throws (some privacy settings do). */
-export function getLocalStorage(win: Window): Storage | null {
-  try {
-    return win.localStorage;
-  } catch {
-    return null;
-  }
+export function writeThemePreference(
+  storage: WritableStorage | null,
+  preference: ThemePreference,
+): boolean {
+  return writeDeviceSetting(storage, THEME_STORAGE_KEY, preference);
 }
 
 export function systemPrefersDark(win: Window): boolean {
