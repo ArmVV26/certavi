@@ -7,8 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Phase 1 (design, theme, i18n and navigation) — implemented and verified; to be released as
-0.2.0.
+## [0.2.0] - 2026-11-02
+
+Design, theme, i18n and navigation (Phase 2)
 
 ### Added
 
@@ -87,4 +88,5 @@ Project foundation (Phase 0).
 - License: all rights reserved (MIT planned when the repository becomes public).
 
 [Unreleased]: https://github.com/ArmVV26/certavi/compare/v0.1.0...HEAD
+[0.2.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.2.0
 [0.1.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.1.0
