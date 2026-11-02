@@ -2,15 +2,26 @@ import { defineConfig, devices } from '@playwright/test';
 
 const PORT = 4173;
 const BASE_URL = `http://localhost:${String(PORT)}`;
+const isCI = !!process.env.CI;
 
 // iPhone-sized viewport used by every project (see context.md: tests run at 390×844).
 const IPHONE_VIEWPORT = { width: 390, height: 844 };
 
+// Limits that keep a local run from saturating the PC (incident of 2026-11-02, see context.md):
+// - `npm run e2e`     → Chromium only, 2 workers, stops after 3 failures, 5 min cap (below).
+// - `npm run e2e:all` → Chromium + WebKit, 10 min cap (passed with --global-timeout).
+// - CI                → Chromium + WebKit with Playwright's default workers and 2 retries.
+// Never set `channel: 'chrome'`: tests run on Playwright's own browsers, never the user's Chrome.
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  forbidOnly: isCI,
+  workers: isCI ? undefined : 2,
+  retries: isCI ? 2 : 0,
+  maxFailures: isCI ? undefined : 3,
+  timeout: 30_000,
+  globalTimeout: 5 * 60_000,
+  // The HTML report is written to playwright-report/ but never opened or served.
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: BASE_URL,
@@ -23,7 +34,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         viewport: IPHONE_VIEWPORT,
-        deviceScaleFactor: 3,
+        deviceScaleFactor: 2,
         hasTouch: true,
       },
     },
@@ -41,7 +52,7 @@ export default defineConfig({
     command: `npx vite build && npx vite preview --port ${String(PORT)} --strictPort`,
     url: BASE_URL,
     reuseExistingServer: false,
-    timeout: 120_000,
+    timeout: 60_000,
     stdout: 'ignore',
     stderr: 'pipe',
   },

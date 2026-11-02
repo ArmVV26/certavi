@@ -12,6 +12,7 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
     "isolatedModules": true,
     "erasableSyntaxOnly": true,
 

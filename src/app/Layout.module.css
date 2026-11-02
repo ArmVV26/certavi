@@ -1,0 +1,148 @@
+/* Space the fixed bottom tab bar takes on phones; toasts and the page leave room for it. */
+:global(:root) {
+  --app-bottom-inset: calc(3.875rem + env(safe-area-inset-bottom));
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.skipLink {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 50;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: var(--fw-bold);
+  transform: translateY(-200%);
+}
+
+.skipLink:focus {
+  transform: none;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: calc(env(safe-area-inset-top) + var(--space-3)) var(--space-4) var(--space-3);
+  background: var(--bg);
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-bold);
+}
+
+.title:focus {
+  outline: none;
+}
+
+/* Phones: tab bar fixed at the bottom. */
+.nav {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 20;
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: var(--border-width) solid var(--border);
+  background: var(--surface);
+}
+
+.navList {
+  display: flex;
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+}
+
+.navItem {
+  flex: 1;
+  min-width: 0;
+}
+
+.navLink {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  min-height: 3.25rem;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.navLink[aria-current='page'] {
+  color: var(--accent);
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 45rem;
+  margin: 0 auto;
+  padding: var(--space-2) var(--space-4) calc(var(--app-bottom-inset) + var(--space-6));
+}
+
+.main:focus {
+  outline: none;
+}
+
+/* Wide screens: navigation in the header, no bottom bar. */
+@media (min-width: 48rem) {
+  :global(:root) {
+    --app-bottom-inset: 0px;
+  }
+
+  .header {
+    border-bottom: var(--border-width) solid var(--border);
+  }
+
+  .nav {
+    position: static;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .navList {
+    gap: var(--space-1);
+    padding: 0;
+  }
+
+  .navItem {
+    flex: none;
+  }
+
+  .navLink {
+    flex-direction: row;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    gap: var(--space-2);
+    min-height: var(--touch-target);
+    padding: 0 var(--space-3);
+    font-size: var(--fs-sm);
+  }
+
+  .navLink[aria-current='page'] {
+    background: var(--accent-tint);
+  }
+
+  .main {
+    padding-top: var(--space-5);
+  }
+}

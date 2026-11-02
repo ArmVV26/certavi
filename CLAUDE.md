@@ -37,20 +37,22 @@ Native App Store app, multi-user, social features.
 | Layer      | Tool                                                                                          |
 | ---------- | --------------------------------------------------------------------------------------------- |
 | Build      | Vite                                                                                          |
-| UI         | React 19, React Router (Phase 1)                                                              |
+| UI         | React 19, React Router 8 (`RouterProvider` from `react-router/dom`)                           |
 | State      | Dexie as source of truth (`useLiveQuery` from `dexie-react-hooks`) + local UI state. No Redux |
 | Validation | zod — schemas shared by client and function (sync contract, importer)                         |
 | Styles     | Design tokens as CSS custom properties + CSS Modules. Light/dark via `data-theme`             |
-| Fonts      | Self-hosted with `@fontsource/*` (nothing loaded from third parties)                          |
+| Fonts      | Self-hosted with `@fontsource-variable/archivo` (nothing loaded from third parties)           |
 | i18n       | `i18next` + `react-i18next` (`es` default, `en` optional)                                     |
 | PWA        | `vite-plugin-pwa` (Workbox): precache, "new version" prompt                                   |
 | Charts     | Hand-written SVG (no chart library)                                                           |
 | Backend    | Netlify Functions (TypeScript) + `@netlify/blobs`                                             |
-| Tests      | Vitest + React Testing Library + jsdom; Playwright (Chromium + WebKit)                        |
+| Tests      | Vitest + RTL + jsdom; Playwright (Chromium locally; Chromium + WebKit in `e2e:all` and CI)    |
 | Quality    | ESLint (flat, type-checked) + Prettier + `tsc`; husky + commitlint                            |
-| CI         | GitHub Actions: lint, typecheck, test, build on PRs to `dev` and `main`                       |
+| CI         | GitHub Actions: lint, typecheck, test, build on PRs to `dev` and `main`; e2e on PRs to `main` |
 
-Only the Phase 0 tooling is installed so far; the rest arrives in the phase that needs it.
+Installed so far: Phase 0 tooling plus Phase 1 (`react-router`, `i18next`, `react-i18next`,
+`@fontsource-variable/archivo`, `@axe-core/playwright`); the rest arrives in the phase that
+needs it.
 
 **Version constraints (pinned exact in `package.json`):** TypeScript stays on **6.0.x**
 (typescript-eslint supports `<6.1`) and ESLint on **9.x** (eslint-plugin-react and jsx-a11y do
@@ -113,6 +115,8 @@ src/
   app/              App shell (routes, layout, providers)
   domain/  data/  features/  ui/  i18n/  theme/
   test/setup.ts     Vitest setup (jest-dom matchers, cleanup)
+  test/render.tsx   renderWithProviders helper for component tests
+  test/renderApp.tsx renderApp: the whole app with an in-memory router
 tests/
   e2e/              Playwright specs (written by the blind-tester)
   mocks/            fake /api/v1/sync server for e2e (Phase 4)
@@ -173,8 +177,10 @@ deload weeks), deload, short week.
 
 - `i18next` + `react-i18next`, resources in `src/i18n/es.json` and `src/i18n/en.json`.
 - **Every user-facing string goes through a key**, in both languages. Keys are namespaced by
-  feature: `session.addSet`, `settings.sync.keyLabel`…
-- Dates and numbers use `Intl` with the active locale (Spanish: decimal comma).
+  feature: `session.addSet`, `settings.sync.keyLabel`… Keys are typed (`src/i18n/i18next.d.ts`).
+  `src/ui` may use `react-i18next` only for its own generic labels (`ui.*`).
+- Dates and numbers use `Intl` with the active locale: `es-ES` (decimal comma) / `en-GB`.
+- The chosen language is a device-only setting (`src/data/deviceStorage.ts`), like the theme.
 - Exercise names from the seed catalog are i18n keys; user-created exercises store raw text.
 - The warm-up symbol is localized: **C** (es) / **W** (en).
 
@@ -192,34 +198,51 @@ deload weeks), deload, short week.
 
 ## 9. Testing
 
-| Kind                            | Tool                                    | Where                 | Who writes it |
-| ------------------------------- | --------------------------------------- | --------------------- | ------------- |
-| Unit (domain rules, data, sync) | Vitest                                  | `src/**/*.test.ts`    | main agent    |
-| Component                       | Vitest + RTL + jsdom                    | `src/**/*.test.tsx`   | main agent    |
-| End-to-end                      | Playwright (Chromium + WebKit, 390×844) | `tests/e2e/*.spec.ts` | blind-tester  |
+| Kind                            | Tool                                   | Where                 | Who writes it |
+| ------------------------------- | -------------------------------------- | --------------------- | ------------- |
+| Unit (domain rules, data, sync) | Vitest                                 | `src/**/*.test.ts`    | main agent    |
+| Component                       | Vitest + RTL + jsdom                   | `src/**/*.test.tsx`   | main agent    |
+| End-to-end                      | Playwright (390×844; see limits below) | `tests/e2e/*.spec.ts` | blind-tester  |
 
 - Query by role, label and visible text (`getByRole`, `getByLabelText`), as a user would.
+- Component tests that need the app providers use `renderWithProviders` from
+  `src/test/render.tsx` (theme, i18n with a `locale` option defaulting to `es`, toasts); tests of
+  whole screens use `renderApp(path)` from `src/test/renderApp.tsx` (real routes, memory router).
 - Domain code needs thorough tests (Phase 2 target: ≥ 90 % coverage of `src/domain`).
 - Tests use **synthetic data only** — never real exports from gym_app.
 - Playwright builds the app, starts `vite preview` on **4173** and stops it itself
-  (`reuseExistingServer: false`, `strictPort`). A busy port fails the run on purpose.
+  (`reuseExistingServer: false`, `strictPort`, webServer timeout 60 s). A busy port fails the
+  run on purpose.
+- **E2E limits** (after the 2026-11-02 resource-starvation incident, see `context.md` §2.2 and
+  §12): `npm run e2e` runs **Chromium only**; `npm run e2e:all` (and CI, on PRs to `main`)
+  runs Chromium + WebKit. Locally **2 workers**, no retries, `maxFailures` 3; CI uses default workers + 2 retries.
+  30 s per test; global timeout 5 min (`npm run e2e`) / 10 min (`npm run e2e:all`). Reporters
+  `list` + `html` (`open: 'never'`, report port 9323). Chromium `deviceScaleFactor` 2; never
+  `channel: 'chrome'`.
+- How to run e2e: only through `npm run e2e` (or `e2e:all`), in the foreground, no extra
+  flags, no background polling, nothing heavy in parallel. If it exceeds 5 min or hangs: stop
+  it, `npm run ports:kill`, check ports, report. Never retry in a loop (one run + one after a
+  fix); never install browsers. E2E covers user flows and acceptance criteria — exhaustive
+  combinations belong in unit tests; axe runs once per screen and theme (light/dark), in
+  Chromium only. Target: `npm run e2e` under 2 min.
 - IndexedDB tests (Phase 3) use `fake-indexeddb`.
 
 ## 10. Commands
 
-| Command                           | What it does                                                                          |
-| --------------------------------- | ------------------------------------------------------------------------------------- |
-| `npm run dev`                     | Vite dev server on 5173 (strict port)                                                 |
-| `npm run build`                   | `tsc -b` + `vite build`                                                               |
-| `npm run preview`                 | Serve the build on 4173                                                               |
-| `npm run lint`                    | ESLint (type-checked)                                                                 |
-| `npm run typecheck`               | `tsc -b`                                                                              |
-| `npm run test`                    | Vitest, single run                                                                    |
-| `npm run test:watch`              | Vitest in watch mode (user only — never leave it running)                             |
-| `npm run e2e`                     | Playwright (builds, serves, tests, stops the server)                                  |
-| `npm run format` / `format:check` | Prettier write / check                                                                |
-| `npm run ports:check`             | Lists which of 5173 / 4173 / 8888 / 8787 are busy and by which process; exit 1 if any |
-| `npm run ports:kill`              | Frees those ports                                                                     |
+| Command                           | What it does                                                                         |
+| --------------------------------- | ------------------------------------------------------------------------------------ |
+| `npm run dev`                     | Vite dev server on 5173 (strict port)                                                |
+| `npm run build`                   | `tsc -b` + `vite build`                                                              |
+| `npm run preview`                 | Serve the build on 4173                                                              |
+| `npm run lint`                    | ESLint (type-checked)                                                                |
+| `npm run typecheck`               | `tsc -b`                                                                             |
+| `npm run test`                    | Vitest, single run                                                                   |
+| `npm run test:watch`              | Vitest in watch mode (user only — never leave it running)                            |
+| `npm run e2e`                     | Playwright, **Chromium only** (builds, serves, tests, stops the server)              |
+| `npm run e2e:all`                 | Playwright, Chromium + WebKit (10 min global timeout); also run by CI on PRs to main |
+| `npm run format` / `format:check` | Prettier write / check                                                               |
+| `npm run ports:check`             | Lists which of 5173 / 4173 / 8888 / 8787 / 9323 are busy and by whom; exit 1 if any  |
+| `npm run ports:kill`              | Frees those ports                                                                    |
 
 Note: `typecheck` is `tsc -b`, not `tsc --noEmit -p .` as first drafted in `context.md` §8.5.
 The root `tsconfig.json` only holds project references (`tsconfig.app.json` for `src`,

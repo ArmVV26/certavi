@@ -3,7 +3,7 @@
 > Documento de arranque del proyecto **Certavi**, la reescritura de la app de registro de gimnasio (antes «Winter Arc · registro», repositorio `gym_app`).
 > Al crear el repositorio, este archivo se copia como `context.md` en la raíz. Desde ese momento es la **fuente de verdad del estado del proyecto**: qué está decidido, qué está hecho, qué falta y con qué prompt se arranca cada fase. Lo mantiene al día el agente de contexto.
 >
-> Última actualización: 2 nov 2026 · Estado: **Fase 0 implementada y verificada; pendiente de commits, PR y tag `v0.1.0` por el usuario**
+> Última actualización: 2 nov 2026 · Estado: **Fase 0 cerrada (`v0.1.0`) · Fase 1 implementada y verificada 🚧 (lint, typecheck, test, build, format y e2e ✅): pendiente de commits de `feature/app-shell`, PR a `dev`, PR `dev → main` y tag `v0.2.0` por el usuario**
 
 ---
 
@@ -84,6 +84,21 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | husky | Solo el hook **`commit-msg`** (commitlint); **sin `pre-commit`** | — |
 | Contrato sync v1 (borrador) | Cambios respecto a gym_app: campos `type`/`updatedAt`/`deleted`/`serverSeq` (antes `t`/`u`/`del`/`srv`); copias como `GET /api/v1/backups` y `GET /api/v1/backups/{date}`; códigos de error en lugar de frases en español; `CLAVE_SYNC` de mínimo 32 caracteres; la respuesta incluye `rejected` | Contrato limpio y portable a otro backend |
 | Archivos aplazados | `netlify.toml`, `public/robots.txt`, `netlify/functions/sync.ts` y `tests/mocks/sync-server.ts` se crean en su fase (4 / 8) | Solo se crea lo que la fase necesita |
+
+### 2.2 Decisiones de la Fase 1 (2026-11-02)
+
+| Tema | Decisión | Motivo |
+|---|---|---|
+| Paleta y fuente | Paleta **«Hierro»** y fuente **«Archivo»** (`@fontsource-variable/archivo`, autoalojada). Elegidas con `docs/design/selector.html` (generado por `scripts/build-selector.mjs`); registro en `docs/design/decision.md` | Elección del usuario sobre pantallas reales en miniatura |
+| Tokens | Variables CSS en `src/theme/tokens.css` (documentadas en `docs/design/tokens.md`); los tintes se calculan con `color-mix` al **12 %** | Un solo origen para claro/oscuro, sin colores sueltos en componentes |
+| Tema | `system \| light \| dark` guardado en `localStorage`, **solo en el dispositivo** (no se sincroniza); sigue al sistema en vivo y actualiza `theme-color` | Ajuste propio de cada dispositivo |
+| i18n | `i18next` + `react-i18next`, **`es` por defecto** y `en`; claves tipadas; formatos con `Intl`: `es-ES` y **`en-GB`** para inglés; idioma guardado en el dispositivo | Fechas día/mes y sistema métrico también en inglés |
+| Router | **react-router 8**, con `RouterProvider` importado de `react-router/dom` | Versión actual; el paquete DOM aporta el provider para el navegador |
+| Textos de `src/ui` | `src/ui` puede usar `react-i18next` **solo para sus propias etiquetas genéricas** (claves `ui.*`, p. ej. «Cerrar») | Mantener la regla «todo texto por i18n» sin pasar etiquetas triviales por props |
+| Ajustes del dispositivo | Lectura/escritura de preferencias locales (tema, idioma) centralizada en `src/data/deviceStorage.ts` | Un único punto de acceso al almacenamiento del dispositivo |
+| Ámbito de commit para diseño | Los documentos de diseño usan el ámbito **`theme`** | `design` no es un ámbito permitido por commitlint |
+| Límites de e2e | Tras el incidente del 2026-11-02 (sección 12): `playwright.config.ts` con **2 workers** en local (CI: los de por defecto + 2 reintentos), `retries` 0 y `maxFailures` 3 en local, `timeout` 30 s por test, `globalTimeout` 5 min (`npm run e2e`) y 10 min (`npm run e2e:all`, vía `--global-timeout=600000`), reporter `list` + `html` (`open: 'never'`), webServer con `reuseExistingServer: false` y timeout 60 s, chromium con `deviceScaleFactor` 2 (antes 3), nunca `channel: 'chrome'`. **`npm run e2e` = solo Chromium**; nuevo **`npm run e2e:all`** = Chromium + WebKit. Puerto **9323** (informe de Playwright) añadido a `ports:check` y `ports:kill`. CI: job `e2e` (Chromium + WebKit, `npm run e2e:all`) **solo en PR a `main`**, después del job de checks, que sube el informe si falla. `.claude/settings.json` deniega `npx playwright install` y `npx playwright show-report` (Bash y PowerShell). Reglas nuevas en `.claude/rules.md`, `.claude/agents/blind-tester.md` y `.claude/commands/close-phase.md`: e2e solo con `npm run e2e`, en primer plano, sin flags extra, sin sondeo en segundo plano y sin nada pesado en paralelo; si pasa de 5 min o se cuelga → parar, `ports:kill`, comprobar puertos e informar; nunca reintentar en bucle (una ejecución + una tras un arreglo); nunca instalar navegadores; los e2e cubren flujos de usuario y criterios de aceptación (las combinaciones exhaustivas van a tests unitarios); axe una vez por pantalla y tema; objetivo `npm run e2e` < 2 min | Evitar que la suite sature el PC del usuario |
+| Suite e2e reducida | Decisión del usuario (2026-11-02): de **111 a 38 tests por navegador** (navegación 12, tema 9, idioma 5, componentes 11, humo 1). Los e2e cubren flujos de usuario y criterios de aceptación; las combinaciones exhaustivas van a tests unitarios. axe se ejecuta **una vez por pantalla y tema (claro/oscuro), solo en Chromium** (se omite en WebKit). AC-NAV-09 («Tab llega al enlace "saltar al contenido"») es una **excepción documentada de WebKit** (`test.skip` con motivo); se sigue comprobando en Chromium, y el foco + Enter se comprueban en ambos motores | Suite rápida y ligera (~19 s en Chromium) sin perder cobertura de los criterios de aceptación |
 
 ---
 
@@ -614,13 +629,16 @@ lint          eslint .
 typecheck     tsc -b
 test          vitest run
 test:watch    vitest
-e2e           playwright test
+e2e           playwright test --project=chromium   (desde 2026-11-02; antes: playwright test)
+e2e:all       Chromium + WebKit, --global-timeout=600000   (nuevo, 2026-11-02)
 format        prettier --write .
 format:check  prettier --check .
-ports:check   node scripts/ports-check.mjs (dice qué ocupa 5173/4173/8888/8787)
-ports:kill    kill-port 5173 4173 8888 8787
+ports:check   node scripts/ports-check.mjs (dice qué ocupa 5173/4173/8888/8787/9323)
+ports:kill    libera 5173 4173 8888 8787 9323
 prepare       husky
 ```
+
+> `e2e`, `e2e:all` y el puerto 9323 cambiaron el 2026-11-02 (sección 2.2, límites de e2e).
 
 > `typecheck` es `tsc -b` y no `tsc --noEmit -p .` (decisión del 2026-11-02, sección 2.1): el `tsconfig.json` raíz solo contiene referencias, así que `-p .` no comprobaría nada.
 
@@ -675,11 +693,11 @@ Cada fase sigue el mismo ciclo:
 
 ---
 
-### Fase 0 · Base del proyecto → `v0.1.0` 🚧
+### Fase 0 · Base del proyecto → `v0.1.0` ✅
 
 **Rama**: `chore/project-setup`
 
-**Estado (2026-11-02)**: implementada y verificada; **pendiente de commits, PR y tag `v0.1.0` por el usuario** (pasa a ✅ al crear el tag).
+**Estado (2026-11-02)**: **cerrada**. El usuario hizo los commits, el PR a `dev`, el PR `dev → main` y el tag `v0.1.0`.
 
 - Hecho: Vite 8 + React 19.3 + TypeScript 6.0.3 strict (`src/app/App.tsx`, `main.tsx`) y estructura de 3.3 con `.gitkeep`; `tsconfig.json` (referencias) + `tsconfig.app.json` + `tsconfig.node.json` + `tsconfig.e2e.json`; ESLint 9 flat (typescript-eslint `strictTypeChecked`, react, react-hooks, react-refresh, jsx-a11y, prettier); Prettier; Vitest 5 + RTL + jsdom 30 (`src/test/setup.ts`, `src/app/App.test.tsx`); Playwright 1.64 (chromium + webkit, 390×844, webServer `vite build` + `vite preview` en 4173 con `strictPort` y `reuseExistingServer: false`; `tests/e2e/smoke.spec.ts`); husky (solo `commit-msg`) + commitlint con los ámbitos de 7.2 más `release` y `deps`; scripts de 8.5 (incluidos `ports:check`, `ports:kill`, `format`, `format:check`); `.gitattributes`, `.editorconfig`, `.nvmrc` (22), `.gitignore`, `LICENSE`; CI `.github/workflows/ci.yml` (PR a `dev`/`main`: `npm ci`, lint, typecheck, test, build; `actions/checkout@v7`, `setup-node@v7`); `.claude/` (rules, settings con reglas deny/ask/allow para Bash **y** PowerShell, agentes y comandos); `CLAUDE.md`, `README.md`, `CHANGELOG.md`; `docs/spec/README.md`, `docs/api/sync-v1.md` (borrador), `docs/adr/0001` y `0002`, `docs/migration.md`, `docs/design/README.md`.
 - Verificado en Windows (Node 26.13.0 local): `lint` ✅, `typecheck` ✅, `test` ✅ (2 tests de componente), `build` ✅, `format:check` ✅, `e2e` ✅ (4 pasados: título + encabezado y sin scroll horizontal a 390 px, en chromium y webkit a 390×844), `ports:check` ✅ (todos libres tras e2e).
@@ -738,9 +756,32 @@ ejecute yo. Espera a que te confirme. Al terminar, ejecuta /close-phase.
 
 ---
 
-### Fase 1 · Diseño, tema, i18n y navegación → `v0.2.0` ⏳
+### Fase 1 · Diseño, tema, i18n y navegación → `v0.2.0` 🚧
 
 **Ramas**: `feature/design-system` y `feature/app-shell`
+
+**Estado (2026-11-02)**: **implementada y verificada; pendiente de commits de `feature/app-shell`, PR a `dev`, PR `dev → main` y tag `v0.2.0` por el usuario** (pasa a ✅ cuando el usuario cree el tag, igual que la Fase 0). Decisiones en la sección 2.2.
+
+- **Hecho — `feature/design-system`** (mergeada en `dev` con el PR #3; ámbito de commit `theme`): selector de paletas `docs/design/selector.html` (generado por `scripts/build-selector.mjs`); decisión paleta «Hierro» + fuente «Archivo» (`docs/design/decision.md`); tokens (`src/theme/tokens.css`, `docs/design/tokens.md`); motor de tema (system/light/dark guardado en `localStorage`, cambios del sistema en vivo, `theme-color`).
+- **Implementado — `feature/app-shell`** (rama actual, **sin commits todavía**):
+  - i18n es/en en `src/i18n` (i18next + react-i18next, claves tipadas, formato `Intl` es-ES / en-GB, idioma guardado en el dispositivo);
+  - ajustes del dispositivo en `src/data/deviceStorage.ts`;
+  - shell con react-router 8 en `src/app`: rutas, `Layout` con título en la cabecera y botón de tema, barra de pestañas inferior en móvil / barra superior desde 768 px, enlace «saltar al contenido», foco al título de la página al navegar, página 404;
+  - páginas vacías: Hoy (con la fecha localizada), Calendario, Rutinas, Progreso; Ajustes con tema e idioma;
+  - componentes base en `src/ui`: Button, IconButton, Chip, Tag, Card, Dialog, ConfirmDialog, Sheet, Toast, NumberField, Segmented, Switch, EmptyState, Icon; catálogo interno `/dev/ui`;
+  - especificación `docs/spec/theme-language-navigation.md`;
+  - cambio en el criterio de humo: el encabezado principal de `/` ahora es «Hoy» («Certavi» se queda en el título de la pestaña).
+- **Paquetes añadidos en la fase**: `@fontsource-variable/archivo` 5.3.0, `react-router` 8.5.1, `i18next` 26.7.1, `react-i18next` 17.1.11; dev: `@axe-core/playwright` 4.14.0.
+- **Verificado en `feature/app-shell` (2026-11-02)**: `lint` ✅, `typecheck` ✅, `test` ✅ (179 tests en 16 archivos), `build` ✅, `format:check` ✅; puertos libres tras las ejecuciones (5173, 4173, 8888, 8787, 9323).
+- **Helpers de test**: `src/test/render.tsx` (`renderWithProviders`) y `src/test/renderApp.tsx` (`renderApp(path)`: la app completa con un router en memoria).
+- **E2E ✅**: 5 archivos de spec en `tests/e2e`. La suite se **redujo a propósito** (decisión del usuario, sección 2.2) de 111 a **38 tests por navegador**: navegación 12, tema 9, idioma 5, componentes 11, humo 1; axe una vez por pantalla y tema, solo en Chromium; AC-NAV-09 (Tab al enlace «saltar al contenido») es excepción documentada de WebKit.
+  - Ejecución válida (blind-tester, `npm run e2e`, una sola ejecución, Chromium, 2 workers): **38 pasados, 0 fallidos, 0 omitidos en 18,2 s** (≈19 s en total).
+  - Antes de la reducción, el usuario ejecutó `npm run e2e` con la suite de 111 tests: todo pasó en 33 s.
+- **Criterios de aceptación cubiertos** por e2e y tests unitarios/de componente que pasan: el tema sigue al sistema y el botón de la cabecera lo cambia; UI en es/en; Dialog accesible (foco atrapado, Escape, lector de pantalla); tema, idioma y navegación validados a 390×844.
+- **Pendiente (lo hace el usuario)**:
+  1. commits de `feature/app-shell` y PR a `dev`;
+  2. `npm run e2e:all` (Chromium + WebKit) antes o en el PR a `main` (el job e2e de CI lo ejecuta en ese PR);
+  3. release `v0.2.0`: PR `dev → main`, `chore(release): v0.2.0`, tag.
 
 **Objetivo**: decidir el aspecto y dejar el esqueleto navegable.
 
@@ -1044,10 +1085,15 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
 
 | Fecha | Fase | Qué | Versión |
 |---|---|---|---|
+| 2026-11-02 | 1 | **Fase 1 implementada y verificada** en `feature/app-shell`: lint, typecheck, test (179 en 16 archivos), build y format:check ✅; puertos libres. Suite e2e reducida por decisión del usuario de 111 a 38 tests por navegador (2.2); ejecución válida `npm run e2e` (Chromium, 2 workers): **38/38 en 18,2 s**. Antes, la suite de 111 pasó entera en 33 s (ejecución del usuario). Todos los criterios de aceptación cubiertos. Pendiente: commits, PR a `dev`, PR `dev → main` y tag por el usuario | `v0.2.0` (pendiente de tag) |
+| 2026-11-02 | 1 | **Incidente e2e** durante `/close-phase` (20:13–20:32 hora local): el blind-tester lanzó la suite de Playwright 3 veces (+1 sonda) en ~18 min. La 1.ª ejecución usó los 8 workers por defecto de Playwright (50 % de 16 CPU lógicas) con Chromium (`deviceScaleFactor` 3) + WebKit, ~36 escaneos de axe y eslint/tsc a la vez: 7,9 min y 62 fallos, todos timeouts de `page.goto` / `ERR_ABORTED` (falta de recursos). La misma suite con 4 workers tardó 52 s con 1 fallo. Parar el agente no paró la última ejecución (siguió ~1 min). El PC del usuario se volvió muy lento, Chrome dejó de responder y se cayó la conexión (registro de Windows: fallo de handshake del adaptador Wi-Fi USB a las 20:20; causa atribuida a la saturación, no confirmada). No intervinieron: descargas de navegadores, servidor del informe HTML, reintentos automáticos ni el Chrome del usuario. **Decisión**: límites de e2e de la sección 2.2 (2 workers en local, `e2e` solo Chromium, `e2e:all`, job e2e en CI solo en PR a `main`, puerto 9323, reglas nuevas para agentes) | — |
+| 2026-11-02 | 1 | `feature/app-shell` implementada (i18n es/en, shell con react-router 8, páginas vacías, Ajustes, componentes base de `src/ui`, `/dev/ui`, spec de tema/idioma/navegación). lint, typecheck, test (179) y build ✅; axe sin violaciones. **Sin commits** y **sin ejecución e2e válida** todavía | `v0.2.0` (en curso) |
+| 2026-11-02 | 1 | `feature/design-system` mergeada en `dev` (PR #3): selector, decisión Hierro + Archivo, tokens y motor de tema | `v0.2.0` (en curso) |
+| 2026-11-02 | 0 | Release de la Fase 0 por el usuario: commits, PR a `dev`, PR `dev → main` y tag | `v0.1.0` |
 | 2026-11-02 | 0 | Base del proyecto implementada y verificada (lint, typecheck, test, build, format:check, e2e en chromium + webkit, puertos libres; commit denegado a Claude). Decisiones en 2.1. Pendiente: commits, PR y tag por el usuario | `v0.1.0` (pendiente de tag) |
 | 2026-11-01 | — | Plan inicial y decisiones (este documento) | — |
 
-**Estado de fases**: 0 🚧 (implementada y verificada, pendiente de commits, PR y tag `v0.1.0` por el usuario) · 1 ⏳ · 2 ⏳ · 3 ⏳ · 4 ⏳ · 5 ⏳ · 6 ⏳ · 7 ⏳ · 8 ⏳ · 9 ⏳
+**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 🚧 (implementada y verificada; `feature/design-system` en `dev`; `feature/app-shell` pendiente de commits, PR a `dev`, PR `dev → main` y tag `v0.2.0` por el usuario) · 2 ⏳ · 3 ⏳ · 4 ⏳ · 5 ⏳ · 6 ⏳ · 7 ⏳ · 8 ⏳ · 9 ⏳
 
 **Preguntas abiertas**:
 - Equipo exacto de los ejercicios marcados con «?» en la tabla 4.3 (antes de la Fase 2).
