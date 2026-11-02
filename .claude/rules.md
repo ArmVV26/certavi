@@ -19,9 +19,28 @@
 
 - Never leave a server running. If you start one (`vite`, `vite preview`, `netlify dev`,
   the mock sync server, Playwright web server), stop it before finishing the task and
-  verify the port is free (`npm run ports:check`). Ports used: 5173, 4173, 8888, 8787.
+  verify the port is free (`npm run ports:check`). Ports used: 5173, 4173, 8888, 8787, 9323.
 - Prefer one-shot commands: `vitest run` (not watch), `playwright test` with its own webServer.
 - If a port is busy at start, report it instead of picking another one silently.
+
+## End-to-end tests (Playwright)
+
+An e2e run once saturated the user's PC (2026-11-02: 8 parallel browsers, three runs in a row).
+These rules keep it from happening again.
+
+- Run e2e **only** with `npm run e2e` (Chromium, 2 workers, 5 min cap, stops after 3 failures).
+  `npm run e2e:all` (Chromium + WebKit) only when the user asks for it.
+- Never call `npx playwright test` directly and never add flags (`--workers`, `--project`,
+  `--reporter`, `--repeat-each`…) to the npm scripts.
+- Run it in the foreground. Never move it to the background and poll it with `sleep` / `ping`
+  loops. Run nothing heavy (`lint`, `tsc`, `build`, another test run) while it runs.
+- **If it takes more than 5 minutes or hangs:** stop it, run `npm run ports:kill`, make sure no
+  Playwright browser is left (processes under `ms-playwright`), check `npm run ports:check`, and
+  report to the user.
+- **Never retry in a loop.** At most one run, plus one more only after fixing a test; then report.
+  Never re-run to "see if it passes".
+- **Never install browsers** (`npx playwright install`): the user does it. Never open the HTML
+  report (`npx playwright show-report`).
 
 ## Data and secrets
 
