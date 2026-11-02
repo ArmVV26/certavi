@@ -17,19 +17,24 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "playwright test",
+    "e2e": "playwright test --project=chromium",
+    "e2e:all": "playwright test --global-timeout=600000",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "ports:check": "node scripts/ports-check.mjs",
-    "ports:kill": "kill-port 5173 4173 8888 8787",
+    "ports:kill": "kill-port 5173 4173 8888 8787 9323",
     "prepare": "husky"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "5.3.0",
+    "i18next": "26.7.1",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "react-i18next": "17.1.11",
+    "react-router": "8.5.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
     "@eslint/js": "9.39.5",
