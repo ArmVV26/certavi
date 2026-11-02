@@ -1,0 +1,150 @@
+/*
+ * Certavi design tokens. Palette "Hierro" + font "Archivo" (see docs/design/decision.md).
+ * Reference: docs/design/tokens.md. Components use these tokens only — never raw colours or sizes.
+ *
+ * The theme is applied with data-theme="light|dark" on <html> (src/theme/theme.ts). Before the
+ * script runs, the media query block follows the system setting so there is no wrong-theme flash.
+ * Both dark blocks must stay identical (checked by tokens.test.ts).
+ */
+
+/* ---------- Theme-independent tokens ---------- */
+:root {
+  /* Typography */
+  --font-sans: 'Archivo Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-numeric: var(--font-sans);
+  --numeric-features: tabular-nums;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-black: 800;
+
+  --fs-xs: 0.75rem; /* 12px */
+  --fs-sm: 0.875rem; /* 14px */
+  --fs-md: 1rem; /* 16px */
+  --fs-lg: 1.125rem; /* 18px */
+  --fs-xl: 1.375rem; /* 22px */
+  --fs-2xl: 1.75rem; /* 28px */
+  --fs-3xl: 2.25rem; /* 36px */
+  --fs-display: 2.75rem; /* 44px — rest timer, headline numbers */
+
+  --lh-tight: 1.15;
+  --lh-snug: 1.3;
+  --lh-normal: 1.45;
+
+  --tracking-tight: -0.01em;
+  --tracking-caps: 0.06em;
+
+  /* Spacing (4px grid) */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-7: 2rem; /* 32px */
+  --space-8: 2.5rem; /* 40px */
+
+  /* Radii */
+  --radius-sm: 0.5rem; /* 8px */
+  --radius-md: 0.75rem; /* 12px */
+  --radius-lg: 1rem; /* 16px */
+  --radius-full: 999px;
+
+  /* Sizes */
+  --touch-target: 2.75rem; /* 44px: Apple's minimum tap size */
+  --border-width: 1px;
+  --focus-ring-width: 2px;
+
+  /* Motion (disabled below with prefers-reduced-motion) */
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Tinted backgrounds: 12 % of a colour over the card surface (AA-checked in tokens.test.ts) */
+  --tint-amount: 12%;
+  --accent-tint: color-mix(in srgb, var(--accent) var(--tint-amount), var(--surface));
+  --success-tint: color-mix(in srgb, var(--success) var(--tint-amount), var(--surface));
+  --warning-tint: color-mix(in srgb, var(--warning) var(--tint-amount), var(--surface));
+  --danger-tint: color-mix(in srgb, var(--danger) var(--tint-amount), var(--surface));
+  --warmup-tint: color-mix(in srgb, var(--warmup) var(--tint-amount), var(--surface));
+
+  --focus-ring: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+  }
+}
+
+/* ---------- Light (default) ---------- */
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #eceef2;
+  --border: #d5d9e0;
+  --text: #111827;
+  --text-muted: #4b5563;
+  --accent: #1d4ed8;
+  --on-accent: #ffffff;
+  --success: #166534;
+  --warning: #a8380a;
+  --danger: #b91c1c;
+  --warmup: #8a5300;
+
+  --shadow-1: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 5%);
+  --shadow-2: 0 4px 12px rgb(16 24 40 / 10%), 0 2px 4px rgb(16 24 40 / 6%);
+  --overlay: rgb(17 24 39 / 40%);
+}
+
+/* ---------- Dark: system setting, before the theme script runs ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+
+    --bg: #0b0f14;
+    --surface: #151b23;
+    --surface-2: #1e2630;
+    --border: #2e3846;
+    --text: #e6eaf0;
+    --text-muted: #9aa4b2;
+    --accent: #60a5fa;
+    --on-accent: #0b1220;
+    --success: #4ade80;
+    --warning: #fb923c;
+    --danger: #f87171;
+    --warmup: #facc15;
+
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-2: 0 8px 24px rgb(0 0 0 / 50%), 0 2px 6px rgb(0 0 0 / 40%);
+    --overlay: rgb(0 0 0 / 60%);
+  }
+}
+
+/* ---------- Dark: chosen by the app ---------- */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #0b0f14;
+  --surface: #151b23;
+  --surface-2: #1e2630;
+  --border: #2e3846;
+  --text: #e6eaf0;
+  --text-muted: #9aa4b2;
+  --accent: #60a5fa;
+  --on-accent: #0b1220;
+  --success: #4ade80;
+  --warning: #fb923c;
+  --danger: #f87171;
+  --warmup: #facc15;
+
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-2: 0 8px 24px rgb(0 0 0 / 50%), 0 2px 6px rgb(0 0 0 / 40%);
+  --overlay: rgb(0 0 0 / 60%);
+}

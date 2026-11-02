@@ -18,5 +18,7 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
     restoreMocks: true,
+    // CSS is stubbed in tests by default; tokens.test.ts reads tokens.css with ?raw.
+    css: { include: [/tokens\.css/] },
   },
 });
