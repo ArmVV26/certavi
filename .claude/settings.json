@@ -12,6 +12,8 @@
       "Bash(git branch -d:*)",
       "Bash(git branch -D:*)",
       "Bash(npm install -g:*)",
+      "Bash(npx playwright install:*)",
+      "Bash(npx playwright show-report:*)",
       "PowerShell(git commit:*)",
       "PowerShell(git push:*)",
       "PowerShell(git merge:*)",
@@ -23,6 +25,8 @@
       "PowerShell(git branch -d:*)",
       "PowerShell(git branch -D:*)",
       "PowerShell(npm install -g:*)",
+      "PowerShell(npx playwright install:*)",
+      "PowerShell(npx playwright show-report:*)",
       "Read(./.env*)",
       "Read(./backups/**)"
     ],

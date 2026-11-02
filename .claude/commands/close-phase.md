@@ -8,13 +8,18 @@ Never run git commands that write (commit, push, merge, tag, branch): the user d
 1. **Checks** — run, one after another, and stop to report if any fails:
    `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build`.
 2. **Blind tester** — launch the `blind-tester` agent with the acceptance criteria of the
-   phase (from `context.md` §10 and `docs/spec/`). It runs `npm run e2e` and reports.
+   phase (from `context.md` §10 and `docs/spec/`). It runs `npm run e2e` (Chromium, 2 workers,
+   5 min cap) under the e2e rules in `.claude/rules.md`: foreground only, no extra flags, no
+   loops of re-runs (one run, plus one after fixing a test), no browser installs, no
+   `show-report`. If a run takes more than 5 minutes or hangs, it stops, runs
+   `npm run ports:kill`, checks ports and reports. Do not run e2e yourself in parallel.
    Summarize its report: passed / failed, and any failure with steps, expected vs actual.
 3. **Context keeper** — launch the `context-keeper` agent with a short summary of what changed
    in this phase (files, decisions, test results). It updates `context.md`, `CHANGELOG.md`
    and, if needed, `CLAUDE.md`.
-4. **Ports** — run `npm run ports:check`. If any port is busy, find out why and stop that
-   process; do not finish while a port is busy.
+4. **Ports** — run `npm run ports:check` (5173, 4173, 8888, 8787, 9323). If any port is busy,
+   or a Playwright browser (`ms-playwright`) is still running, find out why and stop it; do not
+   finish while anything is left.
 5. **Commit plan** — inspect `git status` and `git diff --stat`, then output the plan in
    exactly this format (Conventional Commits, English, small commits, one idea each, every
    commit must build):
