@@ -2,6 +2,7 @@
 // Exit code: 0 = all free, 1 = at least one port is busy.
 //
 //   5173 vite dev · 4173 vite preview (Playwright) · 8888 netlify dev · 8787 mock sync server
+//   9323 Playwright HTML report (only if someone runs show-report)
 //
 // Usage: npm run ports:check        (free them with: npm run ports:kill)
 
@@ -13,6 +14,7 @@ const PORTS = [
   { port: 4173, use: 'vite preview / Playwright' },
   { port: 8888, use: 'netlify dev' },
   { port: 8787, use: 'mock sync server' },
+  { port: 9323, use: 'Playwright HTML report (show-report)' },
 ];
 const HOSTS = ['127.0.0.1', '::1'];
 const TIMEOUT_MS = 500;
