@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Planned release: **0.1.0** — project foundation (Phase 0).
+## [0.1.0] - 2026-11-02
+
+Project foundation (Phase 0).
 
 ### Added
 
@@ -36,3 +38,6 @@ Planned release: **0.1.0** — project foundation (Phase 0).
   Functions + Blobs backend), ADR-0002 (offline-first with last-write-wins sync), migration
   guide from gym_app, functional spec index and design docs index.
 - License: all rights reserved (MIT planned when the repository becomes public).
+
+[Unreleased]: https://github.com/ArmVV26/certavi/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.1.0
