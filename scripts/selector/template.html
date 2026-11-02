@@ -1,0 +1,1490 @@
+<!doctype html>
+<!--
+  Template for docs/design/selector.html. Do not open this file directly: the fonts are injected
+  by `node scripts/build-selector.mjs`, which replaces the FONT_FACES marker below.
+  This is a standalone design document, not app code, so raw colours and pixel sizes are fine here.
+-->
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Certavi · Selector de diseño</title>
+    <style>
+      /* @FONT_FACES@ */
+
+      /* ---------- Page chrome (neutral, follows the system theme) ---------- */
+      :root {
+        color-scheme: light dark;
+        --page-bg: #f1f1f3;
+        --page-surface: #ffffff;
+        --page-text: #1b1b1f;
+        --page-muted: #55555e;
+        --page-border: #d6d6dc;
+        --page-ok: #166534;
+        --page-bad: #b91c1c;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --page-bg: #111113;
+          --page-surface: #1b1b1f;
+          --page-text: #ececf0;
+          --page-muted: #a3a3ad;
+          --page-border: #34343b;
+          --page-ok: #4ade80;
+          --page-bad: #f87171;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font:
+          15px/1.45 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        background: var(--page-bg);
+        color: var(--page-text);
+      }
+      .controls {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--page-surface);
+        border-bottom: 1px solid var(--page-border);
+        padding: 12px 16px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 24px;
+        align-items: flex-end;
+      }
+      @media (max-width: 760px) {
+        .controls {
+          position: static;
+        }
+      }
+      .brand {
+        flex-basis: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 4px 12px;
+      }
+      .brand h1 {
+        font-size: 18px;
+        margin: 0;
+      }
+      .brand p {
+        margin: 0;
+        color: var(--page-muted);
+        font-size: 13px;
+      }
+      fieldset {
+        border: 0;
+        margin: 0;
+        padding: 0;
+        min-width: 0;
+      }
+      legend {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--page-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 6px;
+        padding: 0;
+      }
+      .pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .pill {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 34px;
+        padding: 4px 12px;
+        border: 1px solid var(--page-border);
+        border-radius: 999px;
+        cursor: pointer;
+        background: var(--page-bg);
+        font-size: 14px;
+        user-select: none;
+      }
+      .pill input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .pill:has(input:checked) {
+        background: var(--page-text);
+        color: var(--page-bg);
+        border-color: var(--page-text);
+      }
+      .pill:has(input:focus-visible) {
+        outline: 2px solid var(--page-text);
+        outline-offset: 2px;
+      }
+      .dots {
+        display: inline-flex;
+      }
+      .dots i {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 1.5px solid var(--page-surface);
+        margin-left: -4px;
+      }
+      .dots i:first-child {
+        margin-left: 0;
+      }
+      .font-sample {
+        font-size: 15px;
+      }
+      main {
+        padding: 20px 16px 48px;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+        max-width: 1640px;
+        margin: 0 auto;
+      }
+      .summary {
+        display: grid;
+        gap: 4px;
+      }
+      .summary h2 {
+        margin: 0;
+        font-size: 20px;
+      }
+      .summary p {
+        margin: 0;
+        color: var(--page-muted);
+      }
+      .group-title {
+        margin: 0 0 12px;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--page-muted);
+      }
+      .devices {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 28px 24px;
+        justify-content: center;
+      }
+      .device {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .device figcaption {
+        font-size: 13px;
+        color: var(--page-muted);
+      }
+      h2.section {
+        font-size: 18px;
+        margin: 0 0 4px;
+      }
+      .section-note {
+        margin: 0 0 12px;
+        color: var(--page-muted);
+        font-size: 14px;
+      }
+      .table-wrap {
+        overflow-x: auto;
+        background: var(--page-surface);
+        border: 1px solid var(--page-border);
+        border-radius: 12px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--page-border);
+        white-space: nowrap;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      th {
+        font-size: 12px;
+        color: var(--page-muted);
+        font-weight: 700;
+      }
+      .sample {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-weight: 700;
+        margin-right: 8px;
+        border: 1px solid var(--page-border);
+      }
+      .ok {
+        color: var(--page-ok);
+        font-weight: 700;
+      }
+      .bad {
+        color: var(--page-bad);
+        font-weight: 700;
+      }
+      .overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+      }
+      .overview article {
+        background: var(--page-surface);
+        border: 1px solid var(--page-border);
+        border-radius: 12px;
+        padding: 12px 14px;
+      }
+      .overview h3 {
+        margin: 0 0 4px;
+        font-size: 16px;
+      }
+      .overview p {
+        margin: 0 0 8px;
+        color: var(--page-muted);
+        font-size: 13px;
+      }
+      .strip {
+        display: flex;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--page-border);
+        margin-top: 4px;
+      }
+      .strip i {
+        flex: 1;
+        height: 22px;
+      }
+      textarea {
+        width: 100%;
+        min-height: 120px;
+        font:
+          13px/1.5 ui-monospace,
+          Consolas,
+          monospace;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--page-border);
+        background: var(--page-surface);
+        color: var(--page-text);
+        resize: vertical;
+      }
+
+      /* ---------- Mock phone (everything inside uses the palette tokens only) ---------- */
+      .phone {
+        --r: 16px;
+        position: relative;
+        width: 340px;
+        max-width: calc(100vw - 32px);
+        height: 740px;
+        border-radius: 40px;
+        border: 8px solid #0d0d0f;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-sans);
+        font-size: 14px;
+        line-height: 1.35;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+      }
+      .phone * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      .phone ul {
+        list-style: none;
+      }
+      .ph-status {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 26px 4px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .ph-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 16px 10px;
+      }
+      .grow {
+        flex: 1;
+        min-width: 0;
+      }
+      .ph-title {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        line-height: 1.15;
+      }
+      .ph-iconbtn {
+        flex: none;
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        background: var(--surface-2);
+        color: var(--text);
+      }
+      .ph-body {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        padding: 0 12px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        padding: 12px 14px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .eyebrow {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .small {
+        font-size: 12px;
+      }
+      .accent {
+        color: var(--accent);
+      }
+      .num {
+        font-family: var(--font-num);
+        font-variant-numeric: tabular-nums;
+        font-weight: var(--num-weight);
+      }
+      .big {
+        font-size: 32px;
+        line-height: 1.05;
+        letter-spacing: -0.01em;
+      }
+      .big small {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-left: 2px;
+      }
+      .h-xl {
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: -0.015em;
+        line-height: 1.1;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .between {
+        justify-content: space-between;
+        flex-wrap: nowrap;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        height: 46px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 16px;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: var(--on-accent);
+      }
+      .btn-secondary {
+        flex: 1;
+        height: 40px;
+        background: var(--surface-2);
+        color: var(--text);
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .btn-ghost {
+        flex: none;
+        height: 34px;
+        padding: 0 12px;
+        border: 1.5px solid var(--border);
+        color: var(--text);
+        font-size: 13px;
+        border-radius: 10px;
+      }
+      .btn-row {
+        display: flex;
+        gap: 8px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        height: 28px;
+        padding: 0 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        background: var(--surface-2);
+        color: var(--muted);
+      }
+      .chip-warning {
+        background: var(--warning-tint);
+        color: var(--warning);
+      }
+      .chip-accent {
+        background: var(--accent-tint);
+        color: var(--accent);
+      }
+      .chip-warm {
+        background: var(--warmup-tint);
+        color: var(--warmup);
+      }
+      .chip-danger {
+        background: var(--danger-tint);
+        color: var(--danger);
+      }
+      .tag {
+        flex: none;
+        align-self: flex-start;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 6px;
+        background: var(--surface-2);
+        color: var(--muted);
+      }
+      .plan li {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 2px 0;
+      }
+      .good {
+        color: var(--success);
+      }
+      .bar {
+        height: 8px;
+        border-radius: 999px;
+        background: var(--surface-2);
+        overflow: hidden;
+      }
+      .bar span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+      }
+      .fill-accent {
+        background: var(--accent);
+      }
+      .fill-success {
+        background: var(--success);
+      }
+      .fill-warning {
+        background: var(--warning);
+      }
+      .checks {
+        display: flex;
+        gap: 14px;
+        font-size: 13px;
+      }
+      .checks li {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--muted);
+      }
+      .checks li.done {
+        color: var(--text);
+      }
+      .checks li.done svg {
+        color: var(--success);
+      }
+      .box {
+        width: 15px;
+        height: 15px;
+        border: 1.5px solid var(--muted);
+        border-radius: 4px;
+      }
+      /* Active session */
+      .rest {
+        background: var(--accent-tint);
+        border-color: transparent;
+        box-shadow: none;
+      }
+      .ex-name {
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.25;
+      }
+      .one-line {
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sets-head,
+      .set {
+        display: grid;
+        grid-template-columns: 30px 1fr 1fr 42px 34px;
+        gap: 6px;
+        align-items: center;
+      }
+      .sets-head {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0 4px;
+      }
+      .sets-head span:nth-child(n + 2) {
+        text-align: center;
+      }
+      .set {
+        padding: 3px 4px;
+        border-radius: 10px;
+      }
+      .badge {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-num);
+        font-weight: 800;
+        font-size: 14px;
+        background: var(--surface-2);
+        color: var(--text);
+      }
+      .set.warm .badge {
+        background: var(--warmup-tint);
+        color: var(--warmup);
+      }
+      .field {
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-num);
+        font-variant-numeric: tabular-nums;
+        font-weight: var(--num-weight);
+        font-size: 18px;
+        background: var(--surface-2);
+        color: var(--text);
+      }
+      .field.ph {
+        color: var(--muted);
+      }
+      .set.done .field {
+        background: transparent;
+      }
+      .set.warm .field {
+        color: var(--muted);
+        font-size: 16px;
+      }
+      .set.done:not(.warm) {
+        background: var(--success-tint);
+      }
+      .set.next .field {
+        background: var(--surface);
+        box-shadow: inset 0 0 0 2px var(--accent);
+      }
+      .check {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        border: 2px solid var(--border);
+        color: var(--muted);
+      }
+      .set.done .check {
+        background: var(--success);
+        border-color: var(--success);
+        color: var(--surface);
+      }
+      .set.warm.done .check {
+        background: var(--warmup);
+        border-color: var(--warmup);
+      }
+      .set.next .check {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      /* Progress */
+      .seg {
+        display: flex;
+        background: var(--surface-2);
+        border-radius: 12px;
+        padding: 3px;
+      }
+      .seg span {
+        flex: 1;
+        text-align: center;
+        padding: 7px 0;
+        border-radius: 9px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+      .seg .on {
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: var(--shadow);
+      }
+      .groups li {
+        display: grid;
+        grid-template-columns: 92px 1fr 46px;
+        gap: 8px;
+        align-items: center;
+        font-size: 13px;
+        padding: 2px 0;
+      }
+      .groups .num {
+        text-align: right;
+        font-size: 15px;
+      }
+      .over {
+        color: var(--warning);
+      }
+      .chart {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .rec li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        padding: 3px 0;
+      }
+      .tabbar {
+        flex: none;
+        display: flex;
+        justify-content: space-around;
+        border-top: 1px solid var(--border);
+        background: var(--surface);
+        padding: 8px 4px 20px;
+      }
+      .tab {
+        width: 20%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        font-size: 10.5px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+      .tab.on {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="controls">
+      <div class="brand">
+        <h1>Certavi · selector de diseño</h1>
+        <p>
+          Combina paleta, fuentes y tema. La elección queda en la URL; abajo tienes el contraste AA
+          y el texto para <code>docs/design/decision.md</code>.
+        </p>
+      </div>
+      <fieldset>
+        <legend>Paleta</legend>
+        <div class="pills" id="ctl-palette"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Fuentes</legend>
+        <div class="pills" id="ctl-font"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Tema</legend>
+        <div class="pills" id="ctl-theme"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Vista</legend>
+        <div class="pills" id="ctl-view"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Calentamiento</legend>
+        <div class="pills" id="ctl-warm"></div>
+      </fieldset>
+    </header>
+
+    <main>
+      <section class="summary" id="summary" aria-live="polite"></section>
+      <section id="stage"></section>
+      <section>
+        <h2 class="section">Contraste AA de la paleta elegida</h2>
+        <p class="section-note">
+          WCAG 2.2 AA: 4,5:1 para texto. Se comprueban todas las parejas que usan las pantallas,
+          incluidas las insignias tintadas (color al 12 % sobre la tarjeta).
+        </p>
+        <div class="table-wrap" id="contrast"></div>
+      </section>
+      <section>
+        <h2 class="section">Las cinco paletas</h2>
+        <p class="section-note">
+          Franja: fondo · tarjeta · texto · acento · hecho · aviso · peligro · calentamiento.
+        </p>
+        <div class="overview" id="overview"></div>
+      </section>
+      <section>
+        <h2 class="section">Para docs/design/decision.md</h2>
+        <p class="section-note">Se actualiza con tu combinación actual. Cópialo en el archivo.</p>
+        <label class="section-note" for="decision" style="display: block"
+          >Texto de la decisión</label
+        >
+        <textarea id="decision" readonly></textarea>
+      </section>
+    </main>
+
+    <script>
+      'use strict';
+
+      // ---------- Data ----------
+      // Every colour pair used below was checked for WCAG AA (>= 4.5:1) in both themes.
+      const PALETTES = {
+        hierro: {
+          name: 'Hierro',
+          desc: 'Pizarra neutra con azul eléctrico. Sobria, tipo iOS. Calentamiento en ocre.',
+          light: {
+            bg: '#F4F5F7',
+            surface: '#FFFFFF',
+            surface2: '#ECEEF2',
+            border: '#D5D9E0',
+            text: '#111827',
+            muted: '#4B5563',
+            accent: '#1D4ED8',
+            onAccent: '#FFFFFF',
+            success: '#166534',
+            warning: '#A8380A',
+            danger: '#B91C1C',
+            warmup: '#8A5300',
+          },
+          dark: {
+            bg: '#0B0F14',
+            surface: '#151B23',
+            surface2: '#1E2630',
+            border: '#2E3846',
+            text: '#E6EAF0',
+            muted: '#9AA4B2',
+            accent: '#60A5FA',
+            onAccent: '#0B1220',
+            success: '#4ADE80',
+            warning: '#FB923C',
+            danger: '#F87171',
+            warmup: '#FACC15',
+          },
+        },
+        tiza: {
+          name: 'Tiza',
+          desc: 'Blanco roto cálido y naranja de seguridad, como discos y tiza. Calentamiento en azul.',
+          light: {
+            bg: '#F7F5F0',
+            surface: '#FFFFFF',
+            surface2: '#EFECE4',
+            border: '#D9D4C7',
+            text: '#1A1714',
+            muted: '#57514A',
+            accent: '#B23A0A',
+            onAccent: '#FFFFFF',
+            success: '#256B29',
+            warning: '#8F5100',
+            danger: '#B3261E',
+            warmup: '#1D5FA8',
+          },
+          dark: {
+            bg: '#12100E',
+            surface: '#1C1916',
+            surface2: '#26221E',
+            border: '#3A342D',
+            text: '#F2EEE8',
+            muted: '#A89F94',
+            accent: '#FB923C',
+            onAccent: '#1A0F05',
+            success: '#6CCB6F',
+            warning: '#F2B347',
+            danger: '#FF8A80',
+            warmup: '#7DB7F5',
+          },
+        },
+        neon: {
+          name: 'Neón',
+          desc: 'Verde lima sobre casi negro; muy deportiva en oscuro. Calentamiento en cian.',
+          light: {
+            bg: '#F5F7F2',
+            surface: '#FFFFFF',
+            surface2: '#EAEFE4',
+            border: '#D3DBC9',
+            text: '#12160F',
+            muted: '#4D5747',
+            accent: '#3F6212',
+            onAccent: '#FFFFFF',
+            success: '#166534',
+            warning: '#9A4A07',
+            danger: '#B91C1C',
+            warmup: '#0B6680',
+          },
+          dark: {
+            bg: '#0A0C0A',
+            surface: '#141814',
+            surface2: '#1C221C',
+            border: '#2C352C',
+            text: '#EEF3EA',
+            muted: '#9BA893',
+            accent: '#A3E635',
+            onAccent: '#0A0F02',
+            success: '#34D399',
+            warning: '#FBBF24',
+            danger: '#F87171',
+            warmup: '#67E8F9',
+          },
+        },
+        marea: {
+          name: 'Marea',
+          desc: 'Verde azulado tranquilo, fácil de leer mucho rato. Calentamiento en violeta.',
+          light: {
+            bg: '#F3F7F7',
+            surface: '#FFFFFF',
+            surface2: '#E6EEEE',
+            border: '#CBD8D8',
+            text: '#0F1A1C',
+            muted: '#4A5A5D',
+            accent: '#0D6A63',
+            onAccent: '#FFFFFF',
+            success: '#166534',
+            warning: '#9A4A07',
+            danger: '#B91C1C',
+            warmup: '#6D28D9',
+          },
+          dark: {
+            bg: '#0A1112',
+            surface: '#121C1E',
+            surface2: '#1A2729',
+            border: '#2A3B3E',
+            text: '#E7F0F0',
+            muted: '#93A7AA',
+            accent: '#2DD4BF',
+            onAccent: '#042F2B',
+            success: '#86EFAC',
+            warning: '#FCD34D',
+            danger: '#FCA5A5',
+            warmup: '#C4B5FD',
+          },
+        },
+        ciruela: {
+          name: 'Ciruela',
+          desc: 'Violeta intenso con personalidad. Calentamiento en azul cielo.',
+          light: {
+            bg: '#F6F5F9',
+            surface: '#FFFFFF',
+            surface2: '#ECEAF3',
+            border: '#D6D2E3',
+            text: '#17141F',
+            muted: '#524C63',
+            accent: '#6D28D9',
+            onAccent: '#FFFFFF',
+            success: '#166534',
+            warning: '#9A4A07',
+            danger: '#B91C1C',
+            warmup: '#0369A1',
+          },
+          dark: {
+            bg: '#0E0C14',
+            surface: '#18151F',
+            surface2: '#221E2C',
+            border: '#353043',
+            text: '#EEEBF5',
+            muted: '#A39DB5',
+            accent: '#A78BFA',
+            onAccent: '#140B2E',
+            success: '#4ADE80',
+            warning: '#FBBF24',
+            danger: '#F87171',
+            warmup: '#7DD3FC',
+          },
+        },
+      };
+
+      const FALLBACK = ', system-ui, -apple-system, "Segoe UI", sans-serif';
+      const FONTS = {
+        A: {
+          name: 'A · Sobria',
+          detail: 'Inter (texto) + Inter con cifras tabulares (números)',
+          sans: "'Inter Variable'",
+          num: "'Inter Variable'",
+          numWeight: 700,
+          packages: ['@fontsource-variable/inter'],
+        },
+        B: {
+          name: 'B · Deportiva',
+          detail: 'Barlow (texto) + Barlow Condensed (números)',
+          sans: "'Barlow'",
+          num: "'Barlow Condensed'",
+          numWeight: 700,
+          packages: ['@fontsource/barlow', '@fontsource/barlow-condensed'],
+        },
+        C: {
+          name: 'C · Técnica',
+          detail: 'Manrope (texto) + JetBrains Mono (números)',
+          sans: "'Manrope Variable'",
+          num: "'JetBrains Mono Variable'",
+          numWeight: 600,
+          packages: ['@fontsource-variable/manrope', '@fontsource-variable/jetbrains-mono'],
+        },
+        D: {
+          name: 'D · Atlética',
+          detail: 'Archivo (texto) + Archivo con cifras tabulares (números)',
+          sans: "'Archivo Variable'",
+          num: "'Archivo Variable'",
+          numWeight: 700,
+          packages: ['@fontsource-variable/archivo'],
+        },
+      };
+
+      const THEMES = { light: 'Claro', dark: 'Oscuro', both: 'Ambos' };
+      const VIEWS = {
+        screens: 'Pantallas',
+        palettes: 'Comparar paletas',
+        fonts: 'Comparar fuentes',
+      };
+      const WARM = { C: 'C (es)', W: 'W (en)' };
+      const MODE_NAME = { light: 'claro', dark: 'oscuro' };
+
+      const TINT = 0.12;
+
+      // Colour pairs checked for contrast: [foreground, background, where it is used].
+      const PAIRS = [
+        ['text', 'bg', 'Texto principal sobre el fondo'],
+        ['text', 'surface', 'Texto principal sobre tarjeta'],
+        ['text', 'surface2', 'Texto sobre botón secundario / campo'],
+        ['muted', 'bg', 'Texto secundario sobre el fondo'],
+        ['muted', 'surface', 'Texto secundario sobre tarjeta'],
+        ['muted', 'surface2', 'Texto secundario sobre campo (valor sugerido)'],
+        ['accent', 'surface', 'Acento como texto (pestaña activa)'],
+        ['accent', 'bg', 'Acento como texto sobre el fondo'],
+        ['onAccent', 'accent', 'Texto del botón principal'],
+        ['accent', 'accentTint', 'Temporizador de descanso / chip de acento'],
+        ['success', 'surface', 'Serie hecha, mejora'],
+        ['text', 'successTint', 'Números en una serie hecha'],
+        ['warning', 'surface', 'Aviso (series de más)'],
+        ['warning', 'warningTint', 'Chip de aviso'],
+        ['danger', 'surface', 'Peligro (quitar, borrar)'],
+        ['danger', 'dangerTint', 'Chip de peligro'],
+        ['warmup', 'surface', 'Calentamiento como texto'],
+        ['warmup', 'warmupTint', 'Insignia de calentamiento (C / W)'],
+      ];
+
+      // ---------- Colour maths (WCAG 2.x relative luminance) ----------
+      const toRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+      const channel = (c) => {
+        const s = c / 255;
+        return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+      };
+      const luminance = (hex) => {
+        const [r, g, b] = toRgb(hex).map(channel);
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      const contrast = (a, b) => {
+        const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+        return (hi + 0.05) / (lo + 0.05);
+      };
+      const mix = (fg, bg, amount) => {
+        const f = toRgb(fg);
+        const b = toRgb(bg);
+        return (
+          '#' +
+          f
+            .map((v, i) =>
+              Math.round(v * amount + b[i] * (1 - amount))
+                .toString(16)
+                .padStart(2, '0'),
+            )
+            .join('')
+            .toUpperCase()
+        );
+      };
+
+      function tokens(paletteId, mode) {
+        const t = { ...PALETTES[paletteId][mode] };
+        for (const key of ['accent', 'success', 'warning', 'danger', 'warmup']) {
+          t[key + 'Tint'] = mix(t[key], t.surface, TINT);
+        }
+        return t;
+      }
+
+      const cssName = (key) =>
+        '--' +
+        key
+          .replace(/([A-Z])/g, '-$1')
+          .replace(/(\D)(\d)/g, '$1-$2')
+          .toLowerCase();
+
+      function phoneStyle(paletteId, mode, fontId) {
+        const t = tokens(paletteId, mode);
+        const f = FONTS[fontId];
+        const vars = Object.entries(t).map(([k, v]) => `${cssName(k)}:${v}`);
+        vars.push(`--font-sans:${f.sans}${FALLBACK}`);
+        vars.push(`--font-num:${f.num}${FALLBACK}`);
+        vars.push(`--num-weight:${f.numWeight}`);
+        vars.push(
+          `--shadow:${mode === 'light' ? '0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.05)' : 'none'}`,
+        );
+        return vars.join(';').replaceAll('"', "'");
+      }
+
+      // ---------- Icons ----------
+      const PATHS = {
+        today: '<path d="M6.5 7v10M3.5 9.5v5M17.5 7v10M20.5 9.5v5M6.5 12h11"/>',
+        calendar:
+          '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+        routines: '<path d="M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01"/>',
+        progress: '<path d="M5 20v-7M11 20V5M17 20v-10M3 20.5h18"/>',
+        settings:
+          '<path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/>',
+        auto: '<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/>',
+        check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+        back: '<path d="M15 5l-7 7 7 7"/>',
+      };
+      const icon = (name, size = 22, width = 2) =>
+        `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PATHS[name]}</svg>`;
+
+      // ---------- Mock screens ----------
+      const statusBar = () =>
+        `<div class="ph-status"><span class="num">9:41</span><span>●●● 5G ▮</span></div>`;
+
+      function tabBar(active) {
+        const tabs = [
+          ['today', 'Hoy'],
+          ['calendar', 'Calendario'],
+          ['routines', 'Rutinas'],
+          ['progress', 'Progreso'],
+          ['settings', 'Ajustes'],
+        ];
+        return `<nav class="tabbar">${tabs
+          .map(
+            ([id, label]) =>
+              `<span class="tab${id === active ? ' on' : ''}">${icon(id, 22, id === active ? 2.4 : 2)}${label}</span>`,
+          )
+          .join('')}</nav>`;
+      }
+
+      function screenToday() {
+        return `
+          <div class="ph-header">
+            <div class="grow"><p class="eyebrow">Lunes, 2 de noviembre</p><h3 class="ph-title">Hoy</h3></div>
+            <span class="ph-iconbtn" title="Tema: automático">${icon('auto', 20)}</span>
+          </div>
+          <div class="ph-body">
+            <div class="row"><span class="chip chip-warning">2 cambios sin sincronizar</span><span class="chip">Semana 1 de 7</span></div>
+            <section class="card">
+              <p class="eyebrow">Sesión propuesta</p>
+              <p class="h-xl">Push</p>
+              <ul class="plan">
+                <li><span>Press inclinado con mancuernas</span><span class="num muted">1+1+2</span></li>
+                <li><span>Press de pecho máquina vertical</span><span class="num muted">3</span></li>
+                <li><span>Elevaciones laterales en polea</span><span class="num muted">3</span></li>
+                <li class="muted">+ 3 ejercicios más</li>
+              </ul>
+              <span class="btn btn-primary">Empezar Push</span>
+              <div class="btn-row"><span class="btn btn-secondary">Otra rutina</span><span class="btn btn-secondary">Sesión libre</span></div>
+            </section>
+            <div class="grid2">
+              <section class="card"><p class="eyebrow">Peso medio</p><p class="num big">78,4<small>kg</small></p><p class="num small good">−0,3 kg</p></section>
+              <section class="card"><p class="eyebrow">Esta semana</p><p class="num big">2<small>/5</small></p><p class="small muted">sesiones</p></section>
+            </div>
+            <section class="card">
+              <div class="row between"><p class="eyebrow">Bloque de hoy · Tobillo</p><span class="num small muted">2/4</span></div>
+              <div class="bar"><span class="fill-success" style="width: 50%"></span></div>
+              <ul class="checks">
+                <li class="done">${icon('check', 16, 3)}Rodillo</li>
+                <li class="done">${icon('check', 16, 3)}Pared</li>
+                <li><span class="box"></span>Goma</li>
+                <li><span class="box"></span>Cajón</li>
+              </ul>
+            </section>
+          </div>
+          ${tabBar('today')}`;
+      }
+
+      function screenSession(warm) {
+        const sets = [
+          { badge: warm, warm: true, kg: '15', reps: '10', rir: '', state: 'done' },
+          { badge: warm, warm: true, kg: '22,5', reps: '5', rir: '', state: 'done' },
+          { badge: '1', kg: '30', reps: '8', rir: '2', state: 'done' },
+          { badge: '2', kg: '27,5', reps: '10', rir: '2', state: 'next' },
+          { badge: '3', kg: '27,5', reps: '10', rir: '2', state: 'todo' },
+        ];
+        const rows = sets
+          .map((s) => {
+            const cls = ['set', s.state, s.warm ? 'warm' : ''].join(' ');
+            const ph = s.state === 'done' ? '' : ' ph';
+            return `<div class="${cls}">
+              <span class="badge">${s.badge}</span>
+              <span class="field${ph}">${s.kg}</span>
+              <span class="field${ph}">${s.reps}</span>
+              <span class="field${ph}">${s.rir || '–'}</span>
+              <span class="check">${icon('check', 18, 3)}</span>
+            </div>`;
+          })
+          .join('');
+        return `
+          <div class="ph-header">
+            <span class="ph-iconbtn">${icon('back', 20)}</span>
+            <div class="grow"><h3 class="ph-title">Push</h3><p class="small muted">Lun 2 nov · <span class="num">42:15</span></p></div>
+            <span class="btn btn-ghost">Terminar</span>
+          </div>
+          <div class="ph-body">
+            <section class="card rest">
+              <div class="row between">
+                <div><p class="eyebrow accent">Descanso</p><p class="num big accent">1:24</p></div>
+                <p class="small">de <span class="num">2:30</span></p>
+              </div>
+              <div class="bar"><span class="fill-accent" style="width: 44%"></span></div>
+            </section>
+            <section class="card">
+              <div class="row between"><h4 class="ex-name">Press inclinado con mancuernas</h4><span class="tag">Mancuernas</span></div>
+              <p class="small muted">Última vez <span class="num">30 kg × 8</span> · RIR 2 · 1 top + 2 back-off</p>
+              <div class="sets-head"><span>Serie</span><span>kg</span><span>Reps</span><span>RIR</span><span></span></div>
+              ${rows}
+              <div class="row"><span class="chip chip-accent">+ Serie</span><span class="chip chip-warm">+ ${warm} Calentamiento</span><span class="chip chip-danger">Quitar</span></div>
+            </section>
+            <section class="card">
+              <div class="row between"><h4 class="ex-name one-line">Press de pecho máquina vertical</h4><span class="tag">Placas</span><span class="num muted">0/3</span></div>
+            </section>
+          </div>
+          ${tabBar('today')}`;
+      }
+
+      function screenProgress(warm) {
+        const groups = [
+          ['Pecho', 10, 10],
+          ['Espalda', 9, 12],
+          ['Hombros', 9, 8],
+          ['Cuádriceps', 6, 9],
+          ['Isquios-glúteo', 5, 8],
+          ['Bíceps', 4, 6],
+        ];
+        const rows = groups
+          .map(([name, done, plan]) => {
+            const pct = Math.min(100, Math.round((done / plan) * 100));
+            const fill =
+              done > plan ? 'fill-warning' : done === plan ? 'fill-success' : 'fill-accent';
+            const numCls = done > plan ? 'over' : done === plan ? 'good' : '';
+            return `<li><span>${name}</span><div class="bar"><span class="${fill}" style="width:${pct}%"></span></div><span class="num ${numCls}">${done}/${plan}</span></li>`;
+          })
+          .join('');
+
+        const values = [32.5, 33, 33.8, 34.2, 35, 35.6, 36.8];
+        const W = 290;
+        const H = 92;
+        const min = 31.5;
+        const max = 37.5;
+        const pts = values.map((v, i) => [
+          8 + (i * (W - 16)) / (values.length - 1),
+          8 + (1 - (v - min) / (max - min)) * (H - 26),
+        ]);
+        const line = pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+        const area = `8,${H - 18} ${line} ${W - 8},${H - 18}`;
+        const last = pts[pts.length - 1];
+        const labels = values
+          .map(
+            (_, i) =>
+              `<text x="${pts[i][0]}" y="${H - 3}" text-anchor="middle" fill="var(--muted)" font-size="10" font-family="var(--font-sans)">S${i + 1}</text>`,
+          )
+          .join('');
+        const grid = [0.25, 0.5, 0.75]
+          .map(
+            (f) =>
+              `<line x1="0" x2="${W}" y1="${8 + f * (H - 26)}" y2="${8 + f * (H - 26)}" stroke="var(--border)" stroke-width="1"/>`,
+          )
+          .join('');
+        const chart = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="1RM estimado por semana">
+            ${grid}
+            <polygon points="${area}" fill="var(--accent-tint)"/>
+            <polyline points="${line}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+            ${pts
+              .slice(0, -1)
+              .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.5" fill="var(--accent)"/>`)
+              .join('')}
+            <circle cx="${last[0]}" cy="${last[1]}" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>
+            ${labels}
+          </svg>`;
+
+        return `
+          <div class="ph-header">
+            <div class="grow"><p class="eyebrow">Semana 1 · ciclo nov–dic</p><h3 class="ph-title">Progreso</h3></div>
+            <span class="ph-iconbtn" title="Tema: automático">${icon('auto', 20)}</span>
+          </div>
+          <div class="ph-body">
+            <div class="seg"><span class="on">Esta semana</span><span>Pasada</span><span>Media 4 sem.</span></div>
+            <section class="card">
+              <div class="row between"><p class="eyebrow">Series efectivas por grupo</p><span class="small muted">hecho/plan</span></div>
+              <ul class="groups">${rows}</ul>
+              <p class="small muted">Los calentamientos (${warm}) no cuentan.</p>
+            </section>
+            <section class="card">
+              <div class="row between">
+                <div><p class="eyebrow">1RM estimado · Press inclinado</p><p class="num big">36,8<small>kg</small></p></div>
+                <span class="num small good">+1,2 kg</span>
+              </div>
+              ${chart}
+            </section>
+            <section class="card">
+              <p class="eyebrow">Récords recientes</p>
+              <ul class="rec">
+                <li><span>Remo en T</span><span class="row"><span class="num">70 kg × 6</span><span class="chip chip-accent">Nuevo</span></span></li>
+              </ul>
+            </section>
+          </div>
+          ${tabBar('progress')}`;
+      }
+
+      const SCREENS = {
+        today: { name: 'Hoy', render: screenToday },
+        session: { name: 'Sesión activa', render: screenSession },
+        progress: { name: 'Progreso', render: screenProgress },
+      };
+
+      function phone(paletteId, mode, fontId, screenId, caption) {
+        return `<figure class="device">
+            <div class="phone" style="${phoneStyle(paletteId, mode, fontId)}">${statusBar()}${SCREENS[screenId].render(state.warm)}</div>
+            <figcaption>${caption}</figcaption>
+          </figure>`;
+      }
+
+      // ---------- State ----------
+      const state = { palette: 'hierro', font: 'A', theme: 'both', view: 'screens', warm: 'C' };
+      const OPTIONS = { palette: PALETTES, font: FONTS, theme: THEMES, view: VIEWS, warm: WARM };
+
+      function readHash() {
+        const params = new URLSearchParams(location.hash.slice(1));
+        for (const key of Object.keys(state)) {
+          const value = params.get(key);
+          if (value && value in OPTIONS[key]) state[key] = value;
+        }
+      }
+      function writeHash() {
+        history.replaceState(null, '', '#' + new URLSearchParams(state).toString());
+      }
+      const modes = () => (state.theme === 'both' ? ['light', 'dark'] : [state.theme]);
+
+      // ---------- Controls ----------
+      function pill(group, value, content) {
+        const checked = state[group] === value ? ' checked' : '';
+        return `<label class="pill"><input type="radio" name="${group}" value="${value}"${checked}>${content}</label>`;
+      }
+      function renderControls() {
+        document.getElementById('ctl-palette').innerHTML = Object.entries(PALETTES)
+          .map(([id, p]) => {
+            const dots =
+              ['accent', 'warmup', 'success']
+                .map((k) => `<i style="background:${p.light[k]}"></i>`)
+                .join('') + `<i style="background:${p.dark.accent}"></i>`;
+            return pill('palette', id, `<span class="dots">${dots}</span>${p.name}`);
+          })
+          .join('');
+        document.getElementById('ctl-font').innerHTML = Object.entries(FONTS)
+          .map(([id, f]) =>
+            pill(
+              'font',
+              id,
+              `<span class="font-sample" style="font-family:${f.sans.replaceAll('"', "'")}${FALLBACK.replaceAll('"', "'")}">${id} Aa</span><span class="font-sample" style="font-family:${f.num}${FALLBACK.replaceAll('"', "'")};font-weight:${f.numWeight};font-variant-numeric:tabular-nums">27,5</span>`,
+            ),
+          )
+          .join('');
+        for (const [group, labels] of [
+          ['theme', THEMES],
+          ['view', VIEWS],
+          ['warm', WARM],
+        ]) {
+          document.getElementById('ctl-' + group).innerHTML = Object.entries(labels)
+            .map(([id, label]) => pill(group, id, label))
+            .join('');
+        }
+      }
+
+      // ---------- Render ----------
+      function renderSummary() {
+        const p = PALETTES[state.palette];
+        const f = FONTS[state.font];
+        document.getElementById('summary').innerHTML = `
+          <h2>${p.name} · ${f.name}</h2>
+          <p>${p.desc}</p>
+          <p>${f.detail}.</p>`;
+      }
+
+      function renderStage() {
+        const stage = document.getElementById('stage');
+        const blocks = [];
+        for (const mode of modes()) {
+          let devices = '';
+          if (state.view === 'screens') {
+            devices = Object.entries(SCREENS)
+              .map(([id, s]) => phone(state.palette, mode, state.font, id, s.name))
+              .join('');
+          } else if (state.view === 'palettes') {
+            devices = Object.entries(PALETTES)
+              .map(([id, p]) => phone(id, mode, state.font, 'session', p.name))
+              .join('');
+          } else {
+            devices = Object.entries(FONTS)
+              .map(([id, f]) => phone(state.palette, mode, id, 'session', f.name))
+              .join('');
+          }
+          blocks.push(
+            `<div><h2 class="group-title">Tema ${MODE_NAME[mode]}</h2><div class="devices">${devices}</div></div>`,
+          );
+        }
+        stage.innerHTML = `<div style="display:flex;flex-direction:column;gap:32px">${blocks.join('')}</div>`;
+      }
+
+      const fmt = (n) => n.toFixed(2).replace('.', ',');
+
+      function renderContrast() {
+        const light = tokens(state.palette, 'light');
+        const dark = tokens(state.palette, 'dark');
+        const cell = (t, fg, bg) => {
+          const ratio = contrast(t[fg], t[bg]);
+          const pass = ratio >= 4.5;
+          return `<td><span class="sample" style="color:${t[fg]};background:${t[bg]}">Aa 27,5</span><span class="${pass ? 'ok' : 'bad'}">${fmt(ratio)} ${pass ? '✓' : '✗'}</span></td>`;
+        };
+        const rows = PAIRS.map(
+          ([fg, bg, use]) =>
+            `<tr><td>${use}</td><td><code>${cssName(fg)}</code> / <code>${cssName(bg)}</code></td>${cell(light, fg, bg)}${cell(dark, fg, bg)}</tr>`,
+        ).join('');
+        document.getElementById('contrast').innerHTML = `<table>
+            <thead><tr><th>Uso</th><th>Tokens</th><th>Claro</th><th>Oscuro</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>`;
+      }
+
+      function paletteMinimum(id) {
+        let min = Infinity;
+        for (const mode of ['light', 'dark']) {
+          const t = tokens(id, mode);
+          for (const [fg, bg] of PAIRS) min = Math.min(min, contrast(t[fg], t[bg]));
+        }
+        return min;
+      }
+
+      function renderOverview() {
+        const keys = ['bg', 'surface', 'text', 'accent', 'success', 'warning', 'danger', 'warmup'];
+        document.getElementById('overview').innerHTML = Object.entries(PALETTES)
+          .map(([id, p]) => {
+            const min = paletteMinimum(id);
+            const strip = (mode) =>
+              `<div class="strip" title="${MODE_NAME[mode]}">${keys.map((k) => `<i style="background:${p[mode][k]}"></i>`).join('')}</div>`;
+            return `<article>
+                <h3>${p.name} <span class="${min >= 4.5 ? 'ok' : 'bad'}" style="font-size:13px">mín. ${fmt(min)}:1 ${min >= 4.5 ? '✓ AA' : '✗'}</span></h3>
+                <p>${p.desc}</p>
+                ${strip('light')}${strip('dark')}
+              </article>`;
+          })
+          .join('');
+      }
+
+      function renderDecision() {
+        const p = PALETTES[state.palette];
+        const f = FONTS[state.font];
+        const tokenLines = (mode) =>
+          Object.entries(PALETTES[state.palette][mode])
+            .map(([k, v]) => `  ${cssName(k)}: ${v};`)
+            .join('\n');
+        document.getElementById('decision').value = [
+          '## Choice',
+          '',
+          `- Palette: **${p.name}** (${state.palette})`,
+          `- Fonts: **${f.name}**: text ${f.sans.replaceAll("'", '')}, numbers ${f.num.replaceAll("'", '')} (weight ${f.numWeight}, tabular figures)`,
+          `- Packages: ${f.packages.map((x) => '`' + x + '`').join(', ')}`,
+          `- Warm-up symbol: C (es) / W (en)`,
+          `- Badge tint: ${Math.round(TINT * 100)} % of the colour over --surface`,
+          `- Minimum contrast of the checked pairs: ${fmt(paletteMinimum(state.palette))}:1 (AA)`,
+          '',
+          '### Light',
+          '',
+          '```css',
+          tokenLines('light'),
+          '```',
+          '',
+          '### Dark',
+          '',
+          '```css',
+          tokenLines('dark'),
+          '```',
+        ].join('\n');
+      }
+
+      function render() {
+        renderSummary();
+        renderStage();
+        renderContrast();
+        renderDecision();
+      }
+
+      document.querySelector('.controls').addEventListener('change', (event) => {
+        const input = event.target;
+        if (!(input instanceof HTMLInputElement) || !(input.name in state)) return;
+        state[input.name] = input.value;
+        writeHash();
+        render();
+      });
+
+      // A pasted or edited URL (#p=…&f=…) only changes the hash, which does not reload the page.
+      window.addEventListener('hashchange', () => {
+        readHash();
+        renderControls();
+        render();
+      });
+
+      readHash();
+      renderControls();
+      renderOverview();
+      render();
+    </script>
+  </body>
+</html>
