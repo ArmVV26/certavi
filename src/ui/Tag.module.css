@@ -1,0 +1,47 @@
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.125rem var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  white-space: nowrap;
+}
+
+/* An <abbr> inside a tag (e.g. the warm-up symbol) keeps its tooltip but not the underline. */
+.tag abbr {
+  text-decoration: none;
+}
+
+.neutral {
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.accent {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+.success {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.warning {
+  background: var(--warning-tint);
+  color: var(--warning);
+}
+
+.danger {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+
+.warmup {
+  background: var(--warmup-tint);
+  color: var(--warmup);
+  font-weight: var(--fw-black);
+}

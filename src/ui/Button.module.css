@@ -1,0 +1,65 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  padding: 0 var(--space-4);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-md);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.secondary {
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: var(--fw-semibold);
+}
+
+.ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+  font-weight: var(--fw-semibold);
+}
+
+/* Tinted, not solid: --danger text on --danger-tint passes AA in both themes. */
+.danger {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+
+.md {
+  font-size: var(--fs-md);
+}
+
+.lg {
+  min-height: calc(var(--touch-target) + var(--space-2));
+  padding: 0 var(--space-5);
+  font-size: var(--fs-lg);
+}
+
+.fullWidth {
+  width: 100%;
+}
