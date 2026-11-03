@@ -16,10 +16,37 @@ export interface PendingEntry {
   updatedAt: number;
 }
 
-/** Small key-value rows: the monotonic clock now; the sync cursor in Phase 4. */
+/** Small key-value rows: the monotonic clock and the sync cursor (`since`). */
 export interface MetaEntry {
   key: string;
   value: number;
+}
+
+/** What started a sync attempt (kept in the attempt log for diagnosis). */
+export type SyncTrigger =
+  | 'start'
+  | 'online'
+  | 'visible'
+  | 'write'
+  | 'interval'
+  | 'retry'
+  | 'manual'
+  | 'key'
+  | 'restore'
+  | 'exit';
+
+/** One sync attempt, for the attempt log in Settings (ADR-0004). */
+export interface SyncLogEntry {
+  /** Auto-increment key; absent until stored. */
+  id?: number;
+  at: number;
+  ok: boolean;
+  /** Error code when `ok` is false (see `SyncErrorCode`). */
+  error?: string;
+  sent: number;
+  received: number;
+  durationMs: number;
+  trigger: SyncTrigger;
 }
 
 export const TABLES = {
@@ -45,6 +72,7 @@ export type CertaviDb = Dexie &
   RecordTables & {
     pending: Table<PendingEntry, string>;
     meta: Table<MetaEntry, string>;
+    syncLog: Table<SyncLogEntry, number>;
   };
 
 /**
@@ -68,12 +96,21 @@ const SCHEMA_V1: Record<(typeof TABLES)[RecordType] | 'pending' | 'meta', string
   meta: 'key',
 };
 
+/** Version 2 (Phase 4) — adds the sync attempt log. A new table: nothing to migrate. */
+const SCHEMA_V2 = {
+  syncLog: '++id',
+};
+
 export const DEFAULT_DATABASE_NAME = 'certavi';
+
+/** The schemas by version, for the migration tests. */
+export const SCHEMAS = { 1: SCHEMA_V1, 2: SCHEMA_V2 } as const;
 
 /** Creates the database handle. Dexie opens it lazily on the first query. */
 export function openDatabase(name: string = DEFAULT_DATABASE_NAME): CertaviDb {
   const db = new Dexie(name) as CertaviDb;
   db.version(1).stores(SCHEMA_V1);
+  db.version(2).stores(SCHEMA_V2);
   return db;
 }
 
