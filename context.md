@@ -3,7 +3,7 @@
 > Documento de arranque del proyecto **Certavi**, la reescritura de la app de registro de gimnasio (antes «Winter Arc · registro», repositorio `gym_app`).
 > Al crear el repositorio, este archivo se copia como `context.md` en la raíz. Desde ese momento es la **fuente de verdad del estado del proyecto**: qué está decidido, qué está hecho, qué falta y con qué prompt se arranca cada fase. Lo mantiene al día el agente de contexto.
 >
-> Última actualización: 3 nov 2026 · Estado: **Fase 0 cerrada (`v0.1.0`) · Fase 1 cerrada (`v0.2.0`) · Fase 2 cerrada (`v0.3.0`) · Fase 3 en curso 🚧: rama 1 de 2 (`feature/local-db`) implementada y verificada, sin commits; rama 2 (`feature/import-export`) sin empezar**
+> Última actualización: 3 nov 2026 · Estado: **Fase 0 cerrada (`v0.1.0`) · Fase 1 cerrada (`v0.2.0`) · Fase 2 cerrada (`v0.3.0`) · Fase 3 🚧 implementada y verificada: `feature/local-db` mergeada en `dev` (PR #8); `feature/import-export` pendiente de commits, PR a `dev`, PR `dev → main`, `chore(release): v0.4.0` y tag `v0.4.0` por el usuario**
 
 ---
 
@@ -126,8 +126,13 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Cobertura | El umbral del **90 %** se aplica también a **`src/data`**: umbrales por glob en `vite.config.ts` (`src/domain/**` y `src/data/**`, cada uno por separado) | La capa de datos guarda todo lo del usuario; no puede bajar sin que falle CI |
 | Almacenamiento local (**ADR-0003**, `docs/adr/0003-local-storage-dexie.md`) | Una tabla de Dexie por tipo de registro + `pending` (una fila por id de registro) + `meta` (reloj monótono). Los borrados son filas solo con la envoltura en la misma tabla. Los repositorios validan con zod, ponen `updatedAt` con el reloj monótono persistido y encolan **en la misma transacción**. La semilla se escribe en la base de datos al arrancar con `ensureSeed` (inserta lo que falta, refresca solo los registros que siguen con `updatedAt` 0, nunca encola). `db.version(1)` no se edita una vez publicada: los cambios posteriores añaden versiones con `.upgrade()` y un test. Se pide `navigator.storage.persist()` al arrancar | Offline-first sin perder datos; esquema migrable |
 | Ajustes sincronizados | Registro semilla **`SEED_SETTINGS`** (`src/domain/seed/settings.ts`: id `settings`, `DEFAULT_REST`, `planStart` null, `updatedAt` 0) | Siempre hay un registro de ajustes que cualquier edición sobrescribe |
-| Formato real de gym_app (leído del **código fuente**, sin datos reales) | Valores reales de `t`: `session`, `set`, `note`, `act`, `bw`, `week` (id `wk_<lunes>`), `tpl` (id `tpl_<id>`), `rec`, `wall`, `excfg` (id `exc_<ej>`, campo `step`), `cfg` (ids `cfg_recovery`, `cfg_exp_brazos`), `mig`. La copia completa es `{ app: 'winter-arc', version: 2, exportedAt, records[] }` sin borrados (puede llevar `srv`); gym_app también aceptaba un array suelto | La tabla de la sección 6 y `docs/migration.md` tenían nombres que no coinciden; se corrigen en `feature/import-export` |
+| Formato real de gym_app (leído del **código fuente**, sin datos reales) | Valores reales de `t`: `session`, `set`, `note`, `act`, `bw`, `week` (id `wk_<lunes>`), `tpl` (id `tpl_<id>`), `rec`, `wall`, `excfg` (id `exc_<ej>`, campo `step`), `cfg` (ids `cfg_recovery`, `cfg_exp_brazos`), `mig`. La copia completa es `{ app: 'winter-arc', version: 2, exportedAt, records[] }` sin borrados (puede llevar `srv`); gym_app también aceptaba un array suelto | La tabla de la sección 6 y `docs/migration.md` tenían nombres que no coincidían; **corregidos** en `feature/import-export` (sección 6, `docs/migration.md` §4) |
 | Ramas de la fase | `feature/local-db` y después **`feature/import-export`** (antes `feature/legacy-import`): importador de gym_app + importación de JSON propio + exportaciones JSON/CSV | El nombre refleja todo lo que entra en la segunda rama |
+| Importación con LWW | Importar (gym_app o copia de Certavi) escribe un registro **solo si es nuevo o estrictamente más reciente** que la copia local; **en empate gana la local**. Todo en **una transacción**; lo escrito entra en la cola de pendientes; `serverSeq` se descarta; el reloj avanza más allá del registro más reciente (`advanceClock`). Si dos registros de gym_app dan el mismo id de Certavi, gana el más reciente (`dedupeNewest`) | Importar nunca pisa algo igual o más nuevo del dispositivo y lo importado se sincroniza como cualquier cambio local |
+| Formato CSV | **Siempre formato Excel en español** (BOM, `;`, coma decimal, CRLF, comillas cuando hace falta), sea cual sea el idioma de la app; columnas de gym_app; cabeceras por i18n (es = las de gym_app, en = snake_case en inglés); e1RM vacío en calentamiento y aproximación | Se abre bien en el Excel del usuario y es comparable con los CSV de gym_app |
+| Copias de Certavi | Formato `{ app: 'certavi', format: 1, kind: 'full' \| 'session' \| 'week', exportedAt, records }`, **sin tombstones ni `serverSeq`** | Una copia es una foto de los datos vivos; el servidor asigna su propio `serverSeq` |
+| Semanas importadas | `WeekPlan.size` siempre **5** (gym_app no lo tenía; el plan congelado se conserva, así que los números no cambian); `total` se descarta | — |
+| Actividades importadas | `min: null` → **0 minutos** | `minutes` es obligatorio en Certavi |
 
 ---
 
@@ -207,6 +212,7 @@ certavi/
 │  └─ app/                   # rutas, layout, providers, registro del service worker
 ├─ tests/
 │  ├─ e2e/                   # Playwright (lo escribe el blind-tester)
+│  ├─ fixtures/              # datos sintéticos (gym-app-sample.json, not-a-backup.txt; Fase 3)
 │  └─ mocks/sync-server.ts   # servidor falso de /api/v1/sync para e2e
 ├─ CLAUDE.md
 ├─ context.md                # este documento
@@ -411,28 +417,28 @@ Se crea vacío un bloque «Estiramientos» para rellenarlo.
 ## 6. Migración desde la app actual
 
 1. **Antes de nada**, en `gym_app`, ve a Ajustes → «Copia completa (.json)» y guárdala fuera del repositorio, por ejemplo en `D:\backups\certavi\`. **Nunca en el repo.**
-2. Certavi tendrá en Ajustes → **«Importar desde la app anterior»**: lee ese JSON, lo valida con zod, lo transforma y muestra un resumen antes de guardar («27 sesiones, 553 series…»).
+2. Certavi tiene en Ajustes → Datos → **«Importar desde la app anterior»** (implementado en la Fase 3, `src/data/legacy/gymApp.ts` + `src/data/importRecords.ts`): lee ese JSON (`{ app: 'winter-arc', records }` o un array suelto), valida cada registro con esquemas zod tolerantes de gym_app, lo transforma, lo valida con `parseRecord` y muestra una vista previa antes de guardar (filas por tipo + sin cambios / ignorados / no válidos). Guarda en una transacción con «gana el más reciente» (2.4).
 
-**Mapeo de registros**
+**Mapeo de registros** (corregido el 2026-11-03 con los valores reales de `t` leídos del código fuente de gym_app; resumen de `docs/migration.md` §4)
 
-| `t` en gym_app | Certavi | Notas |
+| `t` (id) en gym_app | Certavi | Notas |
 |---|---|---|
-| `session` | `WorkoutSession` | `tpl` → `routineId` (`libre` → `null`), `items` se conservan |
-| `set` | `SetEntry` | `w/r/rir/straps/band/kind/slot` |
-| `note` | `ExerciseNote` | — |
-| `act` | `Activity` | — |
-| `bw` | `BodyWeight` | — |
-| `wk` | `WeekPlan` | `hiking`, `deload` y el plan congelado |
-| `tpl` | `Routine` | El override pasa a ser la rutina |
-| `rec` | `BlockLog` del bloque de rehabilitación | `mob`, `ecc`, `stairs`, `pogos`, `maxPain`, `note` |
-| `wall` | `WeeklyMetric` (test de la pared) | — |
-| `exc` | `Exercise.increment` | — |
-| `cfg_recovery` | Bloque de rehabilitación (activo, fecha del fisio) | — |
-| `cfg_exp_brazos`, `mig_*` | Se ignoran | — |
-| `del: true` | Se ignoran | — |
-| Ejercicio `abdomen` | → `crunch-maquina` | — |
+| `session` (`ses_…`) | `WorkoutSession` (mismo id) | `tpl` → `routineId` (`libre` → `null`); `start`/`end` → `startedAt`/`endedAt`; `ready` → `readiness`; las sesiones sin `items` reciben los de la rutina semilla |
+| `set` (`st_<sid>_<ej>_<slot>`) | `SetEntry` (mismo id) | `aprox` → `approach`, `work` → `straight`; slots `p`/`w`/`x` → número; banda vacía → ninguna; `at` → `completedAt` |
+| `note` (`nt_<sid>_<ej>`) | `ExerciseNote` (`note_<sid>_<ej>`) | Id rehecho con la regla de Certavi, tras el alias |
+| `act` | `Activity` (mismo id) | `futbol`/`natacion`/`senderismo`/`movilidad`/`bici`/`otro` → `football`/`swimming`/`hiking`/`mobility`/`cycling`/`other`; `min: null` → 0 |
+| `bw` (`bw_<lunes>`) | `BodyWeight` | — |
+| `week` (`wk_<lunes>`) | `WeekPlan` (`week_<lunes>`) | `hiking`, `deload`, `closedAt`; `plan` (claves de grupo en español) → `plannedSetsByGroup`; `size` siempre 5; `total` se descarta |
+| `tpl` (`tpl_<id>`) | `Routine` (`<id>`) | El override pasa a ser la rutina semilla con los `items` de gym_app; plantillas desconocidas se ignoran |
+| `excfg` (`exc_<ej>`) | `Exercise.increment` | `step` en el ejercicio semilla; ejercicios desconocidos se ignoran |
+| `rec` (`rec_<fecha>`) | `BlockLog` del bloque de rehabilitación del tobillo | Claves `mob`/`ecc` → ids de elemento; `stairs`/`maxPain`/`pogos` → métricas `stairs`/`max-pain`/`pogos` (`null` = sin registrar); `note` |
+| `wall` (`wall_<lunes>`) | `WeeklyMetric` `wall-test` (izquierda, derecha) | La fecha de medición se descarta |
+| `cfg` (`cfg_recovery`) | Bloque de rehabilitación del tobillo | `active`, `startDate`, `reviewDate`; `footballOk` se descarta |
+| `cfg` (`cfg_exp_brazos`), `mig` (`mig_*`) | Se ignoran | — |
+| `del: true`, `t` desconocido | Se ignoran | Mal formados → «no válidos» |
+| Ejercicio `abdomen` | → `crunch-maquina` | En series, notas, items de sesión, rutinas e incrementos |
 
-> **Corrección pendiente (2026-11-03, Fase 3):** al leer el **código fuente** de gym_app (sin datos reales) se vio que algunos nombres de esta tabla no son los reales: `wk` es `week` (id `wk_<lunes>`), `tpl` tiene id `tpl_<id>`, `exc` es `excfg` (id `exc_<ej>`, campo `step`), `cfg_recovery` y `cfg_exp_brazos` son registros `t: 'cfg'`, `mig_*` es `t: 'mig'`. La copia completa es `{ app: 'winter-arc', version: 2, exportedAt, records[] }` **sin borrados** (puede llevar `srv`); gym_app también aceptaba un array suelto. `rec.maxPain` → métrica `max-pain`; `cfg_recovery` → `startDate`/`reviewDate` del bloque (sin `footballOk`). Ver 2.4. Esta tabla y `docs/migration.md` se corrigen en `feature/import-export`.
+Un RIR objetivo que Certavi no sabe leer pasa a `''`. Si dos registros de gym_app dan el mismo id de Certavi, gana el más reciente.
 
 3. Los tests del importador usan un **JSON sintético**, nunca tus datos reales.
 4. Durante el desarrollo, `gym_app` sigue siendo la app del día a día. Cuando Certavi llegue a la v1.0.0, haces la última exportación, la importas, usas Certavi y **archivas** `gym_app` en GitHub (Settings → Archive).
@@ -924,9 +930,9 @@ Al terminar, /close-phase.
 
 **Ramas**: `feature/local-db` y `feature/import-export` (antes `feature/legacy-import`; incluye el importador de gym_app, la importación de JSON propio y las exportaciones JSON/CSV)
 
-**Estado (2026-11-03)**: **en curso**. Rama 1 de 2 (`feature/local-db`) **implementada y verificada, sin commits todavía**; rama 2 (`feature/import-export`) **sin empezar**. Decisiones en la sección 2.4.
+**Estado (2026-11-03)**: **implementada y verificada; pendiente de commits de `feature/import-export`, PR a `dev`, PR `dev → main`, `chore(release): v0.4.0` y tag `v0.4.0` por el usuario**. Rama 1 (`feature/local-db`) mergeada en `dev` por el usuario con el **PR #8** (7 commits). Rama 2 (`feature/import-export`) implementada y verificada, sin commits. Decisiones en la sección 2.4.
 
-- **Implementado — `feature/local-db`** (sin commits):
+- **Implementado — `feature/local-db`** (mergeada en `dev` con el PR #8):
   - `src/data/db.ts` (`openDatabase`, `TABLES`, `tableOf`, `recordTables`, `isLive`; tipos `StoredRecord`, `TombstoneOf`, `PendingEntry`, `MetaEntry`, `CertaviDb`), `clock.ts` (`reserveTimestamps`), `repository.ts` (`createRepository`, `createRepositories`: `get`/`list`/`put`/`putMany`/`remove`), `seed.ts` (`ensureSeed`), `persistence.ts` (`getStorageStatus`, `requestPersistentStorage`), `queries.ts` (`countLiveRecords`, `countPending`), `startup.ts` (`startDatabase`), `DatabaseContext.ts` (`useDatabase`) y `DatabaseProvider.tsx`.
   - `main.tsx` abre la base de datos y ejecuta `startDatabase`; `Providers` recibe ahora una prop `db`; `src/test/render.tsx` añade `openTestDatabase()` y una opción `db` (base de datos nueva y vacía en cada render, sin semilla); `src/test/setup.ts` carga `fake-indexeddb/auto`.
   - Dominio: tipo `RecordOf<K>` en `records.ts`; `OptionalBlock.startDate`/`reviewDate`; métrica `max-pain`; `SEED_SETTINGS` (`src/domain/seed/settings.ts`).
@@ -937,13 +943,26 @@ Al terminar, /close-phase.
 - **Verificado en `feature/local-db` (2026-11-03)**: `lint` ✅, `typecheck` ✅, `test:coverage` ✅ (**364 tests en 32 archivos**; `src/data` 99,04 % sentencias / 97,56 % ramas / 100 % funciones / 100 % líneas; `src/domain` sigue por encima del 90 %), `build` ✅ (Vite avisa de que el chunk principal pesa 618 kB > 500 kB; informativo), `format:check` ✅.
   - E2E (blind-tester, `npm run e2e`, una sola ejecución, Chromium, 2 workers): **45 pasados, 0 fallidos, 0 omitidos en 34,7 s**.
   - Puertos 5173, 4173, 8888, 8787 y 9323 libres.
+- **Implementado — `feature/import-export`** (sin commits):
+  - Importador de gym_app `src/data/legacy/gymApp.ts` (`readGymAppExport(text)`): esquemas zod tolerantes de las formas reales de gym_app (`t`: `session`, `set`, `note`, `act`, `bw`, `week`, `tpl`, `excfg`, `rec`, `wall`, `cfg`, `mig`), conversión y validación final con `parseRecord`; acepta `{ app: 'winter-arc', records }` o un array suelto; borrados, `cfg_exp_brazos`, `mig_*`, `t` desconocido y plantillas/ejercicios desconocidos → ignorados; mal formados → no válidos. Mapeo completo en la sección 6.
+  - `src/data/importFile.ts` (tipo `ImportFile`, `dedupeNewest`: dos registros con el mismo id de Certavi → gana el más reciente).
+  - `src/data/importRecords.ts`: `planImport` (vista previa, solo lectura) y `applyImport` (una transacción, LWW con empate a favor de lo local, cola de pendientes, sin `serverSeq`, reloj adelantado con `advanceClock` en `clock.ts`).
+  - Copias de Certavi `src/data/backup.ts`: `exportAll` (`certavi-backup-<hoy>.json`), `exportSession` (`certavi-session-<fecha>-<id>.json`), `exportWeek` (`certavi-week-<lunes>.json`), `readBackup`; formato en 2.4. **Exportar sesión y semana aún no tienen UI** (Fases 5 y 7).
+  - CSV `src/data/csv.ts`: `toCsv`, `exportSetsCsv` (`certavi-sets-<hoy>.csv`), `exportActivityWeightCsv` (`certavi-activity-weight-<hoy>.csv`); formato Excel en español siempre (2.4); columna de efectiva con `isEffectiveSet`. Tipo `ExportFile` en `src/data/exportFile.ts`.
+  - UI `src/features/settings/ImportExport.tsx` dentro de la tarjeta «Datos»: encabezados de nivel 3 «Importar» / «Exportar»; botones «Importar desde la app anterior», «Importar copia de Certavi», «Exportar copia completa (.json)», «Exportar series (.csv)», «Exportar actividad y peso (.csv)»; vista previa en un `alertdialog` «Resumen de la importación» (filas por tipo + sin cambios / ignorados / no válidos, foco en «Cancelar»; «No hay nada nuevo que importar.» + «Cerrar»); toasts de éxito («Registros importados: N») y de error. Ayudas `download.ts` (`downloadFile`), `recordTypes.ts` (`LISTED_TYPES`, `COUNTED_TYPES`) y `src/i18n/text.ts` (`resolveText` para `TextRef`).
+  - i18n (es/en): `settings.data.*` (importar/exportar, vista previa, errores, cabeceras CSV), `settings.data.types.settings`, `sets.kinds.*`, `activities.kinds.*`, `routines.free`.
+  - Fixtures sintéticos: `tests/fixtures/gym-app-sample.json` (todos los tipos de gym_app; 29 registros escritos, 5 ignorados) y `tests/fixtures/not-a-backup.txt`.
+  - Documentación: `docs/spec/data-import-export.md` parte B definitiva (AC-IMPORT-01..06, AC-EXPORT-01..02); `docs/spec/README.md` la marca ✅; `docs/migration.md` corregido con los valores reales de `t`, las formas y el mapeo completo; sección 6 de este documento corregida.
+  - E2E: el blind-tester escribió `tests/e2e/import-export.spec.ts` (8 tests).
+- **Verificado en `feature/import-export` (2026-11-03)**: `lint` ✅, `typecheck` ✅, `npm run test` ✅ (**417 tests en 39 archivos**, dos ejecuciones sin fallos intermitentes tras corregir un test de exportación que dependía del orden), `test:coverage` ✅ (`src/data` 99,59 % sentencias / 92,68 % ramas / 100 % funciones / 100 % líneas; `src/data/legacy` 100 / 95,34 / 100 / 100; `src/domain` sin cambios, ramas ≥ 96 %), `build` ✅ (chunk principal 638 kB, aviso informativo de Vite > 500 kB), `format:check` ✅.
+  - E2E (blind-tester, `npm run e2e`, Chromium, 2 workers): 1.ª ejecución 19 pasados / 3 fallidos y parada por `maxFailures` — problema del test (buscaba el rol `dialog`; la vista previa es `alertdialog`), corregido solo en el test; 2.ª ejecución **53 pasados, 0 fallidos, 0 omitidos en 49,9 s** (45 anteriores + 8 nuevos).
+  - Puertos libres y ningún navegador de Playwright abierto.
+  - Sin cubrir por e2e (sí por tests unitarios): la fila «No válidos», el mensaje de fallo al guardar y cancelar el selector de archivos del sistema.
 - **Criterios de aceptación**:
-  - «Recargar la app no pierde nada»: ✅ para la parte A (test unitario que reabre la base de datos + e2e de recarga / página nueva).
-  - «El importador transforma un JSON sintético…»: ⏳ pendiente (rama 2, `feature/import-export`).
+  - «El importador transforma un JSON sintético con todos los tipos de registro de gym_app (borrados, `abdomen`, `libre`, overrides, `rec`, `wall`) y los números cuadran»: ✅ (tests unitarios con el fixture: 29 escritos, 5 ignorados; e2e importando desde Ajustes).
+  - «Recargar la app no pierde nada»: ✅ (test unitario que reabre la base de datos + e2e de recarga / página nueva, también tras importar y sin conexión).
   - Cumplido también: registro + entrada de cola atómicos (test que fuerza el fallo de la escritura en la cola); el borrado lógico oculta el registro y encola el tombstone.
-- **Pendiente**:
-  1. (usuario) commits de `feature/local-db` y PR a `dev`;
-  2. (usuario) crear `feature/import-export` desde `dev`; después, implementarla: importador de gym_app (con la corrección de la sección 6 y de `docs/migration.md`), importación de JSON propio, exportaciones JSON (completa, sesión, semana) y CSV, y la parte B de `docs/spec/data-import-export.md`.
+- **Pendiente (usuario)**: commits de `feature/import-export`, PR a `dev`, PR `dev → main`, commit `chore(release): v0.4.0` y tag `v0.4.0`. Nota: commitlint no tiene el ámbito `e2e`; los commits de tests e2e usan `test:` sin ámbito.
 
 **Entregables**:
 - Dexie con esquema y versiones de migración.
@@ -1162,6 +1181,8 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
 
 | Fecha | Fase | Qué | Versión |
 |---|---|---|---|
+| 2026-11-03 | 3 | **`feature/import-export` implementada y verificada** (rama 2 de 2, **sin commits**): importador de gym_app (`src/data/legacy/gymApp.ts`) con el mapeo corregido (sección 6, `docs/migration.md`), `planImport`/`applyImport` (una transacción, LWW con empate a favor de lo local, cola de pendientes), copias de Certavi (`backup.ts`: completa, sesión y semana; sin tombstones ni `serverSeq`), CSV de series y de actividad y peso en formato Excel en español (`csv.ts`), UI de importar/exportar en la tarjeta «Datos», fixtures sintéticos en `tests/fixtures/`, spec parte B (AC-IMPORT-01..06, AC-EXPORT-01..02). lint, typecheck, test (**417 en 39 archivos**, dos ejecuciones), `test:coverage` (`src/data` 99,59 % / 92,68 % / 100 % / 100 %; `src/data/legacy` 100 / 95,34 / 100 / 100), build (aviso informativo: chunk de 638 kB) y format:check ✅. E2E `npm run e2e` (Chromium): 1.ª ejecución 19/3 parada por `maxFailures` (fallo del test: rol `dialog` en vez de `alertdialog`, corregido solo en el test); 2.ª **53/53 en 49,9 s** (8 nuevos en `import-export.spec.ts`). Puertos libres. Criterios de aceptación de la Fase 3 ✅. Decisiones en 2.4. Pendiente: commits, PR a `dev`, PR `dev → main`, `chore(release): v0.4.0` y tag por el usuario | `v0.4.0` (pendiente de tag) |
+| 2026-11-03 | 3 | `feature/local-db` mergeada en `dev` por el usuario (PR #8, 7 commits) | `v0.4.0` (en curso) |
 | 2026-11-03 | 3 | **`feature/local-db` implementada y verificada** (rama 1 de 2 de la Fase 3, **sin commits**): Dexie con una tabla por tipo + `pending` + `meta` (ADR-0003), repositorios con validación zod, reloj monótono y cola en la misma transacción, borrados lógicos, `ensureSeed` al arrancar, `navigator.storage.persist()`, tarjeta «Datos» en Ajustes, métrica `max-pain`, `startDate`/`reviewDate` en bloques, `SEED_SETTINGS`, spec `docs/spec/data-import-export.md` (parte A). lint, typecheck, `test:coverage` (**364 en 32 archivos**; `src/data` 99,04 % / 97,56 % / 100 % / 100 %, umbral 90 % ahora también en `src/data`), build (aviso informativo: chunk de 618 kB) y format:check ✅. E2E `npm run e2e` (Chromium, 2 workers): **45/45 en 34,7 s** (7 nuevos en `data.spec.ts`). Puertos libres. Decisiones en 2.4. Paquetes: `dexie` 4.4.7, `dexie-react-hooks` 4.4.0, `fake-indexeddb` 6.2.7. Rama 2 renombrada a `feature/import-export`, sin empezar | `v0.4.0` (en curso) |
 | 2026-11-03 | 2 | Release de la Fase 2 por el usuario: PR #6 (`feature/domain-model`) a `dev`, PR #7 `dev → main` y tag `v0.3.0`. Sin commit `chore(release)`: `package.json` quedó en 0.2.0; la entrada `[0.3.0]` del `CHANGELOG.md` se añadió en `feature/local-db` | `v0.3.0` |
 | 2026-11-03 | 2 | **Fase 2 implementada y verificada** en `feature/domain-model`: modelo de dominio (zod), reglas, catálogo semilla (45 ejercicios), 6 rutinas y bloques semilla, claves i18n de la semilla, `docs/spec/rules.md`, proyectos de Vitest node/jsdom y `test:coverage` en CI. lint, typecheck, test (**326 en 27 archivos**), build y format:check ✅; cobertura de `src/domain` 100 % sentencias / 96,86 % ramas / 100 % funciones / 100 % líneas (umbral 90 % comprobado). Criterios de aceptación ✅ (semana normal 104 y por grupo; también 81 / 63 / descarga 62). Regresión e2e `npm run e2e` (Chromium, 2 workers): **38/38 en 46,1 s**. Puertos libres. Decisiones en 2.3; regla del gemelo y revisión del ciclo aplazadas a la Fase 7. Paquetes: `zod` 4.6.7, `@vitest/coverage-v8` 5.1.0. Pendiente: commits, PR a `dev`, PR `dev → main` y tag por el usuario | `v0.3.0` (pendiente de tag) |
@@ -1174,7 +1195,7 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
 | 2026-11-02 | 0 | Base del proyecto implementada y verificada (lint, typecheck, test, build, format:check, e2e en chromium + webkit, puertos libres; commit denegado a Claude). Decisiones en 2.1. Pendiente: commits, PR y tag por el usuario | `v0.1.0` (pendiente de tag) |
 | 2026-11-01 | — | Plan inicial y decisiones (este documento) | — |
 
-**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 🚧 (`feature/local-db` implementada y verificada, sin commits; `feature/import-export` sin empezar) · 4 ⏳ · 5 ⏳ · 6 ⏳ · 7 ⏳ · 8 ⏳ · 9 ⏳
+**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 🚧 (implementada y verificada; `feature/local-db` en `dev` con el PR #8; `feature/import-export` pendiente de commits, PR, release y tag `v0.4.0` por el usuario) · 4 ⏳ (siguiente: `feature/sync`) · 5 ⏳ · 6 ⏳ · 7 ⏳ · 8 ⏳ · 9 ⏳
 
 **Preguntas abiertas**:
 - Qué estiramientos van en el bloque «Estiramientos» (antes de la Fase 7).
@@ -1182,6 +1203,11 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
 **Pendiente para fases futuras**:
 - Fase 7: regla del gemelo durante la rehabilitación (60 kg en la semana 1, +5 kg/semana sin dolor al día siguiente hasta 80 kg, y solo si bajar escaleras no duele), con cambios aditivos en el modelo de progresión (ver la Fase 7).
 - Fase 7: revisión del ciclo (`sixWeekReview` de gym_app) en las pantallas de progreso.
-- Fase 3 (`feature/import-export`): corregir la tabla de la sección 6 y `docs/migration.md` con los nombres reales de gym_app (2.4).
-- Sugerencia (no hecha, 2026-11-03) para la Fase 8: dividir el bundle (code-splitting); el chunk principal pesa 618 kB.
+- ~~Fase 3 (`feature/import-export`): corregir la tabla de la sección 6 y `docs/migration.md` con los nombres reales de gym_app (2.4).~~ Hecho el 2026-11-03.
+- Fase 5: UI para exportar el JSON de una sesión (`exportSession` ya existe en `src/data/backup.ts`). Fase 7: UI para exportar el JSON de una semana (`exportWeek`).
+- Sugerencia (no hecha, 2026-11-03) para la Fase 8: dividir el bundle (code-splitting); el chunk principal pesa 638 kB (618 kB tras `feature/local-db`).
 - Sugerencia (no hecha, 2026-11-03) para la Fase 8 (estados de error): mostrar un error visible si la base de datos local no se puede abrir.
+- Sugerencia (no hecha, 2026-11-03) para la Fase 8: con un `Dialog` abierto, la página de fondo sigue en el árbol de accesibilidad (solo `aria-modal`); valorar `inert` en el fondo (afecta al `Dialog` compartido).
+- Sugerencia (no hecha, 2026-11-03) para las Fases 5 y 7: resúmenes legibles dentro de los JSON de sesión y de semana.
+- Sugerencia (no hecha, 2026-11-03) para la Fase 7: el CSV de recuperación de gym_app.
+- Nota (2026-11-03): commitlint no tiene el ámbito `e2e`; los commits de tests e2e usan `test:` sin ámbito.

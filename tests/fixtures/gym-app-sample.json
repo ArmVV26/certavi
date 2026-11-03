@@ -1,0 +1,356 @@
+{
+  "app": "winter-arc",
+  "version": 2,
+  "exportedAt": "2026-10-22T18:00:00.000Z",
+  "records": [
+    {
+      "id": "ses_mg8x1k2a3b4c5d6e7f",
+      "t": "session",
+      "u": 1792400000100,
+      "srv": 41,
+      "date": "2026-10-19",
+      "tpl": "push",
+      "start": 1792400000000,
+      "end": 1792404000000,
+      "items": [
+        {
+          "ex": "press-inclinado-mancuernas",
+          "plan": [
+            ["aprox", "", 1],
+            ["top", "6-8", 1],
+            ["backoff", "8-10", 2]
+          ],
+          "rir": "1-2",
+          "nota": "Bajar lento"
+        },
+        { "ex": "abdomen", "plan": [["work", "12-15", 1]], "rir": "1-2", "opt": true }
+      ],
+      "ready": 4,
+      "note": "Buena sesión; con energía",
+      "deload": false
+    },
+    {
+      "id": "ses_mg9a0b1c2d3e4f5g6h",
+      "t": "session",
+      "u": 1792570000100,
+      "date": "2026-10-21",
+      "tpl": "libre",
+      "start": 1792570000000,
+      "end": 1792573600000,
+      "items": [{ "ex": "remo-t", "plan": [["work", "8-10", 2]], "rir": "2" }]
+    },
+    {
+      "id": "ses_mg1z2y3x4w5v6u7t8s",
+      "t": "session",
+      "u": 1791300000100,
+      "date": "2026-10-07",
+      "tpl": "lowerB",
+      "start": 1791300000000
+    },
+    {
+      "id": "ses_mg0deleted0000000000",
+      "t": "session",
+      "sid": "ses_mg0deleted0000000000",
+      "u": 1792500000000,
+      "del": true
+    },
+
+    {
+      "id": "st_ses_mg8x1k2a3b4c5d6e7f_press-inclinado-mancuernas_w1",
+      "t": "set",
+      "u": 1792400100000,
+      "sid": "ses_mg8x1k2a3b4c5d6e7f",
+      "ex": "press-inclinado-mancuernas",
+      "slot": "w1",
+      "kind": "warmup",
+      "w": 10,
+      "r": 10,
+      "rir": null,
+      "at": 1792400100000
+    },
+    {
+      "id": "st_ses_mg8x1k2a3b4c5d6e7f_press-inclinado-mancuernas_p0",
+      "t": "set",
+      "u": 1792400200000,
+      "sid": "ses_mg8x1k2a3b4c5d6e7f",
+      "ex": "press-inclinado-mancuernas",
+      "slot": "p0",
+      "kind": "aprox",
+      "w": 20,
+      "r": 6,
+      "rir": null,
+      "at": 1792400200000
+    },
+    {
+      "id": "st_ses_mg8x1k2a3b4c5d6e7f_press-inclinado-mancuernas_p1",
+      "t": "set",
+      "u": 1792400300000,
+      "sid": "ses_mg8x1k2a3b4c5d6e7f",
+      "ex": "press-inclinado-mancuernas",
+      "slot": "p1",
+      "kind": "top",
+      "w": 30,
+      "r": 8,
+      "rir": 1,
+      "at": 1792400300000
+    },
+    {
+      "id": "st_ses_mg8x1k2a3b4c5d6e7f_press-inclinado-mancuernas_p2",
+      "t": "set",
+      "u": 1792400400000,
+      "sid": "ses_mg8x1k2a3b4c5d6e7f",
+      "ex": "press-inclinado-mancuernas",
+      "slot": "p2",
+      "kind": "backoff",
+      "w": 27.5,
+      "r": 10,
+      "rir": 2,
+      "at": 1792400400000
+    },
+    {
+      "id": "st_ses_mg8x1k2a3b4c5d6e7f_press-inclinado-mancuernas_p3",
+      "t": "set",
+      "u": 1792400500000,
+      "sid": "ses_mg8x1k2a3b4c5d6e7f",
+      "ex": "press-inclinado-mancuernas",
+      "slot": "p3",
+      "kind": "backoff",
+      "w": 27.5,
+      "r": 9,
+      "rir": null,
+      "at": 1792400500000
+    },
+    {
+      "id": "st_ses_mg8x1k2a3b4c5d6e7f_abdomen_p0",
+      "t": "set",
+      "u": 1792400600000,
+      "sid": "ses_mg8x1k2a3b4c5d6e7f",
+      "ex": "abdomen",
+      "slot": "p0",
+      "kind": "work",
+      "w": 40,
+      "r": 15,
+      "rir": 2,
+      "at": 1792400600000
+    },
+    {
+      "id": "st_ses_mg8x1k2a3b4c5d6e7f_abdomen_x1",
+      "t": "set",
+      "u": 1792400700000,
+      "sid": "ses_mg8x1k2a3b4c5d6e7f",
+      "ex": "abdomen",
+      "slot": "x1",
+      "kind": "extra",
+      "w": 40,
+      "r": 12,
+      "rir": 1,
+      "at": 1792400700000
+    },
+    {
+      "id": "st_ses_mg9a0b1c2d3e4f5g6h_remo-t_p0",
+      "t": "set",
+      "u": 1792570100000,
+      "sid": "ses_mg9a0b1c2d3e4f5g6h",
+      "ex": "remo-t",
+      "slot": "p0",
+      "kind": "work",
+      "w": 60,
+      "r": 10,
+      "rir": 2,
+      "straps": true,
+      "at": 1792570100000
+    },
+    {
+      "id": "st_ses_mg9a0b1c2d3e4f5g6h_remo-t_p1",
+      "t": "set",
+      "u": 1792570200000,
+      "sid": "ses_mg9a0b1c2d3e4f5g6h",
+      "ex": "remo-t",
+      "slot": "p1",
+      "kind": "work",
+      "w": 60,
+      "r": 9,
+      "rir": 1,
+      "straps": false,
+      "at": 1792570200000
+    },
+    {
+      "id": "st_ses_mg9a0b1c2d3e4f5g6h_dominadas_x1",
+      "t": "set",
+      "u": 1792570300000,
+      "sid": "ses_mg9a0b1c2d3e4f5g6h",
+      "ex": "dominadas",
+      "slot": "x1",
+      "kind": "extra",
+      "w": 0,
+      "r": 8,
+      "rir": 2,
+      "band": "morada",
+      "at": 1792570300000
+    },
+    {
+      "id": "st_ses_mg1z2y3x4w5v6u7t8s_rdl-maquina_p1",
+      "t": "set",
+      "u": 1791300100000,
+      "sid": "ses_mg1z2y3x4w5v6u7t8s",
+      "ex": "rdl-maquina",
+      "slot": "p1",
+      "kind": "top",
+      "w": 80,
+      "r": 8,
+      "rir": 2,
+      "at": 1791300100000
+    },
+    {
+      "id": "st_ses_mg0deleted0000000000_remo-t_p0",
+      "t": "set",
+      "sid": "ses_mg0deleted0000000000",
+      "u": 1792500000001,
+      "del": true
+    },
+
+    {
+      "id": "nt_ses_mg8x1k2a3b4c5d6e7f_press-inclinado-mancuernas",
+      "t": "note",
+      "u": 1792400350000,
+      "sid": "ses_mg8x1k2a3b4c5d6e7f",
+      "ex": "press-inclinado-mancuernas",
+      "text": "Hombro bien"
+    },
+    {
+      "id": "nt_ses_mg8x1k2a3b4c5d6e7f_abdomen",
+      "t": "note",
+      "u": 1792400650000,
+      "sid": "ses_mg8x1k2a3b4c5d6e7f",
+      "ex": "abdomen",
+      "text": "Lento, \"sin tirones\""
+    },
+
+    {
+      "id": "act_mg2a3b4c5d6e7f8g9h",
+      "t": "act",
+      "u": 1792480000000,
+      "date": "2026-10-20",
+      "kind": "futbol",
+      "min": 60,
+      "note": "Pachanga"
+    },
+    {
+      "id": "act_mg3b4c5d6e7f8g9h0i",
+      "t": "act",
+      "u": 1792740000000,
+      "date": "2026-10-25",
+      "kind": "senderismo",
+      "min": null,
+      "note": ""
+    },
+
+    { "id": "bw_2026-10-12", "t": "bw", "u": 1791900000000, "week": "2026-10-12", "kg": 81 },
+    { "id": "bw_2026-10-19", "t": "bw", "u": 1792480000000, "week": "2026-10-19", "kg": 80.5 },
+
+    {
+      "id": "wk_2026-10-12",
+      "t": "week",
+      "u": 1792400000000,
+      "week": "2026-10-12",
+      "hiking": false,
+      "deload": false,
+      "plan": {
+        "pecho": 13,
+        "espalda": 14,
+        "hombro": 13,
+        "cuadriceps": 16,
+        "femoral": 15,
+        "triceps": 8,
+        "biceps": 8,
+        "gemelo": 8,
+        "core": 6,
+        "antebrazo": 3
+      },
+      "total": 104,
+      "closedAt": 1792400000000
+    },
+    {
+      "id": "wk_2026-10-19",
+      "t": "week",
+      "u": 1792300000000,
+      "week": "2026-10-19",
+      "hiking": true
+    },
+
+    {
+      "id": "tpl_push",
+      "t": "tpl",
+      "u": 1791000000000,
+      "tpl": "push",
+      "items": [
+        {
+          "ex": "press-inclinado-mancuernas",
+          "plan": [
+            ["aprox", "", 1],
+            ["top", "6-8", 1],
+            ["backoff", "8-10", 2]
+          ],
+          "rir": "1-2"
+        },
+        { "ex": "aperturas-maquina", "plan": [["work", "10-12", 3]], "rir": "1-2" },
+        { "ex": "abdomen", "plan": [["work", "12-15", 3]], "rir": "1-2", "opt": true }
+      ]
+    },
+
+    { "id": "exc_remo-t", "t": "excfg", "u": 1791100000000, "ex": "remo-t", "step": 5 },
+    { "id": "exc_abdomen", "t": "excfg", "u": 1791100000001, "ex": "abdomen", "step": 1.25 },
+
+    {
+      "id": "rec_2026-10-20",
+      "t": "rec",
+      "u": 1792480000001,
+      "date": "2026-10-20",
+      "mob": { "rodillo": true, "pared": true, "sentado": true, "goma": true, "cajon": true },
+      "ecc": { "talon": true, "zancada": false, "pogos": true },
+      "stairs": 2,
+      "maxPain": 3,
+      "pogos": null,
+      "note": "Algo de rigidez por la mañana"
+    },
+    {
+      "id": "rec_2026-10-21",
+      "t": "rec",
+      "u": 1792570000001,
+      "date": "2026-10-21",
+      "mob": { "rodillo": true, "pared": false, "sentado": false, "goma": true, "cajon": false },
+      "ecc": { "talon": false, "zancada": false, "pogos": false },
+      "stairs": 1
+    },
+
+    {
+      "id": "wall_2026-10-19",
+      "t": "wall",
+      "u": 1792480000002,
+      "week": "2026-10-19",
+      "date": "2026-10-20",
+      "left": 10.5,
+      "right": 9
+    },
+
+    {
+      "id": "cfg_recovery",
+      "t": "cfg",
+      "u": 1790000000000,
+      "active": true,
+      "start": "2026-10-01",
+      "physio": "2026-10-20",
+      "footballOk": false
+    },
+    {
+      "id": "cfg_exp_brazos",
+      "t": "cfg",
+      "u": 1789000000000,
+      "start": "2026-09-01",
+      "weeks": 6,
+      "tpl": "upper"
+    },
+    { "id": "mig_v130", "t": "mig", "u": 1789000000001, "at": 1789000000001 },
+    { "id": "mig_v140", "t": "mig", "u": 1789000000002, "at": 1789000000002 }
+  ]
+}
