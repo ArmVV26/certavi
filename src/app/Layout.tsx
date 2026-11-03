@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useLocation, useMatches } from 'react-router';
+import { SyncIndicator } from '../features/settings/SyncIndicator';
 import { ThemeToggle } from '../theme/ThemeToggle';
 import { Icon } from '../ui/Icon';
 import styles from './Layout.module.css';
 import { NAV_ITEMS, titleKeyOf } from './navigation';
 
 /**
- * App shell: header with the page title and the theme button, the main navigation (bottom tab
+ * App shell: header with the page title, the sync indicator and the theme button, the main navigation (bottom tab
  * bar on phones, top bar on wide screens) and the current page.
  */
 export function Layout() {
@@ -52,6 +53,7 @@ export function Layout() {
             ))}
           </ul>
         </nav>
+        <SyncIndicator />
         <ThemeToggle />
       </header>
       <main id="main" tabIndex={-1} className={styles.main}>

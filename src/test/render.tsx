@@ -5,6 +5,9 @@ import type { ReactElement, ReactNode } from 'react';
 import { openDatabase } from '../data/db';
 import type { CertaviDb } from '../data/db';
 import { DatabaseProvider } from '../data/DatabaseProvider';
+import type { SyncEngine } from '../data/sync/engine';
+import { SyncProvider } from '../data/sync/SyncProvider';
+import { createTestEngine } from '../data/sync/testing';
 import { createI18n } from '../i18n';
 import { I18nProvider } from '../i18n/I18nProvider';
 import type { Locale } from '../i18n/locale';
@@ -23,23 +26,28 @@ export interface RenderWithProvidersOptions extends Omit<RenderOptions, 'wrapper
   locale?: Locale;
   /** Database to use; a fresh empty one by default (no seed: call ensureSeed if needed). */
   db?: CertaviDb;
+  /** Sync engine; by default one without a key over a fake server, not started. */
+  sync?: SyncEngine;
 }
 
 export function renderWithProviders(
   ui: ReactElement,
-  { locale = 'es', db = openTestDatabase(), ...options }: RenderWithProvidersOptions = {},
+  { locale = 'es', db = openTestDatabase(), sync, ...options }: RenderWithProvidersOptions = {},
 ) {
   const i18n = createI18n(locale);
+  const engine = sync ?? createTestEngine(db, { key: null }).engine;
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <DatabaseProvider db={db}>
-        <ThemeProvider>
-          <I18nProvider i18n={i18n}>
-            <ToastProvider>{children}</ToastProvider>
-          </I18nProvider>
-        </ThemeProvider>
+        <SyncProvider engine={engine}>
+          <ThemeProvider>
+            <I18nProvider i18n={i18n}>
+              <ToastProvider>{children}</ToastProvider>
+            </I18nProvider>
+          </ThemeProvider>
+        </SyncProvider>
       </DatabaseProvider>
     );
   }
-  return { i18n, db, ...render(ui, { wrapper: Wrapper, ...options }) };
+  return { i18n, db, sync: engine, ...render(ui, { wrapper: Wrapper, ...options }) };
 }

@@ -3,6 +3,8 @@
 > **Status:** Implemented (Phase 4) · written in Phase 0 from the behaviour of `gym_app` 1.5.1
 > (`netlify/functions/sync.mjs` + `public/js/store.js`), adapted to Certavi's naming.
 > Server: `server/sync/handler.ts` (Netlify adapter `netlify/functions/sync.ts`).
+> Client: `src/data/sync/` (engine, HTTP transport; decisions in
+> [ADR-0004](../adr/0004-client-sync-engine.md)).
 > Contract test: `server/sync/contract.test.ts` checks the examples, the error table and the
 > numbers in this document against the schemas in `src/domain/sync/contract.ts` and the server.
 >
@@ -201,7 +203,8 @@ Not enforced by the server, but required for the model to be safe. Inherited fro
 - **Apply incoming** only when `incoming.updatedAt > local.updatedAt`, and never over a
   pending local edit that is newer. The **echo** of just-pushed records therefore changes
   nothing and **must not trigger a re-render**.
-- **New key:** reset `since` to 0 and mark every local record as pending.
+- **New key:** reset `since` to 0 and mark every local record as pending (built-in seed
+  records never edited, `updatedAt: 0`, may stay out: every device already has them).
 - **Attempt log:** keep the last 40 attempts (time, ok/error, sent, received, duration) for the
   Settings screen.
 

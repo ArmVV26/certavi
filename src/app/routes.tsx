@@ -4,6 +4,7 @@ import { DevUiPage } from '../features/dev-ui/DevUiPage';
 import { ProgressPage } from '../features/progress/ProgressPage';
 import { RoutinesPage } from '../features/routines/RoutinesPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
+import { SyncPage } from '../features/settings/SyncPage';
 import { TodayPage } from '../features/today/TodayPage';
 import { Layout } from './Layout';
 import type { RouteHandle } from './navigation';
@@ -22,6 +23,7 @@ export const routes: RouteObject[] = [
       { path: 'routines', element: <RoutinesPage />, handle: handle('nav.routines') },
       { path: 'progress', element: <ProgressPage />, handle: handle('nav.progress') },
       { path: 'settings', element: <SettingsPage />, handle: handle('nav.settings') },
+      { path: 'settings/sync', element: <SyncPage />, handle: handle('settings.sync.title') },
       { path: 'dev/ui', element: <DevUiPage />, handle: handle('devUi.title') },
       { path: '*', element: <NotFoundPage />, handle: handle('notFound.title') },
     ],

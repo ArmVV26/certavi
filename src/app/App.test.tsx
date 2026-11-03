@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { createTestEngine } from '../data/sync/testing';
 import { formatDate } from '../i18n/format';
 import { setSystemDark } from '../test/matchMedia';
 import { openTestDatabase } from '../test/render';
@@ -13,8 +14,9 @@ const nav = () => screen.getByRole('navigation', { name: 'Principal' });
 
 describe('App', () => {
   it('opens on Today with the providers and the browser router', () => {
+    const db = openTestDatabase();
     render(
-      <Providers db={openTestDatabase()}>
+      <Providers db={db} sync={createTestEngine(db, { key: null }).engine}>
         <App />
       </Providers>,
     );
