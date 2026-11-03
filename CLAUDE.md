@@ -122,6 +122,7 @@ src/
   test/renderApp.tsx renderApp: the whole app with an in-memory router
 tests/
   e2e/              Playwright specs (written by the blind-tester)
+  fixtures/         synthetic input files (gym_app sample export, invalid file) for unit and e2e
   mocks/            fake /api/v1/sync server for e2e (Phase 4)
 context.md  CHANGELOG.md  README.md  LICENSE
 ```
