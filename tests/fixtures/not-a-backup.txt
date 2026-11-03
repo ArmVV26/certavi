@@ -1,0 +1,2 @@
+This is a plain text file, not a backup of any app.
+Synthetic content used by tests/e2e/import-export.spec.ts (AC-IMPORT-03).
