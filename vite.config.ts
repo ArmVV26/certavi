@@ -58,6 +58,7 @@ export default defineConfig({
         'src/**/*.test.{ts,tsx}',
         'server/**/*.test.ts',
         'src/domain/testing/**',
+        'src/data/**/testing.ts',
         'server/**/testing.ts',
       ],
       reporter: ['text', 'html'],

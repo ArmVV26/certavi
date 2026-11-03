@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { getLocalStorage, readDeviceSetting, writeDeviceSetting } from './deviceStorage';
+import {
+  getLocalStorage,
+  readDeviceSetting,
+  removeDeviceSetting,
+  writeDeviceSetting,
+} from './deviceStorage';
 
 const isColor = (value: unknown): value is 'red' | 'blue' => value === 'red' || value === 'blue';
 
@@ -8,6 +13,9 @@ const blocked = {
     throw new Error('blocked');
   },
   setItem: () => {
+    throw new Error('blocked');
+  },
+  removeItem: () => {
     throw new Error('blocked');
   },
 };
@@ -42,5 +50,13 @@ describe('deviceStorage', () => {
   it('reports a failed write without throwing', () => {
     expect(writeDeviceSetting(null, 'k', 'red')).toBe(false);
     expect(writeDeviceSetting(blocked, 'k', 'red')).toBe(false);
+  });
+
+  it('removes a setting, and reports a failed removal without throwing', () => {
+    localStorage.setItem('k', 'blue');
+    expect(removeDeviceSetting(localStorage, 'k')).toBe(true);
+    expect(localStorage.getItem('k')).toBeNull();
+    expect(removeDeviceSetting(null, 'k')).toBe(false);
+    expect(removeDeviceSetting(blocked, 'k')).toBe(false);
   });
 });
