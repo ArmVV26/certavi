@@ -16,6 +16,7 @@ import {
   SEED_EXERCISES_BY_ID,
   SEED_ROUTINES,
   SEED_ROUTINES_BY_ID,
+  SEED_SETTINGS,
   STRETCHING_BLOCK,
 } from './index';
 
@@ -330,6 +331,7 @@ describe('seed blocks', () => {
     ).toEqual(['heel-raise', 'split-heel-raise', 'pogos']);
     expect(ANKLE_REHAB_BLOCK.metrics.map((m) => [m.id, m.min, m.max, m.threshold])).toEqual([
       ['stairs', 0, 10, 3],
+      ['max-pain', 0, 10, 3],
       ['pogos', 0, 10, 3],
     ]);
     expect(ANKLE_REHAB_BLOCK.weeklyMetrics[0]?.parts.map((p) => p.id)).toEqual(['left', 'right']);
@@ -342,7 +344,7 @@ describe('seed blocks', () => {
 });
 
 describe('all seed records', () => {
-  const all = [...SEED_EXERCISES, ...SEED_ROUTINES, ...SEED_BLOCKS];
+  const all = [...SEED_EXERCISES, ...SEED_ROUTINES, ...SEED_BLOCKS, SEED_SETTINGS];
 
   it('pass their zod schema', () => {
     for (const record of all) {

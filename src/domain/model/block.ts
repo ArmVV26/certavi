@@ -54,6 +54,10 @@ export const optionalBlockSchema = z.object({
   weeklyMetrics: z.array(weeklyMetricDefSchema),
   active: z.boolean(),
   custom: z.boolean(),
+  /** When the block started (e.g. the start of a rehab programme). */
+  startDate: isoDateSchema.optional(),
+  /** Next review, e.g. the physiotherapist appointment. */
+  reviewDate: isoDateSchema.optional(),
 });
 export type OptionalBlock = z.infer<typeof optionalBlockSchema>;
 

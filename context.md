@@ -3,7 +3,7 @@
 > Documento de arranque del proyecto **Certavi**, la reescritura de la app de registro de gimnasio (antes «Winter Arc · registro», repositorio `gym_app`).
 > Al crear el repositorio, este archivo se copia como `context.md` en la raíz. Desde ese momento es la **fuente de verdad del estado del proyecto**: qué está decidido, qué está hecho, qué falta y con qué prompt se arranca cada fase. Lo mantiene al día el agente de contexto.
 >
-> Última actualización: 3 nov 2026 · Estado: **Fase 0 cerrada (`v0.1.0`) · Fase 1 cerrada (`v0.2.0`) · Fase 2 implementada y verificada 🚧 (lint, typecheck, test, test:coverage, build, format y regresión e2e ✅): pendiente de commits de `feature/domain-model`, PR a `dev`, PR `dev → main` y tag `v0.3.0` por el usuario**
+> Última actualización: 3 nov 2026 · Estado: **Fase 0 cerrada (`v0.1.0`) · Fase 1 cerrada (`v0.2.0`) · Fase 2 cerrada (`v0.3.0`) · Fase 3 en curso 🚧: rama 1 de 2 (`feature/local-db`) implementada y verificada, sin commits; rama 2 (`feature/import-export`) sin empezar**
 
 ---
 
@@ -116,6 +116,18 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Datos semilla | Los registros semilla tienen `updatedAt: 0` | Cualquier edición del usuario o copia del servidor gana |
 | Tests del dominio | Vitest en dos proyectos (`domain` en node, `ui` en jsdom); umbral de cobertura **90 %** en `src/domain` (líneas, funciones, ramas, sentencias) con `npm run test:coverage`, que CI ejecuta en lugar de `npm run test` | El dominio no puede usar el DOM y la cobertura no puede bajar sin que falle CI; además la suite tarda la mitad (~39 s → ~18 s) |
 | Ids derivados | `week_<lunes>`, `bw_<lunes>`, `note_<sesión>_<ejercicio>`, `blocklog_<bloque>_<fecha>`, `wmetric_<bloque>_<métrica>_<lunes>`; ajustes con id `settings`. Fechas ISO locales `YYYY-MM-DD`, semanas desde el lunes | Un registro por clave natural, sin duplicados entre dispositivos |
+
+### 2.4 Decisiones de la Fase 3 (2026-11-03)
+
+| Tema | Decisión | Motivo |
+|---|---|---|
+| `rec.maxPain` de gym_app | Nueva métrica semilla **`max-pain`** «Dolor máximo en los ejercicios» (0-10, umbral 3) en el bloque de rehabilitación del tobillo, entre `stairs` y `pogos` (orden del CSV de gym_app) | No perder ese dato al importar |
+| `cfg_recovery` de gym_app | Campos genéricos opcionales nuevos **`startDate`** y **`reviewDate`** (fechas ISO) en `OptionalBlock`; `footballOk` se descarta | Sirven para cualquier bloque, no solo para el tobillo |
+| Cobertura | El umbral del **90 %** se aplica también a **`src/data`**: umbrales por glob en `vite.config.ts` (`src/domain/**` y `src/data/**`, cada uno por separado) | La capa de datos guarda todo lo del usuario; no puede bajar sin que falle CI |
+| Almacenamiento local (**ADR-0003**, `docs/adr/0003-local-storage-dexie.md`) | Una tabla de Dexie por tipo de registro + `pending` (una fila por id de registro) + `meta` (reloj monótono). Los borrados son filas solo con la envoltura en la misma tabla. Los repositorios validan con zod, ponen `updatedAt` con el reloj monótono persistido y encolan **en la misma transacción**. La semilla se escribe en la base de datos al arrancar con `ensureSeed` (inserta lo que falta, refresca solo los registros que siguen con `updatedAt` 0, nunca encola). `db.version(1)` no se edita una vez publicada: los cambios posteriores añaden versiones con `.upgrade()` y un test. Se pide `navigator.storage.persist()` al arrancar | Offline-first sin perder datos; esquema migrable |
+| Ajustes sincronizados | Registro semilla **`SEED_SETTINGS`** (`src/domain/seed/settings.ts`: id `settings`, `DEFAULT_REST`, `planStart` null, `updatedAt` 0) | Siempre hay un registro de ajustes que cualquier edición sobrescribe |
+| Formato real de gym_app (leído del **código fuente**, sin datos reales) | Valores reales de `t`: `session`, `set`, `note`, `act`, `bw`, `week` (id `wk_<lunes>`), `tpl` (id `tpl_<id>`), `rec`, `wall`, `excfg` (id `exc_<ej>`, campo `step`), `cfg` (ids `cfg_recovery`, `cfg_exp_brazos`), `mig`. La copia completa es `{ app: 'winter-arc', version: 2, exportedAt, records[] }` sin borrados (puede llevar `srv`); gym_app también aceptaba un array suelto | La tabla de la sección 6 y `docs/migration.md` tenían nombres que no coinciden; se corrigen en `feature/import-export` |
+| Ramas de la fase | `feature/local-db` y después **`feature/import-export`** (antes `feature/legacy-import`): importador de gym_app + importación de JSON propio + exportaciones JSON/CSV | El nombre refleja todo lo que entra en la segunda rama |
 
 ---
 
@@ -252,7 +264,7 @@ interface SyncEnvelope {
 | **ExerciseNote** | `sessionId`, `exerciseId`, `text`, `excludeFromProgression`, `reason` | «No cuenta» por ejercicio y sesión (2.3) |
 | **Activity** | `date`, `kind` (fútbol, natación, senderismo…), `minutes`, `note` | — |
 | **BodyWeight** | `week` (lunes), `kg` | Editable en cualquier semana, también la anterior |
-| **OptionalBlock** | `id`, `name`, `type` (`mobility` · `stretching` · `rehab`), `items[]: { id, name, dose, description }`, `days[]` (días de la semana), `metrics[]` (por ejemplo, «dolor al bajar escaleras 0-10», «pogos 0-10»), `active` | Generaliza la recuperación del tobillo: movilidad, estiramientos y rehabilitación configurables |
+| **OptionalBlock** | `id`, `name`, `type` (`mobility` · `stretching` · `rehab`), `items[]: { id, name, dose, description }`, `days[]` (días de la semana), `metrics[]` (por ejemplo, «dolor al bajar escaleras 0-10», «pogos 0-10»), `active`, `startDate?`, `reviewDate?` (fechas ISO, Fase 3, 2.4) | Generaliza la recuperación del tobillo: movilidad, estiramientos y rehabilitación configurables |
 | **BlockLog** | `date`, `blockId`, `done: { itemId: boolean }`, `metrics: { metricId: number }`, `note` | Checklist del día y métricas |
 | **WeeklyMetric** | `week`, `metricId`, `values` (por ejemplo, test de la pared izquierda/derecha en cm) | — |
 | **Settings** | Sincronizados: `rest` (básicos/aislamientos, s), `planStart`. Solo del dispositivo: `theme` (`system` · `light` · `dark`), `locale` (`es` · `en`), sonido, vibración, `syncKey` | Lo que es de este dispositivo no se sincroniza. Paleta y fuente ya no son ajustes (2.3) |
@@ -331,7 +343,7 @@ Las de `rutina-actual.md` (ciclo 2 nov – 20 dic 2026): Push, Pull, Upper, Lowe
 **Bloque opcional semilla «Rehabilitación del tobillo»**:
 - Movilidad diaria: rodillo, pared, sentado sobre el tobillo, goma y bajada de cajón.
 - Fuerza 3-5 días por semana: talón con bajada lenta, zancada y pogos.
-- Métricas: dolor al bajar escaleras (0-10) y pogos (0-10).
+- Métricas: dolor al bajar escaleras (0-10), dolor máximo en los ejercicios (`max-pain`, 0-10, añadida en la Fase 3, 2.4) y pogos (0-10).
 - Métrica semanal: test de la pared, izquierda y derecha (cm).
 
 Se crea vacío un bloque «Estiramientos» para rellenarlo.
@@ -419,6 +431,8 @@ Se crea vacío un bloque «Estiramientos» para rellenarlo.
 | `cfg_exp_brazos`, `mig_*` | Se ignoran | — |
 | `del: true` | Se ignoran | — |
 | Ejercicio `abdomen` | → `crunch-maquina` | — |
+
+> **Corrección pendiente (2026-11-03, Fase 3):** al leer el **código fuente** de gym_app (sin datos reales) se vio que algunos nombres de esta tabla no son los reales: `wk` es `week` (id `wk_<lunes>`), `tpl` tiene id `tpl_<id>`, `exc` es `excfg` (id `exc_<ej>`, campo `step`), `cfg_recovery` y `cfg_exp_brazos` son registros `t: 'cfg'`, `mig_*` es `t: 'mig'`. La copia completa es `{ app: 'winter-arc', version: 2, exportedAt, records[] }` **sin borrados** (puede llevar `srv`); gym_app también aceptaba un array suelto. `rec.maxPain` → métrica `max-pain`; `cfg_recovery` → `startDate`/`reviewDate` del bloque (sin `footballOk`). Ver 2.4. Esta tabla y `docs/migration.md` se corrigen en `feature/import-export`.
 
 3. Los tests del importador usan un **JSON sintético**, nunca tus datos reales.
 4. Durante el desarrollo, `gym_app` sigue siendo la app del día a día. Cuando Certavi llegue a la v1.0.0, haces la última exportación, la importas, usas Certavi y **archivas** `gym_app` en GitHub (Settings → Archive).
@@ -647,7 +661,7 @@ lint          eslint .
 typecheck     tsc -b
 test          vitest run
 test:watch    vitest
-test:coverage vitest run --coverage; umbral 90 % en src/domain (nuevo, 2026-11-03; lo ejecuta CI)
+test:coverage vitest run --coverage; umbral 90 % en src/domain (nuevo, 2026-11-03; lo ejecuta CI) y en src/data (desde la Fase 3, 2.4)
 e2e           playwright test --project=chromium   (desde 2026-11-02; antes: playwright test)
 e2e:all       Chromium + WebKit, --global-timeout=600000   (nuevo, 2026-11-02)
 format        prettier --write .
@@ -855,13 +869,13 @@ Al terminar, /close-phase.
 
 ---
 
-### Fase 2 · Dominio y catálogo → `v0.3.0` 🚧
+### Fase 2 · Dominio y catálogo → `v0.3.0` ✅
 
 **Rama**: `feature/domain-model`
 
-**Estado (2026-11-03)**: **implementada y verificada; pendiente de commits de `feature/domain-model`, PR a `dev`, PR `dev → main`, `chore(release): v0.3.0` y tag `v0.3.0` por el usuario** (pasa a ✅ cuando el usuario cree el tag). Decisiones en la sección 2.3.
+**Estado (2026-11-03)**: **cerrada**. El usuario hizo los commits, el PR #6 a `dev`, el PR #7 `dev → main` y el tag `v0.3.0` (sobre el merge del PR #7). No hubo commit `chore(release): v0.3.0`: `package.json` quedó en 0.2.0 y la entrada `[0.3.0]` del `CHANGELOG.md` se añadió después, en `feature/local-db`. Decisiones en la sección 2.3.
 
-- **Implementado — `src/domain`** (TS puro, sin React, Dexie ni `fetch`; rama actual, **sin commits todavía**):
+- **Implementado — `src/domain`** (TS puro, sin React, Dexie ni `fetch`; mergeado en `dev` con el PR #6):
   - `model/`: esquemas zod + tipos de todas las entidades de 4.1 con la envoltura (`envelope.ts`: `RECORD_TYPES` `exercise`, `routine`, `weekPlan`, `session`, `set`, `note`, `activity`, `bodyWeight`, `block`, `blockLog`, `weeklyMetric`, `settings`; esquema de tombstone; `TextRef` = `{ key }` (clave i18n, datos semilla) | `{ text }` (texto del usuario)); `enums.ts` (tuplas `as const`); `records.ts` con `RECORD_SCHEMAS` y `parseRecord` (valida por tipo; los registros borrados solo necesitan la envoltura). Ids derivados: `week_<lunes>`, `bw_<lunes>`, `note_<sesión>_<ejercicio>`, `blocklog_<bloque>_<fecha>`, `wmetric_<bloque>_<métrica>_<lunes>`, ajustes `settings`.
   - `dates.ts`: fechas locales ISO `YYYY-MM-DD`, semanas desde el lunes.
   - `rules/`: 1RM Epley (ignora calentamiento y aproximación); series efectivas (la aproximación cuenta, el calentamiento no, 0 reps no); back-off (−10 % redondeado al incremento, al menos un escalón por debajo del top); progresión (`progressionAdvice`); referencia «la última vez» (`lastReference`: salta sesiones «no cuenta» y de descarga); series semanales por grupo frente al plan; plan semanal (vivo frente a congelado al cerrar, `closeWeek`, `weeksToClose`); descarga (port de gym_app); semana corta (`WEEK_ROUTINES`); récords (peso máximo, mejor 1RM estimado, mejor volumen, récords por repeticiones con la regla de Hevy, eventos de récord).
@@ -876,9 +890,7 @@ Al terminar, /close-phase.
   - Puertos 5173, 4173, 8888, 8787 y 9323 libres.
 - **Criterios de aceptación** ✅: cobertura ≥ 90 % en `src/domain`; test de que las series planificadas de la semana normal suman **104** y cuadran por grupo (cuádriceps 16, isquios-glúteos 15, espalda 14, pecho 13, hombros 13, tríceps 8, bíceps 8, gemelos 8, core 6, antebrazos 3). Verificado también: semana de 4 sesiones 81, de 3 sesiones 63 y de descarga 62.
 - **Aplazado a la Fase 7**: regla del gemelo durante la rehabilitación y revisión del ciclo (ver la Fase 7).
-- **Pendiente (lo hace el usuario)**:
-  1. commits de `feature/domain-model` y PR a `dev`;
-  2. release `v0.3.0`: PR `dev → main` (el job e2e de CI ejecuta `npm run e2e:all`), `chore(release): v0.3.0` y tag `v0.3.0`.
+- **Release (hecha por el usuario)**: commits de `feature/domain-model`, PR #6 a `dev`, PR #7 `dev → main` y tag `v0.3.0`.
 
 **Objetivo**: todo el modelo de la sección 4 en `src/domain`, puro y con tests. Sin UI.
 
@@ -908,9 +920,30 @@ Al terminar, /close-phase.
 
 ---
 
-### Fase 3 · Datos locales, importador y exportaciones → `v0.4.0` ⏳
+### Fase 3 · Datos locales, importador y exportaciones → `v0.4.0` 🚧
 
-**Ramas**: `feature/local-db` y `feature/legacy-import`
+**Ramas**: `feature/local-db` y `feature/import-export` (antes `feature/legacy-import`; incluye el importador de gym_app, la importación de JSON propio y las exportaciones JSON/CSV)
+
+**Estado (2026-11-03)**: **en curso**. Rama 1 de 2 (`feature/local-db`) **implementada y verificada, sin commits todavía**; rama 2 (`feature/import-export`) **sin empezar**. Decisiones en la sección 2.4.
+
+- **Implementado — `feature/local-db`** (sin commits):
+  - `src/data/db.ts` (`openDatabase`, `TABLES`, `tableOf`, `recordTables`, `isLive`; tipos `StoredRecord`, `TombstoneOf`, `PendingEntry`, `MetaEntry`, `CertaviDb`), `clock.ts` (`reserveTimestamps`), `repository.ts` (`createRepository`, `createRepositories`: `get`/`list`/`put`/`putMany`/`remove`), `seed.ts` (`ensureSeed`), `persistence.ts` (`getStorageStatus`, `requestPersistentStorage`), `queries.ts` (`countLiveRecords`, `countPending`), `startup.ts` (`startDatabase`), `DatabaseContext.ts` (`useDatabase`) y `DatabaseProvider.tsx`.
+  - `main.tsx` abre la base de datos y ejecuta `startDatabase`; `Providers` recibe ahora una prop `db`; `src/test/render.tsx` añade `openTestDatabase()` y una opción `db` (base de datos nueva y vacía en cada render, sin semilla); `src/test/setup.ts` carga `fake-indexeddb/auto`.
+  - Dominio: tipo `RecordOf<K>` en `records.ts`; `OptionalBlock.startDate`/`reviewDate`; métrica `max-pain`; `SEED_SETTINGS` (`src/domain/seed/settings.ts`).
+  - Ajustes → tarjeta nueva **«Datos»/«Data»** (`src/features/settings/DataCard.tsx`) entre Apariencia y Desarrollador: recuentos en vivo por tipo de registro (`useLiveQuery`), «Pendientes de sincronizar» y estado de «Almacenamiento». Claves i18n `settings.data.*` (es/en) y `blocks.metrics.maxPain`.
+  - Documentación: `docs/spec/data-import-export.md` (parte A definitiva, parte B en borrador), índice `docs/spec/README.md` actualizado, `docs/spec/rules.md` menciona la tercera métrica de dolor, ADR-0003 (`docs/adr/0003-local-storage-dexie.md`).
+  - E2E: el blind-tester escribió `tests/e2e/data.spec.ts` (7 tests: AC-DATA-01..05 + caso límite de dos pestañas / sin conexión).
+- **Paquetes añadidos en la fase** (instalados por el usuario): runtime `dexie` 4.4.7, `dexie-react-hooks` 4.4.0; dev `fake-indexeddb` 6.2.7.
+- **Verificado en `feature/local-db` (2026-11-03)**: `lint` ✅, `typecheck` ✅, `test:coverage` ✅ (**364 tests en 32 archivos**; `src/data` 99,04 % sentencias / 97,56 % ramas / 100 % funciones / 100 % líneas; `src/domain` sigue por encima del 90 %), `build` ✅ (Vite avisa de que el chunk principal pesa 618 kB > 500 kB; informativo), `format:check` ✅.
+  - E2E (blind-tester, `npm run e2e`, una sola ejecución, Chromium, 2 workers): **45 pasados, 0 fallidos, 0 omitidos en 34,7 s**.
+  - Puertos 5173, 4173, 8888, 8787 y 9323 libres.
+- **Criterios de aceptación**:
+  - «Recargar la app no pierde nada»: ✅ para la parte A (test unitario que reabre la base de datos + e2e de recarga / página nueva).
+  - «El importador transforma un JSON sintético…»: ⏳ pendiente (rama 2, `feature/import-export`).
+  - Cumplido también: registro + entrada de cola atómicos (test que fuerza el fallo de la escritura en la cola); el borrado lógico oculta el registro y encola el tombstone.
+- **Pendiente**:
+  1. (usuario) commits de `feature/local-db` y PR a `dev`;
+  2. (usuario) crear `feature/import-export` desde `dev`; después, implementarla: importador de gym_app (con la corrección de la sección 6 y de `docs/migration.md`), importación de JSON propio, exportaciones JSON (completa, sesión, semana) y CSV, y la parte B de `docs/spec/data-import-export.md`.
 
 **Entregables**:
 - Dexie con esquema y versiones de migración.
@@ -1129,6 +1162,8 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
 
 | Fecha | Fase | Qué | Versión |
 |---|---|---|---|
+| 2026-11-03 | 3 | **`feature/local-db` implementada y verificada** (rama 1 de 2 de la Fase 3, **sin commits**): Dexie con una tabla por tipo + `pending` + `meta` (ADR-0003), repositorios con validación zod, reloj monótono y cola en la misma transacción, borrados lógicos, `ensureSeed` al arrancar, `navigator.storage.persist()`, tarjeta «Datos» en Ajustes, métrica `max-pain`, `startDate`/`reviewDate` en bloques, `SEED_SETTINGS`, spec `docs/spec/data-import-export.md` (parte A). lint, typecheck, `test:coverage` (**364 en 32 archivos**; `src/data` 99,04 % / 97,56 % / 100 % / 100 %, umbral 90 % ahora también en `src/data`), build (aviso informativo: chunk de 618 kB) y format:check ✅. E2E `npm run e2e` (Chromium, 2 workers): **45/45 en 34,7 s** (7 nuevos en `data.spec.ts`). Puertos libres. Decisiones en 2.4. Paquetes: `dexie` 4.4.7, `dexie-react-hooks` 4.4.0, `fake-indexeddb` 6.2.7. Rama 2 renombrada a `feature/import-export`, sin empezar | `v0.4.0` (en curso) |
+| 2026-11-03 | 2 | Release de la Fase 2 por el usuario: PR #6 (`feature/domain-model`) a `dev`, PR #7 `dev → main` y tag `v0.3.0`. Sin commit `chore(release)`: `package.json` quedó en 0.2.0; la entrada `[0.3.0]` del `CHANGELOG.md` se añadió en `feature/local-db` | `v0.3.0` |
 | 2026-11-03 | 2 | **Fase 2 implementada y verificada** en `feature/domain-model`: modelo de dominio (zod), reglas, catálogo semilla (45 ejercicios), 6 rutinas y bloques semilla, claves i18n de la semilla, `docs/spec/rules.md`, proyectos de Vitest node/jsdom y `test:coverage` en CI. lint, typecheck, test (**326 en 27 archivos**), build y format:check ✅; cobertura de `src/domain` 100 % sentencias / 96,86 % ramas / 100 % funciones / 100 % líneas (umbral 90 % comprobado). Criterios de aceptación ✅ (semana normal 104 y por grupo; también 81 / 63 / descarga 62). Regresión e2e `npm run e2e` (Chromium, 2 workers): **38/38 en 46,1 s**. Puertos libres. Decisiones en 2.3; regla del gemelo y revisión del ciclo aplazadas a la Fase 7. Paquetes: `zod` 4.6.7, `@vitest/coverage-v8` 5.1.0. Pendiente: commits, PR a `dev`, PR `dev → main` y tag por el usuario | `v0.3.0` (pendiente de tag) |
 | 2026-11-03 | 1 | Release de la Fase 1 por el usuario: commits de `feature/app-shell`, PR #4 a `dev`, PR `dev → main`, `chore(release): v0.2.0` y tag | `v0.2.0` |
 | 2026-11-02 | 1 | **Fase 1 implementada y verificada** en `feature/app-shell`: lint, typecheck, test (179 en 16 archivos), build y format:check ✅; puertos libres. Suite e2e reducida por decisión del usuario de 111 a 38 tests por navegador (2.2); ejecución válida `npm run e2e` (Chromium, 2 workers): **38/38 en 18,2 s**. Antes, la suite de 111 pasó entera en 33 s (ejecución del usuario). Todos los criterios de aceptación cubiertos. Pendiente: commits, PR a `dev`, PR `dev → main` y tag por el usuario | `v0.2.0` (pendiente de tag) |
@@ -1139,7 +1174,7 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
 | 2026-11-02 | 0 | Base del proyecto implementada y verificada (lint, typecheck, test, build, format:check, e2e en chromium + webkit, puertos libres; commit denegado a Claude). Decisiones en 2.1. Pendiente: commits, PR y tag por el usuario | `v0.1.0` (pendiente de tag) |
 | 2026-11-01 | — | Plan inicial y decisiones (este documento) | — |
 
-**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 🚧 (implementada y verificada; `feature/domain-model` pendiente de commits, PR a `dev`, PR `dev → main` y tag `v0.3.0` por el usuario) · 3 ⏳ · 4 ⏳ · 5 ⏳ · 6 ⏳ · 7 ⏳ · 8 ⏳ · 9 ⏳
+**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 🚧 (`feature/local-db` implementada y verificada, sin commits; `feature/import-export` sin empezar) · 4 ⏳ · 5 ⏳ · 6 ⏳ · 7 ⏳ · 8 ⏳ · 9 ⏳
 
 **Preguntas abiertas**:
 - Qué estiramientos van en el bloque «Estiramientos» (antes de la Fase 7).
@@ -1147,3 +1182,6 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
 **Pendiente para fases futuras**:
 - Fase 7: regla del gemelo durante la rehabilitación (60 kg en la semana 1, +5 kg/semana sin dolor al día siguiente hasta 80 kg, y solo si bajar escaleras no duele), con cambios aditivos en el modelo de progresión (ver la Fase 7).
 - Fase 7: revisión del ciclo (`sixWeekReview` de gym_app) en las pantallas de progreso.
+- Fase 3 (`feature/import-export`): corregir la tabla de la sección 6 y `docs/migration.md` con los nombres reales de gym_app (2.4).
+- Sugerencia (no hecha, 2026-11-03) para la Fase 8: dividir el bundle (code-splitting); el chunk principal pesa 618 kB.
+- Sugerencia (no hecha, 2026-11-03) para la Fase 8 (estados de error): mostrar un error visible si la base de datos local no se puede abrir.

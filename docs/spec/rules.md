@@ -136,7 +136,8 @@ From non-deload sessions, without warm-up or approach sets:
   Lower Full has no fixed day.
 - Optional block "Rehabilitación del tobillo": daily mobility (5 items, 2 × 30 s per leg),
   strength 3-5 days a week (heel raises and split-stance heel raises 3 × 10 per leg, pogos
-  3 × 20), pain metrics 0-10 with a reference line at **3/10** (stairs, pogos) and a weekly
+  3 × 20), pain metrics 0-10 with a reference line at **3/10** (going down stairs, maximum pain
+  during the exercises, pogos) and a weekly
   wall test (left / right, cm). The "Estiramientos" block is created empty and inactive.
 
 ## Out of scope
