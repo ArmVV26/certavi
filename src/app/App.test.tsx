@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { formatDate } from '../i18n/format';
 import { setSystemDark } from '../test/matchMedia';
+import { openTestDatabase } from '../test/render';
 import { renderApp } from '../test/renderApp';
 import { App } from './App';
 import { Providers } from './Providers';
@@ -13,7 +14,7 @@ const nav = () => screen.getByRole('navigation', { name: 'Principal' });
 describe('App', () => {
   it('opens on Today with the providers and the browser router', () => {
     render(
-      <Providers>
+      <Providers db={openTestDatabase()}>
         <App />
       </Providers>,
     );

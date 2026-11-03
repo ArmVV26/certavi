@@ -39,13 +39,17 @@ export default defineConfig({
         },
       },
     ],
-    // `npm run test:coverage` (also in CI): fails if the pure domain drops below 90 %.
+    // `npm run test:coverage` (also in CI): fails if the pure domain or the data layer (local
+    // database, repositories, importers, exporters) drops below 90 %, each on its own.
     coverage: {
       provider: 'v8',
-      include: ['src/domain/**/*.ts'],
-      exclude: ['src/domain/**/*.test.ts', 'src/domain/testing/**'],
+      include: ['src/domain/**/*.ts', 'src/data/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/domain/testing/**'],
       reporter: ['text', 'html'],
-      thresholds: { lines: 90, functions: 90, branches: 90, statements: 90 },
+      thresholds: {
+        'src/domain/**': { lines: 90, functions: 90, branches: 90, statements: 90 },
+        'src/data/**': { lines: 90, functions: 90, branches: 90, statements: 90 },
+      },
     },
   },
 });
