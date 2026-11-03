@@ -53,9 +53,9 @@ export default defineConfig([
     },
   },
 
-  // Node-side TypeScript: tool configs, e2e tests.
+  // Node-side TypeScript: tool configs, e2e tests, the sync server and the Netlify Functions.
   {
-    files: ['*.config.ts', 'tests/**/*.ts'],
+    files: ['*.config.ts', 'tests/**/*.ts', 'server/**/*.ts', 'netlify/**/*.ts'],
     languageOptions: {
       globals: globals.node,
     },
