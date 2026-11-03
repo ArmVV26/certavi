@@ -1,6 +1,8 @@
 // Global setup for Vitest: adds jest-dom matchers (toBeInTheDocument, toHaveTextContent…),
-// a fake matchMedia (jsdom has none) and a clean DOM + storage after each test.
+// a fake matchMedia (jsdom has none), an in-memory IndexedDB (fake-indexeddb) and a clean DOM +
+// storage after each test. Each test opens its own database (openTestDatabase in render.tsx).
 import '@testing-library/jest-dom/vitest';
+import 'fake-indexeddb/auto';
 import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
 import { installMatchMedia, resetMatchMedia } from './matchMedia';
