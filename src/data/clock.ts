@@ -18,3 +18,12 @@ export async function reserveTimestamps(
   if (count > 0) await db.meta.put({ key: CLOCK_KEY, value: first + count - 1 });
   return first;
 }
+
+/**
+ * Moves the clock to `at` if it is behind, so the next local edit is newer than imported
+ * records. Same transaction rule as `reserveTimestamps`.
+ */
+export async function advanceClock(db: CertaviDb, at: number): Promise<void> {
+  const last = (await db.meta.get(CLOCK_KEY))?.value ?? 0;
+  if (at > last) await db.meta.put({ key: CLOCK_KEY, value: at });
+}
