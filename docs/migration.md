@@ -53,6 +53,24 @@ Certavi will have **Settings → "Import from the previous app"**, which:
 **Exercise ids from gym_app are preserved**, so renamed exercises keep their history
 (see `context.md` §4.3).
 
+### Ids in the Phase 2 seed (`src/domain/seed`)
+
+- **Exercises:** all 45 gym_app ids except `abdomen`, plus the new `hack-banda`. `abdomen` is
+  resolved by `resolveExerciseId` (`legacyAliases.ts`) to `crunch-maquina`; the importer must
+  apply it to sets, notes, session items and routine overrides.
+- `dominadas`, `hack-squat`, `bilbo-banca` and `bilbo-prensa` stay in the catalog (not archived)
+  but are in no seed routine. Their history imports as is.
+- **Routines** keep the gym_app template ids: `push`, `pull`, `upper`, `lowerA`, `lowerB`,
+  `lowerFull`. `libre` becomes `routineId: null`.
+- gym_app set kinds map as: `aprox` → `approach`, `work` → `straight`; the others keep their
+  name. Slots `w<n>` / `p<n>` / `x<n>` become `slot: n` with the kind telling them apart.
+- gym_app's `hiking` week was a 4-session week with Lower Full. In Certavi a week has a `size`
+  (5, 4 or 3) besides `hiking`; imported weeks keep their frozen plan, so their numbers do not
+  change.
+- "Does not count" is new in Certavi (`ExerciseNote.excludeFromProgression`); gym_app has nothing
+  to map to it.
+- Seed records have `updatedAt: 0`, so any imported or edited record wins over them.
+
 ## 5. Importer test requirements (Phase 3)
 
 A synthetic JSON covering **every** record type above, including deleted records, `abdomen`,
