@@ -1,0 +1,147 @@
+.heading {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+  border-bottom: var(--border-width) solid var(--border);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.value {
+  font-weight: var(--fw-semibold);
+  text-align: end;
+}
+
+.number {
+  font-family: var(--font-numeric);
+  font-variant-numeric: var(--numeric-features);
+}
+
+.danger {
+  color: var(--danger);
+}
+
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--danger-tint);
+  color: var(--text);
+  font-size: var(--fs-sm);
+}
+
+.error svg {
+  flex: none;
+  color: var(--danger);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.inputWrap {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 var(--border-width) var(--border);
+}
+
+.inputWrap:focus-within {
+  box-shadow: inset 0 0 0 var(--focus-ring-width) var(--accent);
+}
+
+.invalid,
+.invalid:focus-within {
+  box-shadow: inset 0 0 0 var(--focus-ring-width) var(--danger);
+}
+
+.input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: var(--fs-md);
+}
+
+/* The field already shows a focus ring on .inputWrap. */
+.input:focus-visible {
+  outline: none;
+}
+
+.toggle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.toggle[aria-pressed='true'] {
+  color: var(--accent);
+}
+
+.hint {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.fieldError {
+  color: var(--danger);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--touch-target);
+  color: var(--accent);
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+}

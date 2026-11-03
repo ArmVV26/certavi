@@ -9,6 +9,7 @@ import { Card } from '../../ui/Card';
 import { Icon } from '../../ui/Icon';
 import { Segmented } from '../../ui/Segmented';
 import { DataCard } from './DataCard';
+import { SyncCard } from './SyncCard';
 import styles from './SettingsPage.module.css';
 
 export function SettingsPage() {
@@ -18,6 +19,8 @@ export function SettingsPage() {
 
   return (
     <div className={styles.page}>
+      <SyncCard />
+
       <Card element="section">
         <h2 className={styles.heading}>{t('settings.appearance')}</h2>
         <Segmented
