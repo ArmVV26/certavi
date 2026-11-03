@@ -58,9 +58,13 @@ If `CLAVE_SYNC` is missing or shorter than 32 characters, every request answers
 
 ## 4. Check that it works
 
-With the app's settings screen (Phase 4, `feature/sync-client`) you enter the key on each
-device. Before that, or to diagnose a problem, call the API directly. In PowerShell use
-`curl.exe` (plain `curl` is an alias of another command):
+On each device: **Ajustes → Sincronización**, paste the key in "Clave de sincronización" and
+press "Guardar clave". Within a few seconds the status says "Sincronizado" and the header icon
+turns green; "Registro y copias del servidor" lists every attempt. The `dev` branch deploy uses
+its own key (the one for **Branch deploys**).
+
+To diagnose a problem without the app, call the API directly. In PowerShell use `curl.exe`
+(plain `curl` is an alias of another command):
 
 ```sh
 # Without the key → 401 {"error":"unauthorized"} (after a short delay)
@@ -78,5 +82,7 @@ Typing the key in a terminal leaves it in the shell history; clear it afterwards
   production.
 - The server keeps one backup per day (Madrid time) of the data before the first change of the
   day, and the 14 most recent ones. They are listed and restored from the app.
-- Changing `CLAVE_SYNC`: set the new value, redeploy, and enter the new key on every device.
-  Each device then uploads everything it has again; nothing is lost.
+- Changing `CLAVE_SYNC`: set the new value, redeploy, and enter the new key on every device
+  ("Cambiar clave"). Each device then uploads everything it has again; nothing is lost.
+- Restoring a backup: Ajustes → Sincronización → "Registro y copias del servidor" →
+  "Restaurar". The other devices follow on their next sync.
