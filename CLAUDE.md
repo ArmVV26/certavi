@@ -52,8 +52,9 @@ Native App Store app, multi-user, social features.
 
 Installed so far: Phase 0 tooling, Phase 1 (`react-router`, `i18next`, `react-i18next`,
 `@fontsource-variable/archivo`, `@axe-core/playwright`), Phase 2 (`zod`,
-`@vitest/coverage-v8`) and Phase 3 (`dexie`, `dexie-react-hooks`, `fake-indexeddb`); the rest
-arrives in the phase that needs it.
+`@vitest/coverage-v8`), Phase 3 (`dexie`, `dexie-react-hooks`, `fake-indexeddb`) and Phase 4
+(`@netlify/blobs` runtime, `@netlify/functions` dev); the rest arrives in the phase that needs
+it.
 
 **Version constraints (pinned exact in `package.json`):** TypeScript stays on **6.0.x**
 (typescript-eslint supports `<6.1`) and ESLint on **9.x** (eslint-plugin-react and jsx-a11y do
@@ -87,6 +88,16 @@ React UI ─► hooks ─► Domain (pure TS) ─► Repositories ─► Dexie (
 - `src/ui` — generic, presentational components (Button, Dialog, Sheet, NumberField…).
   No domain knowledge, no data access.
 - `src/app` — routes, layout, providers, service worker registration.
+- `src/data/sync` — client sync: `engine.ts` (`createSyncEngine`), `transport.ts`
+  (`SyncTransport`, `SyncError`), `httpTransport.ts` (generic for any sync-v1 backend),
+  `queue.ts`, `commit.ts` (applies a response in one transaction), `restore.ts` (server
+  backups), `syncKey.ts` (device-only key), `attemptLog.ts`, `browserTriggers.ts`,
+  `SyncProvider.tsx` (`useSyncEngine`, `useSyncState`). Decisions in ADR-0004.
+- `server/sync` — the sync server as a plain `Request → Response` handler
+  (`createSyncHandler`) over a `SyncStore` (memory or Netlify Blobs). It is shared by the
+  Netlify Function (`netlify/functions/sync.ts`, a thin adapter), the unit tests and the e2e
+  fake server. Its production code imports only `src/domain` (contract + merge rule); only
+  `server/sync/httpTransport.test.ts` reaches into `src/data` (client transport vs real handler).
 - **The backend is as dumb as possible**: it stores and returns records, applies
   last-write-wins and keeps daily backups. All business logic lives in the client.
 
@@ -108,23 +119,30 @@ docs/
   api/sync-v1.md    backend contract
   adr/              architecture decision records (0001, 0002, …)
   design/           palette, typography, tokens (Phase 1)
+  deploy-netlify.md Netlify deploy guide (Phase 4)
   migration.md      mapping from gym_app
-netlify/functions/  sync.ts (Phase 4)
+netlify/functions/  sync.ts — thin adapter over server/sync (Phase 4)
 public/             icons, robots.txt, manifest (generated)
 scripts/            ports-check.mjs
+server/sync/        sync v1 server: handler, stores (memory, Netlify Blobs), auth, backups,
+                    contract test (Phase 4)
 src/
   app/              App shell (routes, layout, providers)
   domain/           model/ (zod schemas + types), rules/, seed/ (catalog, routines, blocks,
-                    legacy aliases), testing/ (test data builders), dates.ts
-  data/  features/  ui/  i18n/  theme/
+                    legacy aliases), sync/ (contract schemas, merge rule), testing/ (test
+                    data builders), dates.ts
+  data/             Dexie, repositories, importer, exporters, sync/ (client sync engine)
+  features/  ui/  i18n/  theme/
   test/setup.ts     Vitest setup (jest-dom matchers, cleanup, fake-indexeddb/auto)
   test/render.tsx   renderWithProviders + openTestDatabase helpers for component tests
   test/renderApp.tsx renderApp: the whole app with an in-memory router
 tests/
   e2e/              Playwright specs (written by the blind-tester)
   fixtures/         synthetic input files (gym_app sample export, invalid file) for unit and e2e
-  mocks/            fake /api/v1/sync server for e2e (Phase 4)
-context.md  CHANGELOG.md  README.md  LICENSE
+  mocks/            sync-server.ts: fake /api/v1/** for e2e — the real server/sync handler with
+                    a memory store, attached via Playwright `context.route` (no process, no port)
+context.md  CHANGELOG.md  README.md  LICENSE  netlify.toml (build, SPA redirect, headers/CSP)
+tsconfig.json       references only: tsconfig.app / .node / .e2e / .server.json
 ```
 
 Empty folders hold a `.gitkeep` until they get real files.
@@ -214,13 +232,21 @@ deload weeks), deload, short week.
   fresh empty database per render — no seed — overridable with the `db` option;
   `openTestDatabase()` opens one directly); tests of whole screens use `renderApp(path)` from
   `src/test/renderApp.tsx` (real routes, memory router).
-- Vitest runs two projects (`vite.config.ts`): **`domain`** — `src/domain/**/*.test.ts` in a
+- Vitest runs three projects (`vite.config.ts`): **`domain`** — `src/domain/**/*.test.ts` in a
   **Node** environment, so any DOM use fails (guarded by `src/domain/environment.test.ts`) —
-  and **`ui`** — everything else, in jsdom with the RTL setup.
-- Domain and data code need thorough tests: v8 coverage of `src/domain/**` and of
-  `src/data/**` must each stay **≥ 90 %** (lines, functions, branches, statements; per-glob
-  thresholds in `vite.config.ts`). Enforced by `npm run test:coverage`, which CI runs instead
-  of `npm run test`.
+  **`server`** — `server/**` and `netlify/**` tests, in Node — and **`ui`** — everything else,
+  in jsdom with the RTL setup.
+- Domain, data and server code need thorough tests: v8 coverage of `src/domain/**`,
+  `src/data/**` and `server/**` must each stay **≥ 90 %** (lines, functions, branches,
+  statements; per-glob thresholds in `vite.config.ts`; `src/data/**/testing.ts` and
+  `server/**/testing.ts` are excluded). Enforced by `npm run test:coverage`, which CI runs
+  instead of `npm run test`.
+- Sync tests: `src/data/sync/testing.ts` provides `createTestEngine` and `createFakeServer`
+  (fake server over the domain merge rule, manual scheduler); `renderWithProviders` accepts a
+  `sync` option (default: a test engine without key, not started). The contract is checked by
+  `server/sync/contract.test.ts` (against `docs/api/sync-v1.md`) and
+  `server/sync/httpTransport.test.ts` (client transport against the real handler). E2E sync
+  tests use `tests/mocks/sync-server.ts`.
 - Tests use **synthetic data only** — never real exports from gym_app.
 - Playwright builds the app, starts `vite preview` on **4173** and stops it itself
   (`reuseExistingServer: false`, `strictPort`, webServer timeout 60 s). A busy port fails the
@@ -261,7 +287,8 @@ deload weeks), deload, short week.
 Note: `typecheck` is `tsc -b`, not `tsc --noEmit -p .` as first drafted in `context.md` §8.5.
 The root `tsconfig.json` only holds project references (`tsconfig.app.json` for `src`,
 `tsconfig.node.json` for tool configs, `tsconfig.e2e.json` for `tests/` with Node + DOM types
-so `page.evaluate` callbacks type-check), so `-p .` would check no files at all.
+so `page.evaluate` callbacks type-check, `tsconfig.server.json` for `server/` and `netlify/`),
+so `-p .` would check no files at all.
 
 Before saying a task is done: `npm run lint && npm run typecheck && npm run test`
 (+ `npm run build` when build/PWA/functions changed), and `npm run ports:check` is clean.
