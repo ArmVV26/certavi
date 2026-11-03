@@ -54,7 +54,34 @@
       "en": "English"
     },
     "developer": "Developer",
-    "uiCatalog": "Component catalog"
+    "uiCatalog": "Component catalog",
+    "data": {
+      "title": "Data",
+      "intro": "Everything is saved on this device first.",
+      "loading": "Loading…",
+      "listLabel": "Data stored on this device",
+      "types": {
+        "exercise": "Exercises",
+        "routine": "Routines",
+        "session": "Sessions",
+        "set": "Sets",
+        "note": "Exercise notes",
+        "activity": "Activities",
+        "bodyWeight": "Weekly body weights",
+        "weekPlan": "Weeks",
+        "block": "Optional blocks",
+        "blockLog": "Block logs",
+        "weeklyMetric": "Weekly metrics"
+      },
+      "pending": "Waiting to sync",
+      "storage": "Storage",
+      "storageStatus": {
+        "checking": "Checking…",
+        "persisted": "Persistent",
+        "notPersisted": "The browser may delete it if space runs low",
+        "unsupported": "No information from the browser"
+      }
+    }
   },
   "sets": {
     "warmupSymbol": "W",
@@ -239,6 +266,7 @@
     },
     "metrics": {
       "stairs": "Pain going down stairs",
+      "maxPain": "Maximum pain during the exercises",
       "pogos": "Pain on pogos"
     },
     "weeklyMetrics": {

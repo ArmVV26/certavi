@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { makeSession, makeSet, makeWeekPlan } from '../testing/builders';
 import { activitySchema, bodyWeightId, bodyWeightSchema } from './activity';
-import { blockLogId, blockMetricSchema, weeklyMetricId, weeklyMetricSchema } from './block';
+import { ANKLE_REHAB_BLOCK } from '../seed/blocks';
+import {
+  blockLogId,
+  blockMetricSchema,
+  optionalBlockSchema,
+  weeklyMetricId,
+  weeklyMetricSchema,
+} from './block';
 import { isLowerBody, SET_KINDS, weekdaySchema, weekSizeSchema } from './enums';
 import { plainText, textKey, textRefSchema, tombstoneSchema } from './envelope';
 import { parseRecord, RECORD_SCHEMAS } from './records';
@@ -101,6 +108,15 @@ describe('records', () => {
   it('rejects a block metric whose min is not below its max', () => {
     const metric = { id: 'stairs', name: textKey('x'), min: 10, max: 0 };
     expect(blockMetricSchema.safeParse(metric).success).toBe(false);
+  });
+
+  it('accepts optional start and review dates on a block, as ISO dates', () => {
+    const block = { ...ANKLE_REHAB_BLOCK, startDate: '2026-10-01', reviewDate: '2026-10-20' };
+    expect(optionalBlockSchema.safeParse(block).success).toBe(true);
+    expect(optionalBlockSchema.safeParse(ANKLE_REHAB_BLOCK).success).toBe(true);
+    expect(optionalBlockSchema.safeParse({ ...block, reviewDate: '20/10/2026' }).success).toBe(
+      false,
+    );
   });
 
   it('builds stable ids for per-day and per-week records', () => {
