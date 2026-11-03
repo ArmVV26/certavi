@@ -3,3 +3,4 @@ export * from './dates';
 export * from './model';
 export * from './rules';
 export * from './seed';
+export * from './sync';

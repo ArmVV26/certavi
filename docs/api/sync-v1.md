@@ -1,8 +1,10 @@
 # Sync API v1 — contract
 
-> **Status:** Draft · written in Phase 0 from the behaviour of `gym_app` 1.5.1
+> **Status:** Implemented (Phase 4) · written in Phase 0 from the behaviour of `gym_app` 1.5.1
 > (`netlify/functions/sync.mjs` + `public/js/store.js`), adapted to Certavi's naming.
-> Implemented and covered by a contract test in **Phase 4**.
+> Server: `server/sync/handler.ts` (Netlify adapter `netlify/functions/sync.ts`).
+> Contract test: `server/sync/contract.test.ts` checks the examples, the error table and the
+> numbers in this document against the schemas in `src/domain/sync/contract.ts` and the server.
 >
 > This document is the **only thing another backend has to honour** to replace the Netlify
 > implementation (see [ADR-0001](../adr/0001-backend-netlify-blobs.md)). The zod schemas in
@@ -138,10 +140,15 @@ Newest first. `count` (number of records) and `createdAt` may be `null` if unkno
 
 ### `GET /api/v1/backups/{date}`
 
-`date` is `YYYY-MM-DD`. `200`:
+`date` is `YYYY-MM-DD`. `200` (the records as stored that day):
 
 ```json
-{ "date": "2026-11-02", "records": [/* SyncRecord[] as stored that day */] }
+{
+  "date": "2026-11-02",
+  "records": [
+    { "id": "set_m3k…", "type": "set", "updatedAt": 1762070400123, "serverSeq": 1239, "…": "…" }
+  ]
+}
 ```
 
 Errors: `400 invalid-date`, `404 not-found`.
@@ -169,7 +176,8 @@ the client maps them to translated messages.
 | 409    | `conflict`             | Concurrency retries exhausted                      | Retry with backoff                        |
 | 413    | `payload-too-large`    | Body larger than **8 MiB**                         | Send smaller batches                      |
 | 500    | `server-misconfigured` | `CLAVE_SYNC` missing or too short                  | **Fatal**: stop retrying, show error      |
-| 5xx    | —                      | Anything else                                      | Retry with backoff                        |
+| 500    | `internal-error`       | Unexpected failure (storage down, corrupt data)    | Retry with backoff                        |
+| 5xx    | —                      | Anything else (e.g. from the hosting platform)     | Retry with backoff                        |
 
 ## 8. Client obligations
 
@@ -215,9 +223,12 @@ Data exported from gym_app is converted by the legacy importer, not by the serve
 ## 10. Netlify implementation notes (non-normative)
 
 - Function `netlify/functions/sync.ts` with `config.path` covering the three routes.
-- `@netlify/blobs` `getStore({ name: 'certavi', consistency: 'strong' })`; the document is
+- `@netlify/blobs` `getStore({ name, consistency: 'strong' })`; the document is
   `{ serverSeq: number, records: Record<id, SyncRecord> }`; conditional writes with
   `onlyIfMatch: etag` / `onlyIfNew: true`.
+- Named stores are shared by every deploy of a site, so the store name depends on the deploy
+  context: `certavi` in production, `certavi-<context>` elsewhere (`certavi-branch-deploy` for
+  the `dev` branch deploy), so a test deploy never touches the real data.
 - Backup blobs carry metadata `{ createdAt, count }` so the list does not have to read them.
 
 ## 11. Versioning
