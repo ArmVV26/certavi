@@ -1,29 +1,16 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { RecordType } from '../../domain';
 import { useDatabase } from '../../data/DatabaseContext';
 import { getStorageStatus, type StorageLike, type StorageStatus } from '../../data/persistence';
+import type { ExportFile } from '../../data/exportFile';
 import { countLiveRecords, countPending } from '../../data/queries';
 import { formatNumber } from '../../i18n/format';
 import { useLocale } from '../../i18n/LocaleContext';
 import { Card } from '../../ui/Card';
 import styles from './DataCard.module.css';
-
-/** Rows shown, in order. Synced settings are a single record and are not listed. */
-const COUNTED_TYPES = [
-  'exercise',
-  'routine',
-  'session',
-  'set',
-  'note',
-  'activity',
-  'bodyWeight',
-  'weekPlan',
-  'block',
-  'blockLog',
-  'weeklyMetric',
-] as const satisfies readonly Exclude<RecordType, 'settings'>[];
+import { ImportExport } from './ImportExport';
+import { COUNTED_TYPES } from './recordTypes';
 
 const STORAGE_KEY = {
   persisted: 'persisted',
@@ -48,10 +35,12 @@ function useStorageStatus(storage: StorageLike | undefined): StorageStatus | 'ch
 interface DataCardProps {
   /** `navigator.storage` by default; injectable for tests. */
   storage?: StorageLike;
+  /** Download of exported files; injectable for tests. */
+  download?: (file: ExportFile) => void;
 }
 
 /** What is stored on this device: counts per record type, pending sync and storage status. */
-export function DataCard({ storage = navigator.storage }: DataCardProps) {
+export function DataCard({ storage = navigator.storage, download }: DataCardProps) {
   const { t } = useTranslation();
   const { locale } = useLocale();
   const db = useDatabase();
@@ -92,6 +81,7 @@ export function DataCard({ storage = navigator.storage }: DataCardProps) {
           </dd>
         </div>
       </dl>
+      <ImportExport {...(download ? { download } : {})} />
     </Card>
   );
 }

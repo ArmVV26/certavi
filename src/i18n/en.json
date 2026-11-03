@@ -71,7 +71,8 @@
         "weekPlan": "Weeks",
         "block": "Optional blocks",
         "blockLog": "Block logs",
-        "weeklyMetric": "Weekly metrics"
+        "weeklyMetric": "Weekly metrics",
+        "settings": "Settings"
       },
       "pending": "Waiting to sync",
       "storage": "Storage",
@@ -80,12 +81,76 @@
         "persisted": "Persistent",
         "notPersisted": "The browser may delete it if space runs low",
         "unsupported": "No information from the browser"
+      },
+      "import": "Import",
+      "export": "Export",
+      "importLegacy": "Import from the previous app",
+      "importBackup": "Import a Certavi backup",
+      "exportBackup": "Export full backup (.json)",
+      "exportSets": "Export sets (.csv)",
+      "exportActivity": "Export activity and weight (.csv)",
+      "preview": {
+        "intro": "This will be saved on this device:",
+        "summary": "Import summary",
+        "unchanged": "Unchanged (already here)",
+        "ignored": "Ignored (deleted or internal settings)",
+        "invalid": "Invalid (not imported)",
+        "nothing": "There is nothing new to import.",
+        "confirm": "Import",
+        "cancel": "Cancel",
+        "close": "Close"
+      },
+      "imported": "Records imported: {{total}}",
+      "errors": {
+        "notLegacy": "This file is not a full backup of the previous app.",
+        "notBackup": "This file is not a Certavi backup.",
+        "importFailed": "The import failed. Nothing was saved.",
+        "exportFailed": "The export failed."
+      },
+      "csv": {
+        "yes": "yes",
+        "no": "no",
+        "sets": {
+          "date": "date",
+          "session": "session",
+          "exercise": "exercise",
+          "setKind": "set_type",
+          "order": "order",
+          "weight": "weight_kg",
+          "reps": "reps",
+          "rir": "rir",
+          "straps": "straps",
+          "band": "band",
+          "e1rm": "e1rm_kg",
+          "effective": "counts_as_effective",
+          "exerciseNote": "exercise_note",
+          "sessionNote": "session_note"
+        },
+        "activity": {
+          "date": "date",
+          "type": "type",
+          "activity": "activity",
+          "minutes": "minutes",
+          "weight": "weight_kg",
+          "note": "note"
+        },
+        "activityRow": "activity",
+        "weightRow": "weekly_average_weight"
       }
     }
   },
   "sets": {
     "warmupSymbol": "W",
-    "warmup": "Warm-up"
+    "warmup": "Warm-up",
+    "kinds": {
+      "warmup": "Warm-up",
+      "approach": "Approach",
+      "top": "Top set",
+      "backoff": "Back-off",
+      "straight": "Working set",
+      "bilbo": "Bilbo",
+      "extra": "Extra set"
+    }
   },
   "ui": {
     "close": "Close",
@@ -242,7 +307,8 @@
       "inclineCurl": "First set with 24 kg and the back-off sets with the next lighter dumbbell. When the first set reaches 12, move to 26 kg.",
       "crunch": "Add load until you finish at RIR 1-2.",
       "legPress": "Always load the plates the same way and write it in the note."
-    }
+    },
+    "free": "Free session"
   },
   "blocks": {
     "names": {
@@ -275,6 +341,16 @@
     "sides": {
       "left": "Left",
       "right": "Right"
+    }
+  },
+  "activities": {
+    "kinds": {
+      "football": "Football",
+      "swimming": "Swimming",
+      "hiking": "Hiking",
+      "mobility": "Mobility",
+      "cycling": "Cycling",
+      "other": "Other"
     }
   }
 }
