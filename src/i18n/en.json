@@ -129,5 +129,124 @@
     "formats": "Dates and numbers",
     "today": "Today: {{date}}",
     "number": "Number: {{value}}"
+  },
+  "exercises": {
+    "names": {
+      "press-inclinado-mancuernas": "Incline dumbbell press",
+      "press-pecho-vertical": "Seated machine chest press",
+      "press-vertical-pie": "Standing machine chest press",
+      "press-inclinado-maquina": "Incline machine chest press",
+      "bilbo-banca": "Barbell bench press · Bilbo set",
+      "aperturas-maquina": "Machine chest fly",
+      "press-hombro-inclinado": "Incline machine shoulder press",
+      "press-militar-discos": "Plate-loaded shoulder press",
+      "laterales-maquina": "Machine lateral raise",
+      "laterales-placas": "Selectorized lateral raise",
+      "laterales-polea": "Cable lateral raise",
+      "vuelos-posteriores": "Reverse machine fly",
+      "triceps-v": "Cable triceps pushdown (V-bar)",
+      "triceps-overhead-polea": "Overhead cable triceps extension",
+      "triceps-katana": "Cable katana triceps extension",
+      "triceps-polea-uni": "Single-arm cable pushdown",
+      "jalon-pecho": "Lat pulldown · wide neutral grip",
+      "jalon-cerrado": "Lat pulldown · close overhand grip",
+      "remo-t": "T-bar row",
+      "remo-bajo": "Selectorized seated row",
+      "remo-bajo-discos": "Plate-loaded seated row",
+      "remo-alto-isolateral": "Iso-Lateral high row",
+      "dominadas": "Pull-ups",
+      "curl-inclinado": "Incline dumbbell curl",
+      "curl-martillo-polea": "Cable hammer curl",
+      "curl-predicador": "Machine preacher curl",
+      "curl-muneca": "Behind-the-back wrist curl",
+      "crunch-maquina": "Machine crunch",
+      "hack-banda": "Banded hack squat",
+      "hack-squat": "Hack squat",
+      "prensa": "Leg press",
+      "prensa-pendular-uni": "Single-leg pendulum press",
+      "bilbo-prensa": "Leg press · Bilbo set",
+      "extension-pierna": "Plate-loaded leg extension",
+      "extension-pierna-placas": "Selectorized leg extension",
+      "rdl-maquina": "Machine Romanian deadlift",
+      "hip-thrust": "Plate-loaded hip thrust",
+      "hip-thrust-maquina": "Machine hip thrust",
+      "curl-femoral-pie": "Standing single-leg curl",
+      "curl-femoral-tumbado": "Lying leg curl",
+      "curl-femoral-sentado": "Seated leg curl",
+      "abduccion": "Machine hip abduction",
+      "aduccion": "Machine hip adduction",
+      "gemelo-hack": "Hack machine calf raise",
+      "gemelo-sentado-discos": "Plate-loaded seated calf raise"
+    },
+    "groups": {
+      "chest": "Chest",
+      "back": "Back",
+      "shoulders": "Shoulders",
+      "quads": "Quads",
+      "hamstrings-glutes": "Hamstrings and glutes",
+      "triceps": "Triceps",
+      "biceps": "Biceps",
+      "calves": "Calves",
+      "core": "Core",
+      "forearms": "Forearms"
+    },
+    "equipment": {
+      "plate-loaded": "Plate-loaded",
+      "selectorized": "Selectorized",
+      "dumbbell": "Dumbbells",
+      "cable": "Cable",
+      "barbell": "Barbell",
+      "bodyweight": "Bodyweight",
+      "other": "Other"
+    }
+  },
+  "routines": {
+    "names": {
+      "push": "Push",
+      "pull": "Pull",
+      "upper": "Upper",
+      "lowerA": "Lower A",
+      "lowerB": "Lower B",
+      "lowerFull": "Lower Full"
+    },
+    "notes": {
+      "calf": "First exercise of the day. Pause at the bottom, no bounce. +5 kg a week if there is no pain the next day, until you are back at 80 kg.",
+      "bandedHack": "Purple band by default. If you use another one, note its colour: that session does not count for weight increases. Go all the way down on every rep; if you cannot, place your feet a little higher on the platform.",
+      "inclineCurl": "First set with 24 kg and the back-off sets with the next lighter dumbbell. When the first set reaches 12, move to 26 kg.",
+      "crunch": "Add load until you finish at RIR 1-2.",
+      "legPress": "Always load the plates the same way and write it in the note."
+    }
+  },
+  "blocks": {
+    "names": {
+      "ankleRehab": "Ankle rehab",
+      "stretching": "Stretching"
+    },
+    "items": {
+      "foamRoll": "Calf foam rolling",
+      "wallAnkle": "Knee-to-wall ankle mobility",
+      "ankleSit": "Sitting on the ankle",
+      "bandMobilization": "Banded ankle mobilization",
+      "boxDrop": "Box step-down",
+      "heelRaise": "Heel raises with slow lowering",
+      "splitHeelRaise": "Split-stance heel raises",
+      "pogos": "Pogos"
+    },
+    "doses": {
+      "twoBy30sPerLeg": "2 × 30 s per leg",
+      "threeBy10PerLeg": "3 × 10 per leg",
+      "threeBy20": "3 × 20"
+    },
+    "metrics": {
+      "stairs": "Pain going down stairs",
+      "pogos": "Pain on pogos"
+    },
+    "weeklyMetrics": {
+      "wallTest": "Wall test"
+    },
+    "sides": {
+      "left": "Left",
+      "right": "Right"
+    }
   }
 }
