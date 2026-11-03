@@ -129,5 +129,124 @@
     "formats": "Fechas y números",
     "today": "Hoy: {{date}}",
     "number": "Número: {{value}}"
+  },
+  "exercises": {
+    "names": {
+      "press-inclinado-mancuernas": "Press inclinado con mancuernas",
+      "press-pecho-vertical": "Press de pecho en máquina vertical",
+      "press-vertical-pie": "Press de pecho en máquina vertical de pie",
+      "press-inclinado-maquina": "Press de pecho inclinado en máquina",
+      "bilbo-banca": "Press de banca con barra · serie Bilbo",
+      "aperturas-maquina": "Aperturas en máquina",
+      "press-hombro-inclinado": "Press de hombro inclinado en máquina",
+      "press-militar-discos": "Press militar en máquina de discos",
+      "laterales-maquina": "Elevaciones laterales en máquina",
+      "laterales-placas": "Elevaciones laterales en máquina de placas",
+      "laterales-polea": "Elevaciones laterales en polea",
+      "vuelos-posteriores": "Vuelos posteriores en máquina",
+      "triceps-v": "Tríceps en polea con agarre en V",
+      "triceps-overhead-polea": "Extensión de tríceps sobre la cabeza en polea",
+      "triceps-katana": "Tríceps katana en polea",
+      "triceps-polea-uni": "Tríceps en polea a una mano",
+      "jalon-pecho": "Jalón de pecho · agarre abierto neutro",
+      "jalon-cerrado": "Jalón de pecho · agarre cerrado prono",
+      "remo-t": "Remo en T",
+      "remo-bajo": "Remo bajo en máquina de placas",
+      "remo-bajo-discos": "Remo bajo en máquina de discos",
+      "remo-alto-isolateral": "Remo alto Iso-Lateral",
+      "dominadas": "Dominadas",
+      "curl-inclinado": "Curl inclinado con mancuernas",
+      "curl-martillo-polea": "Curl martillo en polea",
+      "curl-predicador": "Curl predicador en máquina",
+      "curl-muneca": "Curl de muñeca por detrás",
+      "crunch-maquina": "Crunch en máquina",
+      "hack-banda": "Sentadilla hack con banda",
+      "hack-squat": "Sentadilla hack",
+      "prensa": "Prensa",
+      "prensa-pendular-uni": "Prensa pendular unilateral",
+      "bilbo-prensa": "Prensa · serie Bilbo",
+      "extension-pierna": "Extensión de cuádriceps en máquina de discos",
+      "extension-pierna-placas": "Extensión de cuádriceps en máquina de placas",
+      "rdl-maquina": "Peso muerto rumano en máquina",
+      "hip-thrust": "Hip thrust en máquina de discos",
+      "hip-thrust-maquina": "Hip thrust en máquina",
+      "curl-femoral-pie": "Curl femoral de pie unilateral",
+      "curl-femoral-tumbado": "Curl femoral tumbado",
+      "curl-femoral-sentado": "Curl femoral sentado",
+      "abduccion": "Abducción de cadera en máquina",
+      "aduccion": "Aducción de cadera en máquina",
+      "gemelo-hack": "Elevaciones de gemelo en hack",
+      "gemelo-sentado-discos": "Gemelo sentado en máquina de discos"
+    },
+    "groups": {
+      "chest": "Pecho",
+      "back": "Espalda",
+      "shoulders": "Hombro",
+      "quads": "Cuádriceps",
+      "hamstrings-glutes": "Femoral y glúteo",
+      "triceps": "Tríceps",
+      "biceps": "Bíceps",
+      "calves": "Gemelo",
+      "core": "Core",
+      "forearms": "Antebrazo"
+    },
+    "equipment": {
+      "plate-loaded": "Discos",
+      "selectorized": "Placas",
+      "dumbbell": "Mancuernas",
+      "cable": "Polea",
+      "barbell": "Barra",
+      "bodyweight": "Peso corporal",
+      "other": "Otro"
+    }
+  },
+  "routines": {
+    "names": {
+      "push": "Push",
+      "pull": "Pull",
+      "upper": "Upper",
+      "lowerA": "Lower A",
+      "lowerB": "Lower B",
+      "lowerFull": "Lower Full"
+    },
+    "notes": {
+      "calf": "Primer ejercicio del día. Pausa abajo y sin rebote. +5 kg por semana si al día siguiente no hay dolor, hasta volver a 80 kg.",
+      "bandedHack": "Banda morada por defecto. Si usas otra, apunta el color: esa sesión no cuenta para decidir subidas. Baja hasta el fondo en todas las repeticiones; si no llegas, sube un poco los pies en la plataforma.",
+      "inclineCurl": "La primera serie con 24 kg y las back-off con la mancuerna inferior. Cuando la primera llegue a 12, pasa a 26 kg.",
+      "crunch": "Sube carga hasta terminar a RIR 1-2.",
+      "legPress": "Coloca los discos siempre igual y apúntalo en la nota."
+    }
+  },
+  "blocks": {
+    "names": {
+      "ankleRehab": "Rehabilitación del tobillo",
+      "stretching": "Estiramientos"
+    },
+    "items": {
+      "foamRoll": "Rodillo en gemelo",
+      "wallAnkle": "Tobillo a la pared",
+      "ankleSit": "Sentado sobre el tobillo",
+      "bandMobilization": "Movilización con goma",
+      "boxDrop": "Bajada de cajón",
+      "heelRaise": "Elevaciones de talón con bajada lenta",
+      "splitHeelRaise": "Elevaciones de talón en zancada",
+      "pogos": "Pogos"
+    },
+    "doses": {
+      "twoBy30sPerLeg": "2 × 30 s por pierna",
+      "threeBy10PerLeg": "3 × 10 por pierna",
+      "threeBy20": "3 × 20"
+    },
+    "metrics": {
+      "stairs": "Dolor al bajar escaleras",
+      "pogos": "Dolor en pogos"
+    },
+    "weeklyMetrics": {
+      "wallTest": "Test de la pared"
+    },
+    "sides": {
+      "left": "Izquierda",
+      "right": "Derecha"
+    }
   }
 }

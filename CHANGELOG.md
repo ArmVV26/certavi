@@ -7,9 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Domain model and catalog (Phase 2) — to be released as 0.3.0.
+
+### Added
+
+- Domain model in `src/domain/model` (pure TypeScript, no React, Dexie or `fetch`): zod schemas
+  and types for every entity with the sync envelope (`exercise`, `routine`, `weekPlan`,
+  `session`, `set`, `note`, `activity`, `bodyWeight`, `block`, `blockLog`, `weeklyMetric`,
+  `settings`), tombstone schema, `TextRef` (`{ key }` for seed i18n keys, `{ text }` for user
+  text), `as const` enums, `RECORD_SCHEMAS` and `parseRecord` (validates by type; soft-deleted
+  records only need the envelope). Derived ids for week plans, body weight, notes, block logs
+  and weekly metrics; settings use the id `settings`.
+- Local ISO date helpers (`src/domain/dates.ts`), weeks starting on Monday.
+- Domain rules in `src/domain/rules`: Epley estimated 1RM (ignores warm-up and approach sets),
+  effective sets (approach counts, warm-up and 0-rep sets do not), back-off suggestion (−10 %
+  rounded to the increment, at least one step below the top set), progression advice, "last
+  time" reference (skips "does not count" and deload sessions), weekly sets per muscle group vs
+  plan, week plan (live vs frozen when closed), deload, short week and records (max weight,
+  best e1RM, best volume, rep records, record events).
+- Seed data in `src/domain/seed`: 45 exercises (gym_app ids preserved, `abdomen` merged into
+  `crunch-maquina` through a legacy alias, new `hack-banda`), the 6 current routines, the
+  "ankle rehab" block (8 items, 0-10 pain metrics with a threshold of 3, weekly wall test) and
+  an empty, inactive "stretching" block. Seed records use `updatedAt: 0`.
+- Spanish and English translations for seed exercises, muscle groups, equipment, routines,
+  routine notes and blocks, with a test that every seed key exists in both languages.
+- Test data builders in `src/domain/testing`.
+- Functional spec of the rules from the user's point of view (`docs/spec/rules.md`).
+- `npm run test:coverage` script: v8 coverage of `src/domain` with 90 % thresholds (lines,
+  functions, branches, statements).
+- Dependencies: `zod` 4.6.7 (runtime) and `@vitest/coverage-v8` 5.1.0 (dev).
+
+### Changed
+
+- Vitest runs two projects: `domain` in a Node environment (DOM use fails, guarded by a test)
+  and `ui` in jsdom with the RTL setup; the suite runs about twice as fast.
+- CI runs `npm run test:coverage` instead of `npm run test`, so it fails if domain coverage
+  drops below 90 %.
+- Functional spec index links the rules spec and marks the theme, language and navigation spec
+  as covered by end-to-end tests.
+- Migration guide: Phase 2 seed ids (exercise alias, exercises outside routines, routine ids)
+  and the mapping of set kinds and slots from gym_app.
+
 ## [0.2.0] - 2026-11-02
 
-Design, theme, i18n and navigation (Phase 2)
+Design, theme, i18n and navigation (Phase 1).
 
 ### Added
 
@@ -87,6 +128,6 @@ Project foundation (Phase 0).
   guide from gym_app, functional spec index and design docs index.
 - License: all rights reserved (MIT planned when the repository becomes public).
 
-[Unreleased]: https://github.com/ArmVV26/certavi/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/ArmVV26/certavi/compare/v0.2.0...HEAD
 [0.2.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.2.0
 [0.1.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.1.0

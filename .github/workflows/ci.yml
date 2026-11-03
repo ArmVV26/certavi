@@ -35,8 +35,10 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Unit and component tests
-        run: npm run test
+      # Runs every unit and component test once, and fails if src/domain coverage drops below
+      # 90 % (thresholds in vite.config.ts).
+      - name: Unit and component tests, with domain coverage
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build

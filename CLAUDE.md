@@ -48,11 +48,11 @@ Native App Store app, multi-user, social features.
 | Backend    | Netlify Functions (TypeScript) + `@netlify/blobs`                                             |
 | Tests      | Vitest + RTL + jsdom; Playwright (Chromium locally; Chromium + WebKit in `e2e:all` and CI)    |
 | Quality    | ESLint (flat, type-checked) + Prettier + `tsc`; husky + commitlint                            |
-| CI         | GitHub Actions: lint, typecheck, test, build on PRs to `dev` and `main`; e2e on PRs to `main` |
+| CI         | GitHub Actions: lint, typecheck, test:coverage, build on PRs to dev/main; e2e on PRs to main  |
 
-Installed so far: Phase 0 tooling plus Phase 1 (`react-router`, `i18next`, `react-i18next`,
-`@fontsource-variable/archivo`, `@axe-core/playwright`); the rest arrives in the phase that
-needs it.
+Installed so far: Phase 0 tooling, Phase 1 (`react-router`, `i18next`, `react-i18next`,
+`@fontsource-variable/archivo`, `@axe-core/playwright`) and Phase 2 (`zod`,
+`@vitest/coverage-v8`); the rest arrives in the phase that needs it.
 
 **Version constraints (pinned exact in `package.json`):** TypeScript stays on **6.0.x**
 (typescript-eslint supports `<6.1`) and ESLint on **9.x** (eslint-plugin-react and jsx-a11y do
@@ -113,7 +113,9 @@ public/             icons, robots.txt, manifest (generated)
 scripts/            ports-check.mjs
 src/
   app/              App shell (routes, layout, providers)
-  domain/  data/  features/  ui/  i18n/  theme/
+  domain/           model/ (zod schemas + types), rules/, seed/ (catalog, routines, blocks,
+                    legacy aliases), testing/ (test data builders), dates.ts
+  data/  features/  ui/  i18n/  theme/
   test/setup.ts     Vitest setup (jest-dom matchers, cleanup)
   test/render.tsx   renderWithProviders helper for component tests
   test/renderApp.tsx renderApp: the whole app with an in-memory router
@@ -208,7 +210,12 @@ deload weeks), deload, short week.
 - Component tests that need the app providers use `renderWithProviders` from
   `src/test/render.tsx` (theme, i18n with a `locale` option defaulting to `es`, toasts); tests of
   whole screens use `renderApp(path)` from `src/test/renderApp.tsx` (real routes, memory router).
-- Domain code needs thorough tests (Phase 2 target: ≥ 90 % coverage of `src/domain`).
+- Vitest runs two projects (`vite.config.ts`): **`domain`** — `src/domain/**/*.test.ts` in a
+  **Node** environment, so any DOM use fails (guarded by `src/domain/environment.test.ts`) —
+  and **`ui`** — everything else, in jsdom with the RTL setup.
+- Domain code needs thorough tests: v8 coverage of `src/domain/**` must stay **≥ 90 %** (lines,
+  functions, branches, statements). Enforced by `npm run test:coverage`, which CI runs instead
+  of `npm run test`.
 - Tests use **synthetic data only** — never real exports from gym_app.
 - Playwright builds the app, starts `vite preview` on **4173** and stops it itself
   (`reuseExistingServer: false`, `strictPort`, webServer timeout 60 s). A busy port fails the
@@ -238,6 +245,7 @@ deload weeks), deload, short week.
 | `npm run typecheck`               | `tsc -b`                                                                             |
 | `npm run test`                    | Vitest, single run                                                                   |
 | `npm run test:watch`              | Vitest in watch mode (user only — never leave it running)                            |
+| `npm run test:coverage`           | Vitest single run with v8 coverage; fails if `src/domain` drops below 90 % (CI)      |
 | `npm run e2e`                     | Playwright, **Chromium only** (builds, serves, tests, stops the server)              |
 | `npm run e2e:all`                 | Playwright, Chromium + WebKit (10 min global timeout); also run by CI on PRs to main |
 | `npm run format` / `format:check` | Prettier write / check                                                               |
