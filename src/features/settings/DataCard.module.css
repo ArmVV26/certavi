@@ -1,0 +1,39 @@
+.heading {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
+
+.intro {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+  border-bottom: var(--border-width) solid var(--border);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.value {
+  font-family: var(--font-numeric);
+  font-variant-numeric: var(--numeric-features);
+  font-weight: var(--fw-semibold);
+}
+
+.status {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  text-align: end;
+}
