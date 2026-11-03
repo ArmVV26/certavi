@@ -7,7 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Domain model and catalog (Phase 2) — to be released as 0.3.0.
+Local data, importer and exports (Phase 3, in progress) — to be released as 0.4.0.
+
+### Added
+
+- Local database with Dexie (ADR-0003, `docs/adr/0003-local-storage-dexie.md`): one table per
+  record type plus `pending` (one row per record id) and `meta` (persisted monotonic clock);
+  soft deletes stored as envelope-only tombstones in the same table (`src/data/db.ts`,
+  `clock.ts`).
+- Repositories (`createRepository`, `createRepositories`: get, list, put, putMany, remove) that
+  validate with zod, stamp `updatedAt` from the monotonic clock and add the record to the
+  pending queue in the same transaction (`src/data/repository.ts`).
+- Seed written to the database on start-up (`ensureSeed`: inserts missing records, refreshes
+  only those still at `updatedAt` 0, never queued); persistent storage requested with
+  `navigator.storage.persist()`; start-up in `startDatabase`; `DatabaseProvider` and
+  `useDatabase`; live count queries (`countLiveRecords`, `countPending`).
+- Settings → "Data" card with live counts per record type, records pending sync and storage
+  status (`settings.data.*` keys in Spanish and English).
+- Seed settings record `SEED_SETTINGS` (id `settings`, default rest, no plan start,
+  `updatedAt` 0); `max-pain` metric ("max pain during the exercises", 0-10, threshold 3) in the
+  ankle rehab block; optional `startDate` and `reviewDate` on optional blocks; `RecordOf<K>`
+  type.
+- Functional spec `docs/spec/data-import-export.md` (part A final, part B draft) and end-to-end
+  spec `tests/e2e/data.spec.ts` (7 tests).
+- Test helper `openTestDatabase()` and a `db` option in `renderWithProviders` (fresh, empty
+  database per render); `fake-indexeddb` loaded in the test setup.
+- Dependencies: `dexie` 4.4.7 and `dexie-react-hooks` 4.4.0 (runtime) and `fake-indexeddb`
+  6.2.7 (dev).
+
+### Changed
+
+- The app opens the local database before rendering; `Providers` takes a `db` prop.
+- `npm run test:coverage` also enforces 90 % on `src/data` (per-glob thresholds for
+  `src/domain/**` and `src/data/**`).
+- Functional spec index lists the data spec; the rules spec mentions the third pain metric.
+
+## [0.3.0] - 2026-11-03
+
+Domain model and catalog (Phase 2).
 
 ### Added
 
@@ -128,6 +165,7 @@ Project foundation (Phase 0).
   guide from gym_app, functional spec index and design docs index.
 - License: all rights reserved (MIT planned when the repository becomes public).
 
-[Unreleased]: https://github.com/ArmVV26/certavi/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/ArmVV26/certavi/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.3.0
 [0.2.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.2.0
 [0.1.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.1.0
