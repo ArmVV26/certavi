@@ -8,20 +8,20 @@ What Certavi does, described from the **user's point of view**.
 
 ## Index
 
-| Spec                                                                                                                                                      | Status                                  | Phase            |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- | ---------------- |
-| Smoke: the app loads, its tab title says "Certavi" and it opens on Today                                                                                  | ✅ covered by `tests/e2e/smoke.spec.ts` | 0 (updated in 1) |
-| [theme-language-navigation.md](theme-language-navigation.md) — theme (system/light/dark), language (es/en), navigation shell, base components (`/dev/ui`) | 🚧 written, e2e pending                 | 1                |
-| `rules.md` — training rules: 1RM, progression, weekly sets, records, deload, short week                                                                   | ⏳                                      | 2                |
-| `data-import-export.md` — import from gym_app, JSON/CSV export and import                                                                                 | ⏳                                      | 3                |
-| `sync.md` — sync key, status indicator, attempt log, server backups                                                                                       | ⏳                                      | 4                |
-| `today.md` — Today screen                                                                                                                                 | ⏳                                      | 5                |
-| `session.md` — active session                                                                                                                             | ⏳                                      | 5                |
-| `exercises.md` — catalog, filters, custom exercises, exercise detail                                                                                      | ⏳                                      | 6                |
-| `routines.md` — routine viewer and editor                                                                                                                 | ⏳                                      | 6                |
-| `calendar.md` — calendar and week closing                                                                                                                 | ⏳                                      | 7                |
-| `progress.md` — progress screens and charts                                                                                                               | ⏳                                      | 7                |
-| `blocks.md` — optional mobility / stretching / rehab blocks                                                                                               | ⏳                                      | 7                |
+| Spec                                                                                                                                                      | Status                                                                   | Phase            |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------- |
+| Smoke: the app loads, its tab title says "Certavi" and it opens on Today                                                                                  | ✅ covered by `tests/e2e/smoke.spec.ts`                                  | 0 (updated in 1) |
+| [theme-language-navigation.md](theme-language-navigation.md) — theme (system/light/dark), language (es/en), navigation shell, base components (`/dev/ui`) | ✅ covered by `tests/e2e/{navigation,theme,language,components}.spec.ts` | 1                |
+| [rules.md](rules.md) — training rules: 1RM, progression, weekly sets, records, deload, short week, seed catalog                                           | ✅ written; covered by unit tests (no screens yet)                       | 2                |
+| `data-import-export.md` — import from gym_app, JSON/CSV export and import                                                                                 | ⏳                                                                       | 3                |
+| `sync.md` — sync key, status indicator, attempt log, server backups                                                                                       | ⏳                                                                       | 4                |
+| `today.md` — Today screen                                                                                                                                 | ⏳                                                                       | 5                |
+| `session.md` — active session                                                                                                                             | ⏳                                                                       | 5                |
+| `exercises.md` — catalog, filters, custom exercises, exercise detail                                                                                      | ⏳                                                                       | 6                |
+| `routines.md` — routine viewer and editor                                                                                                                 | ⏳                                                                       | 6                |
+| `calendar.md` — calendar and week closing                                                                                                                 | ⏳                                                                       | 7                |
+| `progress.md` — progress screens and charts                                                                                                               | ⏳                                                                       | 7                |
+| `blocks.md` — optional mobility / stretching / rehab blocks                                                                                               | ⏳                                                                       | 7                |
 
 ## Smoke acceptance criteria (Phase 0, updated in Phase 1)
 

@@ -3,7 +3,7 @@
 > Documento de arranque del proyecto **Certavi**, la reescritura de la app de registro de gimnasio (antes «Winter Arc · registro», repositorio `gym_app`).
 > Al crear el repositorio, este archivo se copia como `context.md` en la raíz. Desde ese momento es la **fuente de verdad del estado del proyecto**: qué está decidido, qué está hecho, qué falta y con qué prompt se arranca cada fase. Lo mantiene al día el agente de contexto.
 >
-> Última actualización: 2 nov 2026 · Estado: **Fase 0 cerrada (`v0.1.0`) · Fase 1 implementada y verificada 🚧 (lint, typecheck, test, build, format y e2e ✅): pendiente de commits de `feature/app-shell`, PR a `dev`, PR `dev → main` y tag `v0.2.0` por el usuario**
+> Última actualización: 3 nov 2026 · Estado: **Fase 0 cerrada (`v0.1.0`) · Fase 1 cerrada (`v0.2.0`) · Fase 2 implementada y verificada 🚧 (lint, typecheck, test, test:coverage, build, format y regresión e2e ✅): pendiente de commits de `feature/domain-model`, PR a `dev`, PR `dev → main` y tag `v0.3.0` por el usuario**
 
 ---
 
@@ -100,6 +100,23 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Límites de e2e | Tras el incidente del 2026-11-02 (sección 12): `playwright.config.ts` con **2 workers** en local (CI: los de por defecto + 2 reintentos), `retries` 0 y `maxFailures` 3 en local, `timeout` 30 s por test, `globalTimeout` 5 min (`npm run e2e`) y 10 min (`npm run e2e:all`, vía `--global-timeout=600000`), reporter `list` + `html` (`open: 'never'`), webServer con `reuseExistingServer: false` y timeout 60 s, chromium con `deviceScaleFactor` 2 (antes 3), nunca `channel: 'chrome'`. **`npm run e2e` = solo Chromium**; nuevo **`npm run e2e:all`** = Chromium + WebKit. Puerto **9323** (informe de Playwright) añadido a `ports:check` y `ports:kill`. CI: job `e2e` (Chromium + WebKit, `npm run e2e:all`) **solo en PR a `main`**, después del job de checks, que sube el informe si falla. `.claude/settings.json` deniega `npx playwright install` y `npx playwright show-report` (Bash y PowerShell). Reglas nuevas en `.claude/rules.md`, `.claude/agents/blind-tester.md` y `.claude/commands/close-phase.md`: e2e solo con `npm run e2e`, en primer plano, sin flags extra, sin sondeo en segundo plano y sin nada pesado en paralelo; si pasa de 5 min o se cuelga → parar, `ports:kill`, comprobar puertos e informar; nunca reintentar en bucle (una ejecución + una tras un arreglo); nunca instalar navegadores; los e2e cubren flujos de usuario y criterios de aceptación (las combinaciones exhaustivas van a tests unitarios); axe una vez por pantalla y tema; objetivo `npm run e2e` < 2 min | Evitar que la suite sature el PC del usuario |
 | Suite e2e reducida | Decisión del usuario (2026-11-02): de **111 a 38 tests por navegador** (navegación 12, tema 9, idioma 5, componentes 11, humo 1). Los e2e cubren flujos de usuario y criterios de aceptación; las combinaciones exhaustivas van a tests unitarios. axe se ejecuta **una vez por pantalla y tema (claro/oscuro), solo en Chromium** (se omite en WebKit). AC-NAV-09 («Tab llega al enlace "saltar al contenido"») es una **excepción documentada de WebKit** (`test.skip` con motivo); se sigue comprobando en Chromium, y el foco + Enter se comprueban en ambos motores | Suite rápida y ligera (~19 s en Chromium) sin perder cobertura de los criterios de aceptación |
 
+### 2.3 Decisiones de la Fase 2 (2026-11-03)
+
+| Tema | Decisión | Motivo |
+|---|---|---|
+| Serie de aproximación | **Cuenta como serie efectiva** en el recuento semanal (como en gym_app); se ignora en el 1RM y en los récords | Necesario para que la semana normal sume 104 y cuádriceps 16 |
+| Incrementos por defecto | Mancuernas **+2 kg**; básicos de pierna y `gemelo-hack` **+5 kg**; todo lo demás (torso y aislamientos de pierna) **+2,5 kg** | Saltos reales del material del gimnasio |
+| «No cuenta» | Es **por ejercicio y sesión**: `ExerciseNote.excludeFromProgression` + `reason` (`machine-busy`, `missing-plates`, `other-band`, `other`) | Una máquina ocupada afecta a un ejercicio, no a toda la sesión |
+| Ejercicios fuera de rutina | `bilbo-banca` (barra), `bilbo-prensa` (discos) y `hack-squat` (discos) siguen en el catálogo, **sin archivar**, fuera de las rutinas; `dominadas` también fuera de las rutinas; `abdomen` se fusiona por alias (`legacyAliases.ts`: `abdomen` → `crunch-maquina`, `resolveExerciseId`) | Conservar historial sin ensuciar las rutinas |
+| Tabla 4.3 | **Confirmada por el usuario** (sin «?»; straps en el peso muerto rumano: **sí**) | Cierra las dos preguntas abiertas de equipo y straps |
+| Ids de rutina | Se conservan los ids de plantilla de gym_app: `push`, `pull`, `upper`, `lowerA`, `lowerB`, `lowerFull`; `libre` → `routineId: null`. Días ISO: Push 1, Pull 2, Lower B 3, Upper 5, Lower A 7, Lower Full ninguno | Migración directa desde gym_app |
+| Regla del top set | Reps > tope del rango → subir siempre; reps = tope con RIR ≥ 1 o sin RIR → subir; RIR 0 → mantener; por debajo → mantener y buscar +1 rep. Bilbo: > 30 reps → +5 kg fijo. Dominadas: progresan con una banda más fina | Interpretación de `rutina-actual.md` |
+| `WeekPlan` | Tiene `size` (5/4/3) además de `hiking` y `deload`. Semana corta: 4 → Push, Pull, Lower A, Lower B (se cae el Upper); 3 → Push, Pull, Lower Full | Representar la semana corta en el plan |
+| Ajustes | Se separan: **sincronizados** (`rest` de básicos/aislamientos en segundos, `planStart`) y **solo del dispositivo** (tema, idioma, sonido, vibración, `syncKey`). Paleta y fuente **dejan de ser ajustes** (fijadas en la Fase 1) | Lo propio de cada dispositivo no viaja |
+| Datos semilla | Los registros semilla tienen `updatedAt: 0` | Cualquier edición del usuario o copia del servidor gana |
+| Tests del dominio | Vitest en dos proyectos (`domain` en node, `ui` en jsdom); umbral de cobertura **90 %** en `src/domain` (líneas, funciones, ramas, sentencias) con `npm run test:coverage`, que CI ejecuta en lugar de `npm run test` | El dominio no puede usar el DOM y la cobertura no puede bajar sin que falle CI; además la suite tarda la mitad (~39 s → ~18 s) |
+| Ids derivados | `week_<lunes>`, `bw_<lunes>`, `note_<sesión>_<ejercicio>`, `blocklog_<bloque>_<fecha>`, `wmetric_<bloque>_<métrica>_<lunes>`; ajustes con id `settings`. Fechas ISO locales `YYYY-MM-DD`, semanas desde el lunes | Un registro por clave natural, sin duplicados entre dispositivos |
+
 ---
 
 ## 3. Arquitectura
@@ -143,7 +160,7 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Backend | Netlify Functions en TypeScript + `@netlify/blobs` |
 | Tests | Vitest + React Testing Library (unitarios y de componentes), Playwright (end-to-end) |
 | Calidad | ESLint + Prettier + `tsc -b`; husky + commitlint (valida tus mensajes de commit) |
-| CI | GitHub Actions: lint, typecheck, test y build en cada PR a `dev` y `main` (2.000 minutos/mes gratis en repos privados) |
+| CI | GitHub Actions: lint, typecheck, tests con cobertura (`test:coverage`, desde la Fase 2) y build en cada PR a `dev` y `main`; e2e solo en PR a `main` (2.000 minutos/mes gratis en repos privados) |
 
 ### 3.3 Estructura del repositorio
 
@@ -169,7 +186,7 @@ certavi/
 ├─ public/                   # iconos, robots.txt, manifest (generado)
 ├─ scripts/ports-check.mjs   # qué proceso ocupa 5173/4173/8888/8787
 ├─ src/
-│  ├─ domain/                # TS puro: entidades, reglas, catálogo, rutinas semilla. Sin React ni Dexie
+│  ├─ domain/                # TS puro: model/ (zod), rules/, seed/ (catálogo, rutinas, bloques), testing/, dates.ts. Sin React ni Dexie
 │  ├─ data/                  # Dexie, repositorios, SyncEngine, transporte, importador
 │  ├─ features/              # today, session, calendar, routines, exercises, progress, blocks, settings
 │  ├─ ui/                    # componentes comunes: Button, Dialog, Chip, NumberField, Sheet, Toast…
@@ -229,27 +246,28 @@ interface SyncEnvelope {
 | **MuscleGroup** | `chest` · `back` · `shoulders` · `quads` · `hamstrings-glutes` · `triceps` · `biceps` · `calves` · `core` · `forearms` | Para el recuento semanal |
 | **SetScheme** | lista de bloques `{ kind: 'approach' \| 'top' \| 'backoff' \| 'straight' \| 'bilbo', reps: '6-8' \| '~10' \| '', count }`, `rir` | «1 aprox + 1 + 2» = tres bloques |
 | **Routine** | `id`, `name`, `items[]: { exerciseId, scheme, note, optional }`, `weekday?` | Editable. Ya no hay «plantilla + override»: la rutina es una sola |
-| **WeekPlan** | `id` (lunes), `hiking`, `deload`, `plannedSetsByGroup`, `closedAt` | Al cerrar la semana se congela el plan |
+| **WeekPlan** | `id` (lunes), `hiking`, `deload`, `size` (5/4/3), `plannedSetsByGroup`, `closedAt` | Al cerrar la semana se congela el plan. `size` añadido en la Fase 2 (2.3) |
 | **WorkoutSession** | `id`, `date`, `routineId \| null` (null = **sesión libre**), `startedAt`, `endedAt`, `items[]` (copia de la rutina al empezar, editable: añadir, quitar o reordenar ejercicios y **series**), `note`, `readiness` (1-5) | Cambiar el plan de la sesión **no** toca la rutina |
 | **SetEntry** | `id`, `sessionId`, `exerciseId`, `slot`, `kind` (`warmup` · `approach` · `top` · `backoff` · `straight` · `bilbo` · `extra`), `weight`, `reps`, `rir`, `straps?`, `band?`, `completedAt` | El calentamiento se muestra con su símbolo y no cuenta en las estadísticas |
-| **ExerciseNote** | `sessionId`, `exerciseId`, `text` | — |
+| **ExerciseNote** | `sessionId`, `exerciseId`, `text`, `excludeFromProgression`, `reason` | «No cuenta» por ejercicio y sesión (2.3) |
 | **Activity** | `date`, `kind` (fútbol, natación, senderismo…), `minutes`, `note` | — |
 | **BodyWeight** | `week` (lunes), `kg` | Editable en cualquier semana, también la anterior |
 | **OptionalBlock** | `id`, `name`, `type` (`mobility` · `stretching` · `rehab`), `items[]: { id, name, dose, description }`, `days[]` (días de la semana), `metrics[]` (por ejemplo, «dolor al bajar escaleras 0-10», «pogos 0-10»), `active` | Generaliza la recuperación del tobillo: movilidad, estiramientos y rehabilitación configurables |
 | **BlockLog** | `date`, `blockId`, `done: { itemId: boolean }`, `metrics: { metricId: number }`, `note` | Checklist del día y métricas |
 | **WeeklyMetric** | `week`, `metricId`, `values` (por ejemplo, test de la pared izquierda/derecha en cm) | — |
-| **Settings** | `theme` (`system` · `light` · `dark`), `locale` (`es` · `en`), descansos, sonido, vibración, `planStart`, `palette`, `font` | Lo que es de este dispositivo no se sincroniza (tema, clave de sync) |
+| **Settings** | Sincronizados: `rest` (básicos/aislamientos, s), `planStart`. Solo del dispositivo: `theme` (`system` · `light` · `dark`), `locale` (`es` · `en`), sonido, vibración, `syncKey` | Lo que es de este dispositivo no se sincroniza. Paleta y fuente ya no son ajustes (2.3) |
 
 ### 4.2 Reglas de dominio (todas con tests)
 
 - **1RM estimado** (Epley sobre la mejor serie; se ignoran las de calentamiento y aproximación).
 - **Progresión** según `rutina-actual.md`:
   - **Top set:** al tocar el tope del rango a RIR 1-2 se sube en la siguiente sesión. Si se supera el rango, se sube sí o sí.
-  - **Incrementos:** +2,5 kg en torso y +5 kg en pierna, salvo que el ejercicio tenga su propio incremento.
+  - **Incrementos:** +2,5 kg en torso y +5 kg en pierna, salvo que el ejercicio tenga su propio incremento. Concretado en la Fase 2 (2.3): mancuernas +2 kg; básicos de pierna y `gemelo-hack` +5 kg; el resto +2,5 kg.
   - **Back-off:** ≈ −10 % del top, redondeado al incremento.
   - **Aislamientos:** cuando todas las series llegan al tope, se sube la mínima carga.
   - **Excepción:** las sesiones marcadas «no cuenta» (máquina ocupada, faltan discos, otra banda) no deciden subidas.
-- **Series efectivas por grupo y semana** frente al plan, con el plan congelado en las semanas cerradas.
+- **Series efectivas por grupo y semana** frente al plan, con el plan congelado en las semanas cerradas. La aproximación cuenta; el calentamiento y las series de 0 reps no (2.3).
+- Reglas implementadas en la Fase 2 y descritas para el usuario en `docs/spec/rules.md`.
 - **Récords** (peso máximo, 1RM estimado, mejores marcas por repeticiones); excluyen las semanas de descarga.
 - **Descarga:** mitad de series (redondeando hacia arriba), sin opcionales ni Bilbo, RIR 3-4.
 - **Semana corta:** con 4 sesiones se cae el Upper, nunca la pierna. Con 3, Push, Pull y Lower Full.
@@ -268,39 +286,39 @@ interface SyncEnvelope {
 | `hack-banda` | Sentadilla hack con banda | **Nuevo** (historial propio, banda morada por defecto) |
 | `dominadas` | Dominadas | Se queda en el catálogo, fuera de las rutinas |
 
-**Equipo y straps (propuesta, a confirmar en la Fase 2)**
+**Equipo y straps (confirmada por el usuario en la Fase 2, 2026-11-03)**
 
-Leyenda: D = discos · P = placas · M = mancuernas · Po = polea · C = peso corporal · ? = no lo sé.
+Leyenda: D = discos · P = placas · M = mancuernas · Po = polea · C = peso corporal.
 
 | Ejercicio | Equipo | Straps |
 |---|---|---|
 | Press inclinado con mancuernas | M | — |
-| Press de pecho máquina vertical | ? | — |
-| Press de pecho en máquina vertical de pie | ? | — |
-| Press de pecho inclinado en máquina | ? | — |
-| Aperturas en máquina | P? | — |
-| Press de hombro inclinado máquina | ? | — |
+| Press de pecho máquina vertical | P | — |
+| Press de pecho en máquina vertical de pie | D | — |
+| Press de pecho inclinado en máquina | D | — |
+| Aperturas en máquina | P | — |
+| Press de hombro inclinado máquina | D | — |
 | Press militar en máquina de discos | D | — |
-| Elevaciones laterales máquina | ? | — |
+| Elevaciones laterales máquina | D | — |
 | Elevaciones laterales en máquina de placas | P | — |
 | Elevaciones laterales en polea | Po | — |
 | Tríceps en V · overhead · katana · polea unilateral | Po | — |
-| Jalón abierto neutro / cerrado prono | P? | **Sí** |
+| Jalón abierto neutro / cerrado prono | P | **Sí** |
 | Remo en T | D | **Sí** |
 | Remo bajo en máquina de placas | P | **Sí** |
 | Remo bajo en máquina de discos | D | **Sí** |
 | Remo alto Iso-Lateral | D | **Sí** |
-| Vuelos posteriores máquina | P? | — |
+| Vuelos posteriores máquina | P | — |
 | Curl inclinado con mancuernas | M | — |
 | Curl martillo en polea | Po | — |
-| Curl predicador en máquina | ? | — |
-| Curl de muñeca por detrás | ? | — |
-| Crunch en máquina | P? | — |
-| Peso muerto rumano en máquina (Technogym Pure) | D | ¿Sí? (agarre) |
+| Curl predicador en máquina | D | — |
+| Curl de muñeca por detrás | P | — |
+| Crunch en máquina | P | — |
+| Peso muerto rumano en máquina (Technogym Pure) | D | **Sí** (agarre) |
 | Hip thrust en máquina de discos | D | — |
-| Hip thrust en máquina | P? | — |
+| Hip thrust en máquina | D | — |
 | Abducción / aducción | P | — |
-| Curl femoral de pie / tumbado / sentado | P? | — |
+| Curl femoral de pie / tumbado / sentado | D | — |
 | Prensa · prensa pendular unilateral · hack · hack con banda | D | — |
 | Extensión de pierna (discos) / (placas) | D / P | — |
 | Gemelo en hack · gemelo sentado en discos | D | — |
@@ -368,7 +386,7 @@ Se crea vacío un bloque «Estiramientos» para rellenarlo.
    - creados por mí;
    - en alguna rutina.
 5. **Etiqueta de equipo** visible en cada ejercicio.
-6. **Straps** en todos los ejercicios de espalda (y en el rumano, si lo confirmas).
+6. **Straps** en todos los ejercicios de espalda y en el peso muerto rumano (confirmado en la Fase 2).
 7. **Añadir y quitar series efectivas** en la sesión activa (incluidas las que vienen de la rutina) y en el editor de rutinas.
 8. **Calentamientos con símbolo** propio, como la «W» de Hevy («C» en español, «W» en inglés), visualmente distintos y fuera de las estadísticas.
 9. **Bloques opcionales del día:** movilidad, estiramientos y rehabilitación configurables, con checklist y métricas.
@@ -629,6 +647,7 @@ lint          eslint .
 typecheck     tsc -b
 test          vitest run
 test:watch    vitest
+test:coverage vitest run --coverage; umbral 90 % en src/domain (nuevo, 2026-11-03; lo ejecuta CI)
 e2e           playwright test --project=chromium   (desde 2026-11-02; antes: playwright test)
 e2e:all       Chromium + WebKit, --global-timeout=600000   (nuevo, 2026-11-02)
 format        prettier --write .
@@ -756,14 +775,14 @@ ejecute yo. Espera a que te confirme. Al terminar, ejecuta /close-phase.
 
 ---
 
-### Fase 1 · Diseño, tema, i18n y navegación → `v0.2.0` 🚧
+### Fase 1 · Diseño, tema, i18n y navegación → `v0.2.0` ✅
 
 **Ramas**: `feature/design-system` y `feature/app-shell`
 
-**Estado (2026-11-02)**: **implementada y verificada; pendiente de commits de `feature/app-shell`, PR a `dev`, PR `dev → main` y tag `v0.2.0` por el usuario** (pasa a ✅ cuando el usuario cree el tag, igual que la Fase 0). Decisiones en la sección 2.2.
+**Estado (2026-11-03)**: **cerrada**. El usuario hizo los commits, el PR de `feature/app-shell` a `dev` (PR #4), el PR `dev → main`, el commit `chore(release): v0.2.0` y el tag `v0.2.0`. Decisiones en la sección 2.2.
 
 - **Hecho — `feature/design-system`** (mergeada en `dev` con el PR #3; ámbito de commit `theme`): selector de paletas `docs/design/selector.html` (generado por `scripts/build-selector.mjs`); decisión paleta «Hierro» + fuente «Archivo» (`docs/design/decision.md`); tokens (`src/theme/tokens.css`, `docs/design/tokens.md`); motor de tema (system/light/dark guardado en `localStorage`, cambios del sistema en vivo, `theme-color`).
-- **Implementado — `feature/app-shell`** (rama actual, **sin commits todavía**):
+- **Hecho — `feature/app-shell`** (mergeada en `dev` con el PR #4):
   - i18n es/en en `src/i18n` (i18next + react-i18next, claves tipadas, formato `Intl` es-ES / en-GB, idioma guardado en el dispositivo);
   - ajustes del dispositivo en `src/data/deviceStorage.ts`;
   - shell con react-router 8 en `src/app`: rutas, `Layout` con título en la cabecera y botón de tema, barra de pestañas inferior en móvil / barra superior desde 768 px, enlace «saltar al contenido», foco al título de la página al navegar, página 404;
@@ -778,10 +797,7 @@ ejecute yo. Espera a que te confirme. Al terminar, ejecuta /close-phase.
   - Ejecución válida (blind-tester, `npm run e2e`, una sola ejecución, Chromium, 2 workers): **38 pasados, 0 fallidos, 0 omitidos en 18,2 s** (≈19 s en total).
   - Antes de la reducción, el usuario ejecutó `npm run e2e` con la suite de 111 tests: todo pasó en 33 s.
 - **Criterios de aceptación cubiertos** por e2e y tests unitarios/de componente que pasan: el tema sigue al sistema y el botón de la cabecera lo cambia; UI en es/en; Dialog accesible (foco atrapado, Escape, lector de pantalla); tema, idioma y navegación validados a 390×844.
-- **Pendiente (lo hace el usuario)**:
-  1. commits de `feature/app-shell` y PR a `dev`;
-  2. `npm run e2e:all` (Chromium + WebKit) antes o en el PR a `main` (el job e2e de CI lo ejecuta en ese PR);
-  3. release `v0.2.0`: PR `dev → main`, `chore(release): v0.2.0`, tag.
+- **Release (hecha por el usuario)**: commits de `feature/app-shell`, PR #4 a `dev`, PR `dev → main`, `chore(release): v0.2.0` y tag `v0.2.0`.
 
 **Objetivo**: decidir el aspecto y dejar el esqueleto navegable.
 
@@ -839,9 +855,30 @@ Al terminar, /close-phase.
 
 ---
 
-### Fase 2 · Dominio y catálogo → `v0.3.0` ⏳
+### Fase 2 · Dominio y catálogo → `v0.3.0` 🚧
 
 **Rama**: `feature/domain-model`
+
+**Estado (2026-11-03)**: **implementada y verificada; pendiente de commits de `feature/domain-model`, PR a `dev`, PR `dev → main`, `chore(release): v0.3.0` y tag `v0.3.0` por el usuario** (pasa a ✅ cuando el usuario cree el tag). Decisiones en la sección 2.3.
+
+- **Implementado — `src/domain`** (TS puro, sin React, Dexie ni `fetch`; rama actual, **sin commits todavía**):
+  - `model/`: esquemas zod + tipos de todas las entidades de 4.1 con la envoltura (`envelope.ts`: `RECORD_TYPES` `exercise`, `routine`, `weekPlan`, `session`, `set`, `note`, `activity`, `bodyWeight`, `block`, `blockLog`, `weeklyMetric`, `settings`; esquema de tombstone; `TextRef` = `{ key }` (clave i18n, datos semilla) | `{ text }` (texto del usuario)); `enums.ts` (tuplas `as const`); `records.ts` con `RECORD_SCHEMAS` y `parseRecord` (valida por tipo; los registros borrados solo necesitan la envoltura). Ids derivados: `week_<lunes>`, `bw_<lunes>`, `note_<sesión>_<ejercicio>`, `blocklog_<bloque>_<fecha>`, `wmetric_<bloque>_<métrica>_<lunes>`, ajustes `settings`.
+  - `dates.ts`: fechas locales ISO `YYYY-MM-DD`, semanas desde el lunes.
+  - `rules/`: 1RM Epley (ignora calentamiento y aproximación); series efectivas (la aproximación cuenta, el calentamiento no, 0 reps no); back-off (−10 % redondeado al incremento, al menos un escalón por debajo del top); progresión (`progressionAdvice`); referencia «la última vez» (`lastReference`: salta sesiones «no cuenta» y de descarga); series semanales por grupo frente al plan; plan semanal (vivo frente a congelado al cerrar, `closeWeek`, `weeksToClose`); descarga (port de gym_app); semana corta (`WEEK_ROUTINES`); récords (peso máximo, mejor 1RM estimado, mejor volumen, récords por repeticiones con la regla de Hevy, eventos de récord).
+  - `seed/`: **45 ejercicios** (todos los ids de gym_app salvo `abdomen`, más el nuevo `hack-banda`); **6 rutinas** de `rutina-actual.md`; bloque «Rehabilitación del tobillo» (8 elementos, métricas de dolor escaleras/pogos 0-10 con umbral 3, métrica semanal test de la pared izquierda/derecha en cm) y bloque «Estiramientos» vacío e inactivo; `legacyAliases.ts` (`abdomen` → `crunch-maquina`, `resolveExerciseId`).
+- **i18n**: claves nuevas en `es.json`/`en.json`: `exercises.names.*`, `exercises.groups.*`, `exercises.equipment.*`, `routines.names.*`, `routines.notes.*`, `blocks.*`; el test `src/i18n/seedKeys.test.ts` comprueba que cada clave semilla existe en los dos idiomas.
+- **Tests**: Vitest dividido en dos proyectos en `vite.config.ts`: `domain` (entorno node, `src/domain/**/*.test.ts`; cualquier uso del DOM falla, lo vigila `src/domain/environment.test.ts`) y `ui` (jsdom + setup de RTL, el resto). Cobertura v8 sobre `src/domain/**` con umbrales del 90 % (líneas, funciones, ramas, sentencias); script nuevo `npm run test:coverage`. CI (`.github/workflows/ci.yml`) ejecuta `npm run test:coverage` en lugar de `npm run test`. La suite pasó de ~39 s a ~18 s en local.
+- **Paquetes añadidos en la fase** (instalados por el usuario): `zod` 4.6.7 (runtime); dev: `@vitest/coverage-v8` 5.1.0.
+- **Documentación**: `docs/spec/rules.md` nuevo (las reglas desde el punto de vista del usuario, con ejemplos numéricos); índice `docs/spec/README.md` (enlaza `rules.md` y marca `theme-language-navigation.md` como cubierta por e2e); `docs/migration.md`: sección de ids semilla de la Fase 2 (alias de `abdomen`, ejercicios fuera de rutina, ids de rutina, mapeo de `kind`/`slot` de series: `aprox` → `approach`, `work` → `straight`, slots `w/p/x` → número de slot, `hiking` frente a `size`, `updatedAt` 0 en la semilla).
+- **Verificado en `feature/domain-model` (2026-11-03)**: `lint` ✅, `typecheck` ✅, `test` ✅ (**326 tests en 27 archivos**; antes 179 en 16), `build` ✅, `format:check` ✅.
+  - `test:coverage` ✅: `src/domain` sentencias 100 %, ramas 96,86 %, funciones 100 %, líneas 100 %. Comprobado que subir el umbral por encima del valor real hace que el comando salga con código 1.
+  - Regresión e2e (blind-tester, `npm run e2e`, una sola ejecución, Chromium, 2 workers): **38 pasados, 0 fallidos, 0 omitidos en 46,1 s**. Sin specs e2e nuevas (la fase no tiene pantallas).
+  - Puertos 5173, 4173, 8888, 8787 y 9323 libres.
+- **Criterios de aceptación** ✅: cobertura ≥ 90 % en `src/domain`; test de que las series planificadas de la semana normal suman **104** y cuadran por grupo (cuádriceps 16, isquios-glúteos 15, espalda 14, pecho 13, hombros 13, tríceps 8, bíceps 8, gemelos 8, core 6, antebrazos 3). Verificado también: semana de 4 sesiones 81, de 3 sesiones 63 y de descarga 62.
+- **Aplazado a la Fase 7**: regla del gemelo durante la rehabilitación y revisión del ciclo (ver la Fase 7).
+- **Pendiente (lo hace el usuario)**:
+  1. commits de `feature/domain-model` y PR a `dev`;
+  2. release `v0.3.0`: PR `dev → main` (el job e2e de CI ejecuta `npm run e2e:all`), `chore(release): v0.3.0` y tag `v0.3.0`.
 
 **Objetivo**: todo el modelo de la sección 4 en `src/domain`, puro y con tests. Sin UI.
 
@@ -1007,6 +1044,13 @@ en docs/spec/, luego implementación y tests; blind-tester al final. /close-phas
 - Progreso completo (sección 5.1).
 - **Bloques opcionales**: configuración de movilidad, estiramientos y rehabilitación (ejercicios, días, métricas), checklist diario, métricas, gráfica con línea de 3/10 y métrica semanal (test de la pared).
 - Peso corporal de cualquier semana.
+- **Revisión del ciclo** (el `sixWeekReview` de gym_app) en las pantallas de progreso. Aplazada desde la Fase 2.
+- **Regla del gemelo durante la rehabilitación** (aplazada desde la Fase 2, 2026-11-03). `rutina-actual.md` §5, «Lower A», nota «Gemelo»: 60 kg en la semana 1; desde la semana 2, +5 kg por semana si no hay dolor al día siguiente, siempre con pausa abajo y sin rebote, hasta volver a 80 kg; y la regla de gym_app: solo se sube si bajar escaleras no duele. Depende del bloque de rehabilitación del tobillo y de sus métricas, por eso va en esta fase. El modelo de progresión actual lo permite sin reescribirlo, con cambios aditivos:
+  - un `context` opcional en `ProgressionInput` (bloques activos + últimas métricas de los bloques);
+  - el id del ejercicio en la entrada;
+  - un motivo nuevo para mantener el peso (p. ej. `'rehab-gate'`);
+  - una guarda antes de la regla general.
+  - Si aparecen más reglas especiales, convertir la cascada de `if` en una lista ordenada de reglas (aplica / aconseja).
 
 **Prompt**:
 
@@ -1085,6 +1129,8 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
 
 | Fecha | Fase | Qué | Versión |
 |---|---|---|---|
+| 2026-11-03 | 2 | **Fase 2 implementada y verificada** en `feature/domain-model`: modelo de dominio (zod), reglas, catálogo semilla (45 ejercicios), 6 rutinas y bloques semilla, claves i18n de la semilla, `docs/spec/rules.md`, proyectos de Vitest node/jsdom y `test:coverage` en CI. lint, typecheck, test (**326 en 27 archivos**), build y format:check ✅; cobertura de `src/domain` 100 % sentencias / 96,86 % ramas / 100 % funciones / 100 % líneas (umbral 90 % comprobado). Criterios de aceptación ✅ (semana normal 104 y por grupo; también 81 / 63 / descarga 62). Regresión e2e `npm run e2e` (Chromium, 2 workers): **38/38 en 46,1 s**. Puertos libres. Decisiones en 2.3; regla del gemelo y revisión del ciclo aplazadas a la Fase 7. Paquetes: `zod` 4.6.7, `@vitest/coverage-v8` 5.1.0. Pendiente: commits, PR a `dev`, PR `dev → main` y tag por el usuario | `v0.3.0` (pendiente de tag) |
+| 2026-11-03 | 1 | Release de la Fase 1 por el usuario: commits de `feature/app-shell`, PR #4 a `dev`, PR `dev → main`, `chore(release): v0.2.0` y tag | `v0.2.0` |
 | 2026-11-02 | 1 | **Fase 1 implementada y verificada** en `feature/app-shell`: lint, typecheck, test (179 en 16 archivos), build y format:check ✅; puertos libres. Suite e2e reducida por decisión del usuario de 111 a 38 tests por navegador (2.2); ejecución válida `npm run e2e` (Chromium, 2 workers): **38/38 en 18,2 s**. Antes, la suite de 111 pasó entera en 33 s (ejecución del usuario). Todos los criterios de aceptación cubiertos. Pendiente: commits, PR a `dev`, PR `dev → main` y tag por el usuario | `v0.2.0` (pendiente de tag) |
 | 2026-11-02 | 1 | **Incidente e2e** durante `/close-phase` (20:13–20:32 hora local): el blind-tester lanzó la suite de Playwright 3 veces (+1 sonda) en ~18 min. La 1.ª ejecución usó los 8 workers por defecto de Playwright (50 % de 16 CPU lógicas) con Chromium (`deviceScaleFactor` 3) + WebKit, ~36 escaneos de axe y eslint/tsc a la vez: 7,9 min y 62 fallos, todos timeouts de `page.goto` / `ERR_ABORTED` (falta de recursos). La misma suite con 4 workers tardó 52 s con 1 fallo. Parar el agente no paró la última ejecución (siguió ~1 min). El PC del usuario se volvió muy lento, Chrome dejó de responder y se cayó la conexión (registro de Windows: fallo de handshake del adaptador Wi-Fi USB a las 20:20; causa atribuida a la saturación, no confirmada). No intervinieron: descargas de navegadores, servidor del informe HTML, reintentos automáticos ni el Chrome del usuario. **Decisión**: límites de e2e de la sección 2.2 (2 workers en local, `e2e` solo Chromium, `e2e:all`, job e2e en CI solo en PR a `main`, puerto 9323, reglas nuevas para agentes) | — |
 | 2026-11-02 | 1 | `feature/app-shell` implementada (i18n es/en, shell con react-router 8, páginas vacías, Ajustes, componentes base de `src/ui`, `/dev/ui`, spec de tema/idioma/navegación). lint, typecheck, test (179) y build ✅; axe sin violaciones. **Sin commits** y **sin ejecución e2e válida** todavía | `v0.2.0` (en curso) |
@@ -1093,9 +1139,11 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
 | 2026-11-02 | 0 | Base del proyecto implementada y verificada (lint, typecheck, test, build, format:check, e2e en chromium + webkit, puertos libres; commit denegado a Claude). Decisiones en 2.1. Pendiente: commits, PR y tag por el usuario | `v0.1.0` (pendiente de tag) |
 | 2026-11-01 | — | Plan inicial y decisiones (este documento) | — |
 
-**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 🚧 (implementada y verificada; `feature/design-system` en `dev`; `feature/app-shell` pendiente de commits, PR a `dev`, PR `dev → main` y tag `v0.2.0` por el usuario) · 2 ⏳ · 3 ⏳ · 4 ⏳ · 5 ⏳ · 6 ⏳ · 7 ⏳ · 8 ⏳ · 9 ⏳
+**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 🚧 (implementada y verificada; `feature/domain-model` pendiente de commits, PR a `dev`, PR `dev → main` y tag `v0.3.0` por el usuario) · 3 ⏳ · 4 ⏳ · 5 ⏳ · 6 ⏳ · 7 ⏳ · 8 ⏳ · 9 ⏳
 
 **Preguntas abiertas**:
-- Equipo exacto de los ejercicios marcados con «?» en la tabla 4.3 (antes de la Fase 2).
-- ¿Straps también en el peso muerto rumano? (antes de la Fase 2).
 - Qué estiramientos van en el bloque «Estiramientos» (antes de la Fase 7).
+
+**Pendiente para fases futuras**:
+- Fase 7: regla del gemelo durante la rehabilitación (60 kg en la semana 1, +5 kg/semana sin dolor al día siguiente hasta 80 kg, y solo si bajar escaleras no duele), con cambios aditivos en el modelo de progresión (ver la Fase 7).
+- Fase 7: revisión del ciclo (`sixWeekReview` de gym_app) en las pantallas de progreso.
