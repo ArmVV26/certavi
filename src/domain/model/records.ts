@@ -27,6 +27,9 @@ export const RECORD_SCHEMAS = {
 /** A live record of any type. */
 export type DomainRecord = z.infer<(typeof RECORD_SCHEMAS)[RecordType]>;
 
+/** The live record of one type, e.g. `RecordOf<'session'>` is a `WorkoutSession`. */
+export type RecordOf<K extends RecordType> = z.infer<(typeof RECORD_SCHEMAS)[K]>;
+
 export type ParseResult =
   | { ok: true; record: DomainRecord | Tombstone }
   | { ok: false; error: z.ZodError | 'unknown-type' };

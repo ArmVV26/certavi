@@ -54,7 +54,34 @@
       "en": "English"
     },
     "developer": "Desarrollo",
-    "uiCatalog": "Catálogo de componentes"
+    "uiCatalog": "Catálogo de componentes",
+    "data": {
+      "title": "Datos",
+      "intro": "Todo se guarda primero en este dispositivo.",
+      "loading": "Cargando…",
+      "listLabel": "Datos guardados en este dispositivo",
+      "types": {
+        "exercise": "Ejercicios",
+        "routine": "Rutinas",
+        "session": "Sesiones",
+        "set": "Series",
+        "note": "Notas de ejercicio",
+        "activity": "Actividades",
+        "bodyWeight": "Pesos semanales",
+        "weekPlan": "Semanas",
+        "block": "Bloques opcionales",
+        "blockLog": "Registros de bloques",
+        "weeklyMetric": "Métricas semanales"
+      },
+      "pending": "Pendientes de sincronizar",
+      "storage": "Almacenamiento",
+      "storageStatus": {
+        "checking": "Comprobando…",
+        "persisted": "Persistente",
+        "notPersisted": "El navegador podría borrarlo si falta espacio",
+        "unsupported": "Sin información del navegador"
+      }
+    }
   },
   "sets": {
     "warmupSymbol": "C",
@@ -239,6 +266,7 @@
     },
     "metrics": {
       "stairs": "Dolor al bajar escaleras",
+      "maxPain": "Dolor máximo en los ejercicios",
       "pogos": "Dolor en pogos"
     },
     "weeklyMetrics": {
