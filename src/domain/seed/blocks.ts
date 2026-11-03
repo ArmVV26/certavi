@@ -45,6 +45,7 @@ export const ANKLE_REHAB_BLOCK: OptionalBlock = {
   days: [...WEEKDAYS],
   metrics: [
     { id: 'stairs', name: k('metrics.stairs'), min: 0, max: 10, threshold: PAIN_THRESHOLD },
+    { id: 'max-pain', name: k('metrics.maxPain'), min: 0, max: 10, threshold: PAIN_THRESHOLD },
     { id: 'pogos', name: k('metrics.pogos'), min: 0, max: 10, threshold: PAIN_THRESHOLD },
   ],
   weeklyMetrics: [

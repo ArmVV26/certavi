@@ -7,6 +7,7 @@ export * from './blocks';
 export * from './catalog';
 export * from './legacyAliases';
 export * from './routines';
+export * from './settings';
 
 export const SEED_EXERCISES_BY_ID: ReadonlyMap<string, Exercise> = new Map(
   SEED_EXERCISES.map((e) => [e.id, e]),

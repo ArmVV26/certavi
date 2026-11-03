@@ -54,11 +54,103 @@
       "en": "English"
     },
     "developer": "Desarrollo",
-    "uiCatalog": "Catálogo de componentes"
+    "uiCatalog": "Catálogo de componentes",
+    "data": {
+      "title": "Datos",
+      "intro": "Todo se guarda primero en este dispositivo.",
+      "loading": "Cargando…",
+      "listLabel": "Datos guardados en este dispositivo",
+      "types": {
+        "exercise": "Ejercicios",
+        "routine": "Rutinas",
+        "session": "Sesiones",
+        "set": "Series",
+        "note": "Notas de ejercicio",
+        "activity": "Actividades",
+        "bodyWeight": "Pesos semanales",
+        "weekPlan": "Semanas",
+        "block": "Bloques opcionales",
+        "blockLog": "Registros de bloques",
+        "weeklyMetric": "Métricas semanales",
+        "settings": "Ajustes"
+      },
+      "pending": "Pendientes de sincronizar",
+      "storage": "Almacenamiento",
+      "storageStatus": {
+        "checking": "Comprobando…",
+        "persisted": "Persistente",
+        "notPersisted": "El navegador podría borrarlo si falta espacio",
+        "unsupported": "Sin información del navegador"
+      },
+      "import": "Importar",
+      "export": "Exportar",
+      "importLegacy": "Importar desde la app anterior",
+      "importBackup": "Importar copia de Certavi",
+      "exportBackup": "Exportar copia completa (.json)",
+      "exportSets": "Exportar series (.csv)",
+      "exportActivity": "Exportar actividad y peso (.csv)",
+      "preview": {
+        "intro": "Se guardará en este dispositivo:",
+        "summary": "Resumen de la importación",
+        "unchanged": "Sin cambios (ya estaban)",
+        "ignored": "Ignorados (borrados o ajustes internos)",
+        "invalid": "No válidos (no se importan)",
+        "nothing": "No hay nada nuevo que importar.",
+        "confirm": "Importar",
+        "cancel": "Cancelar",
+        "close": "Cerrar"
+      },
+      "imported": "Registros importados: {{total}}",
+      "errors": {
+        "notLegacy": "Este archivo no es una copia completa de la app anterior.",
+        "notBackup": "Este archivo no es una copia de Certavi.",
+        "importFailed": "No se pudo importar. No se ha guardado nada.",
+        "exportFailed": "No se pudo exportar."
+      },
+      "csv": {
+        "yes": "sí",
+        "no": "no",
+        "sets": {
+          "date": "fecha",
+          "session": "sesion",
+          "exercise": "ejercicio",
+          "setKind": "tipo_serie",
+          "order": "orden",
+          "weight": "peso_kg",
+          "reps": "reps",
+          "rir": "rir",
+          "straps": "straps",
+          "band": "banda",
+          "e1rm": "e1rm_kg",
+          "effective": "cuenta_como_efectiva",
+          "exerciseNote": "nota_ejercicio",
+          "sessionNote": "nota_sesion"
+        },
+        "activity": {
+          "date": "fecha",
+          "type": "tipo",
+          "activity": "actividad",
+          "minutes": "minutos",
+          "weight": "peso_kg",
+          "note": "nota"
+        },
+        "activityRow": "actividad",
+        "weightRow": "peso_medio_semana"
+      }
+    }
   },
   "sets": {
     "warmupSymbol": "C",
-    "warmup": "Calentamiento"
+    "warmup": "Calentamiento",
+    "kinds": {
+      "warmup": "Calentamiento",
+      "approach": "Aproximación",
+      "top": "Top set",
+      "backoff": "Back-off",
+      "straight": "Serie de trabajo",
+      "bilbo": "Bilbo",
+      "extra": "Serie extra"
+    }
   },
   "ui": {
     "close": "Cerrar",
@@ -215,7 +307,8 @@
       "inclineCurl": "La primera serie con 24 kg y las back-off con la mancuerna inferior. Cuando la primera llegue a 12, pasa a 26 kg.",
       "crunch": "Sube carga hasta terminar a RIR 1-2.",
       "legPress": "Coloca los discos siempre igual y apúntalo en la nota."
-    }
+    },
+    "free": "Sesión libre"
   },
   "blocks": {
     "names": {
@@ -239,6 +332,7 @@
     },
     "metrics": {
       "stairs": "Dolor al bajar escaleras",
+      "maxPain": "Dolor máximo en los ejercicios",
       "pogos": "Dolor en pogos"
     },
     "weeklyMetrics": {
@@ -247,6 +341,16 @@
     "sides": {
       "left": "Izquierda",
       "right": "Derecha"
+    }
+  },
+  "activities": {
+    "kinds": {
+      "football": "Fútbol",
+      "swimming": "Natación",
+      "hiking": "Senderismo",
+      "mobility": "Movilidad",
+      "cycling": "Bici",
+      "other": "Otro"
     }
   }
 }

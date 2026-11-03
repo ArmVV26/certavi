@@ -7,7 +7,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Domain model and catalog (Phase 2) — to be released as 0.3.0.
+## [0.4.0] - 2026-11-03
+
+Local data, importer and exports (Phase 3)
+
+### Added
+
+- Local database with Dexie (ADR-0003, `docs/adr/0003-local-storage-dexie.md`): one table per
+  record type plus `pending` (one row per record id) and `meta` (persisted monotonic clock);
+  soft deletes stored as envelope-only tombstones in the same table (`src/data/db.ts`,
+  `clock.ts`).
+- Repositories (`createRepository`, `createRepositories`: get, list, put, putMany, remove) that
+  validate with zod, stamp `updatedAt` from the monotonic clock and add the record to the
+  pending queue in the same transaction (`src/data/repository.ts`).
+- Seed written to the database on start-up (`ensureSeed`: inserts missing records, refreshes
+  only those still at `updatedAt` 0, never queued); persistent storage requested with
+  `navigator.storage.persist()`; start-up in `startDatabase`; `DatabaseProvider` and
+  `useDatabase`; live count queries (`countLiveRecords`, `countPending`).
+- Settings → "Data" card with live counts per record type, records pending sync and storage
+  status (`settings.data.*` keys in Spanish and English).
+- Seed settings record `SEED_SETTINGS` (id `settings`, default rest, no plan start,
+  `updatedAt` 0); `max-pain` metric ("max pain during the exercises", 0-10, threshold 3) in the
+  ankle rehab block; optional `startDate` and `reviewDate` on optional blocks; `RecordOf<K>`
+  type.
+- Functional spec `docs/spec/data-import-export.md` (part A: local data; part B: import and
+  export, AC-IMPORT-01..06 and AC-EXPORT-01..02) and end-to-end spec `tests/e2e/data.spec.ts`
+  (7 tests).
+- Test helper `openTestDatabase()` and a `db` option in `renderWithProviders` (fresh, empty
+  database per render); `fake-indexeddb` loaded in the test setup.
+- Dependencies: `dexie` 4.4.7 and `dexie-react-hooks` 4.4.0 (runtime) and `fake-indexeddb`
+  6.2.7 (dev).
+- gym_app importer (`src/data/legacy/gymApp.ts`, `readGymAppExport`): tolerant zod schemas of
+  the real gym_app record shapes (`session`, `set`, `note`, `act`, `bw`, `week`, `tpl`,
+  `excfg`, `rec`, `wall`, `cfg`, `mig`), converted and validated with `parseRecord`; accepts
+  `{ app: 'winter-arc', records }` or a bare array. Deleted records, `cfg_exp_brazos`, `mig_*`,
+  unknown types, templates and exercises are ignored; malformed records are reported as
+  invalid; when two records map to the same Certavi id the newest wins (`dedupeNewest`,
+  `src/data/importFile.ts`). `abdomen` maps to `crunch-maquina` everywhere.
+- Import planning and saving (`src/data/importRecords.ts`): `planImport` (read-only preview)
+  and `applyImport` (one transaction, last-write-wins: a record is written only if it is new or
+  strictly newer than the local copy, ties keep the local one; written records join the pending
+  queue; `serverSeq` is dropped; the clock moves past the newest record with `advanceClock`).
+- Certavi backups (`src/data/backup.ts`): `{ app: 'certavi', format: 1, kind, exportedAt,
+records }` without tombstones or `serverSeq`; `exportAll`, `exportSession` and `exportWeek`
+  (no UI yet for session and week) and `readBackup`.
+- CSV exports (`src/data/csv.ts`): sets and activity + body weight, always in Excel-for-Spanish
+  format (BOM, `;`, decimal comma, CRLF, quoting) with gym_app's columns; headers through i18n;
+  empty e1RM for warm-up and approach sets.
+- Settings → "Data" card: import (from gym_app or a Certavi backup) and export (full backup
+  JSON, sets CSV, activity and weight CSV) buttons; import preview dialog with rows per type
+  plus unchanged / ignored / invalid; success and error toasts (`ImportExport.tsx`,
+  `download.ts`, `recordTypes.ts`).
+- `resolveText` helper for `TextRef` (`src/i18n/text.ts`); i18n keys `settings.data.*` (import,
+  export, preview, errors, CSV headers), `sets.kinds.*`, `activities.kinds.*`,
+  `routines.free`.
+- Synthetic fixtures `tests/fixtures/gym-app-sample.json` (every gym_app record type) and
+  `tests/fixtures/not-a-backup.txt`; end-to-end spec `tests/e2e/import-export.spec.ts`
+  (8 tests).
+
+### Changed
+
+- The app opens the local database before rendering; `Providers` takes a `db` prop.
+- `npm run test:coverage` also enforces 90 % on `src/data` (per-glob thresholds for
+  `src/domain/**` and `src/data/**`).
+- Functional spec index lists the data spec as covered; the rules spec mentions the third pain
+  metric.
+- Migration guide: real gym_app `t` values, record shapes and the full mapping to Certavi.
+
+## [0.3.0] - 2026-11-03
+
+Domain model and catalog (Phase 2).
 
 ### Added
 
@@ -128,6 +197,7 @@ Project foundation (Phase 0).
   guide from gym_app, functional spec index and design docs index.
 - License: all rights reserved (MIT planned when the repository becomes public).
 
-[Unreleased]: https://github.com/ArmVV26/certavi/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/ArmVV26/certavi/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.3.0
 [0.2.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.2.0
 [0.1.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.1.0
