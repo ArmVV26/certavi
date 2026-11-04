@@ -100,6 +100,10 @@ Reverse flies count as shoulders; hip abduction and adduction count as hamstring
 - **4 sessions:** Push, Pull, Lower A, Lower B. **Upper is dropped, never a leg day.** 81 sets.
 - **3 sessions:** Push, Pull, Lower Full. 63 sets.
 
+**Hiking week** (Sunday in the mountains, as in gym_app): Lower A is dropped and Lower B becomes
+Lower Full. A normal week is then Push, Pull, Lower Full, Upper — **86 sets**; with 4 sessions,
+Push, Pull, Lower Full — 63 sets; with 3 sessions nothing changes.
+
 A **closed** week keeps the plan it had when it was closed, even if the routines change later.
 The current week (and later ones) always use the routines as they are now.
 
