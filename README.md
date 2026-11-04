@@ -154,7 +154,8 @@ npx playwright install chromium webkit   # browsers for end-to-end tests
 - **Unit and component tests** live next to the code (`*.test.ts(x)`) and run with Vitest,
   React Testing Library and jsdom.
 - **End-to-end tests** in `tests/e2e/` run with Playwright on Chromium and WebKit at an iPhone
-  viewport (390×844). They are written black-box from the functional spec in
+  viewport (390×844). Chromium runs every test; WebKit (Safari's engine) runs the ones tagged
+  `@all-engines` — local data, sync, import / export, Today and the 390 px layout. They are written black-box from the functional spec in
   [`docs/spec/`](docs/spec/README.md), without looking at the source.
 - Tests use synthetic data only.
 

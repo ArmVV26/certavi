@@ -29,6 +29,12 @@ You are a QA engineer who has NEVER seen the source code.
 - Target: `npm run e2e` takes **under 2 minutes**. Keep the suite small enough for that.
 - When a browser genuinely behaves differently (e.g. WebKit does not Tab to links), skip that
   check in that browser with `test.skip(condition, 'reason')` and keep it in the others.
+- **WebKit only runs tests tagged `@all-engines`** (`{ tag: '@all-engines' }` on a `test` or a
+  `test.describe`); everything else runs in Chromium only. Tag a test when its result can
+  depend on the engine: IndexedDB / local data, sync, import and export, downloads, Today and
+  the session, the 390 px layout. Do not tag engine-independent UI logic (theme, language,
+  navigation, components): WebKit in CI has one worker and is the scarce resource. Keep the
+  tagged set small: a new spec file gets a tag on its `describe` only if all of it qualifies.
 
 ## Time and waits (mandatory — real-time waits broke CI in WebKit on 2026-11-04)
 
