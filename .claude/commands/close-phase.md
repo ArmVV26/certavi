@@ -1,31 +1,36 @@
 ---
-description: Close the current phase — run all checks, blind-tester and context-keeper, verify ports, and propose the commit plan.
+description: Close the current branch (default) or the last branch of a phase ("final") — checks, branch e2e, reviewers, status in context.md and commit plan.
+argument-hint: [final]
 ---
 
-Close the current phase of Certavi. Follow these steps in order and report each result.
+Close the current branch of Certavi. Argument: `$ARGUMENTS` — empty means a **regular branch
+close**; `final` means the **last branch of the phase** (the one after which the PR
+`dev → main` opens). Follow the steps in order and report each result briefly.
 Never run git commands that write (commit, push, merge, tag, branch): the user does that.
 
-1. **Checks** — run, one after another, and stop to report if any fails:
-   `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build`.
-2. **Blind tester** — launch the `blind-tester` agent with the acceptance criteria of the
-   phase (from `context.md` §10 and `docs/spec/`). It runs `npm run e2e` (Chromium, 2 workers,
-   5 min cap) under the e2e rules in `.claude/rules.md`: foreground only, no extra flags, no
-   loops of re-runs (one run, plus one after fixing a test), no browser installs, no
-   `show-report`. If a run takes more than 5 minutes or hangs, it stops, runs
-   `npm run ports:kill`, checks ports and reports. Do not run e2e yourself in parallel.
-   Summarize its report: passed / failed, and any failure with steps, expected vs actual.
-   **On the last branch of a phase** (the one after which the PR `dev → main` opens), the
-   blind-tester then runs `npm run e2e:all` once (Chromium + WebKit, 2 workers, 10 min cap,
-   same rules: foreground, no extra flags, one run plus at most one after a fix). A WebKit-only
-   failure is reported like any other; never skip it to get the PR through. This is the run CI
-   repeats on the PR to `main` (incident of 2026-11-04: WebKit had never run before that PR).
-3. **Context keeper** — launch the `context-keeper` agent with a short summary of what changed
-   in this phase (files, decisions, test results). It updates `context.md`, `CHANGELOG.md`
-   and, if needed, `CLAUDE.md`.
-4. **Ports** — run `npm run ports:check` (5173, 4173, 8888, 8787, 9323). If any port is busy,
-   or a Playwright browser (`ms-playwright`) is still running, find out why and stop it; do not
-   finish while anything is left.
-5. **Commit plan** — inspect `git status` and `git diff --stat`, then output the plan in
+## Every branch (regular and final)
+
+1. **Checks** — one after another; stop and report if any fails: `npm run lint`,
+   `npm run typecheck`, `npm run test:coverage`. Run `npm run build` only if the branch
+   touched build, PWA or functions (`vite.config.ts`, `package.json`, `netlify.toml`,
+   `netlify/`, `server/`).
+2. **Branch e2e** — find the specs of this branch: `git status --porcelain tests/e2e` plus
+   `git diff --name-only dev...HEAD -- tests/e2e` (branches are often uncommitted at this point).
+   Launch the `blind-tester` agent with the acceptance criteria of the branch (from
+   `docs/spec/`); it writes **at most 8 new tests**. It runs only
+   `npm run e2e -- <those spec files>` under the e2e rules in `.claude/rules.md`: foreground,
+   Chromium, nothing else after `--`. **One pass and a single fix** if something fails; then
+   report. If the branch touched no e2e spec, skip e2e and say so. Do not run e2e yourself in
+   parallel.
+3. **Security review** — if the diff touches `server/`, `src/data/sync/`, `package.json` or
+   `netlify.toml`, launch the `security-reviewer` agent (it is read-only). Summarise its output.
+4. **Status in `context.md`** — **no context-keeper on regular branches.** You add, in the
+   phase's section of `context.md` (find it with Grep, edit by range), a status of **at most 10
+   lines**: _hecho / falta / siguiente_. No test counts, coverage figures or durations.
+5. **Ports** — `npm run ports:check`. If a port is busy or a Playwright browser
+   (`ms-playwright`) is still running, find out why and stop it; do not finish with anything
+   left running.
+6. **Commit plan** — inspect `git status` and `git diff --stat`, then output the plan in
    exactly this format (Conventional Commits, English, small commits, one idea each, every
    commit must build):
 
@@ -38,8 +43,24 @@ Commits (in this order):
 2. ...
 Then:
 - git push -u origin feature/xxx → PR to dev ("feat: …"), merge (NO squash: merge commit to keep the commits)
-- If this is the end of the phase: PR dev → main, version X.Y.Z in package.json (commit "chore(release): vX.Y.Z"),
-  git tag -a vX.Y.Z -m "…", git push origin vX.Y.Z
 ```
 
-6. **Suggestions** — list anything worth doing that was out of scope.
+## Only with `final`
+
+After step 3 and before step 4, also:
+
+- **e2e:all** — the blind-tester runs `npm run e2e:all` **once** (Chromium + WebKit, 10 min
+  cap, same rules: foreground, no extra flags, one run plus at most one after a fix). A
+  WebKit-only failure is reported like any other; never skip it to get the PR through (CI
+  repeats this run on the PR to `main`; incident of 2026-11-04).
+- **Reviews** — launch `code-reviewer` and `security-reviewer` (always, regardless of the diff).
+- **Context keeper** — launch the `context-keeper` agent with a short factual summary of the
+  phase (files, decisions, tests passed). It updates `context.md`, `docs/history.md`,
+  `CHANGELOG.md` and, if needed, `CLAUDE.md`. Skip step 4 (it replaces it).
+- **Release plan** — append to the commit plan: PR `dev → main`, version X.Y.Z in
+  `package.json` (commit `chore(release): vX.Y.Z`), `git tag -a vX.Y.Z -m "…"`,
+  `git push origin vX.Y.Z`.
+
+## Last
+
+**Suggestions** — list anything worth doing that was out of scope.

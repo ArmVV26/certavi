@@ -28,15 +28,17 @@
 An e2e run once saturated the user's PC (2026-11-02: 8 parallel browsers, three runs in a row).
 These rules keep it from happening again.
 
-- Run e2e **only** with `npm run e2e` (Chromium, 2 workers, 5 min cap, stops after 3 failures).
+- Run e2e **only** with `npm run e2e` (Chromium, 2 workers, 5 min cap, stops after 3 failures),
+  optionally followed by spec paths: `npm run e2e -- tests/e2e/today.spec.ts` — and nothing else.
   `npm run e2e:all` (Chromium + WebKit) only when the user asks for it, or in the `/close-phase`
   step for the last branch of a phase (before the PR `dev → main`; CI runs it again there).
 - **No real-time waits in e2e** (incident of 2026-11-04): no `waitForTimeout`, no waiting for a
   debounce or a backoff to pass. App timers move with `page.clock`; state is awaited with
   `toHaveText` / `expect.poll`; before injecting a failure, confirm with the fake server that the
   previous request was answered. Details in `.claude/agents/blind-tester.md`.
-- Never call `npx playwright test` directly and never add flags (`--workers`, `--project`,
-  `--reporter`, `--repeat-each`…) to the npm scripts.
+- Never call `npx playwright test` directly. The only thing allowed after `--` is spec paths:
+  no `--project`, `--workers`, `--retries`, `--headed`, `--ui`, `--reporter`, `--repeat-each`…
+  and no flags added to the npm scripts.
 - Run it in the foreground. Never move it to the background and poll it with `sleep` / `ping`
   loops. Run nothing heavy (`lint`, `tsc`, `build`, another test run) while it runs.
 - **If it takes more than 5 minutes or hangs:** stop it, run `npm run ports:kill`, make sure no
@@ -46,6 +48,14 @@ These rules keep it from happening again.
   Never re-run to "see if it passes".
 - **Never install browsers** (`npx playwright install`): the user does it. Never open the HTML
   report (`npx playwright show-report`).
+
+## Context economy
+
+- Work in **short sessions, one per branch** (or per sub-task of a branch). Start a new session
+  instead of dragging a long one along.
+- At about **150k tokens** of context, run `/compact` (to keep going) or `/clear` (to start over).
+- Do not read big files whole (`context.md`, `docs/history.md`, specs, lockfile, reports): use
+  Grep to find the section and read it by range (offset/limit).
 
 ## Data and secrets
 
