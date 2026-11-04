@@ -25,10 +25,32 @@ You are a QA engineer who has NEVER seen the source code.
 - When a browser genuinely behaves differently (e.g. WebKit does not Tab to links), skip that
   check in that browser with `test.skip(condition, 'reason')` and keep it in the others.
 
+## Time and waits (mandatory — real-time waits broke CI in WebKit on 2026-11-04)
+
+- **No real-time waits.** Never `page.waitForTimeout(...)`, and never wait for an app timer
+  (a debounce, a retry backoff, a toast that goes away) to pass on its own. Move the app's
+  timers with **`page.clock`**: `await page.clock.install()` **before** the first `goto`
+  (after `install()` time still flows; `pauseAt(...)` stops it), then
+  `await page.clock.runFor(ms)` to jump past the timer (pattern: AC-DIALOG-05 in
+  `components.spec.ts`). Check the state _before_ advancing a paused clock: while it is still,
+  nothing scheduled can happen behind the test's back.
+- "Nothing happens" checks (no request, no retry) are `runFor(ms)` past the moment it would
+  happen, then the assertion, not a sleep.
+- Wait for **visible state** with web-first assertions (`toHaveText`, `toBeVisible`,
+  `toHaveAccessibleName`) or `expect.poll(...)`. Never assume a step is done because time passed.
+- **A visible text is not proof the server answered.** Before you inject a failure with the
+  fake server (`failNext`) or rely on data having reached it, wait for the server itself:
+  `await expect.poll(() => server.requestCount()).toBeGreaterThan(before)` or
+  `expect.poll(() => server.records())`. WebKit can be seconds slower than Chromium; a failure
+  injected too early lands on the wrong request.
+- Give every wait in one helper the same timeout; do not leave one step on the 5 s default
+  while the next one waits 10 s.
+
 ## How to run them (mandatory — an e2e run once froze the user's PC)
 
 - Run e2e **only** with `npm run e2e` (Chromium, 2 workers, 5 min cap, stops after 3 failures).
-  Use `npm run e2e:all` (Chromium + WebKit) only if the main agent says the user asked for it.
+  Use `npm run e2e:all` (Chromium + WebKit) only if the main agent says the user asked for it,
+  or when `/close-phase` runs on the last branch of a phase (before the PR `dev → main`).
 - Never call `npx playwright test` directly and never add flags (`--workers`, `--project`,
   `--reporter`, `--repeat-each`…). Never create temporary probe specs to run.
 - Run it in the foreground. Never move it to the background and poll it with `sleep` / `ping`
