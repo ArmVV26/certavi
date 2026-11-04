@@ -1,7 +1,7 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-4);
 }
 
 .date {
@@ -10,4 +10,204 @@
   font-weight: var(--fw-semibold);
   letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
+}
+
+.heading {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
+
+.headingRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.range {
+  color: var(--text-muted);
+  font-weight: var(--fw-semibold);
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.muted a {
+  color: var(--accent);
+  font-weight: var(--fw-semibold);
+}
+
+.hint {
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+/* Today's session */
+
+.hero {
+  border-color: var(--accent);
+}
+
+.routineName {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-black);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.details summary {
+  min-height: var(--touch-target);
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+.details summary:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* This week */
+
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day {
+  min-width: 0;
+}
+
+.dayInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  min-height: 4.5rem;
+  padding: var(--space-1) 0.125rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--text);
+  text-decoration: none;
+}
+
+a.dayInner:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.today .dayInner {
+  box-shadow: inset 0 0 0 var(--focus-ring-width) var(--accent);
+}
+
+.done .dayInner {
+  background: var(--success-tint);
+}
+
+.dayName {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+}
+
+.dayMark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1rem;
+  color: var(--success);
+}
+
+.dayLabel {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.figures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.figure dt {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.figureValue {
+  font-family: var(--font-numeric);
+  font-size: var(--fs-xl);
+  font-variant-numeric: var(--numeric-features);
+  font-weight: var(--fw-bold);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Forms */
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.narrow {
+  flex: 0 0 7rem;
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Lines a button up with the input of a labelled field next to it. */
+.alignEnd {
+  margin-top: calc(var(--fs-sm) * var(--lh-normal) + var(--space-1));
 }
