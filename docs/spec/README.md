@@ -54,3 +54,6 @@ One file per feature area. Each file contains:
 5. **Out of scope** — what this spec does not cover.
 
 Write the spec **before** implementing the feature.
+
+> Flows that save data on the device, sync, import / export or lay out Today are also tested in
+> Safari's engine (WebKit); theme, language, navigation and base components only in Chromium.
