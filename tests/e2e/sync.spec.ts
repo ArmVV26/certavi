@@ -75,10 +75,17 @@ const ES = {
 
 const STATE_ES = {
   notSetUp: 'Sin configurar',
+  syncing: 'Sincronizando…',
   offline: 'Sin conexión',
   error: 'Error',
   synced: 'Sincronizado',
 } as const;
+
+/** One timeout for every wait on the app: WebKit's local storage is seconds slower. */
+const WAIT = 15_000;
+
+/** The sync endpoint of the fake server (backups use other paths). */
+const SYNC_PATH = '/api/v1/sync';
 
 /** Datos card rows: [es, new device, after importing the sample file]. */
 const DATA_ROWS: readonly (readonly [string, string, string])[] = [
@@ -147,11 +154,79 @@ async function saveKey(page: Page, key: string, lang: Lang = 'es'): Promise<void
   await button(page, lang === 'es' ? ES.saveKey : 'Save key').click();
 }
 
-/** Waits until the card says "Sincronizado" with nothing pending. */
-async function expectSynced(page: Page, timeout = 10_000): Promise<void> {
+/** Sync requests the fake server has received so far (failed ones included). */
+function syncCount(server: FakeSyncServer): number {
+  return server.requestCount(SYNC_PATH);
+}
+
+/**
+ * Waits until the server has received a sync request after the first `after` ones, then until
+ * the card and the indicator say "Sincronizado" with nothing pending ("Sincronizado" only
+ * appears once the server has answered, spec §2.1). A visible text alone is not proof that the
+ * server answered, so the server is checked first. Every step uses the same timeout.
+ */
+async function expectSynced(
+  page: Page,
+  server: FakeSyncServer,
+  after: number,
+  timeout = WAIT,
+): Promise<void> {
+  await expect
+    .poll(() => syncCount(server), { timeout, message: 'a sync request reached the server' })
+    .toBeGreaterThan(after);
   await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.synced, { timeout });
   await expect(rowValue(page, ES.pending)).toHaveText('0', { timeout });
   await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sincronizado', { timeout });
+}
+
+// --- Clock -----------------------------------------------------------------------------------
+// The app's timers (the ~2 s wait after a change, the 4/8/15/30/60 s retries, the 45 s sync)
+// are moved with `page.clock`, never waited for. Order that works: `page.clock.install()`
+// before the first `goto` (time still flows, so the app loads normally), `pauseClock` only once
+// the page is ready and the server has answered what the test expected.
+
+/** Stops the page clock (installed before the first `goto`) a moment from now. */
+async function pauseClock(page: Page): Promise<void> {
+  const now = await page.evaluate(() => Date.now());
+  await page.clock.pauseAt(now + 500);
+}
+
+/** Waits for something on the page; `check` receives the timeout it must use. */
+type Settle = (check: (timeout: number) => Promise<unknown>) => Promise<void>;
+
+/** Clock flowing: one check with the usual timeout. */
+const live: Settle = async (check) => {
+  await check(WAIT);
+};
+
+/**
+ * Clock paused: retries `check` while moving the clock on in `step` ms steps, at most `budget`
+ * ms in total. The small steps let the page's zero-delay timers run (local storage
+ * notifications, first queries of a new screen), as they would with time flowing; the budget
+ * guarantees that no timer due later than that (a retry, the wait after a change) runs behind
+ * the test's back.
+ */
+function paused(page: Page, budget = 1_000, step = 100): Settle {
+  return async (check) => {
+    for (let spent = 0; ; spent += step) {
+      try {
+        await check(1_000);
+        return;
+      } catch (error) {
+        if (spent >= budget) throw error;
+      }
+      await page.clock.runFor(step);
+    }
+  };
+}
+
+/** Clock paused: waits until the server has received more than `after` sync requests. */
+async function serverGotSync(page: Page, server: FakeSyncServer, after: number): Promise<void> {
+  await paused(
+    page,
+    2_500,
+    250,
+  )((timeout) => expect.poll(() => syncCount(server), { timeout }).toBeGreaterThan(after));
 }
 
 /** The counts list of the Datos card (the one with "Pendientes de sincronizar"). */
@@ -176,8 +251,9 @@ async function readCounts(page: Page): Promise<Rows> {
     .filter(([term]) => term !== 'Almacenamiento');
 }
 
-async function expectCounts(page: Page, expected: Rows, timeout = 10_000): Promise<void> {
-  await expect(page.getByText('Cargando…', { exact: true })).toHaveCount(0);
+/** Waits for the Datos card to load, then for its counts (same timeout for both steps). */
+async function expectCounts(page: Page, expected: Rows, timeout = WAIT): Promise<void> {
+  await expect(page.getByText('Cargando…', { exact: true })).toHaveCount(0, { timeout });
   await expect.poll(() => readCounts(page), { timeout }).toEqual(expected);
 }
 
@@ -187,14 +263,19 @@ async function chooseFile(page: Page, buttonName: string, file: string): Promise
   await (await chooser).setFiles(file);
 }
 
-/** Imports a gym_app file from Settings and checks "Registros importados: n". */
-async function importGym(page: Page, file: string, n: number): Promise<void> {
+/**
+ * Imports a gym_app file from Settings and checks "Registros importados: n". With a paused
+ * clock pass `paused(page)` as `settle`.
+ */
+async function importGym(page: Page, file: string, n: number, settle = live): Promise<void> {
   await chooseFile(page, ES.importGym, file);
   const dialog = dialogOf(page, ES.importGym);
-  await expect(dialog).toBeVisible();
+  await settle((timeout) => expect(dialog).toBeVisible({ timeout }));
   await button(dialog, ES.confirmImport).click();
-  await expect(toast(page, `Registros importados: ${String(n)}`)).toBeVisible();
-  await expect(dialog).toBeHidden();
+  await settle(async (timeout) => {
+    await expect(toast(page, `Registros importados: ${String(n)}`)).toBeVisible({ timeout });
+    await expect(dialog).toBeHidden({ timeout });
+  });
 }
 
 async function download(
@@ -299,12 +380,13 @@ async function axe(page: Page, label: string): Promise<void> {
 }
 
 /** Opens Ajustes, imports the sample (29 records) and saves the right key: synced. */
-async function syncedWithSample(page: Page): Promise<void> {
+async function syncedWithSample(page: Page, server: FakeSyncServer): Promise<void> {
   await gotoReady(page, '/settings', 'Ajustes');
   await importGym(page, GYM_SAMPLE, 29);
+  const before = syncCount(server);
   await saveKey(page, E2E_SYNC_KEY);
   await expect(toast(page, ES.keySaved)).toBeVisible();
-  await expectSynced(page);
+  await expectSynced(page, server, before);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -318,6 +400,7 @@ test.describe('sync', () => {
   }) => {
     const server = createFakeSyncServer();
     await server.attach(context);
+    await page.clock.install();
 
     await gotoReady(page, '/', 'Hoy');
     const link = indicator(page);
@@ -359,8 +442,10 @@ test.describe('sync', () => {
     await expect(page.getByText(ES.noAttempts, { exact: true })).toBeVisible();
     await expect(page.getByText(ES.backupsNoKey, { exact: true })).toBeVisible();
 
-    await page.waitForTimeout(1500);
+    // Past the start sync, the ~2 s wait after a change and the first retry.
+    await page.clock.runFor(10_000);
     expect(server.requestCount(), 'requests to /api/v1/ without a key').toBe(0);
+    await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sin configurar');
   });
 
   test('AC-SYNC-02 · a 31-character key is not saved; "Mostrar clave" toggles; a key with spaces at the ends is trimmed', async ({
@@ -402,7 +487,7 @@ test.describe('sync', () => {
     await saveKey(page, `  ${E2E_SYNC_KEY}  `);
     await expect(toast(page, ES.keySaved)).toBeVisible();
     await expect(page.getByText(ES.keyStored, { exact: true })).toBeVisible();
-    await expectSynced(page);
+    await expectSynced(page, server, 0);
   });
 
   test('AC-SYNC-03 · saving the right key sends the 29 imported records; log shows one "Correcto" attempt', async ({
@@ -419,9 +504,32 @@ test.describe('sync', () => {
     );
     await expect(rowValue(page, ES.lastSync)).toHaveText(ES.never);
 
+    // The server holds its answer for 2 s: until it answers the state must be "Sincronizando…",
+    // never "Sincronizado" (spec §2.1).
+    const status = rowValue(page, ES.status);
+    const syncingName = /^Sincronización: Sincronizando…( · 29 pendientes)?$/;
+    server.setDelay(2_000);
     await saveKey(page, E2E_SYNC_KEY);
     await expect(toast(page, ES.keySaved)).toBeVisible();
-    await expectSynced(page);
+    await expect(status).toHaveText(STATE_ES.syncing);
+    await expect(indicator(page)).toHaveAccessibleName(syncingName);
+    const seen = new Set<string>();
+    await expect
+      .poll(
+        async () => {
+          seen.add((await status.innerText()).trim());
+          return syncCount(server);
+        },
+        { timeout: WAIT, message: 'the first sync reached the server' },
+      )
+      .toBeGreaterThan(0);
+    server.setDelay(0); // only the first request is held
+    // The answer is still held.
+    await expect(status).toHaveText(STATE_ES.syncing);
+    await expect(indicator(page)).toHaveAccessibleName(syncingName);
+    expect([...seen], 'states shown before the server had the request').toEqual([STATE_ES.syncing]);
+
+    await expectSynced(page, server, 0);
     await expectCounts(page, dataCounts('after', '0'));
 
     // "Última sincronización" shows today.
@@ -448,33 +556,39 @@ test.describe('sync', () => {
   }) => {
     const server = createFakeSyncServer();
     await server.attach(context);
+    await page.clock.install();
     await gotoReady(page, '/settings', 'Ajustes');
     await importGym(page, GYM_SAMPLE, 29);
 
     await saveKey(page, E2E_WRONG_KEY);
-    await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.error, { timeout: 10_000 });
+    await expect
+      .poll(() => syncCount(server), { timeout: WAIT, message: 'the server got the wrong key' })
+      .toBeGreaterThan(0);
+    await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.error, { timeout: WAIT });
     await expect(page.getByText(ES.wrongKey, { exact: true }).first()).toBeVisible();
     await expect(indicator(page)).toHaveAccessibleName('Sincronización: Error · 29 pendientes');
     await expect(rowValue(page, ES.pending)).toHaveText('29');
 
-    // No new attempt on its own (the first retry would come after 4 s).
+    // No new attempt on its own: past the 4, 8 and 15 s retries and the 45 s sync of changes
+    // waiting.
     const afterError = server.requestCount();
-    expect(afterError).toBeGreaterThan(0);
-    await page.waitForTimeout(6000);
+    await page.clock.runFor(60_000);
     expect(server.requestCount(), 'no retry after a wrong key').toBe(afterError);
+    await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.error);
     expect(await server.records()).toHaveLength(0);
     await expect(rowValue(page, ES.pending)).toHaveText('29');
 
     // "Sincronizar ahora" does try again (and fails the same way).
     await button(page, ES.syncNow).click();
-    await expect.poll(() => server.requestCount()).toBeGreaterThan(afterError);
-    await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.error);
+    await expect.poll(() => server.requestCount(), { timeout: WAIT }).toBeGreaterThan(afterError);
+    await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.error, { timeout: WAIT });
     await expect(rowValue(page, ES.pending)).toHaveText('29');
 
     // Changing the key to the right one sends everything.
     await button(page, ES.changeKey).click();
+    const before = syncCount(server);
     await saveKey(page, E2E_SYNC_KEY);
-    await expectSynced(page);
+    await expectSynced(page, server, before);
     expect(await server.records()).toHaveLength(29);
   });
 
@@ -484,7 +598,8 @@ test.describe('sync', () => {
   }, testInfo) => {
     const server = createFakeSyncServer();
     await server.attach(context);
-    await syncedWithSample(page);
+    await page.clock.install();
+    await syncedWithSample(page, server);
     const extra = sampleWithExtraActivity(testInfo, 'act_e2e_offline_0001');
 
     await context.setOffline(true);
@@ -496,13 +611,14 @@ test.describe('sync', () => {
     );
     await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.offline);
     await expect(rowValue(page, ES.pending)).toHaveText('1');
-    // Longer than the "couple of seconds after a change".
-    await page.waitForTimeout(3000);
+    // Past the "couple of seconds after a change" (and the first retry).
+    await page.clock.runFor(5_000);
     expect(server.requestCount(), 'no request while offline').toBe(before);
+    await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.offline);
     await expect(rowValue(page, ES.pending)).toHaveText('1');
 
     await context.setOffline(false);
-    await expectSynced(page);
+    await expectSynced(page, server, before);
     expect(await server.records()).toHaveLength(30);
     await expectCounts(
       page,
@@ -516,31 +632,65 @@ test.describe('sync', () => {
   }, testInfo) => {
     const server = createFakeSyncServer();
     await server.attach(context);
+    await page.clock.install();
     await gotoReady(page, '/settings', 'Ajustes');
     await saveKey(page, E2E_SYNC_KEY);
-    await expectSynced(page);
+    // The key's first sync (an empty batch) has been answered: the next request is the import's.
+    await expectSynced(page, server, 0);
+
+    // From here the clock is still while failures are checked: the ~2 s wait after a change
+    // and the 4 s retry only run when the test moves the clock, so the failure lands on the
+    // import's sync and the error is seen before any retry can fix it.
+    const still = paused(page);
+    await pauseClock(page);
 
     // The connection is cut on the next attempt.
+    let before = syncCount(server);
     server.failNext('abort');
-    await importGym(page, GYM_SAMPLE, 29);
-    await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.error, { timeout: 10_000 });
-    await expect(page.getByText(ES.unreachable, { exact: true }).first()).toBeVisible();
-    await expect(rowValue(page, ES.pending)).toHaveText('29');
+    await importGym(page, GYM_SAMPLE, 29, still);
+    await page.clock.runFor(2_500); // past the ~2 s wait after a change
+    await serverGotSync(page, server, before);
+    await still(async (timeout) => {
+      await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.error, { timeout });
+      await expect(page.getByText(ES.unreachable, { exact: true }).first()).toBeVisible({
+        timeout,
+      });
+      await expect(rowValue(page, ES.pending)).toHaveText('29', { timeout });
+    });
     expect(await server.records()).toHaveLength(0);
-    // The automatic retry (after ~4 s) sends them.
-    await expectSynced(page, 12_000);
+    expect(syncCount(server), 'no retry while the clock is still').toBe(before + 1);
+
+    // The automatic retry, 4 s after the failure, sends them.
+    before = syncCount(server);
+    await page.clock.runFor(4_500);
+    await serverGotSync(page, server, before);
+    await page.clock.resume();
+    await expectSynced(page, server, before);
     expect(await server.records()).toHaveLength(29);
 
-    // The server answers 500 on the next attempt.
+    // The server answers 500 on the next attempt (the previous one was answered: "Sincronizado").
+    await pauseClock(page);
+    before = syncCount(server);
     server.failNext(500);
-    await importGym(page, sampleWithExtraActivity(testInfo, 'act_e2e_retry_0001'), 1);
-    await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.error, { timeout: 10_000 });
-    await expect(page.getByText(ES.serverError, { exact: true }).first()).toBeVisible();
-    await expect(rowValue(page, ES.pending)).toHaveText('1');
+    await importGym(page, sampleWithExtraActivity(testInfo, 'act_e2e_retry_0001'), 1, still);
+    await page.clock.runFor(2_500); // past the ~2 s wait after a change
+    await serverGotSync(page, server, before);
+    await still(async (timeout) => {
+      await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.error, { timeout });
+      await expect(page.getByText(ES.serverError, { exact: true }).first()).toBeVisible({
+        timeout,
+      });
+      await expect(rowValue(page, ES.pending)).toHaveText('1', { timeout });
+    });
     expect(await server.records()).toHaveLength(29);
+    expect(syncCount(server), 'no retry while the clock is still').toBe(before + 1);
+
+    // "Sincronizar ahora" sends it.
+    await page.clock.resume();
+    before = syncCount(server);
     await button(page, ES.syncNow).click();
-    await expect(toast(page, ES.synced)).toBeVisible();
-    await expectSynced(page);
+    await expect(toast(page, ES.synced)).toBeVisible({ timeout: WAIT });
+    await expectSynced(page, server, before);
     expect(await server.records()).toHaveLength(30);
   });
 
@@ -550,7 +700,7 @@ test.describe('sync', () => {
   }, testInfo) => {
     const server = createFakeSyncServer();
     await server.attach(context);
-    await syncedWithSample(page);
+    await syncedWithSample(page, server);
 
     await context.setOffline(true);
     await importGym(page, sampleWithExtraActivity(testInfo, 'act_e2e_reload_0001'), 1);
@@ -573,10 +723,11 @@ test.describe('sync', () => {
     expect(await server.records()).toHaveLength(29);
 
     // The network comes back.
+    const before = syncCount(server);
     await context.unroute('**/api/v1/**', unreachable);
     await context.setOffline(true);
     await context.setOffline(false);
-    await expectSynced(page);
+    await expectSynced(page, server, before);
     expect(await server.records()).toHaveLength(30);
   });
 
@@ -587,7 +738,7 @@ test.describe('sync', () => {
   }, testInfo) => {
     const server = createFakeSyncServer();
     await server.attach(context);
-    await syncedWithSample(page);
+    await syncedWithSample(page, server);
     await expectCounts(page, dataCounts('after', '0'));
     const countsA = await readCounts(page);
 
@@ -595,9 +746,10 @@ test.describe('sync', () => {
     try {
       await gotoReady(b.page, '/settings', 'Ajustes');
       await expectCounts(b.page, dataCounts('new'));
+      const before = syncCount(server);
       await saveKey(b.page, E2E_SYNC_KEY);
       await expect(toast(b.page, ES.keySaved)).toBeVisible();
-      await expectSynced(b.page);
+      await expectSynced(b.page, server, before);
       await expectCounts(b.page, countsA);
     } finally {
       await b.context.close();
@@ -608,7 +760,12 @@ test.describe('sync', () => {
     page,
     context,
     browser,
+    browserName,
   }, testInfo) => {
+    // Two devices, three imports, four syncs and two exports: in WebKit every step on local
+    // storage is seconds slower (a fresh device's Datos card alone can take > 7 s), so the
+    // default 30 s does not fit there. Nothing is waited for by time; this is only the budget.
+    test.slow(browserName === 'webkit', 'two devices; WebKit local storage is seconds slower');
     const server = createFakeSyncServer();
     await server.attach(context);
     const ACT = 'act_mg2a3b4c5d6e7f8g9h';
@@ -620,27 +777,38 @@ test.describe('sync', () => {
         act.note = `E2E versión ${who}`;
       });
 
-    await syncedWithSample(page);
+    await syncedWithSample(page, server);
     const b = await newDevice(browser, testInfo, server);
     try {
+      await b.page.clock.install();
       await gotoReady(b.page, '/settings', 'Ajustes');
+      let before = syncCount(server);
       await saveKey(b.page, E2E_SYNC_KEY);
-      await expectSynced(b.page);
+      await expect(toast(b.page, ES.keySaved)).toBeVisible();
+      await expectSynced(b.page, server, before);
       await expectCounts(b.page, dataCounts('after', '0'));
 
       // A changes the activity while offline; later B changes it too and syncs first.
       await context.setOffline(true);
+      await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sin conexión');
       await importGym(page, version('A', 1000), 1);
       await expect(rowValue(page, ES.pending)).toHaveText('1');
+      before = syncCount(server); // A is offline: only B can reach the server now
       await importGym(b.page, version('B', 2000), 1);
-      await expectSynced(b.page);
+      await b.page.clock.runFor(2_500); // past B's ~2 s wait after a change
+      await expectSynced(b.page, server, before);
+      await expect
+        .poll(async () => JSON.stringify(await server.records()), { timeout: WAIT })
+        .toContain('E2E versión B');
 
       // A syncs after B.
+      before = syncCount(server);
       await context.setOffline(false);
-      await expectSynced(page);
+      await expectSynced(page, server, before);
+      before = syncCount(server);
       await button(b.page, ES.syncNow).click();
-      await expect(toast(b.page, ES.synced)).toBeVisible();
-      await expectSynced(b.page);
+      await expect(toast(b.page, ES.synced)).toBeVisible({ timeout: WAIT });
+      await expectSynced(b.page, server, before);
 
       const onServer = JSON.stringify(await server.records());
       expect(onServer).toContain('E2E versión B');
@@ -667,7 +835,8 @@ test.describe('sync', () => {
   }) => {
     const server = createFakeSyncServer();
     await server.attach(context);
-    await syncedWithSample(page);
+    await page.clock.install();
+    await syncedWithSample(page, server);
     await expect(page.getByText(ES.keyStored, { exact: true })).toBeVisible();
     // The key itself is never shown again.
     await expect(page.getByText(E2E_SYNC_KEY)).toHaveCount(0);
@@ -709,31 +878,44 @@ test.describe('sync', () => {
     await page.reload();
     await expect(h1(page, 'Ajustes')).toBeVisible();
     await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.notSetUp);
-    await page.waitForTimeout(1000);
-    expect(server.requestCount()).toBe(count);
+    // Past the start sync and the first retry.
+    await page.clock.runFor(10_000);
+    expect(server.requestCount(), 'no request after forgetting the key').toBe(count);
+    await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.notSetUp);
   });
 
   test('AC-SYNC-11 · after more than 40 attempts the log lists exactly 40, newest first', async ({
     page,
     context,
   }) => {
-    test.setTimeout(60_000); // 42 real attempts, one after another
+    // 42 attempts, one after another. Nothing waits for time: each click waits for the button
+    // to be enabled again (it is disabled while a sync runs) and each attempt for the server.
+    test.setTimeout(60_000);
     const server = createFakeSyncServer();
     await server.attach(context);
-    await syncedWithSample(page); // attempt 1: "Enviados: 29"
+    await syncedWithSample(page, server); // attempt 1: "Enviados: 29"
 
     const syncNow = button(page, ES.syncNow);
     for (let i = 0; i < 40; i++) {
-      const before = server.requestCount();
+      const before = syncCount(server);
       await syncNow.click();
       await expect
-        .poll(() => server.requestCount(), { intervals: [50], message: `attempt ${String(i + 2)}` })
+        .poll(() => syncCount(server), {
+          intervals: [50],
+          timeout: WAIT,
+          message: `attempt ${String(i + 2)}`,
+        })
         .toBeGreaterThan(before);
     }
+    // Attempt 41 has been answered before the failure is queued.
+    await expect(syncNow).toBeEnabled({ timeout: WAIT });
+    await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.synced, { timeout: WAIT });
     // Attempt 42, the newest, fails with a wrong key (no retries afterwards).
+    const before = syncCount(server);
     server.failNext(401);
     await syncNow.click();
-    await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.error);
+    await expect.poll(() => syncCount(server), { timeout: WAIT }).toBeGreaterThan(before);
+    await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.error, { timeout: WAIT });
 
     await page.getByRole('link', { name: ES.logLink, exact: true }).click();
     await expect(h1(page, ES.card)).toBeVisible();
@@ -754,7 +936,7 @@ test.describe('sync', () => {
   }, testInfo) => {
     const server = createFakeSyncServer();
     await server.attach(context);
-    await syncedWithSample(page);
+    await syncedWithSample(page, server);
     const countsA = await readCounts(page);
     const all = await server.records();
     expect(all).toHaveLength(29);
@@ -808,7 +990,7 @@ test.describe('sync', () => {
   }, testInfo) => {
     const server = createFakeSyncServer();
     await server.attach(context);
-    await syncedWithSample(page);
+    await syncedWithSample(page, server);
     // The backup holds only the sessions and sets (14 of the 29 records).
     const small = (await server.records()).filter((r) => r.type === 'session' || r.type === 'set');
     expect(small, 'sessions + sets on the server').toHaveLength(14);
@@ -830,6 +1012,7 @@ test.describe('sync', () => {
 
     await button(page, 'Restaurar la copia del 2 de noviembre de 2026').click();
     await expect(dialog).toBeVisible();
+    const beforeRestore = syncCount(server); // restoring starts a sync
     await button(dialog, ES.restore).click();
     const restored = toast(page, /^Copia restaurada\. Registros cambiados: \d+$/);
     await expect(restored).toBeVisible();
@@ -853,14 +1036,15 @@ test.describe('sync', () => {
     ];
     await page.getByRole('link', { name: ES.back, exact: true }).click();
     await expect(h1(page, 'Ajustes')).toBeVisible();
-    await expectSynced(page);
+    await expectSynced(page, server, beforeRestore);
     await expectCounts(page, expected);
 
     const other = await newDevice(browser, testInfo, server);
     try {
       await gotoReady(other.page, '/settings', 'Ajustes');
+      const before = syncCount(server);
       await saveKey(other.page, E2E_SYNC_KEY);
-      await expectSynced(other.page);
+      await expectSynced(other.page, server, before);
       await expectCounts(other.page, expected);
     } finally {
       await other.context.close();
@@ -884,7 +1068,7 @@ test.describe('sync', () => {
       await axe(page, `/settings, key form (${scheme})`);
 
       await saveKey(page, E2E_SYNC_KEY);
-      await expectSynced(page);
+      await expectSynced(page, server, 0);
       await axe(page, `/settings, key saved (${scheme})`);
 
       await server.addBackup('2026-11-02', [{ id: 'e2e-a' }, { id: 'e2e-b' }]);
@@ -956,19 +1140,26 @@ test.describe('sync', () => {
     await saveKey(page, E2E_SYNC_KEY, 'en');
     await expect(toast(page, 'Key saved.')).toBeVisible();
     await expect(page.getByText('Key saved on this device.', { exact: true })).toBeVisible();
-    await expect(rowValue(page, 'Status')).toHaveText('Synced', { timeout: 10_000 });
+    await expect.poll(() => syncCount(server), { timeout: WAIT }).toBeGreaterThan(0);
+    await expect(rowValue(page, 'Status')).toHaveText('Synced', { timeout: WAIT });
     await expect(indicator(page)).toHaveAccessibleName('Sync: Synced');
+    let before = syncCount(server);
     await button(page, 'Sync now').click();
-    await expect(toast(page, 'Synced.')).toBeVisible();
+    await expect(toast(page, 'Synced.')).toBeVisible({ timeout: WAIT });
+    // That attempt was answered before the failure is queued.
+    expect(syncCount(server)).toBeGreaterThan(before);
+    await expect(button(page, 'Sync now')).toBeEnabled({ timeout: WAIT });
+    before = syncCount(server);
     server.failNext(401);
     await button(page, 'Sync now').click();
-    await expect(rowValue(page, 'Status')).toHaveText('Error');
+    await expect.poll(() => syncCount(server), { timeout: WAIT }).toBeGreaterThan(before);
+    await expect(rowValue(page, 'Status')).toHaveText('Error', { timeout: WAIT });
     await expect(
       page.getByText('Wrong key. Check it in Settings.', { exact: true }).first(),
     ).toBeVisible();
     await expect(indicator(page)).toHaveAccessibleName('Sync: Error');
     await button(page, 'Sync now').click();
-    await expect(rowValue(page, 'Status')).toHaveText('Synced');
+    await expect(rowValue(page, 'Status')).toHaveText('Synced', { timeout: WAIT });
 
     // Change key → Cancel.
     await button(page, 'Change key').click();

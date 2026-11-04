@@ -106,8 +106,32 @@ describe('Sync card', () => {
     ).toBeInTheDocument();
   });
 
+  it('says "Sincronizando…" until the first answer, then "Sincronizado"', async () => {
+    const { card, engine, server } = setup();
+    const status = within(card()).getByLabelText('Estado de la sincronización');
+    expect(within(status).getByText('Sincronizando…')).toBeInTheDocument();
+    expect(within(card()).getByRole('button', { name: 'Sincronizar ahora' })).toBeDisabled();
+
+    const gate = server.hold();
+    engine.start();
+    await waitFor(() => {
+      expect(server.requests).toHaveLength(1);
+    });
+    expect(within(status).getByText('Sincronizando…')).toBeInTheDocument();
+
+    gate.release();
+    expect(await within(status).findByText('Sincronizado')).toBeInTheDocument();
+    expect(within(card()).getByRole('button', { name: 'Sincronizar ahora' })).toBeEnabled();
+    engine.stop();
+  });
+
   it('syncs now and shows the result', async () => {
-    const { user, card, server } = setup();
+    const { user, card, server, engine } = setup();
+    // As in the app (main.tsx): the engine starts and its first attempt ends before "Sync now".
+    engine.start();
+    await waitFor(() => {
+      expect(within(card()).getByRole('button', { name: 'Sincronizar ahora' })).toBeEnabled();
+    });
 
     await user.click(within(card()).getByRole('button', { name: 'Sincronizar ahora' }));
     expect(await screen.findByText('Sincronizado.')).toBeInTheDocument();
@@ -121,6 +145,7 @@ describe('Sync card', () => {
     expect(await within(toasts).findByText(reason)).toBeInTheDocument();
     expect(within(card()).getByText(reason)).toBeInTheDocument();
     expect(within(card()).getByText('Error')).toBeInTheDocument();
+    engine.stop();
   });
 
   it('says so when "Sync now" finds no network', async () => {
@@ -129,11 +154,16 @@ describe('Sync card', () => {
     const user = userEvent.setup();
     renderApp('/settings', { db, sync: engine });
     const card = cardOf('Sincronización');
+    engine.start(); // as in the app; without network the state is "Sin conexión" at once
+    await waitFor(() => {
+      expect(within(card).getByRole('button', { name: 'Sincronizar ahora' })).toBeEnabled();
+    });
 
     await user.click(within(card).getByRole('button', { name: 'Sincronizar ahora' }));
 
     expect(await screen.findByText('No se pudo conectar con el servidor.')).toBeInTheDocument();
     expect(within(card).getByText('Sin conexión')).toBeInTheDocument();
+    engine.stop();
   });
 
   it('changes the key, or cancels the change', async () => {

@@ -263,6 +263,14 @@ deload weeks), deload, short week.
   fix); never install browsers. E2E covers user flows and acceptance criteria — exhaustive
   combinations belong in unit tests; axe runs once per screen and theme (light/dark), in
   Chromium only. Target: `npm run e2e` under 2 min.
+- `npm run e2e:all` runs locally only when the user asks, or in `/close-phase` on the last
+  branch of a phase, before the PR `dev → main` (WebKit was never run before the Phase 4 PR and
+  CI caught it, 2026-11-04).
+- **No real-time waits in e2e:** no `waitForTimeout`, no waiting for a debounce or backoff to
+  pass. App timers move with `page.clock` (`install()` before `goto`, then `runFor(ms)`); state
+  is awaited with web-first assertions or `expect.poll`; before injecting a failure into the fake
+  sync server, wait until the server answered the previous request (`requestCount`). WebKit can
+  be seconds slower than Chromium on IndexedDB.
 - IndexedDB tests use `fake-indexeddb` (loaded by `src/test/setup.ts`); use
   `openTestDatabase()` for a fresh database. Local storage layout: ADR-0003.
 
@@ -327,8 +335,9 @@ Git write commands and global installs are **denied** in `.claude/settings.json`
   acceptance criteria, lists needed packages and the branch to create, and waits for
   confirmation before writing code.
 - **`/close-phase`** — runs lint, typecheck, test and build; launches the **blind-tester**
-  (e2e from the spec) and the **context-keeper** (updates memory); checks no port is busy;
-  outputs the commit plan.
+  (e2e from the spec; on the last branch of a phase also `npm run e2e:all`, before the PR
+  `dev → main`) and the **context-keeper** (updates memory); checks no port is busy; outputs
+  the commit plan.
 - **blind-tester:** give it the phase's acceptance criteria. It writes and runs
   `tests/e2e/*.spec.ts` and reports failures with steps, expected vs actual and screenshots.
   It does not fix app code. Write the spec in `docs/spec/` **before** implementing a feature

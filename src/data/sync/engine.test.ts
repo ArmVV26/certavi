@@ -413,6 +413,94 @@ describe('sync engine', () => {
       expect(await db.pending.count()).toBe(0);
     });
 
+    // "Sincronizado" means the server answered (docs/spec/sync.md §2.1). On a slow device the
+    // first request can leave seconds after saving the key, so the state must say "syncing".
+    describe('before the first answer', () => {
+      function statusesOf(engine: ReturnType<typeof setup>['engine']) {
+        const seen: string[] = [engine.getState().status];
+        engine.subscribe(() => seen.push(engine.getState().status));
+        return seen;
+      }
+
+      it('shows syncing, never idle, from saving a key until the server answers', async () => {
+        const { engine, server } = setup({ key: null });
+        const seen = statusesOf(engine);
+        const gate = server.hold();
+
+        const saving = engine.setKey(TEST_KEY);
+        expect(engine.getState().status).toBe('syncing');
+        expect(await saving).toBe('saved');
+        await vi.waitFor(() => {
+          expect(server.requests).toHaveLength(1);
+        });
+        expect(engine.getState().status).toBe('syncing');
+        expect(seen).not.toContain('idle');
+
+        gate.release();
+        await vi.waitFor(() => {
+          expect(engine.getState().status).toBe('idle');
+        });
+      });
+
+      it('goes from syncing to error without passing through idle when it fails', async () => {
+        const { engine, server } = setup({ key: null });
+        const seen = statusesOf(engine);
+        server.failNext('network');
+
+        expect(await engine.setKey(TEST_KEY)).toBe('saved');
+        await vi.waitFor(() => {
+          expect(engine.getState()).toMatchObject({ status: 'error', error: 'network' });
+        });
+        expect(seen).not.toContain('idle');
+      });
+
+      it('shows offline, not idle, when the key is saved without network', async () => {
+        const { engine, server, online } = setup({ key: null });
+        online.value = false;
+
+        expect(await engine.setKey(TEST_KEY)).toBe('saved');
+        expect(engine.getState()).toMatchObject({ status: 'offline', hasKey: true });
+        expect(server.requests).toHaveLength(0);
+      });
+
+      it('starts as syncing with a key until the start-up attempt is answered', async () => {
+        const { engine, server } = setup();
+        expect(engine.getState().status).toBe('syncing');
+        const gate = server.hold();
+
+        engine.start();
+        await vi.waitFor(() => {
+          expect(server.requests).toHaveLength(1);
+        });
+        expect(engine.getState().status).toBe('syncing');
+
+        gate.release();
+        await vi.waitFor(() => {
+          expect(engine.getState().status).toBe('idle');
+        });
+        engine.stop();
+      });
+
+      it('starts as offline when the app opens with a key and no network', () => {
+        const { engine, online } = setup();
+        online.value = false;
+        engine.start();
+        expect(engine.getState().status).toBe('offline');
+        engine.stop();
+      });
+
+      it('still runs the first attempt when re-queueing the records fails', async () => {
+        const { engine, server, db } = setup({ key: null });
+        vi.spyOn(db.pending, 'bulkPut').mockRejectedValueOnce(new Error('disk full'));
+
+        await expect(engine.setKey(TEST_KEY)).rejects.toThrow();
+        await vi.waitFor(() => {
+          expect(engine.getState().status).toBe('idle');
+        });
+        expect(server.requests).toHaveLength(1);
+      });
+    });
+
     it('reports a key that cannot be stored', async () => {
       const { engine, keyStore } = setup({ key: null });
       vi.spyOn(keyStore, 'write').mockReturnValue(false);
