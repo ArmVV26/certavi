@@ -14,6 +14,11 @@ Never run git commands that write (commit, push, merge, tag, branch): the user d
    `show-report`. If a run takes more than 5 minutes or hangs, it stops, runs
    `npm run ports:kill`, checks ports and reports. Do not run e2e yourself in parallel.
    Summarize its report: passed / failed, and any failure with steps, expected vs actual.
+   **On the last branch of a phase** (the one after which the PR `dev → main` opens), the
+   blind-tester then runs `npm run e2e:all` once (Chromium + WebKit, 2 workers, 10 min cap,
+   same rules: foreground, no extra flags, one run plus at most one after a fix). A WebKit-only
+   failure is reported like any other; never skip it to get the PR through. This is the run CI
+   repeats on the PR to `main` (incident of 2026-11-04: WebKit had never run before that PR).
 3. **Context keeper** — launch the `context-keeper` agent with a short summary of what changed
    in this phase (files, decisions, test results). It updates `context.md`, `CHANGELOG.md`
    and, if needed, `CLAUDE.md`.
