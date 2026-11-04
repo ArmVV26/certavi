@@ -18,6 +18,16 @@ export function formatDate(
   return new Intl.DateTimeFormat(INTL_LOCALE[locale], options).format(date);
 }
 
+/** A date range such as a week: "2–8 nov" (es) / "2–8 Nov" (en), "26 oct–1 nov" across months. */
+export function formatDateRange(
+  start: Date,
+  end: Date,
+  locale: Locale,
+  options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' },
+): string {
+  return new Intl.DateTimeFormat(INTL_LOCALE[locale], options).formatRange(start, end);
+}
+
 /**
  * Number typed by the user, with a comma or a point as the decimal separator ("27,5", "27.5").
  * Returns null for empty or incomplete input ("", "-", ","). No thousands separators: weights,

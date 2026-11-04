@@ -82,7 +82,9 @@ React UI ─► hooks ─► Domain (pure TS) ─► Repositories ─► Dexie (
 - `src/domain` — pure TypeScript: entities, zod schemas, rules, seed catalog and routines.
   **No React, no Dexie, no `fetch`.** Everything here is unit-tested.
 - `src/data` — Dexie database, repositories, `SyncEngine`, `SyncTransport` implementations,
-  legacy importer, exporters. Depends on `domain`, never on `features` or `ui`.
+  legacy importer, exporters. Depends on `domain`, never on `features` or `ui`. Ids of
+  records created on the device come from `newId(prefix)` (`src/data/ids.ts`: `ses_`, `act_`,
+  `set_` + base36 time + 10 random characters).
 - `src/features/*` — screens and their hooks (`today`, `session`, `calendar`, `routines`,
   `exercises`, `progress`, `blocks`, `settings`). May use `domain`, `data`, `ui`, `i18n`.
 - `src/ui` — generic, presentational components (Button, Dialog, Sheet, NumberField…).
@@ -173,7 +175,8 @@ never synced).
 Rules (all tested): estimated 1RM (Epley on best set, ignoring warm-up/approach), progression
 (top set, increments +2.5 kg upper / +5 kg lower unless overridden, back-off ≈ −10 %, isolation),
 "does not count" sessions, effective sets per muscle group per week vs plan, records (excluding
-deload weeks), deload, short week.
+deload weeks), deload, short week, hiking week (`weekRoutines`), day plan (`dayPlan.ts`), new
+sessions (`session.ts`), Today helpers (`today.ts`) and blocks of the day (`blocks.ts`).
 
 ---
 
@@ -236,6 +239,10 @@ deload weeks), deload, short week.
   **Node** environment, so any DOM use fails (guarded by `src/domain/environment.test.ts`) —
   **`server`** — `server/**` and `netlify/**` tests, in Node — and **`ui`** — everything else,
   in jsdom with the RTL setup.
+- Timeouts: RTL `asyncUtilTimeout` is **5 s** (`src/test/setup.ts`) and the `ui` project's
+  `testTimeout` is **15 s** (`vite.config.ts`). Under `test:coverage` (v8, all workers busy) a
+  write → live query → re-render can take over 1 s, which made component tests fail at random
+  (2026-11-04).
 - Domain, data and server code need thorough tests: v8 coverage of `src/domain/**`,
   `src/data/**` and `server/**` must each stay **≥ 90 %** (lines, functions, branches,
   statements; per-glob thresholds in `vite.config.ts`; `src/data/**/testing.ts` and
