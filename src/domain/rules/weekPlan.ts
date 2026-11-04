@@ -17,6 +17,21 @@ export const WEEK_ROUTINES: Readonly<Record<WeekSize, readonly string[]>> = {
   3: ['push', 'pull', 'lowerFull'],
 };
 
+/** In a hiking week Sunday is for the mountain: its routine goes and Lower B becomes Lower Full. */
+const HIKING_DROPS = 'lowerA';
+const HIKING_SWAPS: Readonly<Record<string, string>> = { lowerB: 'lowerFull' };
+
+/**
+ * Routines planned in a week (as gym_app): with hiking, a normal week is Push, Pull, Lower Full and
+ * Upper; with 4 sessions, Push, Pull and Lower Full; with 3 nothing changes.
+ */
+export function weekRoutines(options: { size: WeekSize; hiking?: boolean }): string[] {
+  const ids = WEEK_ROUTINES[options.size];
+  if (!options.hiking) return [...ids];
+  const swapped = ids.filter((id) => id !== HIKING_DROPS).map((id) => HIKING_SWAPS[id] ?? id);
+  return [...new Set(swapped)];
+}
+
 export type RoutineLookup = ReadonlyMap<string, Pick<Routine, 'items'>>;
 
 export interface PlanSummary {
@@ -30,16 +45,17 @@ export interface PlanSummary {
 
 /** Plan computed from the current routines. Missing routines count as empty. */
 export function livePlan(
-  options: { size: WeekSize; deload: boolean },
+  options: { size: WeekSize; deload: boolean; hiking?: boolean },
   routines: RoutineLookup,
   exercises: ExerciseLookup,
 ): PlanSummary {
-  const plans = WEEK_ROUTINES[options.size].map((id) => {
+  const { size, deload } = options;
+  const plans = weekRoutines(options).map((id) => {
     const items = routines.get(id)?.items ?? [];
-    return options.deload ? deloadItems(items) : items;
+    return deload ? deloadItems(items) : items;
   });
   const groups = plannedSetsByGroup(plans, exercises);
-  return { ...options, groups, total: totalSets(groups), closed: false };
+  return { size, deload, groups, total: totalSets(groups), closed: false };
 }
 
 /** A week plan with default values: 5 sessions, no hiking, no deload, not closed. */
@@ -69,7 +85,7 @@ export function weekPlanSummary(
     const groups = record.plannedSetsByGroup;
     return { size, deload, groups, total: totalSets(groups), closed: true };
   }
-  return livePlan({ size, deload }, routines, exercises);
+  return livePlan({ size, deload, hiking: record?.hiking ?? false }, routines, exercises);
 }
 
 /** Freezes the plan of a finished week. Already closed weeks keep their first closing time. */
