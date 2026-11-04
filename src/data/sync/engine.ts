@@ -1,0 +1,377 @@
+// The client sync engine (docs/api/sync-v1.md §8, ADR-0004): when to sync, batches, retries,
+// the exit flush, the key and the attempt log. Every dependency is injected, so it is tested
+// without a browser or a network.
+import { liveQuery, type Subscription } from 'dexie';
+import {
+  KEEPALIVE_MAX_BYTES,
+  MAX_BATCH_RECORDS,
+  PENDING_SYNC_INTERVAL_MS,
+  RETRY_BACKOFF_SECONDS,
+  type BackupFile,
+  type BackupList,
+  type SyncResponse,
+} from '../../domain';
+import type { CertaviDb, SyncTrigger } from '../db';
+import { addAttempt, lastSuccessAt } from './attemptLog';
+import { commitResponse } from './commit';
+import { keepaliveBatch, nextBatch, queueEverything, readSince } from './queue';
+import { restoreBackup } from './restore';
+import { isValidKey, normalizeKey, type KeyStore } from './syncKey';
+import { SyncError, toSyncError, type SyncErrorCode, type SyncTransport } from './transport';
+
+export type SyncStatus = 'disabled' | 'idle' | 'syncing' | 'offline' | 'error';
+
+export interface SyncState {
+  /**
+   * `disabled`: no key on this device. `idle`: the last attempt worked. With a key and no
+   * attempt finished yet (just saved, or app start-up) it is `syncing`, never `idle`: "Synced"
+   * must not show before the server has answered (docs/spec/sync.md §2.1).
+   */
+  status: SyncStatus;
+  hasKey: boolean;
+  /** Records waiting to be sent. */
+  pending: number;
+  /** Time of the last attempt that worked. */
+  lastSuccessAt: number | null;
+  /** Why the last attempt failed (`status` is `error` or `offline`). */
+  error: SyncErrorCode | null;
+}
+
+/** Timers, injectable so tests control time. */
+export interface Scheduler {
+  set: (callback: () => void, ms: number) => unknown;
+  clear: (handle: unknown) => void;
+}
+
+export interface SyncEngineOptions {
+  db: CertaviDb;
+  keyStore: KeyStore;
+  createTransport: (key: string) => SyncTransport;
+  now?: () => number;
+  scheduler?: Scheduler;
+  /** `navigator.onLine` in the browser. */
+  isOnline?: () => boolean;
+  /** Wait after the queue grows before syncing, so a burst of edits goes in one request. */
+  debounceMs?: number;
+}
+
+export type SetKeyResult = 'saved' | 'unchanged' | 'invalid' | 'storage-error';
+
+export interface SyncEngine {
+  getState: () => SyncState;
+  /** For `useSyncExternalStore`. */
+  subscribe: (listener: () => void) => () => void;
+  /** Starts watching the queue and runs the first sync. */
+  start: () => void;
+  stop: () => void;
+  /** Asks for a sync; it runs now, after the current one, or not at all (no key, offline…). */
+  trigger: (reason: SyncTrigger) => void;
+  /** "Sync now": also clears a stop after a fatal error. Resolves when it has finished. */
+  syncNow: () => Promise<SyncState>;
+  /** The page is being hidden or closed: send what fits in one `keepalive` request. */
+  flush: () => void;
+  /** The browser lost the network. */
+  wentOffline: () => void;
+  setKey: (input: string) => Promise<SetKeyResult>;
+  forgetKey: () => void;
+  listBackups: () => Promise<BackupList>;
+  getBackup: (date: string) => Promise<BackupFile>;
+  /** Restores a server backup; returns how many records changed. */
+  restore: (date: string) => Promise<number>;
+}
+
+type LogResult =
+  | { ok: true; sent: number; received: number }
+  | { ok: false; error: SyncErrorCode; sent: number; received: number };
+
+export const SYNC_DEBOUNCE_MS = 2000;
+/** Safety net: an attempt never loops forever, even if the queue keeps changing. */
+const MAX_ROUNDS = 50;
+
+const defaultScheduler: Scheduler = {
+  set: (callback, ms) => setTimeout(callback, ms),
+  clear: (handle) => {
+    clearTimeout(handle as ReturnType<typeof setTimeout>);
+  },
+};
+
+type TimerKind = 'write' | 'retry' | 'interval';
+
+/** Triggers that bring new local data: worth another attempt if one is already running. */
+const RERUN_TRIGGERS: ReadonlySet<SyncTrigger> = new Set(['write', 'manual', 'key', 'restore']);
+
+export function backoffMs(failures: number): number {
+  const index = Math.min(Math.max(failures, 1), RETRY_BACKOFF_SECONDS.length) - 1;
+  return (RETRY_BACKOFF_SECONDS[index] ?? 60) * 1000;
+}
+
+export function createSyncEngine({
+  db,
+  keyStore,
+  createTransport,
+  now = Date.now,
+  scheduler = defaultScheduler,
+  isOnline = () => true,
+  debounceMs = SYNC_DEBOUNCE_MS,
+}: SyncEngineOptions): SyncEngine {
+  let key = keyStore.read();
+  let transport = key === null ? null : createTransport(key);
+  let state: SyncState = {
+    // With a key, `start()` runs the first attempt; until it ends nothing is known to be synced.
+    status: key === null ? 'disabled' : 'syncing',
+    hasKey: key !== null,
+    pending: 0,
+    lastSuccessAt: null,
+    error: null,
+  };
+  const listeners = new Set<() => void>();
+  let running: Promise<void> | null = null;
+  let rerun: SyncTrigger | null = null;
+  let timer: { handle: unknown; kind: TimerKind } | null = null;
+  let failures = 0;
+  /** After a fatal error, only the user (key, "Sync now") starts a new attempt. */
+  let blocked = false;
+  let queueWatch: Subscription | null = null;
+  /** Null until the first count: the queue as found at start-up is not a new edit. */
+  let lastPending: number | null = null;
+
+  function update(patch: Partial<SyncState>) {
+    state = { ...state, ...patch };
+    for (const listener of listeners) listener();
+  }
+
+  function clearTimer() {
+    if (timer) scheduler.clear(timer.handle);
+    timer = null;
+  }
+
+  function schedule(kind: TimerKind, ms: number) {
+    clearTimer();
+    const handle = scheduler.set(() => {
+      timer = null;
+      trigger(kind);
+    }, ms);
+    timer = { handle, kind };
+  }
+
+  function onQueueCount(count: number) {
+    const grew = lastPending !== null && count > lastPending;
+    lastPending = count;
+    if (count !== state.pending) update({ pending: count });
+    if (!grew || key === null || blocked) return;
+    if (running) {
+      rerun ??= 'write';
+      return;
+    }
+    // A backoff in progress is respected; otherwise sync shortly after the last edit.
+    if (timer?.kind !== 'retry') schedule('write', debounceMs);
+  }
+
+  async function log(reason: SyncTrigger, startedAt: number, result: LogResult) {
+    try {
+      await addAttempt(db, {
+        at: startedAt,
+        trigger: reason,
+        durationMs: now() - startedAt,
+        ...result,
+      });
+    } catch {
+      // The log is a diagnosis aid: failing to write it must not break sync.
+    }
+  }
+
+  async function attempt(reason: SyncTrigger): Promise<void> {
+    const activeKey = key;
+    const activeTransport = transport;
+    if (activeKey === null || activeTransport === null) return;
+    const exit = reason === 'exit';
+    const startedAt = now();
+    let sent = 0;
+    let received = 0;
+    if (!exit) update({ status: 'syncing' });
+    try {
+      let remaining = 0;
+      let batchSize = MAX_BATCH_RECORDS;
+      for (let round = 1; round <= MAX_ROUNDS; round++) {
+        const since = await readSince(db);
+        const batch = exit
+          ? await keepaliveBatch(db, since, KEEPALIVE_MAX_BYTES)
+          : await nextBatch(db, batchSize);
+        if (exit && batch.records.length === 0) return; // nothing to save on the way out
+        let response: SyncResponse;
+        try {
+          response = await activeTransport.sync(
+            { since, records: batch.records },
+            { keepalive: exit },
+          );
+        } catch (error) {
+          const sentCount = batch.records.length;
+          if (error instanceof SyncError && error.code === 'payload-too-large' && sentCount > 1) {
+            batchSize = Math.ceil(sentCount / 2);
+            continue;
+          }
+          throw error;
+        }
+        if (key !== activeKey) return; // the key changed meanwhile: this answer is stale
+        const result = await commitResponse(db, batch.entries, response);
+        sent += batch.records.length;
+        received += response.records.length;
+        remaining = await db.pending.count();
+        if (exit || remaining === 0 || result.dequeued === 0) break;
+      }
+      failures = 0;
+      await log(reason, startedAt, { ok: true, sent, received });
+      if (key !== activeKey) return;
+      update({ status: 'idle', error: null, lastSuccessAt: startedAt });
+      if (remaining > 0 && !rerun) schedule('interval', PENDING_SYNC_INTERVAL_MS);
+    } catch (cause) {
+      const error = toSyncError(cause);
+      await log(reason, startedAt, { ok: false, error: error.code, sent, received });
+      if (key !== activeKey) return;
+      if (error.kind === 'fatal') blocked = true;
+      const offline = error.code === 'network' && !isOnline();
+      update({ status: offline ? 'offline' : 'error', error: error.code });
+      if (error.kind === 'retryable' && !offline && !exit) {
+        failures += 1;
+        schedule('retry', backoffMs(failures));
+      }
+    }
+  }
+
+  function run(reason: SyncTrigger): Promise<void> {
+    clearTimer();
+    const current = attempt(reason).finally(() => {
+      running = null;
+      const next = rerun;
+      rerun = null;
+      if (next !== null) trigger(next);
+    });
+    running = current;
+    return current;
+  }
+
+  function trigger(reason: SyncTrigger) {
+    if (key === null) return;
+    if (blocked && reason !== 'manual' && reason !== 'key') return;
+    if (reason === 'manual' || reason === 'key') blocked = false;
+    if (reason === 'online' || reason === 'visible' || reason === 'manual') failures = 0;
+    if (running) {
+      if (RERUN_TRIGGERS.has(reason)) rerun ??= reason;
+      return;
+    }
+    if (!isOnline()) {
+      clearTimer();
+      update({ status: 'offline', error: null });
+      return;
+    }
+    void run(reason);
+  }
+
+  async function settle() {
+    while (running) await running;
+  }
+
+  async function requireTransport(): Promise<SyncTransport> {
+    if (transport === null) throw new SyncError('client-error');
+    return Promise.resolve(transport);
+  }
+
+  return {
+    getState: () => state,
+
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+
+    start() {
+      if (queueWatch) return;
+      queueWatch = liveQuery(() => db.pending.count()).subscribe({
+        next: onQueueCount,
+        error: () => undefined,
+      });
+      void lastSuccessAt(db)
+        .then((at) => {
+          if (at !== null && state.lastSuccessAt === null) update({ lastSuccessAt: at });
+        })
+        .catch(() => undefined);
+      trigger('start');
+    },
+
+    stop() {
+      queueWatch?.unsubscribe();
+      queueWatch = null;
+      lastPending = null;
+      clearTimer();
+    },
+
+    trigger,
+
+    async syncNow() {
+      trigger('manual');
+      await settle();
+      return state;
+    },
+
+    flush() {
+      if (key === null || blocked || running || !isOnline()) return;
+      void run('exit');
+    },
+
+    wentOffline() {
+      if (key === null) return;
+      clearTimer();
+      if (!running) update({ status: 'offline', error: null });
+    },
+
+    async setKey(input) {
+      const next = normalizeKey(input);
+      if (!isValidKey(next)) return 'invalid';
+      if (next === key) {
+        trigger('key');
+        return 'unchanged';
+      }
+      if (!keyStore.write(next)) return 'storage-error';
+      key = next;
+      transport = createTransport(next);
+      blocked = false;
+      failures = 0;
+      rerun = null;
+      clearTimer();
+      // The first attempt with this key is about to run; it ends in idle, error or offline.
+      update({ hasKey: true, status: 'syncing', error: null });
+      try {
+        await settle(); // a stale attempt drops its answer; let it finish before re-queueing
+        await queueEverything(db);
+      } finally {
+        // Even if re-queueing failed, the attempt runs, so the state never stays "syncing".
+        trigger('key');
+      }
+      return 'saved';
+    },
+
+    forgetKey() {
+      keyStore.remove();
+      key = null;
+      transport = null;
+      blocked = false;
+      failures = 0;
+      rerun = null;
+      clearTimer();
+      update({ hasKey: false, status: 'disabled', error: null });
+    },
+
+    listBackups: async () => (await requireTransport()).listBackups(),
+
+    getBackup: async (date) => (await requireTransport()).getBackup(date),
+
+    async restore(date) {
+      const backup = await (await requireTransport()).getBackup(date);
+      const changed = await restoreBackup(db, backup, now());
+      trigger('restore');
+      return changed;
+    },
+  };
+}

@@ -43,3 +43,17 @@ export function writeDeviceSetting(
     return false;
   }
 }
+
+/** Removes `key`. Returns false if storage is unavailable. */
+export function removeDeviceSetting(
+  storage: Pick<Storage, 'removeItem'> | null,
+  key: string,
+): boolean {
+  try {
+    if (!storage) return false;
+    storage.removeItem(key);
+    return true;
+  } catch {
+    return false;
+  }
+}

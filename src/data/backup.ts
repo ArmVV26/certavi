@@ -58,6 +58,15 @@ function backupFile(
   return { fileName, mimeType: 'application/json', content: JSON.stringify(value, null, 1) };
 }
 
+/** A full backup made of `records` (e.g. a server backup downloaded from Settings). */
+export function fullBackupFile(
+  records: readonly DomainRecord[],
+  fileName: string,
+  now: Date = new Date(),
+): ExportFile {
+  return backupFile('full', records, fileName, now);
+}
+
 /** Live rows only: tombstones never leave the device in a backup. */
 function live<K extends RecordType>(rows: readonly (StoredRecord<K> | undefined)[]): RecordOf<K>[] {
   return rows.filter((row): row is RecordOf<K> => row !== undefined && isLive(row));
