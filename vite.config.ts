@@ -63,7 +63,7 @@ export default defineConfig({
         'src/data/**/testing.ts',
         'server/**/testing.ts',
       ],
-      reporter: ['text', 'html'],
+      reporter: ['text-summary', 'html'],
       thresholds: {
         'src/domain/**': { lines: 90, functions: 90, branches: 90, statements: 90 },
         'src/data/**': { lines: 90, functions: 90, branches: 90, statements: 90 },
