@@ -29,7 +29,12 @@ An e2e run once saturated the user's PC (2026-11-02: 8 parallel browsers, three 
 These rules keep it from happening again.
 
 - Run e2e **only** with `npm run e2e` (Chromium, 2 workers, 5 min cap, stops after 3 failures).
-  `npm run e2e:all` (Chromium + WebKit) only when the user asks for it.
+  `npm run e2e:all` (Chromium + WebKit) only when the user asks for it, or in the `/close-phase`
+  step for the last branch of a phase (before the PR `dev → main`; CI runs it again there).
+- **No real-time waits in e2e** (incident of 2026-11-04): no `waitForTimeout`, no waiting for a
+  debounce or a backoff to pass. App timers move with `page.clock`; state is awaited with
+  `toHaveText` / `expect.poll`; before injecting a failure, confirm with the fake server that the
+  previous request was answered. Details in `.claude/agents/blind-tester.md`.
 - Never call `npx playwright test` directly and never add flags (`--workers`, `--project`,
   `--reporter`, `--repeat-each`…) to the npm scripts.
 - Run it in the foreground. Never move it to the background and poll it with `sleep` / `ping`

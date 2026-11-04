@@ -5,10 +5,23 @@ import {
   SEED_ROUTINES,
   SEED_SETTINGS,
   SEED_UPDATED_AT,
+  type DomainRecord,
   type RecordOf,
   type RecordType,
 } from '../domain';
 import { tableOf, type CertaviDb } from './db';
+
+const SEED_BY_TYPE: Partial<Record<RecordType, readonly DomainRecord[]>> = {
+  exercise: SEED_EXERCISES,
+  routine: SEED_ROUTINES,
+  block: SEED_BLOCKS,
+  settings: [SEED_SETTINGS],
+};
+
+/** The built-in records of one type (none for types without seed data). */
+export function seedRecordsOf(type: RecordType): readonly DomainRecord[] {
+  return SEED_BY_TYPE[type] ?? [];
+}
 
 /**
  * Inserts missing seed records and refreshes the ones never edited (`updatedAt` still 0), so a

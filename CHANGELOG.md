@@ -7,6 +7,93 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-03
+
+Sync and backend (Phase 4).
+
+### Added
+
+- Sync v1 contract in the domain: zod schemas and constants (`src/domain/sync/contract.ts`,
+  `ERROR_STATUS`) and the server merge rule (`src/domain/sync/merge.ts`: `mergeRecords`,
+  `changesSince`, `SyncDocument` backed by a `Map`, safe against `"__proto__"` ids).
+- Sync server in `server/sync/` as a plain `Request → Response` handler (`createSyncHandler`)
+  shared by the Netlify Function, the unit tests and the e2e fake server: SHA-256 +
+  `timingSafeEqual` key check with a 400 ms delay on a wrong key, `500 server-misconfigured`
+  when `CLAVE_SYNC` is shorter than 32 characters, 404/405 with `Allow`, 413 above 8 MiB,
+  etag read–merge–write with 5 attempts (then 409), daily backup in Europe/Madrid time keeping
+  the last 14 (a failed backup is only logged); `SyncStore` interface with memory and Netlify
+  Blobs stores.
+- Netlify Function `netlify/functions/sync.ts` (thin adapter, strong-consistency store, the
+  three `/api/v1` routes); the blob store name depends on the deploy context (`certavi` in
+  production, `certavi-branch-deploy` for the `dev` branch deploy).
+- `netlify.toml` (build, SPA redirect, security headers and CSP, cache headers),
+  `public/robots.txt` and the Netlify deploy guide `docs/deploy-netlify.md`.
+- Contract test (`server/sync/contract.test.ts`) that checks the examples, error table and
+  constants of `docs/api/sync-v1.md` against the schemas and the handler, plus
+  `server/sync/httpTransport.test.ts`, which runs the client transport against the real
+  handler.
+- Client sync engine in `src/data/sync/` (ADR-0004, `docs/adr/0004-client-sync-engine.md`):
+  batches of 300 until the queue is empty, a 413 halves the batch, one attempt at a time,
+  backoff 4/8/15/30/60 s, 2 s debounce after the queue grows, every 45 s while records are
+  pending, fatal errors stop until the key changes or "Sync now", no requests while offline,
+  `keepalive` flush (≤ 55 KB) when the app is hidden or closed; triggers on online, offline,
+  focus, pageshow, visibilitychange and pagehide.
+- Responses are committed in one transaction: an entry leaves the queue only if its record did
+  not change meanwhile, only strictly newer incoming records are applied, and the echo of an
+  upload writes no record table.
+- `SyncTransport` interface and a generic HTTP transport for any sync-v1 backend
+  (`createHttpTransport`: Bearer key, zod-validated answers, 15 s timeout).
+- Device-only sync key (localStorage, at least 32 characters); changing it starts from
+  `since` 0 and queues every record with `updatedAt` > 0.
+- Attempt log (last 40 attempts) in a new Dexie table `syncLog` (`db.version(2)`, with a
+  v1 → v2 migration test).
+- Server backups: list, download as an importable Certavi full backup
+  (`certavi-server-backup-<date>.json`) and restore (differences become new queued edits;
+  records missing from the backup are soft-deleted, except built-in ones, which go back to
+  their seed version).
+- Sync status indicator in the header (links to Settings; announces offline and errors).
+- Settings → "Sync" card (status, last sync, pending records, error reason, key form with
+  show/hide, save/change/forget with confirmation, "Sync now") and a `/settings/sync` page with
+  the attempt log and the server backups.
+- Icons `cloud`, `cloudOff`, `refresh`, `warning`, `download` and `eye`; i18n keys
+  `settings.sync.*` and `sync.*` in Spanish and English.
+- Functional spec `docs/spec/sync.md` (AC-SYNC-01..14) and end-to-end spec
+  `tests/e2e/sync.spec.ts` (16 tests) with a fake sync server (`tests/mocks/sync-server.ts`:
+  the real handler with a memory store, attached through Playwright routing, no process or
+  port).
+- Test helpers: `createTestEngine` and the fake server in `src/data/sync/testing.ts`; a `sync`
+  option in `renderWithProviders`.
+- Dependencies: `@netlify/blobs` 11.1.7 (runtime) and `@netlify/functions` 6.0.3 (dev).
+
+### Changed
+
+- Sync API contract: status "Implemented", new `500 internal-error` code, valid JSON in the
+  backup-file example, a pointer to the client and a note that untouched seed records may stay
+  out when a new key is set.
+- The app starts the sync engine after opening the database; `Providers` takes a `sync` prop.
+- The "Sync" card is now the first card in Settings (then Appearance, Data, Development).
+- Vitest runs a third project, `server` (Node), and `npm run test:coverage` also enforces 90 %
+  on `server/**`; `tsconfig.server.json` joins the TypeScript project references; ESLint knows
+  the Node globals in `server/` and `netlify/`.
+- CI `e2e` job: Playwright browsers cached per Playwright version (`~/.cache/ms-playwright`;
+  full install with system dependencies on a miss, system dependencies only on a hit), the HTML
+  report and `test-results/` (traces) uploaded on failure, and a 12 min job timeout (was 20).
+- Claude Code rules, blind-tester agent and `CLAUDE.md`: no real-time waits in e2e (app timers
+  move with `page.clock`, state is awaited with web-first assertions or `expect.poll`, and the
+  fake sync server must have answered before a failure is injected); `/close-phase` runs
+  `npm run e2e:all` once on the last branch of a phase, before the PR `dev → main`.
+
+### Fixed
+
+- Sync status showed "Synced" right after saving a key, and when the app opened with a key,
+  before the server had answered; it now shows "Syncing…" until the first attempt ends and
+  "Synced" only after a successful one (`docs/spec/sync.md` §2.1 and AC-SYNC-03 updated). If
+  re-queueing records fails while setting a key, the sync attempt still runs.
+- Sync end-to-end tests no longer depend on real-time waits (`page.clock` instead of
+  `waitForTimeout`, waiting for the fake server before injecting failures, consistent 15 s
+  timeouts). AC-SYNC-06 and AC-SYNC-09, which failed on WebKit in CI, now pass on WebKit
+  locally (`npm run e2e:all`: 133 passed, 5 intentionally skipped, 0 failed).
+
 ## [0.4.0] - 2026-11-03
 
 Local data, importer and exports (Phase 3)
@@ -197,7 +284,8 @@ Project foundation (Phase 0).
   guide from gym_app, functional spec index and design docs index.
 - License: all rights reserved (MIT planned when the repository becomes public).
 
-[Unreleased]: https://github.com/ArmVV26/certavi/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/ArmVV26/certavi/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.4.0
 [0.3.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.3.0
 [0.2.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.2.0
 [0.1.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.1.0

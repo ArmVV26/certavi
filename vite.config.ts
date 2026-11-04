@@ -29,6 +29,15 @@ export default defineConfig({
         },
       },
       {
+        // The sync server (server/) and its Netlify adapter run in Node, like in production.
+        extends: true,
+        test: {
+          name: 'server',
+          environment: 'node',
+          include: ['server/**/*.test.ts', 'netlify/**/*.test.ts'],
+        },
+      },
+      {
         extends: true,
         test: {
           name: 'ui',
@@ -39,16 +48,24 @@ export default defineConfig({
         },
       },
     ],
-    // `npm run test:coverage` (also in CI): fails if the pure domain or the data layer (local
-    // database, repositories, importers, exporters) drops below 90 %, each on its own.
+    // `npm run test:coverage` (also in CI): fails if the pure domain, the data layer (local
+    // database, repositories, importers, exporters) or the sync server drops below 90 %, each on
+    // its own. netlify/functions only holds thin adapters and is not measured.
     coverage: {
       provider: 'v8',
-      include: ['src/domain/**/*.ts', 'src/data/**/*.{ts,tsx}'],
-      exclude: ['src/**/*.test.{ts,tsx}', 'src/domain/testing/**'],
+      include: ['src/domain/**/*.ts', 'src/data/**/*.{ts,tsx}', 'server/**/*.ts'],
+      exclude: [
+        'src/**/*.test.{ts,tsx}',
+        'server/**/*.test.ts',
+        'src/domain/testing/**',
+        'src/data/**/testing.ts',
+        'server/**/testing.ts',
+      ],
       reporter: ['text', 'html'],
       thresholds: {
         'src/domain/**': { lines: 90, functions: 90, branches: 90, statements: 90 },
         'src/data/**': { lines: 90, functions: 90, branches: 90, statements: 90 },
+        'server/**': { lines: 90, functions: 90, branches: 90, statements: 90 },
       },
     },
   },
