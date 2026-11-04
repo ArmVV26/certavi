@@ -23,10 +23,6 @@
   },
   "pages": {
     "comingSoon": "Coming soon",
-    "today": {
-      "title": "Today's session",
-      "text": "Here you will see the routine for today and start it, pick another one or log a free session."
-    },
     "calendar": {
       "title": "Your calendar",
       "text": "Here you will see your sessions, activities and special weeks for each month."
@@ -424,5 +420,129 @@
       "cycling": "Cycling",
       "other": "Other"
     }
+  },
+  "plan": {
+    "exercises_one": "{{count}} exercise",
+    "exercises_other": "{{count}} exercises",
+    "sets_one": "{{count}} set",
+    "sets_other": "{{count}} sets",
+    "summary": "{{exercises}} · {{sets}}",
+    "exerciseSets": "{{exercise}} · {{sets}}",
+    "optional": "(optional)"
+  },
+  "today": {
+    "title": "Today's session",
+    "start": "Start {{routine}}",
+    "continue": "Continue {{routine}}",
+    "done": "Session done · view or edit",
+    "seeExercises": "See the exercises",
+    "tags": {
+      "hiking": "Hiking",
+      "deload": "Deload"
+    },
+    "rest": {
+      "names": {
+        "active-rest": "Active rest",
+        "football": "Football",
+        "hiking": "Hiking",
+        "rest": "Rest day"
+      },
+      "short": {
+        "active-rest": "Active",
+        "football": "Football",
+        "hiking": "Hike",
+        "rest": "Rest"
+      },
+      "notes": {
+        "active-rest": "Swimming or mobility. No running.",
+        "football": "Match (+ a swim if it fits).",
+        "hiking": "Hiking week. Careful: the descents load quads and calves, it is not rest.",
+        "rest": "No routine today."
+      }
+    },
+    "quickActivity": "+ {{activity}}",
+    "alsoToday": "Also today:",
+    "inProgress": "(in progress)",
+    "finished": "(done)",
+    "saveError": "Could not save. Try again.",
+    "notices": {
+      "noKey": "This device has no sync key yet: what you log stays only here.",
+      "setKey": "Set it in Settings",
+      "deload_one": "{{count}} week without a deload. One every 6–8 weeks is recommended: turn it on below when it suits you.",
+      "deload_other": "{{count}} weeks without a deload. One every 6–8 weeks is recommended: turn it on below when it suits you."
+    },
+    "week": {
+      "title": "This week",
+      "number": "Week {{number}}",
+      "days": "Days of the week",
+      "day": "{{day}}: {{plan}}",
+      "dayDone": "{{day}}: {{plan}}, done",
+      "effectiveSets": "Effective sets",
+      "sessions": "Sessions",
+      "sessionsOf": "{{done}} of {{size}}",
+      "size": "Sessions this week",
+      "sizeHint": "With 4, Upper is dropped; with 3: Push, Pull and Lower Full.",
+      "hiking": "Hiking week",
+      "hikingHint": "For the whole week: Wednesday becomes Lower Full and Sunday is hiking.",
+      "deload": "Deload week",
+      "deloadOff": "Half the sets and RIR 3-4.",
+      "deloadStreak_one": "{{count}} week in a row without a deload.",
+      "deloadStreak_other": "{{count}} weeks in a row without a deload.",
+      "deloadOn": "On: new sessions get half the sets and RIR 3-4. They do not count for records.",
+      "deloadToastOn": "Deload week: new sessions come out reduced",
+      "deloadToastOff": "Normal week"
+    },
+    "other": {
+      "title": "Another session or day",
+      "date": "Date",
+      "hintToday": "Choose what you trained. Use it to change today's order or to log a day you forgot.",
+      "hintOther": "It will be logged on {{date}}. No timer; you can adjust the time.",
+      "routines": "What you trained",
+      "future": "You can't log a future date.",
+      "existing": "There was already a “{{routine}}” session that day: opening it."
+    },
+    "activity": {
+      "title": "Activity",
+      "kind": "Activity type",
+      "minutes": "Minutes",
+      "note": "Note",
+      "notePlaceholder": "Optional",
+      "save": "Save today's activity",
+      "saved": "Activity saved: {{activity}}",
+      "today": "Today: {{list}}",
+      "withMinutes": "{{activity}} {{minutes}} min"
+    },
+    "weight": {
+      "title": "Average weekly weight",
+      "week": "Week",
+      "thisWeek": "This week · {{range}}",
+      "lastWeek": "Last week · {{range}}",
+      "field": "Average weight",
+      "save": "Save weight",
+      "invalid": "Enter a weight between 20 and 300 kg.",
+      "saved": "Weight saved · {{range}}",
+      "previous": "Previous entry ({{range}}): {{kg}} kg"
+    }
+  },
+  "blocksDay": {
+    "reviewToday": "Review today",
+    "reviewIn_one": "Review: {{date}} (tomorrow)",
+    "reviewIn_other": "Review: {{date}} (in {{count}} days)",
+    "checklist": "Exercises · {{done}}/{{total}}",
+    "timesPerWeek": "{{dose}} · {{times}} days a week",
+    "warning": "Above {{threshold}}/10: go easier on whatever loads that area.",
+    "note": "Note for the day",
+    "noteSaved": "Note saved"
+  },
+  "session": {
+    "title": "Session",
+    "when": "{{date}} · {{time}}",
+    "inProgress": "In progress",
+    "finished": "Finished",
+    "plan": "Plan",
+    "empty": "No exercises yet.",
+    "comingSoon": "Logging sets, rest timer and notes.",
+    "notFound": "Session not found",
+    "backToToday": "Back to Today"
   }
 }

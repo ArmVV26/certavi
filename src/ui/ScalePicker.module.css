@@ -1,0 +1,51 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+/* Eleven values fit a 390 px screen in one row; narrower screens wrap. */
+.scale {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(1.875rem, 1fr));
+  gap: 0.125rem;
+}
+
+.value {
+  min-height: var(--touch-target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-numeric);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: var(--numeric-features);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.value:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.warn {
+  color: var(--warning);
+}
+
+.pressed {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.pressed.warn {
+  background: var(--warning);
+  color: var(--on-accent);
+}

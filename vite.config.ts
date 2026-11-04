@@ -43,6 +43,8 @@ export default defineConfig({
           name: 'ui',
           environment: 'jsdom',
           setupFiles: ['./src/test/setup.ts'],
+          // Several findBy… waits (up to 5 s each, see setup.ts) must fit in one test.
+          testTimeout: 15_000,
           include: ['src/**/*.test.{ts,tsx}'],
           exclude: ['src/domain/**'],
         },

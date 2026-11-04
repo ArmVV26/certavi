@@ -7,7 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.5.0] - 2026-11-03
+Today screen (Phase 5, branch 1 of 3: `feature/today`).
+
+### Added
+
+- Functional spec `docs/spec/today.md` (AC-TODAY-01..19).
+- Day plan rule (`src/domain/rules/dayPlan.ts`: `weekSchedule`, `dayPlan`, `routineDays`):
+  routines keep their weekday; Thursday is "active rest" (quick activities swimming and
+  mobility), Saturday is "football" (football and swimming), other free days are rest. A week
+  of 4 drops Upper (Friday becomes rest); a week of 3 is Push, Pull, Lower Full (Lower Full
+  takes Wednesday).
+- New session rule (`src/domain/rules/session.ts`, `newSession`): a session for today starts
+  now and is in progress; one for another date is finished, 18:00–19:15; a free session has no
+  exercises; in a deload week the routine is copied reduced. No future dates.
+- Today rules (`src/domain/rules/today.ts`): deload reminder after 6 weeks in a row without a
+  deload (`needsDeloadReminder`), plan week number, body weight valid from 20 to 300 kg; blocks
+  of the day and block log patches (`src/domain/rules/blocks.ts`).
+- Data: `readToday`, `updateWeek`, `saveActivity`, `saveBodyWeight` and `updateBlockLog`
+  (`src/data/today.ts`); `startSession` and `readSession` in one transaction
+  (`src/data/sessions.ts`; starting a routine that already has a session on that date opens
+  it); device-created ids `newId(prefix)` (`src/data/ids.ts`: `ses_`, `act_`, `set_` + base36
+  time + 10 random characters).
+- Today screen (`src/features/today/`): "Today's session" hero; "This week" with a 7-day strip,
+  effective sets vs plan, sessions, week size 5/4/3 and hiking and deload switches; "Another
+  session or another day"; "Activity"; "Average body weight of the week"; notices for a missing
+  sync key and for a due deload. Activities are listed in save order.
+- Blocks-of-the-day card (`src/features/blocks/DayBlockCard.tsx`): checklist, 0–10 metrics and
+  a note of the day, saved as a `BlockLog`.
+- Minimal session screen at `/session/:sessionId` (`src/features/session/SessionPage.tsx`,
+  plan only, "Coming soon").
+- Generic UI components `TextField`/`TextArea`, `Checkbox`, `ScalePicker` and `Notice`
+  (`src/ui`); `formatDateRange` (`src/i18n/format.ts`); i18n keys `today.*`, `plan.*`,
+  `blocksDay.*` and `session.*` in Spanish and English; route title `session.title`.
+- End-to-end spec `tests/e2e/today.spec.ts` (8 flow tests covering AC-TODAY-01..19).
+
+### Changed
+
+- Hiking week works as in gym_app: Sunday is hiking, Lower A is dropped and Lower B becomes
+  Lower Full (`weekRoutines` in `src/domain/rules/weekPlan.ts`; `livePlan` and
+  `weekPlanSummary` take `hiking`). A normal hiking week plans 86 sets in 4 sessions; a week of
+  4 with hiking, 63 sets in 3 sessions; a week of 3 is unchanged (`docs/spec/rules.md`).
+- Today is no longer a placeholder page (`docs/spec/theme-language-navigation.md`,
+  `tests/e2e/helpers.ts`, AC-LANG-01 in `tests/e2e/language.spec.ts`); the `pages.today` i18n
+  key is removed.
+- Tests: RTL `asyncUtilTimeout` raised to 5 s (`src/test/setup.ts`) and the `ui` Vitest
+  project's `testTimeout` to 15 s (`vite.config.ts`), because under `test:coverage` component
+  tests failed at random when a write → live query → re-render took over 1 s.
+
+## [0.5.0] - 2026-11-04
 
 Sync and backend (Phase 4).
 
@@ -284,7 +331,8 @@ Project foundation (Phase 0).
   guide from gym_app, functional spec index and design docs index.
 - License: all rights reserved (MIT planned when the repository becomes public).
 
-[Unreleased]: https://github.com/ArmVV26/certavi/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/ArmVV26/certavi/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.5.0
 [0.4.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.4.0
 [0.3.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.3.0
 [0.2.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.2.0

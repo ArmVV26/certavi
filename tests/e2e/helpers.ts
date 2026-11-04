@@ -26,7 +26,7 @@ export const PAGES: readonly PageInfo[] = [
     en: 'Today',
     contentEs: 'La sesión de hoy',
     contentEn: "Today's session",
-    soon: true,
+    // Real content since Phase 5 (docs/spec/today.md): no "Próximamente" any more.
   },
   {
     path: '/calendar',
