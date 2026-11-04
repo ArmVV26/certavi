@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatNumber, isPartialDecimal, parseDecimal, roundTo } from './format';
+import {
+  formatDate,
+  formatDateRange,
+  formatNumber,
+  isPartialDecimal,
+  parseDecimal,
+  roundTo,
+} from './format';
 
 describe('formatNumber', () => {
   it('uses a decimal comma in Spanish and a point in English', () => {
@@ -33,6 +40,17 @@ describe('formatDate', () => {
     const options = { weekday: 'long', day: 'numeric', month: 'long' } as const;
     expect(formatDate(date, 'es', options)).toBe('lunes, 2 de noviembre');
     expect(formatDate(date, 'en', options)).toBe('Monday 2 November');
+  });
+});
+
+describe('formatDateRange', () => {
+  it('formats a week in Spanish and English, within and across months', () => {
+    // Intl uses thin and narrow no-break spaces around the dash; compare with plain spaces.
+    const range = (a: Date, b: Date, l: 'es' | 'en') =>
+      formatDateRange(a, b, l).replace(/\s/g, ' ');
+    expect(range(new Date(2026, 10, 2), new Date(2026, 10, 8), 'es')).toBe('2–8 nov');
+    expect(range(new Date(2026, 10, 2), new Date(2026, 10, 8), 'en')).toBe('2 – 8 Nov');
+    expect(range(new Date(2026, 9, 26), new Date(2026, 10, 1), 'es')).toBe('26 oct – 1 nov');
   });
 });
 
