@@ -22,7 +22,11 @@ import { SyncError, toSyncError, type SyncErrorCode, type SyncTransport } from '
 export type SyncStatus = 'disabled' | 'idle' | 'syncing' | 'offline' | 'error';
 
 export interface SyncState {
-  /** `disabled`: no key on this device. `idle`: the last attempt worked (or none yet). */
+  /**
+   * `disabled`: no key on this device. `idle`: the last attempt worked. With a key and no
+   * attempt finished yet (just saved, or app start-up) it is `syncing`, never `idle`: "Synced"
+   * must not show before the server has answered (docs/spec/sync.md §2.1).
+   */
   status: SyncStatus;
   hasKey: boolean;
   /** Records waiting to be sent. */
@@ -113,7 +117,8 @@ export function createSyncEngine({
   let key = keyStore.read();
   let transport = key === null ? null : createTransport(key);
   let state: SyncState = {
-    status: key === null ? 'disabled' : 'idle',
+    // With a key, `start()` runs the first attempt; until it ends nothing is known to be synced.
+    status: key === null ? 'disabled' : 'syncing',
     hasKey: key !== null,
     pending: 0,
     lastSuccessAt: null,
@@ -335,10 +340,15 @@ export function createSyncEngine({
       failures = 0;
       rerun = null;
       clearTimer();
-      update({ hasKey: true, status: 'idle', error: null });
-      await settle(); // a stale attempt drops its answer; let it finish before re-queueing
-      await queueEverything(db);
-      trigger('key');
+      // The first attempt with this key is about to run; it ends in idle, error or offline.
+      update({ hasKey: true, status: 'syncing', error: null });
+      try {
+        await settle(); // a stale attempt drops its answer; let it finish before re-queueing
+        await queueEverything(db);
+      } finally {
+        // Even if re-queueing failed, the attempt runs, so the state never stays "syncing".
+        trigger('key');
+      }
       return 'saved';
     },
 

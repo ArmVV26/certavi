@@ -27,11 +27,16 @@ waiting, their number as a badge. Its accessible name is
 | State (es)          | State (en)      | When                                                      |
 | ------------------- | --------------- | --------------------------------------------------------- |
 | Sin configurar      | Not set up      | No sync key on this device                                |
-| Sincronizando…      | Syncing…        | A sync is in progress                                     |
+| Sincronizando…      | Syncing…        | A sync is in progress, or the first one has not ended yet |
 | Sin conexión        | Offline         | The device has no network                                 |
 | Error               | Error           | The last attempt failed (the reason is shown in Settings) |
 | Pendiente de enviar | Waiting to send | Changes are waiting and will be sent in a few seconds     |
 | Sincronizado        | Synced          | The last attempt worked and nothing is waiting            |
+
+"Sincronizado" / "Synced" only appears after the server has answered. Right after saving a key,
+and when the app opens with a key, the state is "Sincronizando…" / "Syncing…" until that first
+attempt ends ("Sin conexión" if there is no network). On a slow phone this can take a few
+seconds.
 
 When the state becomes "Sin conexión" or "Error", screen readers announce it once.
 
@@ -60,7 +65,8 @@ The **first card** on Ajustes / Settings, before "Apariencia".
 - Button **"Guardar clave" / "Save key"**. A key shorter than 32 characters (spaces at the
   ends do not count) is not saved and the field shows "La clave debe tener al menos 32
   caracteres." / "The key must have at least 32 characters."
-- On save: toast "Clave guardada." / "Key saved." and the first sync starts right away.
+- On save: toast "Clave guardada." / "Key saved." and the first sync starts right away; the
+  state is "Sincronizando…" until the server answers (§2.1).
 
 **With a key** the card shows "Clave guardada en este dispositivo." / "Key saved on this
 device." (the key itself is never shown again) and three buttons:
@@ -185,6 +191,7 @@ AC-SYNC-03 · Save the key and sync
 Given a device with the gym_app sample imported (29 changes waiting)
 When I save the right key
 Then "Clave guardada." is shown
+And the state is "Sincronizando…" (never "Sincronizado") until the server has answered
 And within a few seconds the state is "Sincronizado", "Pendientes" is 0 and "Última
 sincronización" shows today
 And the server holds the 29 records
