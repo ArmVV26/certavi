@@ -75,6 +75,24 @@ Sync and backend (Phase 4).
 - Vitest runs a third project, `server` (Node), and `npm run test:coverage` also enforces 90 %
   on `server/**`; `tsconfig.server.json` joins the TypeScript project references; ESLint knows
   the Node globals in `server/` and `netlify/`.
+- CI `e2e` job: Playwright browsers cached per Playwright version (`~/.cache/ms-playwright`;
+  full install with system dependencies on a miss, system dependencies only on a hit), the HTML
+  report and `test-results/` (traces) uploaded on failure, and a 12 min job timeout (was 20).
+- Claude Code rules, blind-tester agent and `CLAUDE.md`: no real-time waits in e2e (app timers
+  move with `page.clock`, state is awaited with web-first assertions or `expect.poll`, and the
+  fake sync server must have answered before a failure is injected); `/close-phase` runs
+  `npm run e2e:all` once on the last branch of a phase, before the PR `dev → main`.
+
+### Fixed
+
+- Sync status showed "Synced" right after saving a key, and when the app opened with a key,
+  before the server had answered; it now shows "Syncing…" until the first attempt ends and
+  "Synced" only after a successful one (`docs/spec/sync.md` §2.1 and AC-SYNC-03 updated). If
+  re-queueing records fails while setting a key, the sync attempt still runs.
+- Sync end-to-end tests no longer depend on real-time waits (`page.clock` instead of
+  `waitForTimeout`, waiting for the fake server before injecting failures, consistent 15 s
+  timeouts). AC-SYNC-06 and AC-SYNC-09, which failed on WebKit in CI, now pass on WebKit
+  locally (`npm run e2e:all`: 133 passed, 5 intentionally skipped, 0 failed).
 
 ## [0.4.0] - 2026-11-03
 
