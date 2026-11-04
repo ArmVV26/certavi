@@ -393,7 +393,7 @@ async function syncedWithSample(page: Page, server: FakeSyncServer): Promise<voi
 // Tests
 // ---------------------------------------------------------------------------------------------
 
-test.describe('sync', () => {
+test.describe('sync', { tag: '@all-engines' }, () => {
   test('AC-SYNC-01 · a new device is "Sin configurar", the card comes first with the key form, no request is made', async ({
     page,
     context,
