@@ -22,7 +22,8 @@ export default defineConfig({
   timeout: 30_000,
   globalTimeout: 5 * 60_000,
   // The HTML report is written to playwright-report/ but never opened or served.
-  reporter: [['list'], ['html', { open: 'never' }]],
+  // Locally the console reporter is terse (`dot`) to save output; CI keeps `list`.
+  reporter: isCI ? [['list'], ['html', { open: 'never' }]] : [['dot'], ['html', { open: 'never' }]],
   use: {
     baseURL: BASE_URL,
     trace: 'on-first-retry',
