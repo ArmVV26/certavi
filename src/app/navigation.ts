@@ -12,7 +12,8 @@ export const NAV_ITEMS: readonly { to: string; key: NavKey; icon: IconName }[] =
 ];
 
 /** i18n key of a page title. Each route declares one in its `handle`. */
-export type TitleKey = `nav.${NavKey}` | 'settings.sync.title' | 'devUi.title' | 'notFound.title';
+export type TitleKey =
+  `nav.${NavKey}` | 'session.title' | 'settings.sync.title' | 'devUi.title' | 'notFound.title';
 
 export interface RouteHandle {
   titleKey: TitleKey;
