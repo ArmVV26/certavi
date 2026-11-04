@@ -164,7 +164,7 @@ async function axe(page: Page, label: string): Promise<void> {
 // Tests
 // ---------------------------------------------------------------------------------------------
 
-test.describe('today', () => {
+test.describe('today', { tag: '@all-engines' }, () => {
   test('AC-TODAY-01 / 02 / 19 · the routine or rest day of each weekday; quick activity; the week fits 390 px; an unknown session', async ({
     page,
   }) => {

@@ -8,9 +8,15 @@ const isCI = !!process.env.CI;
 const IPHONE_VIEWPORT = { width: 390, height: 844 };
 
 // Limits that keep a local run from saturating the PC (incident of 2026-11-02, see context.md):
-// - `npm run e2e`     → Chromium only, 2 workers, stops after 3 failures, 5 min cap (below).
-// - `npm run e2e:all` → Chromium + WebKit, 10 min cap (passed with --global-timeout).
-// - CI                → Chromium + WebKit with Playwright's default workers and 2 retries.
+// - `npm run e2e`     → Chromium only (every test), 2 workers, stops after 3 failures, 5 min cap.
+// - `npm run e2e:all` → Chromium (every test) + WebKit (only tests tagged `@all-engines`),
+//                       10 min cap (passed with --global-timeout).
+// - CI                → a matrix of jobs (chromium; webkit shard 1/2 and 2/2), each with
+//                       Playwright's default workers (1 on a 2-vCPU runner) and 2 retries.
+// WebKit only runs the tests whose behaviour depends on the engine (IndexedDB, sync, import /
+// export, downloads, Today, 390 px layout). UI logic that is engine-independent (theme,
+// language, navigation, components) runs in Chromium only. Tag a test or a `describe` with
+// `{ tag: '@all-engines' }` to run it in WebKit too.
 // Never set `channel: 'chrome'`: tests run on Playwright's own browsers, never the user's Chrome.
 export default defineConfig({
   testDir: './tests/e2e',
@@ -45,6 +51,7 @@ export default defineConfig({
         ...devices['iPhone 13'],
         viewport: IPHONE_VIEWPORT,
       },
+      grep: /@all-engines/,
     },
   ],
   // Playwright builds the app, starts `vite preview` and stops it when the run ends.

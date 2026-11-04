@@ -266,7 +266,7 @@ async function importSample(page: Page): Promise<void> {
   await expectCounts(page, 'es', countsFor('es', 'after'));
 }
 
-test.describe('import and export', () => {
+test.describe('import and export', { tag: '@all-engines' }, () => {
   test('AC-IMPORT-01 · gym_app preview shows the summary, saves nothing until "Importar", then 29 records', async ({
     page,
     browserName,
