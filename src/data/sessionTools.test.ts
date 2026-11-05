@@ -428,6 +428,7 @@ describe('Undo of a deleted session', () => {
       { now },
     );
     const undo = await deleteSession(db, session.id, { now });
+    if (!undo) throw new Error('nothing to undo');
     expect(undo).toMatchObject({ kind: 'session' });
     expect(undo.sets).toHaveLength(1);
     expect(undo.notes).toHaveLength(1);
@@ -442,8 +443,15 @@ describe('Undo of a deleted session', () => {
     expect(await db.pending.get(session.id)).toBeDefined();
   });
 
-  it('refuses to delete a session that does not exist', async () => {
-    const { db } = await setup();
-    await expect(deleteSession(db, 'ses_nope')).rejects.toBeInstanceOf(SessionNotFoundError);
+  it('has nothing to undo when the session does not exist', async () => {
+    const { db, session } = await setup();
+    expect(await deleteSession(db, 'ses_nope', { now })).toBeNull();
+    expect(await readSession(db, session.id)).not.toBeNull();
+  });
+
+  it('does not fail when the session was already deleted', async () => {
+    const { db, session } = await setup();
+    await deleteSession(db, session.id, { now });
+    expect(await deleteSession(db, session.id, { now })).toBeNull();
   });
 });

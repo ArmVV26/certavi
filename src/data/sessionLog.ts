@@ -446,19 +446,18 @@ export function reopenSession(
 
 /**
  * Deletes the session with its sets and notes (soft: the deletions sync). Returns what "Undo"
- * needs (`restoreSession`).
+ * needs (`restoreSession`), or null when there was no such session (nothing to undo).
  */
 export function deleteSession(
   db: CertaviDb,
   sessionId: string,
   options: RepositoryOptions = {},
-): Promise<UndoSession> {
+): Promise<UndoSession | null> {
   const sessions = createRepository(db, 'session', options);
   const sets = createRepository(db, 'set', options);
   const notes = createRepository(db, 'note', options);
   return db.transaction('rw', sessionTables(db), async () => {
     const session = await sessions.get(sessionId);
-    if (!session) throw new SessionNotFoundError(sessionId);
     const removedSets: SetEntry[] = [];
     for (const set of await db.sets.where('sessionId').equals(sessionId).toArray()) {
       if (isLive(set)) removedSets.push(set);
@@ -470,7 +469,7 @@ export function deleteSession(
       await notes.remove(note.id);
     }
     await sessions.remove(sessionId);
-    return { kind: 'session', session, sets: removedSets, notes: removedNotes };
+    return session ? { kind: 'session', session, sets: removedSets, notes: removedNotes } : null;
   });
 }
 
