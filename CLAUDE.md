@@ -268,7 +268,8 @@ sessions (`session.ts`), Today helpers (`today.ts`) and blocks of the day (`bloc
   test or a `describe`) what depends on the engine: IndexedDB / local data, sync, import and
   export, downloads, Today and the session, the 390 px layout. Engine-independent UI logic
   (theme, language, navigation, components) stays Chromium-only. CI runs the `e2e` job as a
-  matrix with `fail-fast: false`: `chromium`, `webkit 1/2`, `webkit 2/2` (`--project` /
+  matrix with `fail-fast: false` and `max-parallel: 1` (one job after another, in this order):
+  `chromium`, `webkit 1/2`, `webkit 2/2` (`--project` /
   `--shard` are used in the workflow only, never locally); each job installs and caches its
   own browser and uploads its own report. Locally **2 workers**, no retries, `maxFailures` 3;
   CI uses default workers (1 on a 2-vCPU runner) + 2 retries.
