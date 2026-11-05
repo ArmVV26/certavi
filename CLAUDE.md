@@ -273,7 +273,8 @@ sessions (`session.ts`), Today helpers (`today.ts`) and blocks of the day (`bloc
   `--shard` are used in the workflow only, never locally); each job installs and caches its
   own browser and uploads its own report. Locally **2 workers**, no retries, `maxFailures` 3;
   CI uses default workers (1 on a 2-vCPU runner) + 2 retries.
-  30 s per test; global timeout 5 min (`npm run e2e`) / 10 min (`npm run e2e:all`). Reporters:
+  30 s per test (60 s in WebKit: the project's `timeout` in `playwright.config.ts`; no
+  `test.slow` for WebKit); global timeout 5 min (`npm run e2e`) / 10 min (`npm run e2e:all`). Reporters:
   locally `dot` + `html`, in CI `list` + `html` (`open: 'never'`, report port 9323). Chromium
   `deviceScaleFactor` 2; never `channel: 'chrome'`.
 - Vitest prints the `dot` reporter (`test`, `test:coverage`) and coverage uses `text-summary` +
