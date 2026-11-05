@@ -209,6 +209,7 @@
   },
   "sets": {
     "warmupSymbol": "W",
+    "dropsetSymbol": "D",
     "warmup": "Warm-up",
     "kinds": {
       "warmup": "Warm-up",
@@ -217,6 +218,7 @@
       "backoff": "Back-off",
       "straight": "Working set",
       "bilbo": "Bilbo",
+      "dropset": "Dropset",
       "extra": "Extra set"
     }
   },
@@ -539,10 +541,114 @@
     "when": "{{date}} · {{time}}",
     "inProgress": "In progress",
     "finished": "Finished",
-    "plan": "Plan",
     "empty": "No exercises yet.",
-    "comingSoon": "Logging sets, rest timer and notes.",
     "notFound": "Session not found",
-    "backToToday": "Back to Today"
+    "backToToday": "Back to Today",
+    "progress": "{{done}} of {{total}} done",
+    "deloadNotice": "Deload week. Fewer sets and RIR 3-4: the usual weight or 10 % less. It does not count for records.",
+    "readiness": "How do you feel?",
+    "readinessScale": "1 awful · 5 great",
+    "finishedHint": "Session finished. You can correct any data: it is saved immediately.",
+    "effectiveSets": "Effective sets",
+    "volume": "Volume",
+    "exercise": {
+      "basic": "Basic",
+      "isolation": "Isolation",
+      "optional": "Optional",
+      "done": "Done",
+      "reps": "{{range}} reps",
+      "rir": "RIR {{rir}}",
+      "lastTime": "Last time ({{date}}): {{sets}}",
+      "noLast": "No previous records",
+      "lastSet": "{{weight}} kg × {{reps}}",
+      "straps": "With straps",
+      "band": "Band",
+      "backoff": "Suggested back-off: {{weight}} kg (−10 % of top)",
+      "addWarmup": "+ Warm-up",
+      "addExtra": "+ Extra set",
+      "note": "Note",
+      "noteFilled": "Note ✎",
+      "summary": "{{weight}} × {{reps}}"
+    },
+    "hint": {
+      "increase": "Go up to {{weight}} kg",
+      "hold": "Repeat {{weight}} kg and aim for {{reps}} reps",
+      "deload": "Deload: usual weight or 10 % less",
+      "thinnerBand": "Try a thinner band (or none)",
+      "sameBand": "Same band: aim for {{reps}} reps"
+    },
+    "row": {
+      "set": "Set",
+      "previous": "Previous",
+      "weight": "kg",
+      "added": "Added",
+      "reps": "Reps",
+      "rir": "RIR",
+      "noCount": "doesn't count",
+      "role": {
+        "approach": "Approach",
+        "top": "Top",
+        "backoff": "Back-off",
+        "straight": "Set",
+        "bilbo": "Bilbo",
+        "extra": "Extra",
+        "dropset": "Dropset"
+      },
+      "markDone": "Mark set done",
+      "isDone": "Set done (tap to remove)",
+      "weightOf": "Weight of set {{name}}",
+      "addedOf": "Added weight of set {{name}}",
+      "repsOf": "Reps of set {{name}}",
+      "rirOf": "RIR of set {{name}}",
+      "typeOf": "Type of set {{name}}: {{type}}",
+      "typeTitle": "Set type",
+      "types": {
+        "warmup": "Warm-up",
+        "effective": "Effective",
+        "dropset": "Dropset"
+      },
+      "remove": "Remove",
+      "removeOf": "Remove set {{name}}"
+    },
+    "notes": {
+      "exercise": "Exercise note",
+      "exclude": "Does not count for progression",
+      "reason": "Reason",
+      "reasons": {
+        "machine-busy": "Machine busy",
+        "missing-plates": "Missing plates",
+        "other-band": "Other band",
+        "other": "Other"
+      },
+      "session": "Session notes"
+    },
+    "actions": {
+      "finish": "Finish session",
+      "reopen": "Mark as in progress",
+      "delete": "Delete session"
+    },
+    "toast": {
+      "saved": "Session saved",
+      "savedRecords_one": "Session saved · {{count}} record",
+      "savedRecords_other": "Session saved · {{count}} records",
+      "deleted": "Session deleted",
+      "failed": "Could not save. Try again."
+    },
+    "dialog": {
+      "cancel": "Cancel",
+      "unsaveTitle": "Remove this set from the log?",
+      "unsaveConfirm": "Remove",
+      "removeTitle": "Remove set {{name}}?",
+      "removeMessage": "What was logged will be deleted ({{set}}). The routine does not change.",
+      "removeConfirm": "Remove",
+      "strapsTitle_one": "Also correct the set already saved?",
+      "strapsTitle_other": "Also correct the {{count}} sets already saved?",
+      "strapsFix_one": "Correct the saved one",
+      "strapsFix_other": "Correct the {{count}} saved",
+      "strapsOnlyNext": "Only the next ones",
+      "deleteTitle": "Delete this session?",
+      "deleteMessage": "The session and all its sets and notes will be deleted.",
+      "deleteConfirm": "Delete"
+    }
   }
 }
