@@ -1,11 +1,17 @@
 // Starting and reading workout sessions.
 import {
+  deloadWeeks,
   findSession,
+  isDeloadDate,
+  lastReference,
   mondayOf,
   newSession,
   weekPlanId,
   type Exercise,
+  type ExerciseNote,
+  type HistoryEntry,
   type Routine,
+  type SetEntry,
   type WorkoutSession,
 } from '../domain';
 import { isLive, type CertaviDb } from './db';
@@ -84,19 +90,54 @@ export interface SessionView {
   /** The session's routine; undefined for a free session or a deleted routine. */
   routine: Routine | undefined;
   exercises: ReadonlyMap<string, Exercise>;
+  /** Live sets logged in this session. */
+  sets: SetEntry[];
+  /** Live notes of this session, one per exercise at most. */
+  notes: ExerciseNote[];
+  /** "Last time" per exercise of the session; an exercise without a last time is absent. */
+  references: ReadonlyMap<string, HistoryEntry>;
+  /** The session falls in a deload week. */
+  deload: boolean;
 }
 
-/** A live session with its routine and the exercises it may show, or null if there is none. */
+/**
+ * A live session with its routine, the exercises it may show, what has been logged and the
+ * "last time" of each of its exercises; null if there is no such session.
+ */
 export function readSession(db: CertaviDb, id: string): Promise<SessionView | null> {
-  return db.transaction('r', [db.sessions, db.routines, db.exercises], async () => {
-    const row = await db.sessions.get(id);
-    if (!row || !isLive(row)) return null;
-    const routineRow = row.routineId === null ? undefined : await db.routines.get(row.routineId);
-    const exercises = (await db.exercises.toArray()).filter((e) => isLive(e));
-    return {
-      session: row,
-      routine: routineRow && isLive(routineRow) ? routineRow : undefined,
-      exercises: new Map(exercises.map((e) => [e.id, e])),
-    };
-  });
+  return db.transaction(
+    'r',
+    [db.sessions, db.routines, db.exercises, db.sets, db.notes, db.weekPlans],
+    async () => {
+      const row = await db.sessions.get(id);
+      if (!row || !isLive(row)) return null;
+      const routineRow = row.routineId === null ? undefined : await db.routines.get(row.routineId);
+      const exercises = (await db.exercises.toArray()).filter((e) => isLive(e));
+      const sessions = (await db.sessions.toArray()).filter((s) => isLive(s));
+      const notes = (await db.notes.toArray()).filter((n) => isLive(n));
+      const weekPlans = (await db.weekPlans.toArray()).filter((w) => isLive(w));
+
+      const exerciseIds = [...new Set(row.items.map((item) => item.exerciseId))];
+      const history = (
+        await Promise.all(exerciseIds.map((ex) => db.sets.where('exerciseId').equals(ex).toArray()))
+      )
+        .flat()
+        .filter((s) => isLive(s));
+      const log = { sessions, sets: history, notes, weekPlans };
+      const references = new Map<string, HistoryEntry>();
+      for (const exerciseId of exerciseIds) {
+        const reference = lastReference(exerciseId, log, row);
+        if (reference) references.set(exerciseId, reference);
+      }
+      return {
+        session: row,
+        routine: routineRow && isLive(routineRow) ? routineRow : undefined,
+        exercises: new Map(exercises.map((e) => [e.id, e])),
+        sets: history.filter((s) => s.sessionId === id),
+        notes: notes.filter((n) => n.sessionId === id),
+        references,
+        deload: isDeloadDate(row.date, deloadWeeks(weekPlans)),
+      };
+    },
+  );
 }

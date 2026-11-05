@@ -59,6 +59,22 @@ and how the schema evolves without losing data on the user's phone.
 - Tombstones are kept forever (small); compaction can come later.
 - `persist()` is a request: the browser may refuse. The UI says so instead of hiding it.
 
+## Update — Phase 5 (active session)
+
+- **Rows of an exercise.** A session's copy of an exercise's scheme (`WorkoutSession.items`) is
+  the list of rows the user sees: the routine's planned sets plus the warm-up, dropset and extra
+  rows added that day. A logged `SetEntry` belongs to the row at its `slot` (0-based position),
+  and its `kind` is the type of the row, which the user can change without the row moving. Rows
+  and sets change together in one transaction (`src/data/sessionLog.ts`). The routine never
+  changes.
+- **gym_app numbering.** Imported sets used `w<n>`, `p<n>` and `x<n>` slots. After every
+  import and at start-up, `normalizeLegacySessions` rewrites such sessions to the row list
+  (idempotent; an exercise is legacy when it has warm-up or extra sets and its scheme has no
+  matching rows).
+- **Drafts.** What is typed in a row but not saved is kept in localStorage under
+  `certavi.draft.<sessionId>` (device-only, never synced, zod-validated on read) and dropped when
+  the session is finished or deleted.
+
 ## Alternatives considered
 
 - **A single `records` table** (as in gym_app) with an index on `type` — simpler sync, but
