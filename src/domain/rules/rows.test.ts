@@ -8,6 +8,7 @@ import {
   changeRowKind,
   displayRows,
   effectiveKindFor,
+  insertRow,
   exerciseProgress,
   isExerciseComplete,
   knownBands,
@@ -373,5 +374,37 @@ describe('next open row (the "Siguiente" of the rest timer)', () => {
     expect(nextOpenRow(warm, [])).toEqual({ exerciseId: 'a', slot: 1 });
     expect(nextOpenRow(warm, [saved('a', 1)])).toBeNull();
     expect(nextOpenRow([], [])).toBeNull();
+  });
+});
+
+describe('insertRow (Undo of a removed row)', () => {
+  it('puts the row back and moves the rows below down', () => {
+    const edit = insertRow(hack, 1, { kind: 'top', reps: '6-8' });
+    expect(schemeRows(edit.scheme).map((r) => r.kind)).toEqual([
+      'approach',
+      'top',
+      'top',
+      'backoff',
+      'backoff',
+    ]);
+    expect(edit.remap(0)).toBe(0);
+    expect(edit.remap(1)).toBe(2);
+    expect(edit.remap(3)).toBe(4);
+  });
+
+  it('is the inverse of removeRow', () => {
+    const removed = removeRow(hack, 2);
+    const row = schemeRows(hack)[2];
+    if (!removed || !row) throw new Error('row 2 missing');
+    expect(insertRow(removed.scheme, 2, row).scheme).toEqual(hack);
+  });
+
+  it('clamps the position to the ends', () => {
+    expect(schemeRows(insertRow(hack, 99, { kind: 'extra', reps: '' }).scheme).at(-1)?.kind).toBe(
+      'extra',
+    );
+    expect(schemeRows(insertRow(hack, -4, { kind: 'warmup', reps: '' }).scheme)[0]?.kind).toBe(
+      'warmup',
+    );
   });
 });
