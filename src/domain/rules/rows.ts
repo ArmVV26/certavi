@@ -216,6 +216,36 @@ export function sessionProgress(items: readonly PlanItem[], sets: readonly SetEn
   return total;
 }
 
+export interface RowRef {
+  exerciseId: string;
+  slot: number;
+}
+
+/**
+ * The next working row without a saved set, in screen order: after `from` if given, otherwise
+ * (or when nothing is left after it) from the start. null when every working row is saved.
+ * It is the "Siguiente" of the rest timer.
+ */
+export function nextOpenRow(
+  items: readonly PlanItem[],
+  sets: readonly SetEntry[],
+  from?: RowRef,
+): RowRef | null {
+  const open: RowRef[] = items.flatMap((item) => {
+    const mine = sets.filter((s) => s.exerciseId === item.exerciseId);
+    return displayRows({ scheme: item.scheme, sets: mine, reference: null })
+      .filter((row) => isPlannedKind(row.kind) && row.set === null)
+      .map((row) => ({ exerciseId: item.exerciseId, slot: row.slot }));
+  });
+  if (from) {
+    const order = new Map(items.map((item, index) => [item.exerciseId, index]));
+    const position = (ref: RowRef) => (order.get(ref.exerciseId) ?? 0) * 1000 + ref.slot;
+    const after = open.find((ref) => position(ref) > position(from));
+    if (after) return after;
+  }
+  return open[0] ?? null;
+}
+
 export interface RowInput {
   weight: number | null;
   reps: number | null;

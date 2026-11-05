@@ -11,6 +11,7 @@ import {
   exerciseProgress,
   isExerciseComplete,
   knownBands,
+  nextOpenRow,
   normalizeLegacyRows,
   removeRow,
   remapSets,
@@ -320,5 +321,57 @@ describe('legacy numbering (gym_app import)', () => {
       makeSet({ ...base, kind: 'extra' }),
     ];
     expect(normalizeLegacyRows(item, planned)?.sets.map((s) => s.kind)).toEqual(['extra']);
+  });
+});
+
+describe('next open row (the "Siguiente" of the rest timer)', () => {
+  const two: SetScheme = { blocks: [{ kind: 'straight', reps: '10', count: 2 }], rir: '1-2' };
+  const items: PlanItem[] = [
+    { exerciseId: 'a', scheme: two, optional: false },
+    { exerciseId: 'b', scheme: two, optional: false },
+  ];
+  const saved = (exerciseId: string, slot: number) => makeSet({ sessionId: 's', exerciseId, slot });
+
+  it('is the first empty working row when nothing is given', () => {
+    expect(nextOpenRow(items, [saved('a', 0)])).toEqual({ exerciseId: 'a', slot: 1 });
+  });
+
+  it('is the next empty row after the one just saved, in screen order', () => {
+    const sets = [saved('a', 0), saved('b', 0)];
+    expect(nextOpenRow(items, sets, { exerciseId: 'a', slot: 0 })).toEqual({
+      exerciseId: 'a',
+      slot: 1,
+    });
+    expect(nextOpenRow(items, sets, { exerciseId: 'a', slot: 1 })).toEqual({
+      exerciseId: 'b',
+      slot: 1,
+    });
+  });
+
+  it('wraps to the start when nothing is left after it', () => {
+    const sets = [saved('b', 0), saved('b', 1)];
+    expect(nextOpenRow(items, sets, { exerciseId: 'b', slot: 1 })).toEqual({
+      exerciseId: 'a',
+      slot: 0,
+    });
+  });
+
+  it('skips warm-ups and dropsets, and is null when every working row is saved', () => {
+    const warm: PlanItem[] = [
+      {
+        exerciseId: 'a',
+        scheme: {
+          blocks: [
+            { kind: 'warmup', reps: '', count: 1 },
+            { kind: 'straight', reps: '10', count: 1 },
+          ],
+          rir: '',
+        },
+        optional: false,
+      },
+    ];
+    expect(nextOpenRow(warm, [])).toEqual({ exerciseId: 'a', slot: 1 });
+    expect(nextOpenRow(warm, [saved('a', 1)])).toBeNull();
+    expect(nextOpenRow([], [])).toBeNull();
   });
 });
