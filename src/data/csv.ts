@@ -59,21 +59,10 @@ export function toCsv(
   return BOM + rows.map((row) => row.map((v) => cell(v, labels)).join(';')).join('\r\n');
 }
 
-/** Warm-ups first, then the planned sets, then extra sets; by slot inside each group. */
-const KIND_RANK: Readonly<Record<SetKind, number>> = {
-  warmup: 0,
-  approach: 1,
-  top: 1,
-  backoff: 1,
-  straight: 1,
-  bilbo: 1,
-  extra: 2,
-};
-
 const byDateThenStart = (a: WorkoutSession, b: WorkoutSession) =>
   a.date.localeCompare(b.date) || (a.startedAt ?? 0) - (b.startedAt ?? 0);
 
-/** Sets of one session in display order: exercises as in the session, then by kind and slot. */
+/** Sets of one session in display order: exercises as in the session, then by slot (row). */
 function orderSets(session: WorkoutSession, sets: readonly SetEntry[]): SetEntry[] {
   const order = session.items.map((i) => i.exerciseId);
   const position = (exerciseId: string) => {
@@ -92,7 +81,6 @@ function orderSets(session: WorkoutSession, sets: readonly SetEntry[]): SetEntry
       position(a.exerciseId) - position(b.exerciseId) ||
       (firstDone.get(a.exerciseId) ?? 0) - (firstDone.get(b.exerciseId) ?? 0) ||
       a.exerciseId.localeCompare(b.exerciseId) ||
-      KIND_RANK[a.kind] - KIND_RANK[b.kind] ||
       a.slot - b.slot,
   );
 }

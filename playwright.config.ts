@@ -12,6 +12,11 @@ const IPHONE_VIEWPORT = { width: 390, height: 844 };
 // is waited for by time; this is only the budget. Chromium keeps the default 30 s.
 const WEBKIT_TIMEOUT = 60_000;
 
+// The same engine is also slow on the first read of IndexedDB (the "Datos" card with two tabs
+// open was still "Cargando…" after the default 5 s on 2026-11-05). Web-first assertions return as
+// soon as they pass, so this is only a budget. Chromium keeps the default 5 s.
+const WEBKIT_EXPECT_TIMEOUT = 15_000;
+
 // Limits that keep a local run from saturating the PC (incident of 2026-11-02, see context.md):
 // - `npm run e2e`     → Chromium only (every test), 2 workers, stops after 3 failures, 5 min cap.
 // - `npm run e2e:all` → Chromium (every test) + WebKit (only tests tagged `@all-engines`),
@@ -23,7 +28,8 @@ const WEBKIT_TIMEOUT = 60_000;
 // export, downloads, Today, 390 px layout). UI logic that is engine-independent (theme,
 // language, navigation, components) runs in Chromium only. Tag a test or a `describe` with
 // `{ tag: '@all-engines' }` to run it in WebKit too.
-// Each test has 30 s (60 s in WebKit, see WEBKIT_TIMEOUT); do not add `test.slow` for WebKit.
+// Each test has 30 s (60 s in WebKit, see WEBKIT_TIMEOUT) and each assertion 5 s (15 s in WebKit,
+// see WEBKIT_EXPECT_TIMEOUT); do not add `test.slow` for WebKit.
 // Never set `channel: 'chrome'`: tests run on Playwright's own browsers, never the user's Chrome.
 export default defineConfig({
   testDir: './tests/e2e',
@@ -59,6 +65,7 @@ export default defineConfig({
         viewport: IPHONE_VIEWPORT,
       },
       timeout: WEBKIT_TIMEOUT,
+      expect: { timeout: WEBKIT_EXPECT_TIMEOUT },
       grep: /@all-engines/,
     },
   ],

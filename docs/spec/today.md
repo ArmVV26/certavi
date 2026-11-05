@@ -11,8 +11,8 @@ the switches that change the whole week: number of sessions, hiking week and del
 
 Everything is saved on the device first and works without coverage (see [sync.md](sync.md)).
 
-The session screen itself is described in `session.md` (Phase 5, next branch). In this branch,
-opening a session shows its plan only (§2.8).
+The session screen itself is described in [session.md](session.md). §2.8 below is how it looked
+in the first branch of Phase 5 (plan only) and is superseded by `session.md`.
 
 ## 2. Screens and elements
 
@@ -222,7 +222,7 @@ A card with the heading **"Peso medio de la semana" / "Average weekly weight"**:
 
 Older weeks are edited from the calendar (Phase 7).
 
-### 2.8 Session screen (`/session/<id>`, this branch only)
+### 2.8 Session screen (`/session/<id>`) — first branch only, superseded by [session.md](session.md)
 
 Header title **"Sesión" / "Session"**. It shows:
 

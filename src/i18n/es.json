@@ -209,6 +209,7 @@
   },
   "sets": {
     "warmupSymbol": "C",
+    "dropsetSymbol": "D",
     "warmup": "Calentamiento",
     "kinds": {
       "warmup": "Calentamiento",
@@ -217,6 +218,7 @@
       "backoff": "Back-off",
       "straight": "Serie de trabajo",
       "bilbo": "Bilbo",
+      "dropset": "Dropset",
       "extra": "Serie extra"
     }
   },
@@ -539,10 +541,114 @@
     "when": "{{date}} · {{time}}",
     "inProgress": "En curso",
     "finished": "Terminada",
-    "plan": "Plan",
     "empty": "Sin ejercicios todavía.",
-    "comingSoon": "Registrar series, temporizador y notas.",
     "notFound": "Sesión no encontrada",
-    "backToToday": "Volver a Hoy"
+    "backToToday": "Volver a Hoy",
+    "progress": "{{done}} de {{total}} hechas",
+    "deloadNotice": "Semana de descarga. Menos series y RIR 3-4: el peso de siempre o un 10 % menos. No cuenta para récords.",
+    "readiness": "¿Cómo llegas?",
+    "readinessScale": "1 fatal · 5 a tope",
+    "finishedHint": "Sesión terminada. Puedes corregir cualquier dato: se guarda al momento.",
+    "effectiveSets": "Series efectivas",
+    "volume": "Volumen",
+    "exercise": {
+      "basic": "Básico",
+      "isolation": "Aislamiento",
+      "optional": "Opcional",
+      "done": "Completo",
+      "reps": "{{range}} reps",
+      "rir": "RIR {{rir}}",
+      "lastTime": "Última vez ({{date}}): {{sets}}",
+      "noLast": "Sin registros previos",
+      "lastSet": "{{weight}} kg × {{reps}}",
+      "straps": "Con straps",
+      "band": "Banda",
+      "backoff": "Back-off sugerido: {{weight}} kg (−10 % del top)",
+      "addWarmup": "+ Calentamiento",
+      "addExtra": "+ Serie extra",
+      "note": "Nota",
+      "noteFilled": "Nota ✎",
+      "summary": "{{weight}} × {{reps}}"
+    },
+    "hint": {
+      "increase": "Sube a {{weight}} kg",
+      "hold": "Repite {{weight}} kg y busca {{reps}} reps",
+      "deload": "Descarga: peso de siempre o un 10 % menos",
+      "thinnerBand": "Prueba una banda más fina (o ninguna)",
+      "sameBand": "Misma banda: busca {{reps}} reps"
+    },
+    "row": {
+      "set": "Serie",
+      "previous": "Anterior",
+      "weight": "kg",
+      "added": "Lastre",
+      "reps": "Reps",
+      "rir": "RIR",
+      "noCount": "no cuenta",
+      "role": {
+        "approach": "Aprox.",
+        "top": "Top",
+        "backoff": "Back-off",
+        "straight": "Serie",
+        "bilbo": "Bilbo",
+        "extra": "Extra",
+        "dropset": "Dropset"
+      },
+      "markDone": "Marcar serie hecha",
+      "isDone": "Serie hecha (pulsa para quitar)",
+      "weightOf": "Peso de la serie {{name}}",
+      "addedOf": "Lastre de la serie {{name}}",
+      "repsOf": "Repeticiones de la serie {{name}}",
+      "rirOf": "RIR de la serie {{name}}",
+      "typeOf": "Tipo de la serie {{name}}: {{type}}",
+      "typeTitle": "Tipo de serie",
+      "types": {
+        "warmup": "Calentamiento",
+        "effective": "Efectiva",
+        "dropset": "Dropset"
+      },
+      "remove": "Quitar",
+      "removeOf": "Quitar serie {{name}}"
+    },
+    "notes": {
+      "exercise": "Nota del ejercicio",
+      "exclude": "No cuenta para la progresión",
+      "reason": "Motivo",
+      "reasons": {
+        "machine-busy": "Máquina ocupada",
+        "missing-plates": "Faltan discos",
+        "other-band": "Otra banda",
+        "other": "Otro"
+      },
+      "session": "Notas de la sesión"
+    },
+    "actions": {
+      "finish": "Terminar sesión",
+      "reopen": "Marcar como en curso",
+      "delete": "Eliminar sesión"
+    },
+    "toast": {
+      "saved": "Sesión guardada",
+      "savedRecords_one": "Sesión guardada · {{count}} récord",
+      "savedRecords_other": "Sesión guardada · {{count}} récords",
+      "deleted": "Sesión eliminada",
+      "failed": "No se pudo guardar. Inténtalo de nuevo."
+    },
+    "dialog": {
+      "cancel": "Cancelar",
+      "unsaveTitle": "¿Quitar esta serie del registro?",
+      "unsaveConfirm": "Quitar",
+      "removeTitle": "¿Quitar la serie {{name}}?",
+      "removeMessage": "Se borrará lo registrado ({{set}}). La rutina no cambia.",
+      "removeConfirm": "Quitar",
+      "strapsTitle_one": "¿Corregir también la serie ya guardada?",
+      "strapsTitle_other": "¿Corregir también las {{count}} series ya guardadas?",
+      "strapsFix_one": "Corregir la guardada",
+      "strapsFix_other": "Corregir las {{count}} guardadas",
+      "strapsOnlyNext": "Solo las próximas",
+      "deleteTitle": "¿Eliminar esta sesión?",
+      "deleteMessage": "Se borrarán la sesión y todas sus series y notas.",
+      "deleteConfirm": "Eliminar"
+    }
   }
 }

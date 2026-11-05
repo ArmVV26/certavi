@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useLocation, useMatches } from 'react-router';
 import { SyncIndicator } from '../features/settings/SyncIndicator';
@@ -23,8 +23,10 @@ export function Layout() {
     document.title = t('app.documentTitle', { page: title });
   }, [t, title]);
 
-  // After navigating, move focus to the new page title so screen readers announce it.
-  useEffect(() => {
+  // After navigating, move focus to the new page title so screen readers announce it. It runs
+  // before the new page is painted (layout effect): a passive effect could run after the user
+  // had already tapped a field of the new page and take the focus (and the typing) away from it.
+  useLayoutEffect(() => {
     if (isFirstPage.current) {
       isFirstPage.current = false;
       return;
