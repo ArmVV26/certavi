@@ -56,41 +56,47 @@ test.describe('navigation', () => {
     }
   });
 
-  test('AC-NAV-03 · every page shows its title, content and theme button, and fits 390 px', async ({
-    page,
-  }) => {
-    for (const p of PAGES) {
-      await page.goto(p.path);
-      await expect(h1(page, p.es)).toBeVisible();
-      await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
-      await expect(page).toHaveTitle(`${p.es} · Certavi`);
-      if (p.contentEs) await expect(page.getByText(p.contentEs, { exact: true })).toBeVisible();
-      if (p.soon) await expect(page.getByText('Próximamente', { exact: true })).toBeVisible();
-      await expect(page.getByRole('banner').getByRole('button', { name: /^Tema / })).toBeVisible();
-      expect(await hasHorizontalScroll(page), `horizontal scroll on ${p.path}`).toBe(false);
-    }
+  test(
+    'AC-NAV-03 · every page shows its title, content and theme button, and fits 390 px',
+    {
+      tag: '@all-engines',
+    },
+    async ({ page }) => {
+      for (const p of PAGES) {
+        await page.goto(p.path);
+        await expect(h1(page, p.es)).toBeVisible();
+        await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+        await expect(page).toHaveTitle(`${p.es} · Certavi`);
+        if (p.contentEs) await expect(page.getByText(p.contentEs, { exact: true })).toBeVisible();
+        if (p.soon) await expect(page.getByText('Próximamente', { exact: true })).toBeVisible();
+        await expect(
+          page.getByRole('banner').getByRole('button', { name: /^Tema / }),
+        ).toBeVisible();
+        expect(await hasHorizontalScroll(page), `horizontal scroll on ${p.path}`).toBe(false);
+      }
 
-    // The five labels of the bar fit side by side without being clipped.
-    await page.goto('/');
-    const links = mainNav(page).getByRole('link');
-    const boxes: Box[] = [];
-    for (const [i, name] of NAV_ES.entries()) {
-      const link = links.nth(i);
-      await expect(link).toContainText(name);
-      const box = await boxOf(link);
-      expect(box.x).toBeGreaterThanOrEqual(0);
-      expect(box.x + box.width).toBeLessThanOrEqual(390);
-      const clipped = await link.evaluate((el) =>
-        [el, ...Array.from(el.querySelectorAll<HTMLElement>('*'))].some(
-          (n) => n.scrollWidth > n.clientWidth + 1 && n.clientWidth > 0,
-        ),
-      );
-      expect(clipped, `label "${name}" is clipped`).toBe(false);
-      const prev = boxes.at(-1);
-      if (prev) expect(box.x).toBeGreaterThanOrEqual(prev.x + prev.width - 0.5);
-      boxes.push(box);
-    }
-  });
+      // The five labels of the bar fit side by side without being clipped.
+      await page.goto('/');
+      const links = mainNav(page).getByRole('link');
+      const boxes: Box[] = [];
+      for (const [i, name] of NAV_ES.entries()) {
+        const link = links.nth(i);
+        await expect(link).toContainText(name);
+        const box = await boxOf(link);
+        expect(box.x).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width).toBeLessThanOrEqual(390);
+        const clipped = await link.evaluate((el) =>
+          [el, ...Array.from(el.querySelectorAll<HTMLElement>('*'))].some(
+            (n) => n.scrollWidth > n.clientWidth + 1 && n.clientWidth > 0,
+          ),
+        );
+        expect(clipped, `label "${name}" is clipped`).toBe(false);
+        const prev = boxes.at(-1);
+        if (prev) expect(box.x).toBeGreaterThanOrEqual(prev.x + prev.width - 0.5);
+        boxes.push(box);
+      }
+    },
+  );
 
   test('AC-NAV-04 · reload keeps the page', async ({ page }) => {
     await gotoReady(page, '/progress', 'Progreso');

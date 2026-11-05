@@ -49,8 +49,8 @@ Then:
 
 After step 3 and before step 4, also:
 
-- **e2e:all** — the blind-tester runs `npm run e2e:all` **once** (Chromium + WebKit, 10 min
-  cap, same rules: foreground, no extra flags, one run plus at most one after a fix). A
+- **e2e:all** — the blind-tester runs `npm run e2e:all` **once** (Chromium: every test; WebKit:
+  only `@all-engines` tests; 10 min cap, same rules: foreground, no extra flags, one run plus at most one after a fix). A
   WebKit-only failure is reported like any other; never skip it to get the PR through (CI
   repeats this run on the PR to `main`; incident of 2026-11-04).
 - **Reviews** — launch `code-reviewer` and `security-reviewer` (always, regardless of the diff).

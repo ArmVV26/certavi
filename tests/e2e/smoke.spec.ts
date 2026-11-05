@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test.describe('smoke', () => {
+test.describe('smoke', { tag: '@all-engines' }, () => {
   test('the app loads, opens on Today and fits an iPhone-sized screen', async ({ page }) => {
     await page.goto('/');
 
