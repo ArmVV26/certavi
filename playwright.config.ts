@@ -7,6 +7,11 @@ const isCI = !!process.env.CI;
 // iPhone-sized viewport used by every project (see context.md: tests run at 390×844).
 const IPHONE_VIEWPORT = { width: 390, height: 844 };
 
+// WebKit on a CI runner (2 vCPU, 1 worker) is seconds slower on local storage, and the long
+// sync / Today flows went over 30 s (AC-SYNC-14 English, AC-TODAY-10 / 11 on 2026-11-05). Nothing
+// is waited for by time; this is only the budget. Chromium keeps the default 30 s.
+const WEBKIT_TIMEOUT = 60_000;
+
 // Limits that keep a local run from saturating the PC (incident of 2026-11-02, see context.md):
 // - `npm run e2e`     → Chromium only (every test), 2 workers, stops after 3 failures, 5 min cap.
 // - `npm run e2e:all` → Chromium (every test) + WebKit (only tests tagged `@all-engines`),
@@ -18,6 +23,7 @@ const IPHONE_VIEWPORT = { width: 390, height: 844 };
 // export, downloads, Today, 390 px layout). UI logic that is engine-independent (theme,
 // language, navigation, components) runs in Chromium only. Tag a test or a `describe` with
 // `{ tag: '@all-engines' }` to run it in WebKit too.
+// Each test has 30 s (60 s in WebKit, see WEBKIT_TIMEOUT); do not add `test.slow` for WebKit.
 // Never set `channel: 'chrome'`: tests run on Playwright's own browsers, never the user's Chrome.
 export default defineConfig({
   testDir: './tests/e2e',
@@ -52,6 +58,7 @@ export default defineConfig({
         ...devices['iPhone 13'],
         viewport: IPHONE_VIEWPORT,
       },
+      timeout: WEBKIT_TIMEOUT,
       grep: /@all-engines/,
     },
   ],
