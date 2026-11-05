@@ -262,9 +262,19 @@ sessions (`session.ts`), Today helpers (`today.ts`) and blocks of the day (`bloc
   (`reuseExistingServer: false`, `strictPort`, webServer timeout 60 s). A busy port fails the
   run on purpose.
 - **E2E limits** (after the 2026-11-02 resource-starvation incident, see `context.md` §2.2 and
-  §12): `npm run e2e` runs **Chromium only**; `npm run e2e:all` (and CI, on PRs to `main`)
-  runs Chromium + WebKit. Locally **2 workers**, no retries, `maxFailures` 3; CI uses default workers + 2 retries.
-  30 s per test; global timeout 5 min (`npm run e2e`) / 10 min (`npm run e2e:all`). Reporters:
+  §12): `npm run e2e` runs **Chromium only** (every test); `npm run e2e:all` (and CI, on PRs to
+  `main`) runs Chromium (every test) + WebKit, where the `webkit` project only runs tests tagged
+  **`@all-engines`** (`grep` in `playwright.config.ts`). Tag (`{ tag: '@all-engines' }`, on a
+  test or a `describe`) what depends on the engine: IndexedDB / local data, sync, import and
+  export, downloads, Today and the session, the 390 px layout. Engine-independent UI logic
+  (theme, language, navigation, components) stays Chromium-only. CI runs the `e2e` job as a
+  matrix with `fail-fast: false` and `max-parallel: 1` (one job after another, in this order):
+  `chromium`, `webkit 1/2`, `webkit 2/2` (`--project` /
+  `--shard` are used in the workflow only, never locally); each job installs and caches its
+  own browser and uploads its own report. Locally **2 workers**, no retries, `maxFailures` 3;
+  CI uses default workers (1 on a 2-vCPU runner) + 2 retries.
+  30 s per test (60 s in WebKit: the project's `timeout` in `playwright.config.ts`; no
+  `test.slow` for WebKit); global timeout 5 min (`npm run e2e`) / 10 min (`npm run e2e:all`). Reporters:
   locally `dot` + `html`, in CI `list` + `html` (`open: 'never'`, report port 9323). Chromium
   `deviceScaleFactor` 2; never `channel: 'chrome'`.
 - Vitest prints the `dot` reporter (`test`, `test:coverage`) and coverage uses `text-summary` +
@@ -290,21 +300,21 @@ sessions (`session.ts`), Today helpers (`today.ts`) and blocks of the day (`bloc
 
 ## 10. Commands
 
-| Command                           | What it does                                                                         |
-| --------------------------------- | ------------------------------------------------------------------------------------ |
-| `npm run dev`                     | Vite dev server on 5173 (strict port)                                                |
-| `npm run build`                   | `tsc -b` + `vite build`                                                              |
-| `npm run preview`                 | Serve the build on 4173                                                              |
-| `npm run lint`                    | ESLint (type-checked)                                                                |
-| `npm run typecheck`               | `tsc -b`                                                                             |
-| `npm run test`                    | Vitest, single run                                                                   |
-| `npm run test:watch`              | Vitest in watch mode (user only — never leave it running)                            |
-| `npm run test:coverage`           | Vitest single run with v8 coverage; fails if `src/domain` or `src/data` < 90 % (CI)  |
-| `npm run e2e`                     | Playwright, **Chromium only** (builds, serves, tests, stops the server)              |
-| `npm run e2e:all`                 | Playwright, Chromium + WebKit (10 min global timeout); also run by CI on PRs to main |
-| `npm run format` / `format:check` | Prettier write / check                                                               |
-| `npm run ports:check`             | Lists which of 5173 / 4173 / 8888 / 8787 / 9323 are busy and by whom; exit 1 if any  |
-| `npm run ports:kill`              | Frees those ports                                                                    |
+| Command                           | What it does                                                                               |
+| --------------------------------- | ------------------------------------------------------------------------------------------ |
+| `npm run dev`                     | Vite dev server on 5173 (strict port)                                                      |
+| `npm run build`                   | `tsc -b` + `vite build`                                                                    |
+| `npm run preview`                 | Serve the build on 4173                                                                    |
+| `npm run lint`                    | ESLint (type-checked)                                                                      |
+| `npm run typecheck`               | `tsc -b`                                                                                   |
+| `npm run test`                    | Vitest, single run                                                                         |
+| `npm run test:watch`              | Vitest in watch mode (user only — never leave it running)                                  |
+| `npm run test:coverage`           | Vitest single run with v8 coverage; fails if `src/domain` or `src/data` < 90 % (CI)        |
+| `npm run e2e`                     | Playwright, **Chromium only** (builds, serves, tests, stops the server)                    |
+| `npm run e2e:all`                 | Playwright, Chromium + WebKit (`@all-engines` only); 10 min cap; CI runs it on PRs to main |
+| `npm run format` / `format:check` | Prettier write / check                                                                     |
+| `npm run ports:check`             | Lists which of 5173 / 4173 / 8888 / 8787 / 9323 are busy and by whom; exit 1 if any        |
+| `npm run ports:kill`              | Frees those ports                                                                          |
 
 Note: `typecheck` is `tsc -b`, not `tsc --noEmit -p .` as first drafted in `context.md` §8.5.
 The root `tsconfig.json` only holds project references (`tsconfig.app.json` for `src`,

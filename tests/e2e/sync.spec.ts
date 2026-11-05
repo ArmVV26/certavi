@@ -393,7 +393,7 @@ async function syncedWithSample(page: Page, server: FakeSyncServer): Promise<voi
 // Tests
 // ---------------------------------------------------------------------------------------------
 
-test.describe('sync', () => {
+test.describe('sync', { tag: '@all-engines' }, () => {
   test('AC-SYNC-01 · a new device is "Sin configurar", the card comes first with the key form, no request is made', async ({
     page,
     context,
@@ -760,12 +760,7 @@ test.describe('sync', () => {
     page,
     context,
     browser,
-    browserName,
   }, testInfo) => {
-    // Two devices, three imports, four syncs and two exports: in WebKit every step on local
-    // storage is seconds slower (a fresh device's Datos card alone can take > 7 s), so the
-    // default 30 s does not fit there. Nothing is waited for by time; this is only the budget.
-    test.slow(browserName === 'webkit', 'two devices; WebKit local storage is seconds slower');
     const server = createFakeSyncServer();
     await server.attach(context);
     const ACT = 'act_mg2a3b4c5d6e7f8g9h';
