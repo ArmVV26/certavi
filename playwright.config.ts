@@ -11,8 +11,9 @@ const IPHONE_VIEWPORT = { width: 390, height: 844 };
 // - `npm run e2e`     → Chromium only (every test), 2 workers, stops after 3 failures, 5 min cap.
 // - `npm run e2e:all` → Chromium (every test) + WebKit (only tests tagged `@all-engines`),
 //                       10 min cap (passed with --global-timeout).
-// - CI                → a matrix of jobs (chromium; webkit shard 1/2 and 2/2), each with
-//                       Playwright's default workers (1 on a 2-vCPU runner) and 2 retries.
+// - CI                → a matrix of jobs run one after another (chromium; webkit shard 1/2 and
+//                       2/2), each with Playwright's default workers (1 on a 2-vCPU runner)
+//                       and 2 retries.
 // WebKit only runs the tests whose behaviour depends on the engine (IndexedDB, sync, import /
 // export, downloads, Today, 390 px layout). UI logic that is engine-independent (theme,
 // language, navigation, components) runs in Chromium only. Tag a test or a `describe` with
