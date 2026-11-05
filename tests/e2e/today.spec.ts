@@ -145,6 +145,8 @@ async function expectSessionScreen(page: Page, heading: string): Promise<string>
 }
 
 async function axe(page: Page, label: string): Promise<void> {
+  // Colours may still be transitioning after a theme change: wait for the CSS transitions to end.
+  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
   const results = await new AxeBuilder({ page }).analyze();
   const serious = results.violations.filter(
     (v) => v.impact === 'serious' || v.impact === 'critical',
@@ -301,7 +303,7 @@ test.describe('today', { tag: '@all-engines' }, () => {
     await expect(main.getByText('En curso', { exact: true })).toBeVisible();
     await expect(main.getByText('7 ejercicios · 19 series', { exact: true })).toBeVisible();
     await expect(main).toContainText(/lunes, 2 de noviembre · 0?9:30/);
-    await expect(main.getByText('Próximamente', { exact: true })).toBeVisible();
+    await expect(main.getByText('0 de 19 hechas', { exact: true })).toBeVisible();
 
     await backToToday(page);
     await expect(button(page, 'Empezar Push')).toHaveCount(0);
@@ -754,10 +756,7 @@ test.describe('today', { tag: '@all-engines' }, () => {
     const main = page.getByRole('main');
     await expect(main.getByText('In progress', { exact: true })).toBeVisible();
     await expect(main.getByText('7 exercises · 19 sets', { exact: true })).toBeVisible();
-    await expect(main.getByText('Coming soon', { exact: true })).toBeVisible();
-    await expect(
-      main.getByText('Logging sets, rest timer and notes.', { exact: true }),
-    ).toBeVisible();
+    await expect(main.getByText('0 of 19 done', { exact: true })).toBeVisible();
     leftovers = findSpanishWords(await allUiText(page));
     expect(leftovers, `Spanish text left on the session: ${leftovers.join(', ')}`).toEqual([]);
     if (runAxe) await axe(page, 'Session (en, light)');

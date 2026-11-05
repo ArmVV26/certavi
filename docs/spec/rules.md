@@ -18,6 +18,7 @@ acceptance criteria can reuse.
 | Back-off                   | —                | Yes                               | Yes                                    |
 | Straight (linear)          | —                | Yes                               | Yes                                    |
 | Bilbo                      | —                | Yes                               | Yes                                    |
+| Dropset                    | **D**            | Yes                               | No (like an approach set)              |
 | Extra (added in a session) | —                | Yes                               | Yes                                    |
 
 A set with 0 reps does not count. **0 kg is a valid weight.**

@@ -14,6 +14,8 @@ interface NumberFieldProps {
   /** null = empty. 0 is a real value (bodyweight exercises, empty machine). */
   value: number | null;
   onChange: (value: number | null) => void;
+  /** Called after the field loses focus and its value was tidied (rounded, clamped). */
+  onBlur?: () => void;
   step?: number;
   min?: number;
   max?: number;
@@ -26,6 +28,10 @@ interface NumberFieldProps {
   stepper?: boolean;
   hint?: string;
   error?: string;
+  /** Marks the field as invalid without a message (the caller explains it elsewhere). */
+  invalid?: boolean;
+  /** Smaller text and padding, for dense rows such as the sets of a session. */
+  compact?: boolean;
   hideLabel?: boolean;
   disabled?: boolean;
   id?: string;
@@ -46,6 +52,7 @@ export function NumberField({
   label,
   value,
   onChange,
+  onBlur,
   step = 1,
   min,
   max,
@@ -55,6 +62,8 @@ export function NumberField({
   stepper = false,
   hint,
   error,
+  invalid = false,
+  compact = false,
   hideLabel = false,
   disabled = false,
   id,
@@ -103,6 +112,7 @@ export function NumberField({
   const handleBlur = () => {
     const parsed = parseDecimal(draft);
     commit(parsed === null ? null : clamp(roundTo(parsed, maxFractionDigits), min, max));
+    onBlur?.();
   };
 
   const nudge = (direction: 1 | -1) => {
@@ -126,7 +136,7 @@ export function NumberField({
   );
 
   return (
-    <div className={styles.field}>
+    <div className={cx(styles.field, compact && styles.compact)}>
       <label htmlFor={inputId} className={hideLabel ? undefined : styles.label}>
         {hideLabel ? <VisuallyHidden>{labelContent}</VisuallyHidden> : labelContent}
       </label>
@@ -142,7 +152,7 @@ export function NumberField({
             }}
           />
         )}
-        <div className={cx(styles.inputWrap, error && styles.invalid)}>
+        <div className={cx(styles.inputWrap, (error || invalid) && styles.invalid)}>
           <input
             id={inputId}
             className={styles.input}
@@ -152,7 +162,7 @@ export function NumberField({
             enterKeyHint="done"
             value={draft}
             placeholder={placeholder === undefined ? undefined : format(placeholder, locale)}
-            aria-invalid={error ? true : undefined}
+            aria-invalid={error || invalid ? true : undefined}
             aria-describedby={describedBy}
             disabled={disabled}
             onChange={handleChange}

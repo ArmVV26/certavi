@@ -3,6 +3,7 @@
 import type { DomainRecord, RecordType } from '../domain';
 import { advanceClock } from './clock';
 import { recordTables, tableOf, type CertaviDb } from './db';
+import { normalizeLegacySessions } from './sessionLog';
 
 export interface ImportPlan {
   /** Records that will be (or were) written: new on this device or newer than its copy. */
@@ -67,6 +68,8 @@ export function applyImport(db: CertaviDb, records: readonly DomainRecord[]): Pr
     );
     const newest = Math.max(0, ...plan.toWrite.map((r) => r.updatedAt));
     await advanceClock(db, newest);
+    // gym_app numbers warm-ups and extra sets apart from the planned ones.
+    await normalizeLegacySessions(db);
     return plan;
   });
 }

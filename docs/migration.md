@@ -90,7 +90,9 @@ When two gym_app records map to the same Certavi id (e.g. notes of `abdomen` and
 - **Routines** keep the gym_app template ids: `push`, `pull`, `upper`, `lowerA`, `lowerB`,
   `lowerFull`. `libre` becomes `routineId: null`.
 - gym_app set kinds map as: `aprox` → `approach`, `work` → `straight`; the others keep their
-  name. Slots `w<n>` / `p<n>` / `x<n>` become `slot: n` with the kind telling them apart.
+  name. Slots `w<n>` / `p<n>` / `x<n>` are converted to one list of rows per exercise (`slot` =
+  position: warm-ups first, then the planned sets, then the extra sets) after the import, by
+  `normalizeLegacyRows`; the session's scheme gains the matching warm-up and extra rows.
 - gym_app's `hiking` week was a 4-session week with Lower Full. In Certavi a week has a `size`
   (5, 4 or 3) besides `hiking`; imported weeks keep their frozen plan, so their numbers do not
   change.
