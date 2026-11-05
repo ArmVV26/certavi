@@ -74,6 +74,19 @@ and how the schema evolves without losing data on the user's phone.
 - **Drafts.** What is typed in a row but not saved is kept in localStorage under
   `certavi.draft.<sessionId>` (device-only, never synced, zod-validated on read) and dropped when
   the session is finished or deleted.
+- **Session tools.** Adding, moving and removing exercises, changing the routine and editing the
+  date and hours rewrite `WorkoutSession.items` / `routineId` / `date` / `startedAt` / `endedAt`
+  in one transaction (`src/data/sessionTools.ts`). `PlanItem.added` (optional, `true`) marks an
+  exercise that is not in the session's routine (added by hand, or kept when the routine was
+  changed); it only exists in session plans. Older clients ignore the field.
+- **Undo.** Every removal (row, exercise, session) returns a plain-data snapshot of what it took
+  out (`UndoRow`, `UndoExercise`, `UndoSession`). "Undo" writes it back with new `updatedAt`
+  values and the same ids, so the tombstone is overwritten and the restore syncs like any other
+  write. Nothing is kept on disk: the snapshot lives in memory while the notification is shown.
+  A restore that no longer makes sense (session gone, exercise added again) throws
+  `UndoConflictError` and writes nothing.
+- **Rest settings.** The rest times are the synced `settings` record (`src/data/restSettings.ts`);
+  sound and vibration are device-only (`certavi.restSound`, `certavi.restVibration`).
 
 ## Alternatives considered
 
