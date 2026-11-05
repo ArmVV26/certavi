@@ -98,21 +98,42 @@ describe('sets', () => {
     expect(volume(sets)).toBe(980);
   });
 
-  it('orders warm-ups, planned sets by slot, then extras', () => {
+  it('orders sets by slot, whatever their kind', () => {
     const sets = [
-      makeSet({ ...base, kind: 'extra', slot: 0 }),
-      makeSet({ ...base, kind: 'backoff', slot: 2 }),
+      makeSet({ ...base, kind: 'extra', slot: 4 }),
+      makeSet({ ...base, kind: 'backoff', slot: 3 }),
       makeSet({ ...base, kind: 'warmup', slot: 1 }),
-      makeSet({ ...base, kind: 'top', slot: 1 }),
-      makeSet({ ...base, kind: 'warmup', slot: 0 }),
+      makeSet({ ...base, kind: 'top', slot: 2 }),
+      makeSet({ ...base, kind: 'dropset', slot: 0 }),
     ];
     expect(sets.sort(compareSets).map((s) => `${s.kind}${String(s.slot)}`)).toEqual([
-      'warmup0',
+      'dropset0',
       'warmup1',
-      'top1',
-      'backoff2',
-      'extra0',
+      'top2',
+      'backoff3',
+      'extra4',
     ]);
+  });
+
+  it('counts dropset and extra sets as effective, the dropset only outside strength figures', () => {
+    expect(isEffectiveSet(makeSet({ ...base, kind: 'dropset' }))).toBe(true);
+    expect(countsForStrength(makeSet({ ...base, kind: 'dropset' }))).toBe(false);
+    expect(countsForStrength(makeSet({ ...base, kind: 'extra' }))).toBe(true);
+    expect(volume([makeSet({ ...base, kind: 'dropset', weight: 40, reps: 10 })])).toBe(400);
+  });
+
+  it('counts only planned working rows as planned sets', () => {
+    const withRows: SetScheme = {
+      blocks: [
+        { kind: 'warmup', reps: '', count: 2 },
+        ...hack.blocks,
+        { kind: 'dropset', reps: '', count: 1 },
+        { kind: 'extra', reps: '', count: 3 },
+      ],
+      rir: '1-2',
+    };
+    expect(countSchemeSets(withRows)).toBe(4);
+    expect(expandScheme(withRows)).toHaveLength(10);
   });
 });
 

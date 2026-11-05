@@ -5,6 +5,7 @@ export * from './deload';
 export * from './history';
 export * from './progression';
 export * from './records';
+export * from './rows';
 export * from './scheme';
 export * from './session';
 export * from './sets';
