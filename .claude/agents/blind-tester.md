@@ -54,6 +54,8 @@ You are a QA engineer who has NEVER seen the source code.
   `await expect.poll(() => server.requestCount()).toBeGreaterThan(before)` or
   `expect.poll(() => server.records())`. WebKit can be seconds slower than Chromium; a failure
   injected too early lands on the wrong request.
+- Each test has 30 s, and 60 s in WebKit (set once in `playwright.config.ts`). Do not add
+  `test.slow` because WebKit is slow; if a test gets close to 60 s in WebKit, split it or cut steps.
 - Give every wait in one helper the same timeout; do not leave one step on the 5 s default
   while the next one waits 10 s.
 
