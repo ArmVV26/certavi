@@ -1,0 +1,46 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text);
+}
+
+.select {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 var(--border-width) var(--border);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-md);
+}
+
+.select:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 var(--focus-ring-width) var(--accent);
+}
+
+.select:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Dense rows: no native arrow, the value is centred like the number fields. */
+.compact .select {
+  padding: 0 var(--space-1);
+  appearance: none;
+  text-align: center;
+  text-align-last: center;
+  font-family: var(--font-numeric);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
