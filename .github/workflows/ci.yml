@@ -55,6 +55,9 @@ jobs:
     strategy:
       # A failure in one browser must not hide the result of the others.
       fail-fast: false
+      # One job at a time, in the order of `include` (chromium, webkit 1/2, webkit 2/2); a
+      # failure does not stop the next ones.
+      max-parallel: 1
       matrix:
         include:
           # Chromium runs every test; WebKit only the ones tagged @all-engines (see
