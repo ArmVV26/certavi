@@ -3,6 +3,7 @@ import type { RowEdit } from '../../domain';
 import { getLocalStorage } from '../../data/deviceStorage';
 import {
   clearDrafts,
+  dropExerciseDrafts,
   readDrafts,
   remapDrafts,
   setDraft,
@@ -17,6 +18,8 @@ export interface DraftStore {
   set: (exerciseId: string, slot: number, draft: RowDraft | null) => void;
   /** Moves the drafts of an exercise after its rows changed. */
   follow: (exerciseId: string, remap: RowEdit['remap']) => void;
+  /** Drops the drafts of an exercise that left the session. */
+  dropExercise: (exerciseId: string) => void;
   /** Drops every draft of the session (it ended or was deleted). */
   clear: () => void;
 }
@@ -39,10 +42,13 @@ export function useSessionDrafts(sessionId: string): DraftStore {
   const follow = useCallback((exerciseId: string, remap: RowEdit['remap']) => {
     setDrafts((current) => remapDrafts(current, exerciseId, remap));
   }, []);
+  const dropExercise = useCallback((exerciseId: string) => {
+    setDrafts((current) => dropExerciseDrafts(current, exerciseId));
+  }, []);
   const clear = useCallback(() => {
     setDrafts({});
     clearDrafts(storage, sessionId);
   }, [storage, sessionId]);
 
-  return { drafts, set, follow, clear };
+  return { drafts, set, follow, dropExercise, clear };
 }

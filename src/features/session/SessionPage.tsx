@@ -24,6 +24,7 @@ import { Notice } from '../../ui/Notice';
 import { ScalePicker } from '../../ui/ScalePicker';
 import { Tag } from '../../ui/Tag';
 import { TextArea } from '../../ui/TextField';
+import { AddExerciseSheet } from './AddExerciseSheet';
 import { ExerciseCard } from './ExerciseCard';
 import styles from './SessionPage.module.css';
 import { useDebouncedSave } from './useDebouncedSave';
@@ -64,6 +65,7 @@ function SessionScreen({ view }: { view: SessionView }) {
   const { session, routine, exercises, sets, notes, references, deload } = view;
   const store = useSessionDrafts(session.id);
   const actions = useSessionActions(view, store);
+  const [adding, setAdding] = useState(false);
 
   const inProgress = isInProgress(session);
   const counts = planCounts(session.items);
@@ -136,10 +138,13 @@ function SessionScreen({ view }: { view: SessionView }) {
         )}
       </Card>
 
-      {session.items.map((item) => (
+      {session.items.map((item, index) => (
         <ExerciseCard
           key={item.exerciseId}
           item={item}
+          isFirst={index === 0}
+          isLast={index === session.items.length - 1}
+          focusHeading={!adding && actions.exerciseFocus === item.exerciseId}
           exercise={exercises.get(item.exerciseId)}
           sets={sets.filter((s) => s.exerciseId === item.exerciseId)}
           note={notes.find((n) => n.exerciseId === item.exerciseId)}
@@ -149,6 +154,28 @@ function SessionScreen({ view }: { view: SessionView }) {
           actions={actions}
         />
       ))}
+
+      <Button
+        variant="secondary"
+        onClick={() => {
+          setAdding(true);
+        }}
+      >
+        {t('session.add.button')}
+      </Button>
+      <AddExerciseSheet
+        open={adding}
+        onClose={() => {
+          setAdding(false);
+        }}
+        exercises={[...exercises.values()]}
+        inSession={new Set(session.items.map((item) => item.exerciseId))}
+        routineExerciseIds={view.routineExerciseIds}
+        onChoose={(exerciseId) => {
+          setAdding(false);
+          void actions.addExercise(exerciseId);
+        }}
+      />
 
       <SessionNote note={session.note} onSave={(note) => void actions.updateFields({ note })} />
 
@@ -255,6 +282,23 @@ function SessionDialog({ dialog, onCancel, onConfirm }: SessionDialogProps) {
           cancelLabel={t('session.dialog.strapsOnlyNext')}
         />
       );
+    case 'removeExercise': {
+      const key =
+        dialog.sets > 0 && dialog.note
+          ? 'session.dialog.removeExerciseSetsAndNote'
+          : dialog.sets > 0
+            ? 'session.dialog.removeExerciseSets'
+            : 'session.dialog.removeExerciseNote';
+      return (
+        <ConfirmDialog
+          {...common}
+          title={t('session.dialog.removeExerciseTitle', { name: dialog.name })}
+          message={t(key, { count: dialog.sets })}
+          confirmLabel={t('session.dialog.removeExerciseConfirm')}
+          destructive
+        />
+      );
+    }
     case 'delete':
       return (
         <ConfirmDialog

@@ -568,7 +568,11 @@
       "addExtra": "+ Extra set",
       "note": "Note",
       "noteFilled": "Note ✎",
-      "summary": "{{weight}} × {{reps}}"
+      "summary": "{{weight}} × {{reps}}",
+      "moveUp": "Move {{name}} up",
+      "moveDown": "Move {{name}} down",
+      "removeExercise": "Remove exercise",
+      "outside": "Outside the routine"
     },
     "hint": {
       "increase": "Go up to {{weight}} kg",
@@ -632,7 +636,14 @@
       "savedRecords_one": "Session saved · {{count}} record",
       "savedRecords_other": "Session saved · {{count}} records",
       "deleted": "Session deleted",
-      "failed": "Could not save. Try again."
+      "failed": "Could not save. Try again.",
+      "rowRemoved": "Set removed",
+      "rowRestored": "Set restored",
+      "exerciseRemoved": "Exercise removed",
+      "exerciseRestored": "Exercise restored",
+      "restored": "Session restored",
+      "undo": "Undo",
+      "cannotUndo": "Cannot undo: there is new data"
     },
     "dialog": {
       "cancel": "Cancel",
@@ -648,7 +659,29 @@
       "strapsOnlyNext": "Only the next ones",
       "deleteTitle": "Delete this session?",
       "deleteMessage": "The session and all its sets and notes will be deleted.",
-      "deleteConfirm": "Delete"
+      "deleteConfirm": "Delete",
+      "removeExerciseTitle": "Remove {{name}} from this session?",
+      "removeExerciseSets_one": "Its set will be deleted. The routine does not change.",
+      "removeExerciseSets_other": "Its {{count}} sets will be deleted. The routine does not change.",
+      "removeExerciseNote": "Its note will be deleted. The routine does not change.",
+      "removeExerciseSetsAndNote_one": "Its set and its note will be deleted. The routine does not change.",
+      "removeExerciseSetsAndNote_other": "Its {{count}} sets and its note will be deleted. The routine does not change.",
+      "removeExerciseConfirm": "Remove"
+    },
+    "add": {
+      "button": "+ Add exercise",
+      "title": "Add exercise",
+      "search": "Search exercise",
+      "group": "Muscle group",
+      "equipment": "Equipment",
+      "kind": "Type",
+      "others": "Others",
+      "straps": "Straps",
+      "custom": "Created by me",
+      "inRoutine": "In a routine",
+      "results": "Exercises",
+      "none": "No exercise matches",
+      "already": "Already in the session"
     }
   }
 }

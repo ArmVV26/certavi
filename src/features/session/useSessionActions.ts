@@ -12,12 +12,21 @@ import {
   logSet,
   removeSessionRow,
   reopenSession,
+  restoreRow,
+  restoreSession,
   saveExerciseNote,
   setRowType,
+  UndoConflictError,
   unlogSet,
   updateSessionFields,
   type RowType,
 } from '../../data/sessionLog';
+import {
+  addExercise,
+  moveExercise,
+  removeExercise,
+  restoreExercise,
+} from '../../data/sessionTools';
 import type { SessionView } from '../../data/sessions';
 import { useToast } from '../../ui/ToastContext';
 import { useToday } from '../today/useToday';
@@ -33,6 +42,7 @@ export type DialogState =
       patch: { straps?: boolean; band?: string };
       count: number;
     }
+  | { kind: 'removeExercise'; exerciseId: string; name: string; sets: number; note: boolean }
   | { kind: 'delete' }
   | null;
 
@@ -72,6 +82,8 @@ export function useSessionActions(view: SessionView, store: DraftStore) {
   const [invalid, setInvalid] = useState<InvalidField | null>(null);
   const [dialog, setDialog] = useState<DialogState>(null);
   const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
+  // An exercise just added: its card takes the focus once it shows.
+  const [exerciseFocus, setExerciseFocus] = useState<string | null>(null);
 
   const guard = useCallback(
     async <T>(work: () => Promise<T>): Promise<{ value: T } | null> => {
@@ -84,6 +96,31 @@ export function useSessionActions(view: SessionView, store: DraftStore) {
     },
     [t, toast],
   );
+
+  /** Runs an "Undo"; says so when it worked and why when it could not. */
+  const runUndo = async (restore: () => Promise<string>) => {
+    try {
+      toast.show({ message: await restore(), tone: 'success' });
+    } catch (error) {
+      const key =
+        error instanceof UndoConflictError ? 'session.toast.cannotUndo' : 'session.toast.failed';
+      toast.show({ message: t(key), tone: 'danger' });
+    }
+  };
+
+  /** A notification for something just removed, with the button that brings it back. */
+  const offerUndo = (message: string, restore: () => Promise<string>) => {
+    toast.show({
+      message,
+      tone: 'success',
+      action: {
+        label: t('session.toast.undo'),
+        onAction: () => {
+          void runUndo(restore);
+        },
+      },
+    });
+  };
 
   const markDone = async (
     { exerciseId, row, bodyweight }: RowTarget,
@@ -155,7 +192,38 @@ export function useSessionActions(view: SessionView, store: DraftStore) {
 
   const removeNow = async (exerciseId: string, slot: number) => {
     const done = await guard(() => removeSessionRow(db, sessionId, exerciseId, slot));
-    if (done) store.follow(exerciseId, done.value.remap);
+    if (!done) return;
+    store.follow(exerciseId, done.value.remap);
+    offerUndo(t('session.toast.rowRemoved'), async () => {
+      const edit = await restoreRow(db, done.value.undo);
+      store.follow(exerciseId, edit.remap);
+      return t('session.toast.rowRestored');
+    });
+  };
+
+  const removeExerciseNow = async (exerciseId: string) => {
+    const done = await guard(() => removeExercise(db, sessionId, exerciseId));
+    if (!done) return;
+    store.dropExercise(exerciseId);
+    offerUndo(t('session.toast.exerciseRemoved'), async () => {
+      await restoreExercise(db, done.value);
+      return t('session.toast.exerciseRestored');
+    });
+  };
+
+  /** Asks first when the exercise has saved sets or a note; otherwise removes it at once. */
+  const requestRemoveExercise = (exerciseId: string, name: string, sets: number, note: boolean) => {
+    if (sets > 0 || note) setDialog({ kind: 'removeExercise', exerciseId, name, sets, note });
+    else void removeExerciseNow(exerciseId);
+  };
+
+  const moveExerciseBy = async (exerciseId: string, direction: -1 | 1) => {
+    await guard(() => moveExercise(db, sessionId, exerciseId, direction));
+  };
+
+  const addExerciseToSession = async (exerciseId: string) => {
+    const done = await guard(() => addExercise(db, sessionId, exerciseId));
+    if (done) setExerciseFocus(exerciseId);
   };
 
   const requestRemove = (exerciseId: string, row: DisplayRow, name: string, logged: string) => {
@@ -220,13 +288,23 @@ export function useSessionActions(view: SessionView, store: DraftStore) {
       await guard(() => unlogSet(db, sessionId, current.exerciseId, current.slot));
     } else if (current.kind === 'remove') {
       await removeNow(current.exerciseId, current.slot);
+    } else if (current.kind === 'removeExercise') {
+      await removeExerciseNow(current.exerciseId);
     } else if (current.kind === 'straps') {
       await guard(() => applyStrapsBand(db, sessionId, current.exerciseId, current.patch));
     } else {
       const done = await guard(() => deleteSession(db, sessionId));
       if (!done) return;
       store.clear();
-      toast.show({ message: t('session.toast.deleted'), tone: 'success' });
+      const undo = done.value;
+      if (undo) {
+        offerUndo(t('session.toast.deleted'), async () => {
+          await restoreSession(db, undo);
+          return t('session.toast.restored');
+        });
+      } else {
+        toast.show({ message: t('session.toast.deleted'), tone: 'success' });
+      }
       void navigate('/', { replace: true });
     }
   };
@@ -241,11 +319,18 @@ export function useSessionActions(view: SessionView, store: DraftStore) {
     clearFocusRequest: () => {
       setFocusRequest(null);
     },
+    exerciseFocus,
+    clearExerciseFocus: () => {
+      setExerciseFocus(null);
+    },
     markDone,
     editRow,
     requestUnsave,
     requestRemove,
     addNewRow,
+    requestRemoveExercise,
+    moveExercise: moveExerciseBy,
+    addExercise: addExerciseToSession,
     changeType,
     requestStrapsBand,
     saveNote,
