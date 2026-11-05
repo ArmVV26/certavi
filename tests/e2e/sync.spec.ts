@@ -760,12 +760,7 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     page,
     context,
     browser,
-    browserName,
   }, testInfo) => {
-    // Two devices, three imports, four syncs and two exports: in WebKit every step on local
-    // storage is seconds slower (a fresh device's Datos card alone can take > 7 s), so the
-    // default 30 s does not fit there. Nothing is waited for by time; this is only the budget.
-    test.slow(browserName === 'webkit', 'two devices; WebKit local storage is seconds slower');
     const server = createFakeSyncServer();
     await server.attach(context);
     const ACT = 'act_mg2a3b4c5d6e7f8g9h';
@@ -933,10 +928,7 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     page,
     context,
     browser,
-    browserName,
   }, testInfo) => {
-    // Two devices, as in AC-SYNC-09: only the time budget grows in WebKit.
-    test.slow(browserName === 'webkit', 'two devices; WebKit local storage is seconds slower');
     const server = createFakeSyncServer();
     await server.attach(context);
     await syncedWithSample(page, server);
@@ -990,11 +982,7 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     page,
     context,
     browser,
-    browserName,
   }, testInfo) => {
-    // Two devices, an import, two syncs and a restore: it exceeded 30 s in WebKit on CI
-    // (webkit 2/2). Nothing is waited for by time; this is only the budget.
-    test.slow(browserName === 'webkit', 'two devices; WebKit local storage is seconds slower');
     const server = createFakeSyncServer();
     await server.attach(context);
     await syncedWithSample(page, server);
