@@ -81,6 +81,20 @@ export function removeRow(scheme: SetScheme, slot: number): RowEdit | null {
   };
 }
 
+/**
+ * Puts a row back at `slot` (clamped to the end); the rows from there on move down. It is the
+ * inverse of `removeRow`, used by "Undo".
+ */
+export function insertRow(scheme: SetScheme, slot: number, row: SchemeRow): RowEdit {
+  const rows = schemeRows(scheme);
+  const at = Math.min(Math.max(Math.trunc(slot), 0), rows.length);
+  rows.splice(at, 0, row);
+  return {
+    scheme: rowsToScheme(rows, scheme.rir),
+    remap: (old) => (old >= at ? old + 1 : old),
+  };
+}
+
 /** Changes the type of the row at `slot`; the row stays in place. null when there is no such row. */
 export function changeRowKind(scheme: SetScheme, slot: number, kind: SetKind): RowEdit | null {
   const rows = schemeRows(scheme);
