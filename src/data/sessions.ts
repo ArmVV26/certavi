@@ -98,6 +98,8 @@ export interface SessionView {
   references: ReadonlyMap<string, HistoryEntry>;
   /** The session falls in a deload week. */
   deload: boolean;
+  /** Ids of the exercises that are in at least one routine (for the "in a routine" filter). */
+  routineExerciseIds: ReadonlySet<string>;
 }
 
 /**
@@ -111,7 +113,8 @@ export function readSession(db: CertaviDb, id: string): Promise<SessionView | nu
     async () => {
       const row = await db.sessions.get(id);
       if (!row || !isLive(row)) return null;
-      const routineRow = row.routineId === null ? undefined : await db.routines.get(row.routineId);
+      const routines = (await db.routines.toArray()).filter((r) => isLive(r));
+      const routineRow = routines.find((r) => r.id === row.routineId);
       const exercises = (await db.exercises.toArray()).filter((e) => isLive(e));
       const sessions = (await db.sessions.toArray()).filter((s) => isLive(s));
       const notes = (await db.notes.toArray()).filter((n) => isLive(n));
@@ -131,12 +134,13 @@ export function readSession(db: CertaviDb, id: string): Promise<SessionView | nu
       }
       return {
         session: row,
-        routine: routineRow && isLive(routineRow) ? routineRow : undefined,
+        routine: routineRow,
         exercises: new Map(exercises.map((e) => [e.id, e])),
         sets: history.filter((s) => s.sessionId === id),
         notes: notes.filter((n) => n.sessionId === id),
         references,
         deload: isDeloadDate(row.date, deloadWeeks(weekPlans)),
+        routineExerciseIds: new Set(routines.flatMap((r) => r.items.map((i) => i.exerciseId))),
       };
     },
   );

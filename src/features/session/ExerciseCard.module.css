@@ -3,7 +3,20 @@
   padding: var(--space-3);
 }
 
+.top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.tools {
+  display: flex;
+  flex-shrink: 0;
+}
+
 .heading {
+  flex: 1;
+  min-width: 0;
   font-size: var(--fs-lg);
   font-weight: var(--fw-bold);
   line-height: var(--lh-snug);

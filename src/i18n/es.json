@@ -568,7 +568,11 @@
       "addExtra": "+ Serie extra",
       "note": "Nota",
       "noteFilled": "Nota ✎",
-      "summary": "{{weight}} × {{reps}}"
+      "summary": "{{weight}} × {{reps}}",
+      "moveUp": "Subir {{name}}",
+      "moveDown": "Bajar {{name}}",
+      "removeExercise": "Quitar ejercicio",
+      "outside": "Fuera de la rutina"
     },
     "hint": {
       "increase": "Sube a {{weight}} kg",
@@ -632,7 +636,14 @@
       "savedRecords_one": "Sesión guardada · {{count}} récord",
       "savedRecords_other": "Sesión guardada · {{count}} récords",
       "deleted": "Sesión eliminada",
-      "failed": "No se pudo guardar. Inténtalo de nuevo."
+      "failed": "No se pudo guardar. Inténtalo de nuevo.",
+      "rowRemoved": "Serie quitada",
+      "rowRestored": "Serie recuperada",
+      "exerciseRemoved": "Ejercicio quitado",
+      "exerciseRestored": "Ejercicio recuperado",
+      "restored": "Sesión recuperada",
+      "undo": "Deshacer",
+      "cannotUndo": "No se puede deshacer: ya hay datos nuevos"
     },
     "dialog": {
       "cancel": "Cancelar",
@@ -648,7 +659,29 @@
       "strapsOnlyNext": "Solo las próximas",
       "deleteTitle": "¿Eliminar esta sesión?",
       "deleteMessage": "Se borrarán la sesión y todas sus series y notas.",
-      "deleteConfirm": "Eliminar"
+      "deleteConfirm": "Eliminar",
+      "removeExerciseTitle": "¿Quitar {{name}} de esta sesión?",
+      "removeExerciseSets_one": "Se borrará su serie. La rutina no cambia.",
+      "removeExerciseSets_other": "Se borrarán sus {{count}} series. La rutina no cambia.",
+      "removeExerciseNote": "Se borrará su nota. La rutina no cambia.",
+      "removeExerciseSetsAndNote_one": "Se borrarán su serie y su nota. La rutina no cambia.",
+      "removeExerciseSetsAndNote_other": "Se borrarán sus {{count}} series y su nota. La rutina no cambia.",
+      "removeExerciseConfirm": "Quitar"
+    },
+    "add": {
+      "button": "+ Añadir ejercicio",
+      "title": "Añadir ejercicio",
+      "search": "Buscar ejercicio",
+      "group": "Grupo muscular",
+      "equipment": "Equipo",
+      "kind": "Tipo",
+      "others": "Otros",
+      "straps": "Straps",
+      "custom": "Creados por mí",
+      "inRoutine": "En alguna rutina",
+      "results": "Ejercicios",
+      "none": "Ningún ejercicio coincide",
+      "already": "Ya está en la sesión"
     }
   }
 }
