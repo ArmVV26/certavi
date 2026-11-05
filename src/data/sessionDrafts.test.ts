@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   clearDrafts,
   draftKey,
+  dropExerciseDrafts,
   readDrafts,
   remapDrafts,
   setDraft,
@@ -85,5 +86,14 @@ describe('editing drafts', () => {
     expect(removed.press).toEqual({ '1': typed });
     expect(remapDrafts(drafts, 'press', () => null)).toEqual({ curl: drafts.curl });
     expect(remapDrafts(drafts, 'bench', (slot) => slot)).toBe(drafts);
+  });
+});
+
+describe('dropExerciseDrafts', () => {
+  it('removes the drafts of one exercise and leaves the others', () => {
+    const drafts: SessionDrafts = { a: { '0': typed }, b: { '1': typed } };
+    expect(dropExerciseDrafts(drafts, 'a')).toEqual({ b: { '1': typed } });
+    expect(dropExerciseDrafts(drafts, 'zzz')).toEqual(drafts);
+    expect(drafts).toHaveProperty('a');
   });
 });
