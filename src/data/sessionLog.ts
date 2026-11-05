@@ -8,6 +8,7 @@ import {
   effectiveKindFor,
   exerciseHistory,
   exerciseNoteId,
+  insertRow,
   normalizeLegacyRows,
   PAST_SESSION_MINUTES,
   recordEvents,
@@ -15,8 +16,10 @@ import {
   removeRow,
   schemeRows,
   type ExclusionReason,
+  type ExerciseNote,
   type PlanItem,
   type RowEdit,
+  type SchemeRow,
   type SetEntry,
   type WorkoutSession,
 } from '../domain';
@@ -41,9 +44,57 @@ export class RowNotFoundError extends Error {
   }
 }
 
-const tables = (db: CertaviDb) => [db.sessions, db.sets, db.notes, db.pending, db.meta];
+/** "Undo" cannot bring the removal back: the session is gone or new data took its place. */
+export class UndoConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'UndoConflictError';
+  }
+}
 
-interface Loaded {
+/**
+ * What a removal took out, so "Undo" can bring it back. Plain data: it waits in memory for a few
+ * seconds and is written back with new timestamps (the removal syncs like any other write).
+ */
+export interface UndoRow {
+  kind: 'row';
+  sessionId: string;
+  exerciseId: string;
+  slot: number;
+  /** The removed row; null when only a stray logged set was removed (its row was already gone). */
+  row: SchemeRow | null;
+  sets: SetEntry[];
+}
+
+export interface UndoExercise {
+  kind: 'exercise';
+  sessionId: string;
+  item: PlanItem;
+  /** Its position in the plan. */
+  index: number;
+  sets: SetEntry[];
+  note: ExerciseNote | null;
+}
+
+export interface UndoSession {
+  kind: 'session';
+  session: WorkoutSession;
+  sets: SetEntry[];
+  notes: ExerciseNote[];
+}
+
+/** The edit of a removed row plus what "Undo" needs. */
+export type RowRemoval = RowEdit & { undo: UndoRow };
+
+export const sessionTables = (db: CertaviDb) => [
+  db.sessions,
+  db.sets,
+  db.notes,
+  db.pending,
+  db.meta,
+];
+
+export interface Loaded {
   session: WorkoutSession;
   index: number;
   item: PlanItem;
@@ -51,7 +102,11 @@ interface Loaded {
   sets: SetEntry[];
 }
 
-async function loadExercise(db: CertaviDb, sessionId: string, exerciseId: string): Promise<Loaded> {
+export async function loadExercise(
+  db: CertaviDb,
+  sessionId: string,
+  exerciseId: string,
+): Promise<Loaded> {
   const session = await db.sessions.get(sessionId);
   if (!session || !isLive(session)) throw new SessionNotFoundError(sessionId);
   const index = session.items.findIndex((item) => item.exerciseId === exerciseId);
@@ -90,7 +145,7 @@ export function logSet(
   { now = Date.now }: RepositoryOptions = {},
 ): Promise<SetEntry> {
   const sets = createRepository(db, 'set', { now });
-  return db.transaction('rw', tables(db), async () => {
+  return db.transaction('rw', sessionTables(db), async () => {
     const { item, sets: mine } = await loadExercise(db, input.sessionId, input.exerciseId);
     const existing = newest(atSlot(mine, input.slot));
     const kind = existing?.kind ?? schemeRows(item.scheme)[input.slot]?.kind;
@@ -122,14 +177,14 @@ export function unlogSet(
   options: RepositoryOptions = {},
 ): Promise<void> {
   const sets = createRepository(db, 'set', options);
-  return db.transaction('rw', tables(db), async () => {
+  return db.transaction('rw', sessionTables(db), async () => {
     const { sets: mine } = await loadExercise(db, sessionId, exerciseId);
     for (const set of atSlot(mine, slot)) await sets.remove(set.id);
   });
 }
 
 /** Stores a new scheme for an exercise of the session and moves its logged sets to follow it. */
-async function applyRowEdit(
+export async function applyRowEdit(
   db: CertaviDb,
   loaded: Loaded,
   edit: RowEdit,
@@ -154,7 +209,7 @@ export function addRow(
   kind: 'warmup' | 'extra',
   options: RepositoryOptions = {},
 ): Promise<RowEdit> {
-  return db.transaction('rw', tables(db), async () => {
+  return db.transaction('rw', sessionTables(db), async () => {
     const loaded = await loadExercise(db, sessionId, exerciseId);
     const { scheme } = loaded.item;
     const edit = kind === 'warmup' ? addWarmupRow(scheme) : addExtraRow(scheme);
@@ -163,28 +218,66 @@ export function addRow(
   });
 }
 
-/** Removes a row (and its logged set) from the session; the routine does not change. */
+/**
+ * Removes a row (and its logged set) from the session; the routine does not change. The result
+ * carries what "Undo" needs (`restoreRow`).
+ */
 export function removeSessionRow(
   db: CertaviDb,
   sessionId: string,
   exerciseId: string,
   slot: number,
   options: RepositoryOptions = {},
-): Promise<RowEdit> {
-  return db.transaction('rw', tables(db), async () => {
+): Promise<RowRemoval> {
+  return db.transaction('rw', sessionTables(db), async () => {
     const loaded = await loadExercise(db, sessionId, exerciseId);
     const { scheme } = loaded.item;
+    const removedSets = atSlot(loaded.sets, slot);
     const edit = removeRow(scheme, slot);
     if (edit) {
+      const row = schemeRows(scheme)[slot] ?? null;
       await applyRowEdit(db, loaded, edit, options);
-      return edit;
+      return {
+        ...edit,
+        undo: { kind: 'row', sessionId, exerciseId, slot, row, sets: removedSets },
+      };
     }
     // A logged set whose row is gone can still be removed.
-    const stray = atSlot(loaded.sets, slot);
-    if (stray.length === 0) throw new RowNotFoundError(sessionId, exerciseId, slot);
+    if (removedSets.length === 0) throw new RowNotFoundError(sessionId, exerciseId, slot);
     const sets = createRepository(db, 'set', options);
-    for (const set of stray) await sets.remove(set.id);
-    return { scheme, remap: (s) => s };
+    for (const set of removedSets) await sets.remove(set.id);
+    return {
+      scheme,
+      remap: (s) => s,
+      undo: { kind: 'row', sessionId, exerciseId, slot, row: null, sets: removedSets },
+    };
+  });
+}
+
+/**
+ * Brings back a removed row at its position (the rows below move down) with its logged set.
+ * Returns the edit, so typed drafts can follow the rows.
+ */
+export function restoreRow(
+  db: CertaviDb,
+  undo: UndoRow,
+  options: RepositoryOptions = {},
+): Promise<RowEdit> {
+  const sets = createRepository(db, 'set', options);
+  return db.transaction('rw', sessionTables(db), async () => {
+    const loaded = await loadExercise(db, undo.sessionId, undo.exerciseId).catch(() => {
+      throw new UndoConflictError('The exercise is no longer in the session');
+    });
+    const { scheme } = loaded.item;
+    if (!undo.row) {
+      if (undo.sets.length > 0) await sets.putMany(undo.sets);
+      return { scheme, remap: (s: number) => s };
+    }
+    const edit = insertRow(scheme, undo.slot, undo.row);
+    await applyRowEdit(db, loaded, edit, options);
+    const slot = Math.min(undo.slot, schemeRows(scheme).length);
+    if (undo.sets.length > 0) await sets.putMany(undo.sets.map((set) => ({ ...set, slot })));
+    return edit;
   });
 }
 
@@ -200,7 +293,7 @@ export function setRowType(
   options: RepositoryOptions = {},
 ): Promise<void> {
   const sets = createRepository(db, 'set', options);
-  return db.transaction('rw', tables(db), async () => {
+  return db.transaction('rw', sessionTables(db), async () => {
     const loaded = await loadExercise(db, sessionId, exerciseId);
     const { item } = loaded;
     const rows = displayRows({ scheme: item.scheme, sets: loaded.sets, reference: null });
@@ -227,7 +320,7 @@ export function applyStrapsBand(
   options: RepositoryOptions = {},
 ): Promise<number> {
   const sets = createRepository(db, 'set', options);
-  return db.transaction('rw', tables(db), async () => {
+  return db.transaction('rw', sessionTables(db), async () => {
     const { sets: mine } = await loadExercise(db, sessionId, exerciseId);
     const changed = mine.map((set) => {
       const { band: oldBand, ...rest } = set;
@@ -259,7 +352,7 @@ export function saveExerciseNote(
 ): Promise<void> {
   const notes = createRepository(db, 'note', options);
   const id = exerciseNoteId(input.sessionId, input.exerciseId);
-  return db.transaction('rw', tables(db), async () => {
+  return db.transaction('rw', sessionTables(db), async () => {
     const session = await db.sessions.get(input.sessionId);
     if (!session || !isLive(session)) throw new SessionNotFoundError(input.sessionId);
     if (input.text.trim() === '' && !input.excludeFromProgression) {
@@ -286,7 +379,7 @@ export function updateSessionFields(
   options: RepositoryOptions = {},
 ): Promise<WorkoutSession> {
   const sessions = createRepository(db, 'session', options);
-  return db.transaction('rw', tables(db), async () => {
+  return db.transaction('rw', sessionTables(db), async () => {
     const session = await sessions.get(sessionId);
     if (!session) throw new SessionNotFoundError(sessionId);
     return sessions.put({ ...session, ...patch });
@@ -310,7 +403,7 @@ export function finishSession(
   { now = Date.now }: RepositoryOptions = {},
 ): Promise<FinishResult> {
   const sessions = createRepository(db, 'session', { now });
-  return db.transaction('rw', [...tables(db), db.exercises, db.weekPlans], async () => {
+  return db.transaction('rw', [...sessionTables(db), db.exercises, db.weekPlans], async () => {
     const current = await sessions.get(sessionId);
     if (!current) throw new SessionNotFoundError(sessionId);
     const endedAt =
@@ -344,30 +437,57 @@ export function reopenSession(
   options: RepositoryOptions = {},
 ): Promise<WorkoutSession> {
   const sessions = createRepository(db, 'session', options);
-  return db.transaction('rw', tables(db), async () => {
+  return db.transaction('rw', sessionTables(db), async () => {
     const session = await sessions.get(sessionId);
     if (!session) throw new SessionNotFoundError(sessionId);
     return sessions.put({ ...session, endedAt: null });
   });
 }
 
-/** Deletes the session with its sets and notes (soft: the deletions sync). */
+/**
+ * Deletes the session with its sets and notes (soft: the deletions sync). Returns what "Undo"
+ * needs (`restoreSession`).
+ */
 export function deleteSession(
   db: CertaviDb,
   sessionId: string,
   options: RepositoryOptions = {},
-): Promise<void> {
+): Promise<UndoSession> {
   const sessions = createRepository(db, 'session', options);
   const sets = createRepository(db, 'set', options);
   const notes = createRepository(db, 'note', options);
-  return db.transaction('rw', tables(db), async () => {
+  return db.transaction('rw', sessionTables(db), async () => {
+    const session = await sessions.get(sessionId);
+    if (!session) throw new SessionNotFoundError(sessionId);
+    const removedSets: SetEntry[] = [];
     for (const set of await db.sets.where('sessionId').equals(sessionId).toArray()) {
+      if (isLive(set)) removedSets.push(set);
       await sets.remove(set.id);
     }
+    const removedNotes: ExerciseNote[] = [];
     for (const note of await db.notes.where('sessionId').equals(sessionId).toArray()) {
+      if (isLive(note)) removedNotes.push(note);
       await notes.remove(note.id);
     }
     await sessions.remove(sessionId);
+    return { kind: 'session', session, sets: removedSets, notes: removedNotes };
+  });
+}
+
+/** Brings back a deleted session with its sets and notes. */
+export function restoreSession(
+  db: CertaviDb,
+  undo: UndoSession,
+  options: RepositoryOptions = {},
+): Promise<WorkoutSession> {
+  const sessions = createRepository(db, 'session', options);
+  const sets = createRepository(db, 'set', options);
+  const notes = createRepository(db, 'note', options);
+  return db.transaction('rw', sessionTables(db), async () => {
+    const session = await sessions.put(undo.session);
+    if (undo.sets.length > 0) await sets.putMany(undo.sets);
+    if (undo.notes.length > 0) await notes.putMany(undo.notes);
+    return session;
   });
 }
 
@@ -382,7 +502,7 @@ export function normalizeLegacySessions(
 ): Promise<number> {
   const sessions = createRepository(db, 'session', options);
   const sets = createRepository(db, 'set', options);
-  return db.transaction('rw', tables(db), async () => {
+  return db.transaction('rw', sessionTables(db), async () => {
     let changed = 0;
     for (const row of await db.sessions.toArray()) {
       if (!isLive(row)) continue;
