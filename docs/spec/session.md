@@ -613,12 +613,13 @@ reachable.
   itself is removed with "Quitar ejercicio".
 - **Removing the last exercise** of a routine session leaves it with no exercises ("Sin
   ejercicios todavía.") and "+ Añadir ejercicio".
-- **Undo after something else changed**: "Deshacer" restores what was removed even if other rows
-  or exercises changed meanwhile (an exercise or row that was added later is not touched); if
-  the same exercise was added again in the meantime, "Deshacer" brings back the removed one's
-  sets and note into that card only when it has no saved sets, otherwise the notification says
-  nothing can be restored: **"No se puede deshacer: ya hay datos nuevos" / "Cannot undo: there
-  is new data"**. Un-doing the removal of the session does not depend on anything else.
+- **Undo after something else changed**: "Deshacer" brings back what was removed even if other
+  rows or exercises changed meanwhile (a removed row goes back to its position and the rows
+  below move down; what was added later is not touched). If the same exercise was added again
+  in the meantime, nothing is restored and the notification says **"No se puede deshacer: ya
+  hay datos nuevos" / "Cannot undo: there is new data"**; the same message shows if the
+  session no longer exists. Un-doing the removal of the session does not depend on anything
+  else.
 - **Notifications are stacked**: removing two things in a row shows two notifications (at most
   3 at once, see AC-DIALOG-05); each "Deshacer" only brings back its own.
 - **Reload while a notification with "Deshacer" is open**: the removal stays done and the
