@@ -63,10 +63,9 @@ link **"Volver a Hoy" / "Back to Today"** (as before).
 
 One card per exercise, in the order of the session. The heading is the exercise name; tapping it
 folds or unfolds the card (it is a button, announced as expanded or collapsed). Next to the
-heading: **"Subir ejercicio" / "Move exercise up"** and **"Bajar ejercicio" / "Move exercise
-down"** (icon buttons named with the exercise, e.g. "Subir Remo en T"; the first card has no
-"up" and the last no "down", they are disabled) and **"Quitar ejercicio" / "Remove exercise"**
-(§2.7).
+heading: two icon buttons named with the exercise, **"Subir Remo en T" / "Move Remo en T up"** and
+**"Bajar Remo en T" / "Move Remo en T down"** (the first card cannot go up and the last cannot go
+down: those buttons are disabled). They stay visible when the card is folded (§2.7).
 
 - **Tags:** "Básico" / "Basic" or "Aislamiento" / "Isolation"; "Opcional" / "Optional" when the
   routine marks it so; **"Fuera de la rutina" / "Outside the routine"** when the exercise is not
@@ -126,8 +125,9 @@ down"** (icon buttons named with the exercise, e.g. "Subir Remo en T"; the first
   saved), "Back-off sugerido: 57,5 kg (−10 % del top)" / "Suggested back-off: 57.5 kg (−10 % of
   top)". It updates while the top weight is typed. It is only a text: it does not fill any field.
 - **Buttons:** "+ Calentamiento" / "+ Warm-up", "+ Serie extra" / "+ Extra set", "Nota" /
-  "Note" (reads "Nota ✎" / "Note ✎" when the exercise has a note). An extra set is an effective
-  row with the caption "Extra" that is added at the bottom.
+  "Note" (reads "Nota ✎" / "Note ✎" when the exercise has a note) and **"Quitar ejercicio" /
+  "Remove exercise"** (danger; §2.7). An extra set is an effective row with the caption "Extra"
+  that is added at the bottom.
 - **Note area** (opened by "Nota"): a text area **"Nota del ejercicio" / "Exercise note"**, a
   checkbox **"No cuenta para la progresión" / "Does not count for progression"** and, when it
   is checked, a choice of reason: "Máquina ocupada" / "Machine busy", "Faltan discos" / "Missing
