@@ -53,7 +53,8 @@ every visit to the page starts without filters.
 
 ### 2.3 The detail page (`/exercises/<id>`)
 
-A page whose title is the exercise name, with a link **"Volver a Ejercicios" / "Back to
+A page whose header title is **"Ejercicio" / "Exercise"** and whose heading (level 2) is the
+exercise name, with a link **"Volver a Ejercicios" / "Back to
 Exercises"** to the catalog. For an exercise the user created, the page offers a link **"Editar" /
 "Edit"** (to `/exercises/<id>/edit`) and a button **"Archivar" / "Archive"** (for an archived one,
 **"Desarchivar" / "Unarchive"**). Seed exercises show neither.
@@ -113,7 +114,8 @@ is no confirmation, even with changes).
 **Errors.** Pressing "Guardar" with a problem saves nothing, shows a message under each wrong
 field (linked to it for screen readers) and moves the focus to the first one:
 
-- empty name: **"Escribe un nombre" / "Enter a name"**;
+- empty name: **"Escribe un nombre" / "Enter a name"**; a name longer than 80 characters: **"El
+  nombre puede tener hasta 80 caracteres" / "The name can have up to 80 characters"**;
 - another exercise (seed or not, archived or not) with the same name once case and accents are
   ignored: **"Ya existe un ejercicio con ese nombre" / "An exercise with that name already
   exists"**. Keeping the exercise's own name when editing is fine;
@@ -143,9 +145,10 @@ archives it (toast **"Ejercicio archivado" / "Exercise archived"**) and the page
 no dialog). Archived exercises are not offered in the "Añadir ejercicio" sheet, but sessions that
 already have them keep them.
 
-An exercise that is **in a routine cannot be archived**: the dialog says **"No se puede archivar:
-está en la rutina <nombre>. Quítalo de la rutina antes." / "It can't be archived: it is in the
-routine <name>. Remove it from the routine first."** and has a single button **"Entendido" /
+An exercise that is **in a routine cannot be archived**: pressing "Archivar" opens a dialog titled
+**"No se puede archivar" / "It can't be archived"** that says **"Está en la rutina <nombre>.
+Quítalo de la rutina antes." / "It is in the routine <name>. Remove it from the routine
+first."** (several routines are separated by commas) and has a single button **"Entendido" /
 "Got it"**.
 
 ### 2.6 Creating an exercise from a session
@@ -210,10 +213,10 @@ Then I see the message about the range 0,25–50 kg and the saved step does not 
 
 **AC-EXERCISES-09 · Create an exercise**
 Given the catalog
-When I press "Crear ejercicio", type the name "Press landmine", choose the group "Hombros" and
+When I press "Crear ejercicio", type the name "Press landmine", choose the group "Hombro" and
 the equipment "Barra", and press "Guardar"
 Then I see its detail page with the toast "Ejercicio creado" and the tag "Propio"
-And in the catalog it is listed with "Hombros · Barra" and the tag "Propio"
+And in the catalog it is listed with "Hombro · Barra" and the tag "Propio"
 And the chip "Creados por mí" lists it, and only it.
 
 **AC-EXERCISES-10 · Name rules**
@@ -242,7 +245,7 @@ Then "Press landmine" is still in the catalog.
 **AC-EXERCISES-14 · The new exercise can be used in a session**
 Given a created exercise
 When I open a session, press "+ Añadir ejercicio" and search "landmine"
-Then it is listed ("Hombros · Barra") and tapping it adds it to the session with its default
+Then it is listed ("Hombro · Barra") and tapping it adds it to the session with its default
 scheme (3 sets).
 
 **AC-EXERCISES-15 · Create from the session**
