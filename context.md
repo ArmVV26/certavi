@@ -3,7 +3,7 @@
 > Documento de arranque del proyecto **Certavi**, la reescritura de la app de registro de gimnasio (antes «Winter Arc · registro», repositorio `gym_app`).
 > Al crear el repositorio, este archivo se copia como `context.md` en la raíz. Desde ese momento es la **fuente de verdad del estado del proyecto**: qué está decidido, qué está hecho, qué falta y con qué prompt se arranca cada fase. Lo mantiene al día el agente de contexto.
 >
-> Última actualización: 4 nov 2026 · Estado: **Fase 0 cerrada (`v0.1.0`) · Fase 1 cerrada (`v0.2.0`) · Fase 2 cerrada (`v0.3.0`) · Fase 3 cerrada (`v0.4.0`) · Fase 4 cerrada (`v0.5.0`, desplegada en Netlify) · Fase 5 🚧: rama 1 de 3 `feature/today` implementada y verificada (sin commits); después `chore/ci-e2e-shards`, `feature/active-session` y `feature/session-tools`**
+> Última actualización: 6 nov 2026 · Estado: **Fase 0 cerrada (`v0.1.0`) · Fase 1 cerrada (`v0.2.0`) · Fase 2 cerrada (`v0.3.0`) · Fase 3 cerrada (`v0.4.0`) · Fase 4 cerrada (`v0.5.0`, desplegada en Netlify) · Fase 5 cerrada (`v0.6.0`, sin publicar: PR `dev → main`, release y tag pendientes del usuario)**
 
 ---
 
@@ -174,6 +174,7 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Timeouts de tests (aceptado por el usuario) | `src/test/setup.ts`: RTL `asyncUtilTimeout` **5 s**; `vite.config.ts`: `testTimeout` **15 s** en el proyecto `ui` | Con `test:coverage` (v8 + todos los workers ocupados) una escritura → consulta en vivo → repintado pasaba de 1 s y hacía fallar al azar tests viejos y nuevos (SyncCard, ImportExport, TodayPage) |
 | e2e en CI (`chore/ci-e2e-shards`) | Etiqueta **`@all-engines`**: el proyecto `webkit` solo ejecuta los tests etiquetados (sync, data, import-export, today, smoke y AC-NAV-03); navegación, tema, idioma y componentes, solo Chromium. El job `e2e` de CI es una **matriz** `fail-fast: false` con 3 jobs: `chromium`, `webkit 1/2`, `webkit 2/2` (navegador instalado y cacheado por job, informe propio, `timeout-minutes` 15), **en serie** (`max-parallel: 1`: chromium → webkit 1/2 → webkit 2/2, sin cortar si uno falla). Validación con un PR borrador a `main`. Arreglo tras el primer PR de prueba: `webkit 2/2` fallaba por tiempo (30 s) en AC-SYNC-13 (dos dispositivos, no era un fallo de la app) → `test.slow` en WebKit también en AC-SYNC-12 y 13, como AC-SYNC-09. Segundo arreglo (2026-11-05, segundo PR de prueba): chromium y `webkit 1/2` en verde, pero `webkit 2/2` volvió a agotar los 30 s en AC-SYNC-14 (English) y AC-TODAY-10/11, a 1–4 pasos del final, y otros tests rondaban el límite (AC-TODAY-12 29,3 s) → **`timeout` de 60 s en el proyecto `webkit`** (`WEBKIT_TIMEOUT` en `playwright.config.ts`; Chromium sigue en 30 s) y se quitan los tres `test.slow` de `sync.spec.ts`. Tercer arreglo (2026-11-05, `npm run e2e:all` local en `feature/active-session`: fallaron dos tests, solo en WebKit y por una aserción de 5 s, no por el tiempo del test): **`expect.timeout` de 15 s en el proyecto `webkit`** (`WEBKIT_EXPECT_TIMEOUT`; Chromium sigue en 5 s) porque la primera lectura de IndexedDB con dos pestañas dejaba la tarjeta «Datos» en «Cargando…» (`data.spec.ts` «two tabs»), y el foco al título tras navegar pasa a **`useLayoutEffect`** (`src/app/Layout.tsx`) porque, con un WebKit lento, el efecto llegaba en medio del `fill()` de la clave, le quitaba el foco al campo y «Guardar clave» enviaba vacío (AC-SYNC-14 English); `saveKey()` comprueba ahora `toHaveValue`. Con eso AC-SYNC-14 llegó al registro de intentos y falló por esperar **exactamente 4** intentos (había 5): al guardar la clave el motor vuelve a encolar todo y, si el cambio de la cola llega con el primer intento ya en marcha (IndexedDB lento en WebKit), lanza un intento más justo después (`rerun` de `onQueueCount`, `src/data/sync/engine.ts`); no es un fallo de la app, así que el test pide **al menos 4**, una sola «Clave incorrecta» y los dos últimos en orden. `ci.yml` no cambia: la matriz usa `--project=webkit`, que ya lleva este ajuste. Contenedor oficial de Playwright valorado y descartado por ahora: solo ahorra la instalación del navegador, no acelera WebKit | En CI (2 vCPU, 1 worker) `e2e:all` se estimaba ≥ 14 min, por encima del tope de 10 min |
 | Filas de una serie (rama 2, 2026-11-05) | Cada ejercicio de la sesión es una lista de filas, como en Hevy: `WorkoutSession.items[].scheme` incluye también filas de calentamiento, dropset y extra; `SetEntry.slot` es la posición de su fila y `kind` su tipo, que el usuario cambia (Calentamiento / Efectiva / Dropset) sin que la fila se mueva. Tipo nuevo `dropset`: serie efectiva y volumen, no cuenta para 1RM ni récords. «+ Serie extra» añade una fila; quitar una fila (no la última) se hace deslizando a la izquierda, con botón «Quitar» alcanzable por teclado. Las sesiones de gym_app (`w`/`p`/`x`) se convierten con `normalizeLegacySessions` tras importar y al arrancar. Lo escrito sin ✓ se guarda en localStorage (`certavi.draft.<id>`, solo en el dispositivo) y sobrevive a recargas. «Eliminar sesión» entra en esta rama (el «Deshacer» va en la 3) | El usuario eligió que la fila no se mueva al cambiar su tipo; ver ADR-0003 |
+| Temporizador de descanso (rama 3, 2026-11-06) | Descanso 180 s (fila básica), 120 s (aislamiento), 60 s (tras calentamiento) y +30 s tras una serie top; ajuste ±15 s; tiempos de 15 a 900 s en Ajustes (sincronizados); sonido y vibración solo en el dispositivo (`certavi.restSound`, `certavi.restVibration`); se cierra con ✕ o al terminar la sesión | — |
 
 ### 2.7 Decisiones de configuración de Claude (2026-11-04)
 
@@ -647,67 +648,13 @@ Cada fase sigue el mismo ciclo:
 
 ---
 
-### Fase 5 · Hoy y sesión activa → `v0.6.0` 🚧
+### Fase 5 · Hoy y sesión activa → `v0.6.0` ✅
 
-**Ramas** (3, decidido con el usuario el 2026-11-04, 2.6): `feature/today` → `feature/active-session` (registro de series y núcleo de la sesión, borradores) → `feature/session-tools` (temporizador de descanso, reordenar/añadir/quitar ejercicios con filtro, editar fecha/horas/rutina, aviso de cambios remotos, exportar JSON de la sesión, deshacer). La última rama ejecuta `npm run e2e:all` antes del PR `dev → main`. Entre la rama 1 y la 2 va `chore/ci-e2e-shards` (ver «Pendiente: e2e de CI» abajo).
+**Ramas** `feature/today`, `feature/active-session` y `feature/session-tools`, más el arreglo de `chore/ci-e2e-shards`
 
-**Estado (2026-11-05)**: **en curso**. Ramas 1 (`feature/today`) y `chore/ci-e2e-shards` mergeadas en `dev`. Rama 2 de 3 `feature/active-session` implementada y verificada, **sin commits**. Decisiones en la sección 2.6.
+**Estado (2026-11-06)**: **cerrada**
 
-- **Rama 2 — `feature/active-session`**:
-  - **Hecho:** spec `docs/spec/session.md` (AC-SESSION-01..23); dominio `rules/rows.ts` (filas por ejercicio, «Anterior», validación del ✓, conversión de gym_app) y tipo `dropset`; datos `sessionLog.ts` (registrar, filas, tipo, straps/banda, notas, terminar, eliminar) y `sessionDrafts.ts`; pantalla de sesión (`SetRow` con deslizar para quitar, `ExerciseCard`) y `SelectField`; `session.*` en es/en; ADR-0003 actualizado; `tests/e2e/session.spec.ts` (8 tests, Chromium en verde).
-  - **Falta (rama 3 `feature/session-tools`):** temporizador, añadir/reordenar/quitar ejercicios con filtro (hasta entonces la sesión libre no admite ejercicios), editar fecha/horas/rutina, aviso de cambios remotos, JSON de la sesión, «Deshacer»; `e2e:all` antes del PR `dev → main`.
-  - **Por comprobar a mano (iPhone):** deslizar una fila para ver «Quitar»; con arrastre de ratón en Chromium no se reveló (el botón por teclado sí funciona).
-  - **Sin cubrir en e2e:** sin conexión (AC-21); «Lastre» y «Banda» (ninguna rutina semilla tiene dominadas), cubiertos en tests de componente.
-
-- **Implementado — `feature/today`** (sin commits):
-  - Spec: `docs/spec/today.md` (nueva, AC-TODAY-01..19); índice `docs/spec/README.md`; `docs/spec/theme-language-navigation.md` (Hoy ya no es una página vacía); `docs/spec/rules.md` (semana de senderismo: 86 series).
-  - Dominio: `rules/dayPlan.ts` (`weekSchedule`, `dayPlan`, `routineDays`), `rules/session.ts` (`newSession`), `rules/today.ts` (recordatorio de descarga `needsDeloadReminder`, número de semana del plan, peso corporal), `rules/blocks.ts` (bloques de un día, parches del `BlockLog`), `weekRoutines` en `rules/weekPlan.ts` (`livePlan`/`weekPlanSummary` reciben `hiking`); tests de todo.
-  - Datos: `src/data/today.ts` (`readToday`, `updateWeek`, `saveActivity`, `saveBodyWeight`, `updateBlockLog`), `src/data/sessions.ts` (`startSession`, `readSession`), `src/data/ids.ts` (`newId`); tests.
-  - UI: pantalla Hoy en `src/features/today/` (hero «La sesión de hoy»; «Esta semana» con tira de 7 días, series efectivas frente al plan, sesiones, tamaño 5/4/3 e interruptores de senderismo y descarga; «Otra sesión u otro día»; «Actividad»; «Peso medio de la semana»; avisos de sin clave y de descarga); `src/features/blocks/DayBlockCard.tsx` (tarjeta de bloques del día); pantalla mínima de sesión `src/features/session/SessionPage.tsx` en `/session/:sessionId` (solo el plan, «Próximamente»; se sustituye en la rama 2); componentes genéricos nuevos en `src/ui`: `TextField`/`TextArea`, `Checkbox`, `ScalePicker`, `Notice`; `formatDateRange` en `src/i18n/format.ts`; claves i18n `today.*`, `plan.*`, `blocksDay.*`, `session.*` (es/en); se quita `pages.today`; título de ruta `session.title`.
-  - Tests: `src/test/setup.ts` (RTL `asyncUtilTimeout` 5 s) y `vite.config.ts` (`testTimeout` 15 s en el proyecto `ui`), 2.6.
-  - E2E (blind-tester): `tests/e2e/today.spec.ts` nuevo (8 tests de flujo que cubren AC-TODAY-01..19); `tests/e2e/helpers.ts` y `language.spec.ts` (AC-LANG-01) cambiados porque Hoy ya no muestra «Próximamente».
-- **Verificado en `feature/today` (2026-11-04)**: `lint` ✅, `typecheck` ✅, `format:check` ✅, `build` ✅ (chunk principal **702 kB**, antes 666 kB; aviso informativo de Vite).
-  - `test:coverage` ✅: **731 tests en 67 archivos**; todos los archivos 99,57 / 96,83 / 99,57 / 99,71 %; `src/data` 99,69 / 94,73 / 100 / 100 %; `src/domain/rules` 100 / 96,78 / 100 / 100 %.
-  - E2E: 1.ª `npm run e2e` 81/83 (AC-TODAY-12: bug de la app, la etiqueta del día mostraba la rutina planificada en lugar de la actividad — corregido; AC-TODAY-15: problema del test — corregido). Después el usuario ejecutó `npm run e2e` **83/83 en 2,3 min** y `npm run e2e:all` (166 tests, **7,0 min**): 160 pasados, 5 omitidos (las omisiones documentadas de WebKit), 1 fallido — AC-TODAY-12 en WebKit, bug de la app (orden aleatorio de las actividades con el reloj fijo; corregido con el orden de guardado, 2.6). Ejecución final `npm run e2e` (blind-tester, Chromium, una ejecución): **77 pasados, 0 fallidos en 1,1 min** (`today.spec.ts` reducido de 14 a 8 tests, todos los AC siguen cubiertos). **`e2e:all` no se ha vuelto a ejecutar tras los arreglos.** Puertos libres.
-- **Pendiente (usuario)**: commits de `feature/today` y PR a `dev`.
-- **Pendiente: e2e de CI** (rama siguiente **`chore/ci-e2e-shards`**, después de mergear `feature/today` en `dev`; el usuario está de acuerdo con el enfoque y creará la rama):
-  - Análisis: los runners de GitHub en repos privados tienen 2 vCPU; `playwright.config.ts` usa los workers por defecto en CI = 1 worker. `e2e:all` en local con 2 workers tardó 7,0 min para 166 tests → en CI se estima **≥ 14 min**, por encima de `--global-timeout` 10 min y de `timeout-minutes` 12 del job.
-  - Arreglo previsto: etiqueta **`@all-engines`** en los tests que tienen que correr en WebKit (sync, data, import-export, today, smoke, AC-NAV-03 cabe en 390 px); el proyecto `webkit` filtra con `grep: /@all-engines/`; el resto de navegación, tema, idioma y componentes solo en Chromium (lógica de UI independiente del motor). WebKit pasa de ~83 a ~45 tests.
-  - Job `e2e` de CI como matriz (chromium, webkit), `fail-fast: false`, un navegador instalado/cacheado por job y su propio artefacto de informe; siguiente palanca si WebKit pasa de ~8 min: `--shard=1/2`, `2/2`.
-  - Documentación a actualizar en esa rama: comentarios de `playwright.config.ts`, `CLAUDE.md` §9, `blind-tester.md` (cuándo etiquetar `@all-engines`), `docs/spec/README.md` y la sección 2 de este documento.
-- **Sugerencias (no hechas, 2026-11-04)**: añadir los componentes nuevos de `src/ui` (`TextField`/`TextArea`, `Checkbox`, `ScalePicker`, `Notice`) a `/dev/ui`; el code-splitting (702 kB) sigue en la Fase 8.
-
-**Entregables**:
-- Todo lo de «Hoy» y «Sesión activa» de la sección 5.1.
-- Novedades:
-  - **sesión libre**;
-  - **añadir y quitar series efectivas** (también las de la rutina);
-  - **calentamiento con símbolo** («C»/«W»);
-  - **diálogos propios**;
-  - **filtro** al añadir ejercicio;
-  - tarjeta de **bloques del día**.
-- Temporizador de descanso.
-- Borradores que sobreviven a repintados.
-- Aviso de cambios remotos.
-
-**Revisar al empezar** (sugerencias de la Fase 4, 2026-11-03):
-- El **aviso de cambios remotos** puede apoyarse en el motor de sync (`src/data/sync/engine.ts`): `commitResponse` (`src/data/sync/commit.ts`) ya devuelve cuántos registros llegaron del servidor (`applied`), y el eco de lo propio no escribe nada. **Decidido (2026-11-04, 2.6)**: banner «Hay cambios de otro dispositivo», refresca lo guardado, nunca toca los borradores, se cierra a mano; se implementa en `feature/session-tools`.
-- **Vigilar `test:coverage`**: en la Fase 4 una ejecución informó de 57/58 archivos sin mostrar ningún fallo y no se reprodujo en cinco ejecuciones más. Si vuelve a pasar, guardar la salida completa (`npm run test:coverage > cov.txt 2>&1`), buscar el archivo que no termina (posibles candidatos: los tests con temporizadores o `liveQuery` de `src/data/sync/` y `src/features/settings/Sync*.test.tsx`) y arreglar la causa, no reintentar. **Relacionado (2026-11-04, `feature/today`)**: con `test:coverage` fallaban al azar tests de SyncCard, ImportExport y TodayPage porque una escritura → consulta en vivo → repintado pasaba de 1 s; se subieron los timeouts (RTL 5 s, `ui` 15 s, 2.6). No consta que el caso 57/58 haya vuelto a aparecer.
-- **Medir IndexedDB en el iPhone** (sugerencia del 2026-11-04, no hecha; ya es posible porque la app está desplegada): en WebKit de escritorio los pasos con IndexedDB tardaron segundos (vista previa de importación 2–3 s, primera lectura de Datos > 7 s). Antes de optimizar, medir en Safari del iPhone real (duraciones del registro de intentos, vista previa de importación). Si es lento, contar con índices/`getAll` en lugar de cursores con `filter()` (`countLiveRecords`, `queueEverything`). La sesión activa de esta fase depende de que las escrituras sean rápidas.
-
-**Criterios de aceptación**:
-- Flujo completo en el iPhone sin conexión: empezar, registrar, recargar, seguir y terminar.
-- El blind-tester cubre: 0 kg, ✓ en vacío con referencia, quitar una serie de la rutina, reordenar, sesión libre, calentamiento fuera de estadísticas y modo oscuro.
-
-**Prompt**:
-
-```text
-Lee context.md (5.1 y 5.2) y CLAUDE.md. FASE 5: pantalla Hoy y sesión activa. Paridad con gym_app en todo lo
-listado en 5.1 para Hoy y Sesión, más las novedades 5.2 números 7, 8, 9 (tarjeta del día), 10 y el filtro
-del punto 4 en el selector de añadir ejercicio. Escribe primero la especificación en docs/spec/today.md y
-docs/spec/session.md con criterios de aceptación claros; después implementa. Divide en ramas si es grande y
-dime cuáles crear. Tests de componentes y de lógica; luego lanza al blind-tester. Al terminar, /close-phase.
-```
+**Log (History)**: [Fase 5](docs/history.md#fase5)
 
 ---
 
@@ -829,19 +776,20 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
 
 [Tabla Registro](docs/history.md#seccion12)
 
-**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 🚧 (rama 1 de 3 `feature/today` implementada y verificada, sin commits; después `chore/ci-e2e-shards`, `feature/active-session` y `feature/session-tools`) · 6 ⏳ · 7 ⏳ · 8 ⏳ · 9 ⏳
+**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ⏳ · 7 ⏳ · 8 ⏳ · 9 ⏳
 
 **Preguntas abiertas**:
 - Qué estiramientos van en el bloque «Estiramientos» (antes de la Fase 7).
 - (2026-11-04) ¿Es IndexedDB tan lento en el iPhone real (Safari) como en WebKit de escritorio (segundos por importación o primera lectura)? Medir antes de optimizar (Fase 5, «Revisar al empezar»). Sin medir; ya se puede, porque la app está desplegada.
 - ~~(2026-11-04) ¿Hace falta `test.slow()` en WebKit en `tests/e2e/sync.spec.ts`?~~ Resuelto el 2026-11-05: sustituido por el `timeout` de 60 s del proyecto `webkit` (2.6).
 - (2026-11-04) ¿Baja el job e2e de CI de 5 min con la caché de navegadores? Sin medir (el PR `dev → main` de la Fase 4 pasó en verde, pero no consta la duración). Con la suite de `feature/today` (166 tests en `e2e:all`) se estima ≥ 14 min con 1 worker: ver `chore/ci-e2e-shards` en la Fase 5.
+- (2026-11-06) Medir en el iPhone real el sonido del temporizador con la pantalla bloqueada y el flujo sin conexión de la sesión (Fase 5, pendiente manual).
 
 **Pendiente para fases futuras**:
 - Fase 7: regla del gemelo durante la rehabilitación (60 kg en la semana 1, +5 kg/semana sin dolor al día siguiente hasta 80 kg, y solo si bajar escaleras no duele), con cambios aditivos en el modelo de progresión (ver la Fase 7).
 - Fase 7: revisión del ciclo (`sixWeekReview` de gym_app) en las pantallas de progreso.
 - ~~Fase 3 (`feature/import-export`): corregir la tabla de la sección 6 y `docs/migration.md` con los nombres reales de gym_app (2.4).~~ Hecho el 2026-11-03.
-- Fase 5: UI para exportar el JSON de una sesión (`exportSession` ya existe en `src/data/backup.ts`). Fase 7: UI para exportar el JSON de una semana (`exportWeek`).
+- ~~Fase 5: UI para exportar el JSON de una sesión~~ Hecho el 2026-11-06 (`v0.6.0`). Fase 7: UI para exportar el JSON de una semana (`exportWeek`).
 - Sugerencia (no hecha, 2026-11-03) para la Fase 8 (estados de error): mostrar un error visible si la base de datos local no se puede abrir.
 - Sugerencia (no hecha, 2026-11-03) para la Fase 8: con un `Dialog` abierto, la página de fondo sigue en el árbol de accesibilidad (solo `aria-modal`); valorar `inert` en el fondo (afecta al `Dialog` compartido).
 - Sugerencia (no hecha, 2026-11-03) para las Fases 5 y 7: resúmenes legibles dentro de los JSON de sesión y de semana.
@@ -849,7 +797,7 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
 - Nota (2026-11-03): commitlint no tiene el ámbito `e2e`; los commits de tests e2e usan `test:` sin ámbito.
 - ~~Fase 4 (usuario, tras el tag `v0.5.0`): desplegar en Netlify siguiendo `docs/deploy-netlify.md`.~~ Hecho el 2026-11-04.
 - **`chore/ci-e2e-shards`** (2026-11-04, después de mergear `feature/today` en `dev`, antes de `feature/active-session`): el e2e de CI no cabe (≥ 14 min estimados con 1 worker frente a 10 min de `--global-timeout` y 12 de `timeout-minutes`). Etiqueta `@all-engines` + `grep` en el proyecto `webkit`, job e2e en matriz (chromium, webkit) con `fail-fast: false`, `--shard` si WebKit pasa de ~8 min, y documentación. Detalle en la Fase 5 («Pendiente: e2e de CI»).
-- Fase 5 (`feature/session-tools`): UI para exportar el JSON de la sesión y aviso de cambios remotos (2.6).
+- ~~Fase 5 (`feature/session-tools`): UI para exportar el JSON de la sesión y aviso de cambios remotos (2.6).~~ Hecho el 2026-11-06.
 - Sugerencia (no hecha, 2026-11-04): añadir `TextField`/`TextArea`, `Checkbox`, `ScalePicker` y `Notice` a `/dev/ui`.
 - Sugerencia (no hecha, 2026-11-03) para la Fase 8: code-splitting; el chunk principal pesa ya **702 kB** tras `feature/today` (618 kB tras `feature/local-db`, 638 kB tras `feature/import-export`, 666 kB tras la Fase 4). Detalle en «Revisar al empezar» de la Fase 8.
 - ~~Sugerencia (2026-11-03) para la Fase 5: el «aviso de cambios remotos» de la sesión activa puede apoyarse en el motor de sync.~~ Decidido el 2026-11-04 (2.6); se implementa en `feature/session-tools`.

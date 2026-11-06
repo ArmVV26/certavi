@@ -1,7 +1,12 @@
-import type { ExportFile } from '../../data/exportFile';
+/** A file ready to be saved: its name, type and text. */
+export interface DownloadableFile {
+  fileName: string;
+  mimeType: string;
+  content: string;
+}
 
 /** Hands a generated file to the browser as a download. */
-export function downloadFile({ fileName, mimeType, content }: ExportFile): void {
+export function downloadFile({ fileName, mimeType, content }: DownloadableFile): void {
   const url = URL.createObjectURL(new Blob([content], { type: mimeType }));
   const link = document.createElement('a');
   link.href = url;

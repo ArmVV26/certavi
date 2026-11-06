@@ -182,6 +182,14 @@
       "restoreMessage": "Your data goes back to how it was that day, also on your other devices when they sync. Anything changed afterwards is lost. If in doubt, export a full backup first.",
       "restored": "Backup restored. Records changed: {{total}}",
       "restoreFailed": "The backup could not be restored. Nothing was changed."
+    },
+    "rest": {
+      "title": "Rest",
+      "compound": "Rest after basic exercises (s)",
+      "isolation": "Rest after isolation exercises (s)",
+      "sound": "Sound when the rest ends",
+      "vibration": "Vibration",
+      "vibrationHint": "Does not work on iPhone."
     }
   },
   "sync": {
@@ -568,7 +576,11 @@
       "addExtra": "+ Extra set",
       "note": "Note",
       "noteFilled": "Note ✎",
-      "summary": "{{weight}} × {{reps}}"
+      "summary": "{{weight}} × {{reps}}",
+      "moveUp": "Move {{name}} up",
+      "moveDown": "Move {{name}} down",
+      "removeExercise": "Remove exercise",
+      "outside": "Outside the routine"
     },
     "hint": {
       "increase": "Go up to {{weight}} kg",
@@ -625,14 +637,23 @@
     "actions": {
       "finish": "Finish session",
       "reopen": "Mark as in progress",
-      "delete": "Delete session"
+      "delete": "Delete session",
+      "details": "Session details",
+      "json": "Download JSON"
     },
     "toast": {
       "saved": "Session saved",
       "savedRecords_one": "Session saved · {{count}} record",
       "savedRecords_other": "Session saved · {{count}} records",
       "deleted": "Session deleted",
-      "failed": "Could not save. Try again."
+      "failed": "Could not save. Try again.",
+      "rowRemoved": "Set removed",
+      "rowRestored": "Set restored",
+      "exerciseRemoved": "Exercise removed",
+      "exerciseRestored": "Exercise restored",
+      "restored": "Session restored",
+      "undo": "Undo",
+      "cannotUndo": "Cannot undo: there is new data"
     },
     "dialog": {
       "cancel": "Cancel",
@@ -648,7 +669,58 @@
       "strapsOnlyNext": "Only the next ones",
       "deleteTitle": "Delete this session?",
       "deleteMessage": "The session and all its sets and notes will be deleted.",
-      "deleteConfirm": "Delete"
+      "deleteConfirm": "Delete",
+      "removeExerciseTitle": "Remove {{name}} from this session?",
+      "removeExerciseSets_one": "Its set will be deleted. The routine does not change.",
+      "removeExerciseSets_other": "Its {{count}} sets will be deleted. The routine does not change.",
+      "removeExerciseNote": "Its note will be deleted. The routine does not change.",
+      "removeExerciseSetsAndNote_one": "Its set and its note will be deleted. The routine does not change.",
+      "removeExerciseSetsAndNote_other": "Its {{count}} sets and its note will be deleted. The routine does not change.",
+      "removeExerciseConfirm": "Remove",
+      "routineTitle": "Change the session to {{name}}?",
+      "routineMessage": "The exercise list will become that of the routine. The sets already logged are kept.",
+      "routineConfirm": "Change"
+    },
+    "add": {
+      "button": "+ Add exercise",
+      "title": "Add exercise",
+      "search": "Search exercise",
+      "group": "Muscle group",
+      "equipment": "Equipment",
+      "kind": "Type",
+      "others": "Others",
+      "straps": "Straps",
+      "custom": "Created by me",
+      "inRoutine": "In a routine",
+      "results": "Exercises",
+      "none": "No exercise matches",
+      "already": "Already in the session"
+    },
+    "details": {
+      "title": "Session details",
+      "date": "Date",
+      "start": "Start",
+      "end": "End",
+      "routine": "Routine",
+      "save": "Save",
+      "errors": {
+        "future": "The date cannot be in the future",
+        "endBeforeStart": "The end cannot be earlier than the start",
+        "invalid": "Check the date and the hours"
+      }
+    },
+    "rest": {
+      "title": "Rest",
+      "next": "Next: {{name}}",
+      "go": "Go for the next set!",
+      "minus": "−15 s",
+      "plus": "+15 s",
+      "close": "Close rest",
+      "started": "Rest of {{time}}"
+    },
+    "remote": {
+      "notice": "There are changes from another device in this session.",
+      "close": "Close"
     }
   }
 }

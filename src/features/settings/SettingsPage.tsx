@@ -9,6 +9,7 @@ import { Card } from '../../ui/Card';
 import { Icon } from '../../ui/Icon';
 import { Segmented } from '../../ui/Segmented';
 import { DataCard } from './DataCard';
+import { RestCard } from './RestCard';
 import { SyncCard } from './SyncCard';
 import styles from './SettingsPage.module.css';
 
@@ -43,6 +44,8 @@ export function SettingsPage() {
           }))}
         />
       </Card>
+
+      <RestCard />
 
       <DataCard />
 

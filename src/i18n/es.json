@@ -182,6 +182,14 @@
       "restoreMessage": "Tus datos volverán a como estaban ese día, también en tus otros dispositivos cuando sincronicen. Lo que hayas cambiado después se perderá. Si dudas, exporta antes una copia completa.",
       "restored": "Copia restaurada. Registros cambiados: {{total}}",
       "restoreFailed": "No se pudo restaurar la copia. No se ha cambiado nada."
+    },
+    "rest": {
+      "title": "Descanso",
+      "compound": "Descanso en ejercicios básicos (s)",
+      "isolation": "Descanso en aislamiento (s)",
+      "sound": "Sonido al acabar el descanso",
+      "vibration": "Vibración",
+      "vibrationHint": "No funciona en iPhone."
     }
   },
   "sync": {
@@ -568,7 +576,11 @@
       "addExtra": "+ Serie extra",
       "note": "Nota",
       "noteFilled": "Nota ✎",
-      "summary": "{{weight}} × {{reps}}"
+      "summary": "{{weight}} × {{reps}}",
+      "moveUp": "Subir {{name}}",
+      "moveDown": "Bajar {{name}}",
+      "removeExercise": "Quitar ejercicio",
+      "outside": "Fuera de la rutina"
     },
     "hint": {
       "increase": "Sube a {{weight}} kg",
@@ -625,14 +637,23 @@
     "actions": {
       "finish": "Terminar sesión",
       "reopen": "Marcar como en curso",
-      "delete": "Eliminar sesión"
+      "delete": "Eliminar sesión",
+      "details": "Datos de la sesión",
+      "json": "Descargar JSON"
     },
     "toast": {
       "saved": "Sesión guardada",
       "savedRecords_one": "Sesión guardada · {{count}} récord",
       "savedRecords_other": "Sesión guardada · {{count}} récords",
       "deleted": "Sesión eliminada",
-      "failed": "No se pudo guardar. Inténtalo de nuevo."
+      "failed": "No se pudo guardar. Inténtalo de nuevo.",
+      "rowRemoved": "Serie quitada",
+      "rowRestored": "Serie recuperada",
+      "exerciseRemoved": "Ejercicio quitado",
+      "exerciseRestored": "Ejercicio recuperado",
+      "restored": "Sesión recuperada",
+      "undo": "Deshacer",
+      "cannotUndo": "No se puede deshacer: ya hay datos nuevos"
     },
     "dialog": {
       "cancel": "Cancelar",
@@ -648,7 +669,58 @@
       "strapsOnlyNext": "Solo las próximas",
       "deleteTitle": "¿Eliminar esta sesión?",
       "deleteMessage": "Se borrarán la sesión y todas sus series y notas.",
-      "deleteConfirm": "Eliminar"
+      "deleteConfirm": "Eliminar",
+      "removeExerciseTitle": "¿Quitar {{name}} de esta sesión?",
+      "removeExerciseSets_one": "Se borrará su serie. La rutina no cambia.",
+      "removeExerciseSets_other": "Se borrarán sus {{count}} series. La rutina no cambia.",
+      "removeExerciseNote": "Se borrará su nota. La rutina no cambia.",
+      "removeExerciseSetsAndNote_one": "Se borrarán su serie y su nota. La rutina no cambia.",
+      "removeExerciseSetsAndNote_other": "Se borrarán sus {{count}} series y su nota. La rutina no cambia.",
+      "removeExerciseConfirm": "Quitar",
+      "routineTitle": "¿Cambiar la sesión a {{name}}?",
+      "routineMessage": "La lista de ejercicios pasará a ser la de esa rutina. Las series ya apuntadas se mantienen.",
+      "routineConfirm": "Cambiar"
+    },
+    "add": {
+      "button": "+ Añadir ejercicio",
+      "title": "Añadir ejercicio",
+      "search": "Buscar ejercicio",
+      "group": "Grupo muscular",
+      "equipment": "Equipo",
+      "kind": "Tipo",
+      "others": "Otros",
+      "straps": "Straps",
+      "custom": "Creados por mí",
+      "inRoutine": "En alguna rutina",
+      "results": "Ejercicios",
+      "none": "Ningún ejercicio coincide",
+      "already": "Ya está en la sesión"
+    },
+    "details": {
+      "title": "Datos de la sesión",
+      "date": "Fecha",
+      "start": "Inicio",
+      "end": "Fin",
+      "routine": "Rutina",
+      "save": "Guardar",
+      "errors": {
+        "future": "La fecha no puede ser futura",
+        "endBeforeStart": "El fin no puede ser anterior al inicio",
+        "invalid": "Revisa la fecha y las horas"
+      }
+    },
+    "rest": {
+      "title": "Descanso",
+      "next": "Siguiente: {{name}}",
+      "go": "¡A por la siguiente serie!",
+      "minus": "−15 s",
+      "plus": "+15 s",
+      "close": "Cerrar descanso",
+      "started": "Descanso de {{time}}"
+    },
+    "remote": {
+      "notice": "Hay cambios de otro dispositivo en esta sesión.",
+      "close": "Cerrar"
     }
   }
 }

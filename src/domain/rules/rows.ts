@@ -81,6 +81,20 @@ export function removeRow(scheme: SetScheme, slot: number): RowEdit | null {
   };
 }
 
+/**
+ * Puts a row back at `slot` (clamped to the end); the rows from there on move down. It is the
+ * inverse of `removeRow`, used by "Undo".
+ */
+export function insertRow(scheme: SetScheme, slot: number, row: SchemeRow): RowEdit {
+  const rows = schemeRows(scheme);
+  const at = Math.min(Math.max(Math.trunc(slot), 0), rows.length);
+  rows.splice(at, 0, row);
+  return {
+    scheme: rowsToScheme(rows, scheme.rir),
+    remap: (old) => (old >= at ? old + 1 : old),
+  };
+}
+
 /** Changes the type of the row at `slot`; the row stays in place. null when there is no such row. */
 export function changeRowKind(scheme: SetScheme, slot: number, kind: SetKind): RowEdit | null {
   const rows = schemeRows(scheme);
@@ -214,6 +228,36 @@ export function sessionProgress(items: readonly PlanItem[], sets: readonly SetEn
     total.total += progress.total;
   }
   return total;
+}
+
+export interface RowRef {
+  exerciseId: string;
+  slot: number;
+}
+
+/**
+ * The next working row without a saved set, in screen order: after `from` if given, otherwise
+ * (or when nothing is left after it) from the start. null when every working row is saved.
+ * It is the "Siguiente" of the rest timer.
+ */
+export function nextOpenRow(
+  items: readonly PlanItem[],
+  sets: readonly SetEntry[],
+  from?: RowRef,
+): RowRef | null {
+  const open: RowRef[] = items.flatMap((item) => {
+    const mine = sets.filter((s) => s.exerciseId === item.exerciseId);
+    return displayRows({ scheme: item.scheme, sets: mine, reference: null })
+      .filter((row) => isPlannedKind(row.kind) && row.set === null)
+      .map((row) => ({ exerciseId: item.exerciseId, slot: row.slot }));
+  });
+  if (from) {
+    const order = new Map(items.map((item, index) => [item.exerciseId, index]));
+    const position = (ref: RowRef) => (order.get(ref.exerciseId) ?? 0) * 1000 + ref.slot;
+    const after = open.find((ref) => position(ref) > position(from));
+    if (after) return after;
+  }
+  return open[0] ?? null;
 }
 
 export interface RowInput {
