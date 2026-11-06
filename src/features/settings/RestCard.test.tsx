@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
@@ -60,6 +60,45 @@ describe('RestCard', () => {
     await waitFor(async () => {
       expect(await readRestTimes(db)).toEqual({ compound: 200, isolation: 75 });
     });
+  });
+
+  it('keeps the first time when the second one is saved before the screen reads it back', async () => {
+    const { db } = await setup();
+    // Two fields edited one right after the other: the live query has not delivered the first
+    // save yet when the second one is made (it happens in slower browsers).
+    fireEvent.change(screen.getByLabelText(COMPOUND), { target: { value: '200' } });
+    fireEvent.blur(screen.getByLabelText(COMPOUND));
+    fireEvent.change(screen.getByLabelText(ISOLATION), { target: { value: '90' } });
+    fireEvent.blur(screen.getByLabelText(ISOLATION));
+    await waitFor(async () => {
+      expect(await readRestTimes(db)).toEqual({ compound: 200, isolation: 90 });
+    });
+    await waitFor(() => {
+      expect(screen.getByLabelText(COMPOUND)).toHaveValue('200');
+      expect(screen.getByLabelText(ISOLATION)).toHaveValue('90');
+    });
+  });
+
+  it('keeps what is typed when its own previous save is read back late', async () => {
+    const { db } = await setup();
+    const compound = () => screen.getByLabelText(COMPOUND);
+    // A save, and the next value typed before the screen has read that save back from the
+    // database (it happens in slower browsers).
+    fireEvent.change(compound(), { target: { value: '200' } });
+    fireEvent.blur(compound());
+    fireEvent.change(compound(), { target: { value: '901' } });
+    await waitFor(async () => {
+      expect((await readRestTimes(db)).compound).toBe(200);
+    });
+    // Give the live query time to deliver the first save to the screen.
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(compound()).toHaveValue('901');
+
+    fireEvent.blur(compound());
+    await waitFor(async () => {
+      expect((await readRestTimes(db)).compound).toBe(900);
+    });
+    expect(compound()).toHaveValue('900');
   });
 
   it('keeps the time between 15 and 900 s', async () => {
