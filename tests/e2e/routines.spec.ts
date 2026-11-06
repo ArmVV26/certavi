@@ -325,8 +325,7 @@ test.describe('routines · editor structure', { tag: '@all-engines' }, () => {
     expect((await viewerNames(page)).slice(0, 2)).toEqual(moved.slice(0, 2));
   });
 
-  test('AC-ROUTINES-08 / 09 / 10 · sets, type, reps, RIR, optional and note', async ({ page }) => {
-    // AC-08
+  test('AC-ROUTINES-08 · add and remove sets, up to the limit of 20', async ({ page }) => {
     await openEditor(page, 'Push');
     const aper = exCard(page, 'Aperturas en máquina');
     const base = await readSummary(page);
@@ -340,19 +339,24 @@ test.describe('routines · editor structure', { tag: '@all-engines' }, () => {
     await button(aper, 'Quitar serie 2').click();
     await expect(setRows(aper)).toHaveCount(1);
     await expect(button(aper, 'Quitar serie 1')).toBeDisabled();
-    for (let i = 1; i < 20; i++) await button(aper, 'Añadir serie').click();
+    // Real clicks were used above. The rest only fill the card up to the limit, so they are sent
+    // as events: 19 real clicks, each with Playwright's stability checks, took the whole 60 s of
+    // the test in WebKit on CI (2026-11-06), where frames are slow.
+    const addSet = button(aper, 'Añadir serie');
+    for (let i = 1; i < 20; i++) await addSet.dispatchEvent('click');
     await expect(setRows(aper)).toHaveCount(20);
-    await expect(button(aper, 'Añadir serie')).toBeDisabled();
+    await expect(addSet).toBeDisabled();
 
     // Leave without saving.
     await button(page, 'Descartar').click();
     await button(dialogOf(page, '¿Descartar los cambios?'), 'Descartar cambios').click();
     await expect(h1(page, 'Rutina')).toBeVisible();
     await expect(summaryText(page, base.text)).toBeVisible();
+  });
 
+  test('AC-ROUTINES-09 / 10 · type, reps, RIR, optional and note', async ({ page }) => {
     // AC-09
-    await page.getByRole('link', { name: 'Editar', exact: true }).click();
-    await expect(h1(page, 'Editar rutina')).toBeVisible();
+    await openEditor(page, 'Push');
     const press = exCard(page, 'Press inclinado con mancuernas');
     await press
       .getByRole('combobox', { name: 'Tipo de la serie 1', exact: true })
