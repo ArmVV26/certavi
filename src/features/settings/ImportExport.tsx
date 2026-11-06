@@ -15,7 +15,7 @@ import { resolveText } from '../../i18n/text';
 import { Button } from '../../ui/Button';
 import { Dialog } from '../../ui/Dialog';
 import { useToast } from '../../ui/ToastContext';
-import { downloadFile } from './download';
+import { downloadFile } from '../../ui/download';
 import styles from './DataCard.module.css';
 import { LISTED_TYPES } from './recordTypes';
 
