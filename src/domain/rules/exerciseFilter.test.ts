@@ -71,6 +71,18 @@ describe('filterExercises', () => {
     expect(ids({ text: 'antiguo' })).toEqual([]);
   });
 
+  it('lists archived exercises too when asked, with the other filters still applied', () => {
+    const withArchived = (filter: Partial<ExerciseFilter>) =>
+      filterExercises(
+        list,
+        { ...EMPTY_EXERCISE_FILTER, ...filter },
+        { ...context, includeArchived: true },
+      ).map((e) => e.id);
+    expect(withArchived({})).toEqual(['mine', 'curl', 'old', 'press', 'row', 'tbar']);
+    expect(withArchived({ group: 'back' })).toEqual(['old', 'row', 'tbar']);
+    expect(withArchived({ custom: true })).toEqual(['mine']);
+  });
+
   it('finds the text in the displayed name, ignoring case and accents', () => {
     expect(ids({ text: 'REMO' })).toEqual(['row', 'tbar']);
     expect(ids({ text: 'biceps' })).toEqual(['curl']);

@@ -1,11 +1,11 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavLink, Outlet, useLocation, useMatches } from 'react-router';
+import { Link, Outlet, useLocation, useMatches } from 'react-router';
 import { SyncIndicator } from '../features/settings/SyncIndicator';
 import { ThemeToggle } from '../theme/ThemeToggle';
 import { Icon } from '../ui/Icon';
 import styles from './Layout.module.css';
-import { NAV_ITEMS, titleKeyOf } from './navigation';
+import { NAV_ITEMS, isNavItemActive, titleKeyOf } from './navigation';
 
 /**
  * App shell: header with the page title, the sync indicator and the theme button, the main navigation (bottom tab
@@ -47,10 +47,14 @@ export function Layout() {
           <ul className={styles.navList}>
             {NAV_ITEMS.map((item) => (
               <li key={item.to} className={styles.navItem}>
-                <NavLink to={item.to} end={item.to === '/'} className={styles.navLink}>
+                <Link
+                  to={item.to}
+                  className={styles.navLink}
+                  aria-current={isNavItemActive(item, pathname) ? 'page' : undefined}
+                >
                   <Icon name={item.icon} size={24} />
                   <span>{t(`nav.${item.key}`)}</span>
-                </NavLink>
+                </Link>
               </li>
             ))}
           </ul>

@@ -662,6 +662,12 @@ Cada fase sigue el mismo ciclo:
 
 **Ramas**: `feature/exercise-catalog` y `feature/routine-editor`
 
+**Estado (2026-11-06) · rama 1 `feature/exercise-catalog`**:
+- Hecho: `docs/spec/exercises.md`; catálogo dentro de Rutinas (`/exercises`, selector «Rutinas | Ejercicios», la pestaña Rutinas sigue activa) con filtros compartidos con la hoja «Añadir ejercicio»; ficha (`/exercises/:id`, sin gráfica: va a la Fase 7); crear/editar/archivar ejercicios propios (`exe_`); incremento editable también en los de la semilla (solo eso); «Crear ejercicio» desde la sesión.
+- Decisiones: un ejercicio que está en una rutina no se puede archivar; el formulario crea series rectas (top set + back-off, desde el editor de rutinas); incremento entre 0,25 y 50 kg; nombre repetido se compara sin mayúsculas ni acentos, también con archivados y semilla.
+- Falta (rama 2 `feature/routine-editor`): lista y vista de rutinas, editor (ejercicios y series), restaurar original, `docs/spec/routines.md`; cierre final con `e2e:all`, revisores y release `v0.7.0`.
+- e2e: `tests/e2e/exercises.spec.ts` en Chromium; WebKit se ejecuta en `e2e:all` al cerrar la fase.
+
 **Entregables**:
 - Lista de ejercicios con **filtros**, **etiqueta de equipo**, straps visibles y **crear ejercicio desde cero** (editar y archivar los propios).
 - Ficha de ejercicio completa.

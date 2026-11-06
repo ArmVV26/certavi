@@ -54,19 +54,24 @@ export function isFilterEmpty(filter: ExerciseFilter): boolean {
 }
 
 /**
- * The non-archived exercises that pass every active filter, in alphabetical order of their
- * displayed name. `nameOf` resolves the name (an i18n key for seed exercises);
- * `routineExerciseIds` holds the ids of the exercises that are in some routine.
+ * The exercises that pass every active filter, in alphabetical order of their displayed name.
+ * Archived ones are left out unless `includeArchived` is set. `nameOf` resolves the name (an i18n
+ * key for seed exercises); `routineExerciseIds` holds the ids of the exercises that are in some
+ * routine.
  */
 export function filterExercises<T extends FilterableExercise>(
   exercises: readonly T[],
   filter: ExerciseFilter,
-  context: { nameOf: (exercise: T) => string; routineExerciseIds: ReadonlySet<string> },
+  context: {
+    nameOf: (exercise: T) => string;
+    routineExerciseIds: ReadonlySet<string>;
+    includeArchived?: boolean;
+  },
 ): T[] {
   const text = normalizeText(filter.text);
   return exercises
     .filter((e) => {
-      if (e.archived) return false;
+      if (e.archived && context.includeArchived !== true) return false;
       if (filter.group !== null && e.primaryGroup !== filter.group) return false;
       if (filter.equipment !== null && e.equipment !== filter.equipment) return false;
       if (filter.kind !== null && e.kind !== filter.kind) return false;

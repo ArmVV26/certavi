@@ -1,0 +1,125 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: flex-start;
+  min-height: var(--touch-target);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.name {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-black);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.heading {
+  margin-bottom: var(--space-3);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
+
+.subheading {
+  margin-block: var(--space-3) var(--space-2);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.fact {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+}
+
+.fact dt {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.fact dd {
+  margin: 0;
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: var(--numeric-features);
+  text-align: end;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.plain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-variant-numeric: var(--numeric-features);
+}
+
+.history {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historyLink {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-height: var(--touch-target);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-variant-numeric: var(--numeric-features);
+  text-decoration: none;
+}
+
+.historyDate {
+  font-weight: var(--fw-semibold);
+}
