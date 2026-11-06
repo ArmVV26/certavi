@@ -16,6 +16,7 @@ export type RirRange = z.infer<typeof rirRangeSchema>;
 export const schemeBlockSchema = z.object({
   kind: schemeBlockKindSchema,
   reps: repRangeSchema,
+  /** Rows in the block (keep `MAX_BLOCK_COUNT` in rules/scheme.ts equal to the maximum). */
   count: z.number().int().min(1).max(20),
 });
 export type SchemeBlock = z.infer<typeof schemeBlockSchema>;

@@ -43,6 +43,8 @@ export default defineConfig({
           name: 'ui',
           environment: 'jsdom',
           setupFiles: ['./src/test/setup.ts'],
+          // Several findBy… waits (up to 5 s each, see setup.ts) must fit in one test.
+          testTimeout: 15_000,
           include: ['src/**/*.test.{ts,tsx}'],
           exclude: ['src/domain/**'],
         },
@@ -61,7 +63,7 @@ export default defineConfig({
         'src/data/**/testing.ts',
         'server/**/testing.ts',
       ],
-      reporter: ['text', 'html'],
+      reporter: ['text-summary', 'html'],
       thresholds: {
         'src/domain/**': { lines: 90, functions: 90, branches: 90, statements: 90 },
         'src/data/**': { lines: 90, functions: 90, branches: 90, statements: 90 },

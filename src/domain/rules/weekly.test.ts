@@ -6,6 +6,7 @@ import {
   defaultWeekPlan,
   livePlan,
   weekPlanSummary,
+  weekRoutines,
   weeksToClose,
   WEEK_ROUTINES,
   type RoutineLookup,
@@ -115,6 +116,21 @@ describe('week plan', () => {
     expect(livePlan({ size: 4, deload: false }, routines, exercises).total).toBe(15);
     // Lower Full is missing from this lookup: it counts as empty.
     expect(livePlan({ size: 3, deload: false }, routines, exercises).total).toBe(10);
+  });
+
+  it('plans a hiking week as gym_app: no Lower A, and Lower B becomes Lower Full', () => {
+    expect(weekRoutines({ size: 5 })).toEqual(WEEK_ROUTINES[5]);
+    expect(weekRoutines({ size: 5, hiking: true })).toEqual(['push', 'pull', 'lowerFull', 'upper']);
+    expect(weekRoutines({ size: 4, hiking: true })).toEqual(['push', 'pull', 'lowerFull']);
+    expect(weekRoutines({ size: 3, hiking: true })).toEqual(['push', 'pull', 'lowerFull']);
+    // Lower Full is missing from this lookup: push 4 + pull 6 + upper 4.
+    expect(livePlan({ size: 5, deload: false, hiking: true }, routines, exercises).total).toBe(14);
+    const record = makeWeekPlan({ week: '2026-11-02', hiking: true });
+    expect(weekPlanSummary('2026-11-02', '2026-11-05', record, routines, exercises)).toMatchObject({
+      total: 14,
+      size: 5,
+      closed: false,
+    });
   });
 
   it('applies the deload to the live plan', () => {

@@ -1,7 +1,10 @@
 // Reading set schemes: rep ranges, planned slots and set counts.
-import type { SchemeBlockKind } from '../model/enums';
+import { isPlannedKind, type SchemeBlockKind } from '../model/enums';
 import type { PlanItem } from '../model/routine';
 import type { RepRange, SetScheme } from '../model/scheme';
+
+/** Most rows one block can hold (the same limit as the scheme schema). */
+export const MAX_BLOCK_COUNT = 20;
 
 export interface RepBounds {
   min: number;
@@ -33,9 +36,15 @@ export function expandScheme(scheme: SetScheme): PlannedSlot[] {
   return slots;
 }
 
-/** Planned sets of a scheme. Approach sets count (they are effective sets, not warm-ups). */
+/**
+ * Planned working sets of a scheme. Approach sets count (they are effective sets, not warm-ups);
+ * the warm-up, dropset and extra rows a session adds do not.
+ */
 export function countSchemeSets(scheme: SetScheme): number {
-  return scheme.blocks.reduce((sum, block) => sum + block.count, 0);
+  return scheme.blocks.reduce(
+    (sum, block) => sum + (isPlannedKind(block.kind) ? block.count : 0),
+    0,
+  );
 }
 
 export function countPlanSets(items: readonly PlanItem[]): number {

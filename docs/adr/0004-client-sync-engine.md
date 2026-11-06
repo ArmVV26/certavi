@@ -67,6 +67,15 @@ replaceable and the UI unaware of the transport.
 9. **Downloading a server backup** produces a regular Certavi full backup
    (`certavi-server-backup-<date>.json`: live records, no `serverSeq`), so it can be imported
    back with "Import Certavi backup".
+10. **Reporting what came from the server.** `commitResponse` returns, besides the counts,
+    `changes: AppliedChange[]` (`type`, `id` and, for sets and notes, the `sessionId`): the
+    records that were really written because they were strictly newer. The `sessionId` of a
+    deletion is read from the local copy, since a tombstone carries no fields. The engine hands
+    them to the listeners of `subscribeRemote(listener)` after each commit, so the echo of this
+    device's own push (nothing is written) never notifies. It is a separate channel from
+    `subscribe`/`getState`, which stay about the state of the attempt. The session screen uses
+    it to show "There are changes from another device in this session" (it never rewrites what
+    the user is typing: unsaved values live in the drafts, not in the records).
 
 ## Consequences
 
@@ -77,6 +86,8 @@ replaceable and the UI unaware of the transport.
 - The e2e fake server (`tests/mocks/sync-server.ts`) runs the real server handler, so the
   client is tested end to end against the same code that runs on Netlify.
 - Switching backend means a new `SyncTransport` (or none, if it speaks sync v1).
+- Features can react to remote changes (`subscribeRemote`) without polling the database or
+  knowing about the transport.
 
 **Negative / accepted risks**
 

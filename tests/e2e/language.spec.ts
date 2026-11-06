@@ -28,7 +28,11 @@ test.describe('language', () => {
       for (const [i, name] of NAV_ES.entries()) {
         await expect(nav.getByRole('link').nth(i)).toHaveAccessibleName(name);
       }
-      await expect(page.getByText('Próximamente', { exact: true })).toBeVisible();
+      // Today has real content since Phase 5: its Spanish card heading stands in for the old
+      // "Próximamente" label.
+      await expect(
+        page.getByRole('heading', { name: 'La sesión de hoy', exact: true }),
+      ).toBeVisible();
       await expect(themeButton(page)).toHaveAccessibleName(/^Tema /);
     });
   });

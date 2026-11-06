@@ -9,8 +9,8 @@ main navigation with five sections, a light / dark / automatic theme that follow
 the whole interface in Spanish (default) or English. It also covers the base components shown on
 the internal catalog page `/dev/ui` (dialogs, bottom sheet, notifications, number fields…).
 
-The sections (Today, Calendar, Routines, Progress) are empty for now: each shows a short text and
-a "Próximamente" / "Coming soon" label.
+Calendar, Routines and Progress are empty for now: each shows a short text and a "Próximamente" /
+"Coming soon" label. Today has its real content since Phase 5 ([today.md](today.md)).
 
 ## Screens and elements
 
@@ -47,15 +47,15 @@ A navigation landmark named "Principal" / "Main" with five links, in this order:
 
 ### Pages
 
-| Path        | Title (es / en)                       | Content                                                                                                                                           |
-| ----------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`         | Hoy / Today                           | Today's date (e.g. "lunes, 2 de noviembre" / "Monday 2 November"), heading "La sesión de hoy" / "Today's session", "Próximamente" / "Coming soon" |
-| `/calendar` | Calendario / Calendar                 | Heading "Tu calendario" / "Your calendar", "Próximamente"                                                                                         |
-| `/routines` | Rutinas / Routines                    | Heading "Tus rutinas" / "Your routines", "Próximamente"                                                                                           |
-| `/progress` | Progreso / Progress                   | Heading "Tu progreso" / "Your progress", "Próximamente"                                                                                           |
-| `/settings` | Ajustes / Settings                    | See below                                                                                                                                         |
-| `/dev/ui`   | Componentes / Components              | Component catalog (see below). **Not** in the navigation bar                                                                                      |
-| any other   | Página no encontrada / Page not found | Text and a link "Volver a Hoy" / "Back to Today"                                                                                                  |
+| Path        | Title (es / en)                       | Content                                                                                                                                               |
+| ----------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`         | Hoy / Today                           | Today's date (e.g. "lunes, 2 de noviembre" / "Monday 2 November"), heading "La sesión de hoy" / "Today's session" (Phase 5: see [today.md](today.md)) |
+| `/calendar` | Calendario / Calendar                 | Heading "Tu calendario" / "Your calendar", "Próximamente"                                                                                             |
+| `/routines` | Rutinas / Routines                    | Heading "Tus rutinas" / "Your routines", "Próximamente"                                                                                               |
+| `/progress` | Progreso / Progress                   | Heading "Tu progreso" / "Your progress", "Próximamente"                                                                                               |
+| `/settings` | Ajustes / Settings                    | See below                                                                                                                                             |
+| `/dev/ui`   | Componentes / Components              | Component catalog (see below). **Not** in the navigation bar                                                                                          |
+| any other   | Página no encontrada / Page not found | Text and a link "Volver a Hoy" / "Back to Today"                                                                                                      |
 
 The browser tab title is "<page title> · Certavi", e.g. "Hoy · Certavi".
 
@@ -65,6 +65,17 @@ Card **"Apariencia" / "Appearance"** with two groups of options (radio buttons):
 
 - **"Tema" / "Theme":** "Automático" / "Automatic", "Claro" / "Light", "Oscuro" / "Dark".
 - **"Idioma" / "Language":** "Español", "English" (each in its own language).
+
+Card **"Descanso" / "Rest"** (between "Apariencia" and the data cards), for the rest timer of the
+session (see [session.md](session.md) §2.6):
+
+- **"Descanso en ejercicios básicos (s)" / "Rest after basic exercises (s)"** and **"Descanso en
+  aislamiento (s)" / "Rest after isolation exercises (s)"**: number fields in seconds, from 15 to
+  900, steps of 15 (180 and 120 at first). They sync between devices.
+- Switch **"Sonido al acabar el descanso" / "Sound when the rest ends"** (on at first).
+- Switch **"Vibración" / "Vibration"** (off at first) with the description **"No funciona en
+  iPhone." / "Does not work on iPhone."**
+- Sound and vibration belong to this device only (they are not synced).
 
 Card **"Desarrollo" / "Developer"** with a link **"Catálogo de componentes" / "Component
 catalog"** to `/dev/ui`.
@@ -187,6 +198,24 @@ The page's `theme-color` matches the background: `#f4f5f7` in light, `#0b0f14` i
 **AC-THEME-08 · Readable in both themes**
 Every page passes an automatic accessibility check (axe) with no serious or critical issues,
 including colour contrast, in light and in dark.
+
+### Rest settings
+
+**AC-REST-01 · Rest times**
+Given a fresh install and I am on Ajustes
+Then the card "Descanso" shows 180 in the basic field and 120 in the isolation field
+When I change the basic rest to 200 and the isolation rest to 90
+Then both values are still there after a reload
+And a value below 15 or above 900 is not accepted (the field shows the closest allowed value or
+marks an error) and the saved value does not change
+And with the sync key set, the new values reach another device with the same key.
+
+**AC-REST-02 · Sound and vibration**
+Given a fresh install
+Then "Sonido al acabar el descanso" is on and "Vibración" is off, with "No funciona en iPhone."
+When I turn the sound off and the vibration on
+Then they are still like that after a reload
+And they do not travel to other devices.
 
 ### Language
 

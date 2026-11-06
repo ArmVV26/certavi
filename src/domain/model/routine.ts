@@ -10,6 +10,11 @@ export const planItemSchema = z.object({
   note: textRefSchema.optional(),
   /** Optional exercises are dropped in deload weeks. */
   optional: z.boolean(),
+  /**
+   * Session plans only: the exercise is not part of the session's routine (added by hand, or
+   * kept when the routine was changed). Absent in routines and in free sessions.
+   */
+  added: z.literal(true).optional(),
 });
 export type PlanItem = z.infer<typeof planItemSchema>;
 

@@ -3,7 +3,7 @@
 > Documento de arranque del proyecto **Certavi**, la reescritura de la app de registro de gimnasio (antes «Winter Arc · registro», repositorio `gym_app`).
 > Al crear el repositorio, este archivo se copia como `context.md` en la raíz. Desde ese momento es la **fuente de verdad del estado del proyecto**: qué está decidido, qué está hecho, qué falta y con qué prompt se arranca cada fase. Lo mantiene al día el agente de contexto.
 >
-> Última actualización: 4 nov 2026 · Estado: **Fase 0 cerrada (`v0.1.0`) · Fase 1 cerrada (`v0.2.0`) · Fase 2 cerrada (`v0.3.0`) · Fase 3 cerrada (`v0.4.0`) · Fase 4 🚧: las dos ramas mergeadas en `dev` (PR #11 y #12) y `chore(release): v0.5.0` en `dev` (95a2833, **sin tag**); el PR `dev → main` falló en CI (e2e en WebKit, 2026-11-04). Arreglo en `fix/e2e-webkit-sync` (sin commits), verificado en local en Chromium y WebKit (`npm run e2e:all`: 133 pasados, 5 omitidos a propósito, 0 fallidos); pendientes commits, PR a `dev`, nuevo PR `dev → main` (CI sin ejecutar), tag `v0.5.0` y despliegue en Netlify por el usuario**
+> Última actualización: 6 nov 2026 · Estado: **Fase 0 cerrada (`v0.1.0`) · Fase 1 cerrada (`v0.2.0`) · Fase 2 cerrada (`v0.3.0`) · Fase 3 cerrada (`v0.4.0`) · Fase 4 cerrada (`v0.5.0`, desplegada en Netlify) · Fase 5 cerrada (`v0.6.0`, sin publicar: PR `dev → main`, release y tag pendientes del usuario)**
 
 ---
 
@@ -155,7 +155,39 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | E2E sin esperas de tiempo real (**2026-11-04**) | Nada de `waitForTimeout` ni de esperar a que pase un debounce o un backoff: los temporizadores de la app se mueven con `page.clock` (`install()` antes de `goto`, `runFor`/`pauseAt`); el estado se espera con aserciones web-first o `expect.poll`; antes de inyectar un fallo en el servidor falso (`failNext`) se espera a que haya respondido la petición anterior; timeouts coherentes dentro de un mismo paso. Recogido en `.claude/rules.md`, `.claude/agents/blind-tester.md` («Time and waits») y `CLAUDE.md` §9 | WebKit puede tardar segundos más que Chromium en IndexedDB; las esperas fijas hacían frágiles AC-SYNC-06/09 |
 | Caché de navegadores en CI (**2026-11-04**) | Job `e2e`: paso que lee la versión de Playwright, `actions/cache@v6` de `~/.cache/ms-playwright` con clave `playwright-<os>-<versión>`; si falla la caché, `playwright install --with-deps chromium webkit`; si acierta, solo `playwright install-deps chromium webkit`. Sube `playwright-report/` y `test-results/` (trazas, `trace: 'on-first-retry'`) si falla. `timeout-minutes` 20 → **12**. Objetivo: job e2e < 5 min (**sin medir todavía**) | El job e2e del PR de la Fase 4 tardó 14 min 14 s (2–3 min solo instalando navegadores) y sin trazas para diagnosticar |
 | `e2e:all` en `/close-phase` (**2026-11-04**) | En la **última rama de cada fase**, el blind-tester ejecuta `npm run e2e:all` (Chromium + WebKit) **una vez** antes del PR `dev → main` (`.claude/commands/close-phase.md`, `.claude/rules.md`, `.claude/agents/blind-tester.md`, `CLAUDE.md` §9). Fuera de eso, `e2e:all` solo si lo pide el usuario | En la Fase 4 WebKit no se ejecutó nunca antes del PR y lo detectó CI |
-| Versión del arreglo (**2026-11-04**) | El arreglo entra en **`v0.5.0`** (aún sin tag): `CHANGELOG.md` lo apunta en «Fixed» de 0.5.0. El usuario puede preferir `v0.5.1` | `v0.5.0` no se ha publicado |
+| Versión del arreglo (**2026-11-04**) | El arreglo entra en **`v0.5.0`**: `CHANGELOG.md` lo apunta en «Fixed» de 0.5.0. **Confirmado**: el usuario creó el tag `v0.5.0` (no `v0.5.1`) tras el PR `dev → main` con CI en verde | `v0.5.0` no se había publicado |
+
+### 2.6 Decisiones de la Fase 5 (2026-11-04)
+
+| Tema | Decisión | Motivo |
+|---|---|---|
+| Ramas de la fase | **Tres ramas** en lugar de dos (decidido con el usuario): `feature/today` → `feature/active-session` (registro de series y núcleo de la sesión, borradores) → `feature/session-tools` (temporizador de descanso, reordenar/añadir/quitar ejercicios con filtro, editar fecha/horas/rutina, aviso de cambios remotos, exportar JSON de la sesión, deshacer). La última rama ejecuta `e2e:all` antes del PR `dev → main` | — |
+| Tarjeta de bloques del día | En Hoy: checklist + métricas 0–10 + nota del día (guarda `BlockLog`). Configurar bloques, gráficas y test semanal de la pared siguen en la **Fase 7** | — |
+| Aviso de cambios remotos (rama 3) | Banner «Hay cambios de otro dispositivo»; los datos guardados se refrescan, **los borradores sin guardar nunca se tocan**; se cierra a mano | — |
+| Plan del día | `src/domain/rules/dayPlan.ts` (`weekSchedule`, `dayPlan`, `routineDays`): las rutinas conservan su `weekday`; descansos fijos jueves «Descanso activo» (actividades rápidas natación y movilidad) y sábado «Fútbol» (fútbol y natación); el resto de días libres, «Descanso». Semana de 4 → se cae el Upper (viernes descanso); de 3 → Push, Pull, Lower Full (el Lower Full ocupa el miércoles, el primer día que queda libre) | — |
+| Semana de senderismo | **Como en gym_app** (elección del usuario): el domingo es «Senderismo/Monte», se cae el Lower A y el Lower B pasa a Lower Full (`weekRoutines` en `src/domain/rules/weekPlan.ts`; `livePlan`/`weekPlanSummary` reciben `hiking`). Semana normal + senderismo = Push, Pull, Lower Full, Upper = **86 series, 4 sesiones**; 4 + senderismo = 63, 3 sesiones; 3 + senderismo sin cambios. Sustituye al comentario anterior del modelo («Lower A pasa al jueves») | Paridad con gym_app |
+| Sesiones nuevas | `newSession` (`src/domain/rules/session.ts`): la sesión de hoy empieza ahora, en curso; otra fecha → terminada 18:00–19:15; la sesión libre no tiene ejercicios; semana de descarga → copia reducida. Empezar una rutina que ya tiene sesión esa fecha abre la existente (con toast). Sin fechas futuras. `startSession`/`readSession` en `src/data/sessions.ts` (una transacción) | — |
+| Ids creados en el dispositivo | `newId(prefix)` en `src/data/ids.ts`: `ses_`, `act_`, `set_` + tiempo en base36 + 10 caracteres aleatorios | — |
+| Recordatorio de descarga | Tras **6** semanas seguidas sin descarga (`needsDeloadReminder`, `src/domain/rules/today.ts`) | — |
+| Peso corporal | Válido entre **20 y 300 kg** | — |
+| Orden | Actividades en orden de guardado (`updatedAt`); las sesiones empatadas se ordenan por `updatedAt` | Con el reloj fijo (e2e) el orden era aleatorio (fallo de AC-TODAY-12 en WebKit) |
+| Timeouts de tests (aceptado por el usuario) | `src/test/setup.ts`: RTL `asyncUtilTimeout` **5 s**; `vite.config.ts`: `testTimeout` **15 s** en el proyecto `ui` | Con `test:coverage` (v8 + todos los workers ocupados) una escritura → consulta en vivo → repintado pasaba de 1 s y hacía fallar al azar tests viejos y nuevos (SyncCard, ImportExport, TodayPage) |
+| e2e en CI (`chore/ci-e2e-shards`) | Etiqueta **`@all-engines`**: el proyecto `webkit` solo ejecuta los tests etiquetados (sync, data, import-export, today, smoke y AC-NAV-03); navegación, tema, idioma y componentes, solo Chromium. El job `e2e` de CI es una **matriz** `fail-fast: false` con 3 jobs: `chromium`, `webkit 1/2`, `webkit 2/2` (navegador instalado y cacheado por job, informe propio, `timeout-minutes` 15), **en serie** (`max-parallel: 1`: chromium → webkit 1/2 → webkit 2/2, sin cortar si uno falla). Validación con un PR borrador a `main`. Arreglo tras el primer PR de prueba: `webkit 2/2` fallaba por tiempo (30 s) en AC-SYNC-13 (dos dispositivos, no era un fallo de la app) → `test.slow` en WebKit también en AC-SYNC-12 y 13, como AC-SYNC-09. Segundo arreglo (2026-11-05, segundo PR de prueba): chromium y `webkit 1/2` en verde, pero `webkit 2/2` volvió a agotar los 30 s en AC-SYNC-14 (English) y AC-TODAY-10/11, a 1–4 pasos del final, y otros tests rondaban el límite (AC-TODAY-12 29,3 s) → **`timeout` de 60 s en el proyecto `webkit`** (`WEBKIT_TIMEOUT` en `playwright.config.ts`; Chromium sigue en 30 s) y se quitan los tres `test.slow` de `sync.spec.ts`. Tercer arreglo (2026-11-05, `npm run e2e:all` local en `feature/active-session`: fallaron dos tests, solo en WebKit y por una aserción de 5 s, no por el tiempo del test): **`expect.timeout` de 15 s en el proyecto `webkit`** (`WEBKIT_EXPECT_TIMEOUT`; Chromium sigue en 5 s) porque la primera lectura de IndexedDB con dos pestañas dejaba la tarjeta «Datos» en «Cargando…» (`data.spec.ts` «two tabs»), y el foco al título tras navegar pasa a **`useLayoutEffect`** (`src/app/Layout.tsx`) porque, con un WebKit lento, el efecto llegaba en medio del `fill()` de la clave, le quitaba el foco al campo y «Guardar clave» enviaba vacío (AC-SYNC-14 English); `saveKey()` comprueba ahora `toHaveValue`. Con eso AC-SYNC-14 llegó al registro de intentos y falló por esperar **exactamente 4** intentos (había 5): al guardar la clave el motor vuelve a encolar todo y, si el cambio de la cola llega con el primer intento ya en marcha (IndexedDB lento en WebKit), lanza un intento más justo después (`rerun` de `onQueueCount`, `src/data/sync/engine.ts`); no es un fallo de la app, así que el test pide **al menos 4**, una sola «Clave incorrecta» y los dos últimos en orden. `ci.yml` no cambia: la matriz usa `--project=webkit`, que ya lleva este ajuste. Contenedor oficial de Playwright valorado y descartado por ahora: solo ahorra la instalación del navegador, no acelera WebKit | En CI (2 vCPU, 1 worker) `e2e:all` se estimaba ≥ 14 min, por encima del tope de 10 min |
+| Filas de una serie (rama 2, 2026-11-05) | Cada ejercicio de la sesión es una lista de filas, como en Hevy: `WorkoutSession.items[].scheme` incluye también filas de calentamiento, dropset y extra; `SetEntry.slot` es la posición de su fila y `kind` su tipo, que el usuario cambia (Calentamiento / Efectiva / Dropset) sin que la fila se mueva. Tipo nuevo `dropset`: serie efectiva y volumen, no cuenta para 1RM ni récords. «+ Serie extra» añade una fila; quitar una fila (no la última) se hace deslizando a la izquierda, con botón «Quitar» alcanzable por teclado. Las sesiones de gym_app (`w`/`p`/`x`) se convierten con `normalizeLegacySessions` tras importar y al arrancar. Lo escrito sin ✓ se guarda en localStorage (`certavi.draft.<id>`, solo en el dispositivo) y sobrevive a recargas. «Eliminar sesión» entra en esta rama (el «Deshacer» va en la 3) | El usuario eligió que la fila no se mueva al cambiar su tipo; ver ADR-0003 |
+| Temporizador de descanso (rama 3, 2026-11-06) | Descanso 180 s (fila básica), 120 s (aislamiento), 60 s (tras calentamiento) y +30 s tras una serie top; ajuste ±15 s; tiempos de 15 a 900 s en Ajustes (sincronizados); sonido y vibración solo en el dispositivo (`certavi.restSound`, `certavi.restVibration`); se cierra con ✕ o al terminar la sesión | — |
+
+### 2.7 Decisiones de configuración de Claude (2026-11-04)
+
+| Tema | Decisión | Motivo |
+|---|---|---|
+| Modelos | Principal `opusplan` (Opus planifica, Sonnet ejecuta); `blind-tester` y revisores `sonnet`; `context-keeper` `haiku` | Menos coste por sesión |
+| Lectura vetada | `Read` denegado en `package-lock.json`, `playwright-report/`, `coverage/`, `dist/` (no `test-results/`: su `error-context.md` es útil) | Archivos grandes sin valor para el agente |
+| Cierre en dos niveles | `/close-phase` por rama: checks, e2e solo de los specs de la rama, estado de ≤10 líneas en `context.md` por el agente principal, sin context-keeper. `/close-phase final`: además `e2e:all`, revisores, context-keeper y plan de release | El cierre completo en cada rama era caro |
+| e2e | `npm run e2e -- <specs>` permitido; ningún otro flag. blind-tester: máx. 8 tests por pasada y, ante un fallo, solo `error-context.md` | Menos ejecución y lectura |
+| Reporters | Vitest `dot` + cobertura `text-summary`; Playwright `dot` + `html` en local (CI sin cambios en Playwright; el `test:coverage` de CI sí usa `dot`) | Menos salida; umbrales del 90 % intactos |
+| Revisores | `code-reviewer` y `security-reviewer` de solo lectura, salida ≤30 líneas; el de seguridad se lanza si el diff toca `server/`, `src/data/sync/`, `package.json` o `netlify.toml` | Revisión barata y acotada |
+| Hooks | `PostToolUse` Edit\|Write formatea con Prettier; `Stop` avisa al usuario de puertos ocupados (salvo 5173), siempre exit 0 | Menos `format:check` fallidos y procesos olvidados |
+| Memoria | `context-keeper`: ≤10 líneas, sin recuentos ni logs; el log va a `docs/history.md` | Mantener `context.md` pequeño |
 
 ---
 
@@ -314,6 +346,7 @@ interface SyncEnvelope {
 - **Récords** (peso máximo, 1RM estimado, mejores marcas por repeticiones); excluyen las semanas de descarga.
 - **Descarga:** mitad de series (redondeando hacia arriba), sin opcionales ni Bilbo, RIR 3-4.
 - **Semana corta:** con 4 sesiones se cae el Upper, nunca la pierna. Con 3, Push, Pull y Lower Full.
+- **Semana de senderismo** (Fase 5, 2.6, como en gym_app): el domingo es senderismo, se cae el Lower A y el Lower B pasa a Lower Full (semana normal 86 series en 4 sesiones; de 4 → 63 en 3; de 3 sin cambios).
 
 ### 4.3 Catálogo semilla
 
@@ -540,205 +573,13 @@ Formato: `tipo(ámbito): descripción en inglés, imperativo, minúsculas`.
 
 ## 8. Claude Code: reglas, agentes y comandos
 
-Contenido que se crea en la Fase 0. Se deja aquí el borrador para que la fase sea mecánica.
-
-### 8.1 `.claude/rules.md` (se importa desde `CLAUDE.md` con `@.claude/rules.md`)
-
-```markdown
-# Working rules for Claude Code in Certavi
-
-## Git — the user owns history
-- NEVER run `git commit`, `git push`, `git merge`, `git rebase`, `git tag`, `git reset --hard`,
-  `git checkout -b`/`git switch -c` or create/delete branches. The user does all of that.
-- You MAY run read-only git: `git status`, `git diff`, `git log`, `git branch`.
-- At the end of every phase or task, output a commit plan: branch to use, list of commits
-  (Conventional Commits, English), the exact files for each commit, and the PR/tag steps.
-
-## Dependencies
-- Do NOT install, update or remove packages on your own. When a package is needed, stop and tell
-  the user: package name, version, dev or runtime, why it is needed, and the exact command.
-  Continue only after the user confirms they ran it.
-- Never use global installs.
-
-## Processes and ports (Windows)
-- Never leave a server running. If you start one (`vite`, `vite preview`, `netlify dev`,
-  the mock sync server, Playwright web server), stop it before finishing the task and
-  verify the port is free (`npm run ports:check`). Ports used: 5173, 4173, 8888, 8787.
-- Prefer one-shot commands: `vitest run` (not watch), `playwright test` with its own webServer.
-- If a port is busy at start, report it instead of picking another one silently.
-
-## Data and secrets
-- Never read, copy or commit real user data (exported JSON from the old app) or `.env*`.
-- Never print or hardcode `CLAVE_SYNC` or any secret. Tests use synthetic data only.
-
-## Code
-- TypeScript strict. No `any` without a comment explaining why.
-- Domain logic lives in `src/domain` (pure, no React/Dexie) and must have tests.
-- UI text always through i18n keys (es + en). No hardcoded user-facing strings.
-- Use design tokens; no hardcoded colors or font sizes in components.
-- No `window.confirm/alert/prompt`: use the `Dialog` component.
-- Keep the sync contract in `docs/api/sync-v1.md` and `src/domain/sync/contract.ts` in sync.
-
-## Before saying a task is done
-- `npm run lint && npm run typecheck && npm run test` pass.
-- `npm run build` passes when the task touches build/PWA/functions.
-- No server left running. Updated docs if behaviour changed.
-- Ask the context-keeper agent to update context.md at the end of a phase.
-
-## Scope
-- Do only what the current phase/task asks. If you see something else worth doing,
-  list it under "Suggestions" in your final message instead of doing it.
-- Do not delete or rewrite tests to make them pass without explaining why.
-```
-
-### 8.2 `.claude/settings.json` (refuerza las reglas con permisos)
-
-```json
-{
-  "permissions": {
-    "deny": [
-      "Bash(git commit:*)", "Bash(git push:*)", "Bash(git merge:*)", "Bash(git rebase:*)",
-      "Bash(git tag:*)", "Bash(git reset --hard:*)", "Bash(git checkout -b:*)", "Bash(git switch -c:*)",
-      "Bash(git branch -d:*)", "Bash(git branch -D:*)",
-      "Bash(npm install -g:*)", "Read(./.env*)", "Read(./backups/**)"
-    ],
-    "ask": [
-      "Bash(npm install:*)", "Bash(npm i:*)", "Bash(npm uninstall:*)", "Bash(npm update:*)",
-      "Bash(npx netlify:*)"
-    ],
-    "allow": [
-      "Bash(npm run lint:*)", "Bash(npm run typecheck:*)", "Bash(npm run test:*)",
-      "Bash(npm run build:*)", "Bash(npm run e2e:*)", "Bash(npm run ports:*)",
-      "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)"
-    ]
-  }
-}
-```
-
-Al terminar la Fase 0, comprueba en VS Code con `/permissions` que Claude Code los ha cargado.
-
-### 8.3 Agentes (`.claude/agents/`)
-
-**`context-keeper.md`**
-
-```markdown
----
-name: context-keeper
-description: Keeps project memory up to date. Use at the end of every phase or after any decision that changes scope, architecture, data model or workflow.
-tools: Read, Edit, Write, Grep, Glob
----
-You maintain Certavi's project memory. You never touch src/, tests/ or config.
-On each run:
-1. Read context.md, CLAUDE.md, CHANGELOG.md and the diff summary the main agent gives you.
-2. Update context.md: phase status (✅/🚧/⏳), what was completed, decisions taken (with date),
-   open questions, next phase prompt if it changed, and the progress log (section 12).
-3. Update CHANGELOG.md (Keep a Changelog, "Unreleased" until the user tags).
-4. Update CLAUDE.md only if structure, commands, conventions or architecture changed.
-5. Reply with a short list of what you changed. Be factual: never mark something done
-   unless the main agent confirmed tests pass.
-```
-
-**`blind-tester.md`**
-
-```markdown
----
-name: blind-tester
-description: Black-box QA. Tests Certavi like a real user using only the functional spec. Use after a feature is implemented and before closing a phase.
-tools: Read, Write, Edit, Bash, Glob
----
-You are a QA engineer who has NEVER seen the source code.
-- You may read ONLY: docs/spec/**, README.md, tests/e2e/**, tests/mocks/**, playwright.config.ts.
-- You must NOT read src/** or netlify/**. If you need a selector, use accessible roles,
-  labels and visible text (getByRole/getByLabel/getByText) as a user would.
-- Write Playwright tests in tests/e2e/ from the acceptance criteria of the phase,
-  including edge cases a real user would hit: offline, reload mid-session, 0 kg, undo,
-  wrong input, small iPhone viewport (390x844), dark mode, Spanish and English.
-- Run them with `npm run e2e`. Playwright starts and stops its own servers; make sure
-  no port is left busy (`npm run ports:check`).
-- Report: passed / failed tests, and for each failure the steps to reproduce, expected vs
-  actual, and a screenshot path. Do not fix application code. Do not weaken tests to pass.
-```
-
-### 8.4 Comandos (`.claude/commands/`)
-
-- **`/start-phase N`**: lee `context.md`, la sección de la fase N y `CLAUDE.md`; resume objetivos, entregables y criterios de aceptación; pide confirmación antes de escribir código; y recuerda la rama que debes crear tú (`git switch dev && git switch -c feature/...`).
-- **`/close-phase`**:
-  1. ejecuta `lint`, `typecheck`, `test` y `build`;
-  2. lanza el blind-tester (`npm run e2e`; en la **última rama de la fase**, además `npm run e2e:all` una vez antes del PR `dev → main`, desde el 2026-11-04, 2.5);
-  3. lanza el context-keeper;
-  4. comprueba que no queda ningún puerto ocupado;
-  5. devuelve el **plan de commits**, con este formato:
-
-```
-Rama actual: feature/xxx
-Commits (en este orden):
-1. chore: add vitest config
-   git add vitest.config.ts package.json
-   git commit -m "chore: add vitest config"
-2. ...
-Después:
-- git push -u origin feature/xxx → PR a dev («feat: …»), merge (squash NO: merge commit para conservar commits)
-- Si es fin de fase: PR dev → main, versión X.Y.Z en package.json (commit "chore(release): vX.Y.Z"),
-  git tag -a vX.Y.Z -m "…", git push origin vX.Y.Z
-```
-
-### 8.5 Scripts de `package.json` (de la Fase 0)
-
-```
-dev           vite
-build         tsc -b && vite build
-preview       vite preview
-lint          eslint .
-typecheck     tsc -b
-test          vitest run
-test:watch    vitest
-test:coverage vitest run --coverage; umbral 90 % en src/domain (nuevo, 2026-11-03; lo ejecuta CI), en src/data (desde la Fase 3, 2.4) y en server/** (desde la Fase 4)
-e2e           playwright test --project=chromium   (desde 2026-11-02; antes: playwright test)
-e2e:all       Chromium + WebKit, --global-timeout=600000   (nuevo, 2026-11-02)
-format        prettier --write .
-format:check  prettier --check .
-ports:check   node scripts/ports-check.mjs (dice qué ocupa 5173/4173/8888/8787/9323)
-ports:kill    libera 5173 4173 8888 8787 9323
-prepare       husky
-```
-
-> `e2e`, `e2e:all` y el puerto 9323 cambiaron el 2026-11-02 (sección 2.2, límites de e2e).
-
-> `typecheck` es `tsc -b` y no `tsc --noEmit -p .` (decisión del 2026-11-02, sección 2.1): el `tsconfig.json` raíz solo contiene referencias, así que `-p .` no comprobaría nada.
+[Enlace](docs/history.md#seccion8)
 
 ---
 
 ## 9. Preparación antes de la Fase 0
 
-Esto lo haces tú, una vez y a mano.
-
-1. **Exporta tus datos** de `gym_app` (sección 6, punto 1).
-2. **Instala Node 22 LTS** (desde nodejs.org o con `nvm-windows`) y comprueba con `node -v` y `npm -v`.
-3. **Git en Windows.** Comprueba la identidad con la que firmarás:
-   ```powershell
-   git config --global user.name
-   git config --global user.email      # debe ser el email de tu cuenta de GitHub
-   git config --global core.autocrlf false
-   git config --global init.defaultBranch main
-   ```
-4. **Crea el repositorio** en GitHub: `certavi`, **Private**, sin README (lo genera la Fase 0). Clónalo:
-   ```powershell
-   cd C:\dev            # o tu carpeta de proyectos
-   git clone https://github.com/<tu-usuario>/certavi.git
-   cd certavi
-   ```
-5. **Coloca este archivo** en la raíz como `context.md` y haz el primer commit en `main`. Es el único commit que se hace directamente en `main`:
-   ```powershell
-   git add context.md
-   git commit -m "docs: add project context and plan"
-   git push -u origin main
-   git switch -c dev
-   git push -u origin dev
-   ```
-6. **VS Code**: instala la extensión de Claude Code y abre la carpeta `certavi`.
-7. **Netlify**: todavía nada. El proyecto nuevo se crea en la Fase 4, cuando haya backend que desplegar.
-
-> **Nota (2026-11-02, Fase 0):** los hooks de husky solo se activan con un `npm install` / `npm ci` sin argumentos (script `prepare`), no al instalar paquetes concretos. En este repo se activaron con `npm run prepare`. El `core.autocrlf` de git del usuario ya está en `false`.
+[Enlace](docs/history.md#seccion9)
 
 ---
 
@@ -761,62 +602,9 @@ Cada fase sigue el mismo ciclo:
 
 **Rama**: `chore/project-setup`
 
-**Estado (2026-11-02)**: **cerrada**. El usuario hizo los commits, el PR a `dev`, el PR `dev → main` y el tag `v0.1.0`.
+**Estado (2026-11-02)**: **cerrada**. 
 
-- Hecho: Vite 8 + React 19.3 + TypeScript 6.0.3 strict (`src/app/App.tsx`, `main.tsx`) y estructura de 3.3 con `.gitkeep`; `tsconfig.json` (referencias) + `tsconfig.app.json` + `tsconfig.node.json` + `tsconfig.e2e.json`; ESLint 9 flat (typescript-eslint `strictTypeChecked`, react, react-hooks, react-refresh, jsx-a11y, prettier); Prettier; Vitest 5 + RTL + jsdom 30 (`src/test/setup.ts`, `src/app/App.test.tsx`); Playwright 1.64 (chromium + webkit, 390×844, webServer `vite build` + `vite preview` en 4173 con `strictPort` y `reuseExistingServer: false`; `tests/e2e/smoke.spec.ts`); husky (solo `commit-msg`) + commitlint con los ámbitos de 7.2 más `release` y `deps`; scripts de 8.5 (incluidos `ports:check`, `ports:kill`, `format`, `format:check`); `.gitattributes`, `.editorconfig`, `.nvmrc` (22), `.gitignore`, `LICENSE`; CI `.github/workflows/ci.yml` (PR a `dev`/`main`: `npm ci`, lint, typecheck, test, build; `actions/checkout@v7`, `setup-node@v7`); `.claude/` (rules, settings con reglas deny/ask/allow para Bash **y** PowerShell, agentes y comandos); `CLAUDE.md`, `README.md`, `CHANGELOG.md`; `docs/spec/README.md`, `docs/api/sync-v1.md` (borrador), `docs/adr/0001` y `0002`, `docs/migration.md`, `docs/design/README.md`.
-- Verificado en Windows (Node 26.13.0 local): `lint` ✅, `typecheck` ✅, `test` ✅ (2 tests de componente), `build` ✅, `format:check` ✅, `e2e` ✅ (4 pasados: título + encabezado y sin scroll horizontal a 390 px, en chromium y webkit a 390×844), `ports:check` ✅ (todos libres tras e2e).
-- Permisos comprobados: `git commit --dry-run` denegado desde las herramientas Bash y PowerShell.
-- Decisiones de la fase: sección 2.1.
-
-**Objetivo**: proyecto vacío pero completo en herramientas: compila, testea, tiene CI, documentación y la configuración de Claude Code.
-
-**Entregables**:
-- Vite + React + TS strict.
-- ESLint, Prettier, Vitest + RTL, Playwright (configurado, con un test de humo).
-- husky + commitlint.
-- `.gitattributes` (`* text=auto eol=lf`), `.editorconfig`, `.nvmrc`, `.gitignore` (incluye `backups/`, `.env*`, `.netlify/`, `playwright-report/`).
-- Scripts de la sección 8.5.
-- `.claude/` completo (sección 8).
-- `CLAUDE.md`, `README.md` y `CHANGELOG.md`.
-- `docs/` con su estructura y **ADR-0001** (backend opción A) y **ADR-0002** (offline-first + LWW).
-- CI de GitHub Actions.
-
-**Criterios de aceptación**:
-- `npm run lint`, `typecheck`, `test`, `build` y `e2e` pasan en Windows.
-- Claude Code no puede hacer commit (probado: lo intenta y se le deniega).
-- No queda ningún puerto ocupado tras `e2e`.
-
-**Prompt**:
-
-```text
-Lee context.md completo. Vamos a ejecutar la FASE 0 de Certavi.
-
-Crea la base del proyecto en este repositorio (estoy en Windows + VS Code):
-1. Vite + React + TypeScript strict. Estructura de carpetas de la sección 3.3 (con archivos .gitkeep donde haga falta).
-2. Herramientas: ESLint (flat config, reglas de React y TS), Prettier, Vitest + React Testing Library + jsdom,
-   Playwright (solo Chromium y WebKit, viewport iPhone 390x844, webServer que arranca y para solo),
-   husky + commitlint (config-conventional). Scripts de la sección 8.5, incluido ports:check y ports:kill.
-3. Archivos de repo: .gitattributes (eol=lf), .editorconfig, .nvmrc (22), .gitignore.
-4. .claude/: rules.md, settings.json, agents/context-keeper.md, agents/blind-tester.md,
-   commands/start-phase.md y commands/close-phase.md, con el contenido de la sección 8 (en inglés).
-5. CLAUDE.md (en inglés), muy completo: qué es Certavi, objetivos, stack, arquitectura y capas, estructura de
-   carpetas, modelo de dominio resumido, convenciones de código, i18n, tokens de diseño, cómo se testea,
-   comandos, flujo de ramas y commits, reparto de papeles (yo hago commits/ramas/tags), cómo usar los dos
-   agentes, y que importe las reglas con @.claude/rules.md y remita a context.md para el estado.
-6. README.md (en inglés), sólido y de portfolio: descripción, capturas (placeholder), características,
-   stack, arquitectura con diagrama, offline-first y sincronización, estructura, requisitos, instalación,
-   scripts, tests, despliegue en Netlify, variables de entorno (CLAVE_SYNC, sin valor), flujo de
-   contribución (ramas, Conventional Commits, versiones), hoja de ruta y licencia (pregúntame cuál).
-7. CHANGELOG.md (Keep a Changelog) con la entrada 0.1.0 en Unreleased.
-8. docs/: spec/README.md (índice de la especificación funcional, que iremos llenando), api/sync-v1.md
-   (contrato de la sección 3.5 y 3.4, basado en el sync actual), adr/0001-backend-netlify-blobs.md,
-   adr/0002-offline-first-lww-sync.md, migration.md (sección 6), design/README.md.
-9. GitHub Actions .github/workflows/ci.yml: en PR a dev y main → npm ci, lint, typecheck, test, build.
-10. Un test unitario de ejemplo y un e2e de humo (la app carga y muestra el título).
-
-Antes de instalar NADA, dame la lista completa de paquetes (runtime y dev) con el comando exacto para que lo
-ejecute yo. Espera a que te confirme. Al terminar, ejecuta /close-phase.
-```
+**Log (History)**: [Fase 0](docs/history.md#fase0)
 
 ---
 
@@ -824,79 +612,9 @@ ejecute yo. Espera a que te confirme. Al terminar, ejecuta /close-phase.
 
 **Ramas**: `feature/design-system` y `feature/app-shell`
 
-**Estado (2026-11-03)**: **cerrada**. El usuario hizo los commits, el PR de `feature/app-shell` a `dev` (PR #4), el PR `dev → main`, el commit `chore(release): v0.2.0` y el tag `v0.2.0`. Decisiones en la sección 2.2.
+**Estado (2026-11-03)**: **cerrada**. 
 
-- **Hecho — `feature/design-system`** (mergeada en `dev` con el PR #3; ámbito de commit `theme`): selector de paletas `docs/design/selector.html` (generado por `scripts/build-selector.mjs`); decisión paleta «Hierro» + fuente «Archivo» (`docs/design/decision.md`); tokens (`src/theme/tokens.css`, `docs/design/tokens.md`); motor de tema (system/light/dark guardado en `localStorage`, cambios del sistema en vivo, `theme-color`).
-- **Hecho — `feature/app-shell`** (mergeada en `dev` con el PR #4):
-  - i18n es/en en `src/i18n` (i18next + react-i18next, claves tipadas, formato `Intl` es-ES / en-GB, idioma guardado en el dispositivo);
-  - ajustes del dispositivo en `src/data/deviceStorage.ts`;
-  - shell con react-router 8 en `src/app`: rutas, `Layout` con título en la cabecera y botón de tema, barra de pestañas inferior en móvil / barra superior desde 768 px, enlace «saltar al contenido», foco al título de la página al navegar, página 404;
-  - páginas vacías: Hoy (con la fecha localizada), Calendario, Rutinas, Progreso; Ajustes con tema e idioma;
-  - componentes base en `src/ui`: Button, IconButton, Chip, Tag, Card, Dialog, ConfirmDialog, Sheet, Toast, NumberField, Segmented, Switch, EmptyState, Icon; catálogo interno `/dev/ui`;
-  - especificación `docs/spec/theme-language-navigation.md`;
-  - cambio en el criterio de humo: el encabezado principal de `/` ahora es «Hoy» («Certavi» se queda en el título de la pestaña).
-- **Paquetes añadidos en la fase**: `@fontsource-variable/archivo` 5.3.0, `react-router` 8.5.1, `i18next` 26.7.1, `react-i18next` 17.1.11; dev: `@axe-core/playwright` 4.14.0.
-- **Verificado en `feature/app-shell` (2026-11-02)**: `lint` ✅, `typecheck` ✅, `test` ✅ (179 tests en 16 archivos), `build` ✅, `format:check` ✅; puertos libres tras las ejecuciones (5173, 4173, 8888, 8787, 9323).
-- **Helpers de test**: `src/test/render.tsx` (`renderWithProviders`) y `src/test/renderApp.tsx` (`renderApp(path)`: la app completa con un router en memoria).
-- **E2E ✅**: 5 archivos de spec en `tests/e2e`. La suite se **redujo a propósito** (decisión del usuario, sección 2.2) de 111 a **38 tests por navegador**: navegación 12, tema 9, idioma 5, componentes 11, humo 1; axe una vez por pantalla y tema, solo en Chromium; AC-NAV-09 (Tab al enlace «saltar al contenido») es excepción documentada de WebKit.
-  - Ejecución válida (blind-tester, `npm run e2e`, una sola ejecución, Chromium, 2 workers): **38 pasados, 0 fallidos, 0 omitidos en 18,2 s** (≈19 s en total).
-  - Antes de la reducción, el usuario ejecutó `npm run e2e` con la suite de 111 tests: todo pasó en 33 s.
-- **Criterios de aceptación cubiertos** por e2e y tests unitarios/de componente que pasan: el tema sigue al sistema y el botón de la cabecera lo cambia; UI en es/en; Dialog accesible (foco atrapado, Escape, lector de pantalla); tema, idioma y navegación validados a 390×844.
-- **Release (hecha por el usuario)**: commits de `feature/app-shell`, PR #4 a `dev`, PR `dev → main`, `chore(release): v0.2.0` y tag `v0.2.0`.
-
-**Objetivo**: decidir el aspecto y dejar el esqueleto navegable.
-
-**Pasos**:
-1. **Selector de diseño**:
-   - Claude Code genera `docs/design/selector.html`, una página autónoma que abres en el navegador.
-   - Muestra **5 paletas** y **4 combinaciones de fuentes** aplicadas a 3 pantallas reales en miniatura: Hoy, sesión activa con una serie de calentamiento y Progreso.
-   - Todo en claro y en oscuro, con interruptores para combinarlas.
-   - **Tú eliges** y lo apuntas en `docs/design/decision.md`.
-2. **Tokens de diseño**:
-   - colores semánticos (`--bg`, `--surface`, `--text`, `--accent`, `--success`, `--warning`, `--danger`, `--warmup`…) para claro y oscuro;
-   - tipografía, espaciado, radios y sombras;
-   - fuentes autoalojadas;
-   - contraste AA comprobado.
-3. **Tema**:
-   - preferencia `system | light | dark` guardada en el dispositivo;
-   - **botón sol/luna en la cabecera** (cicla entre automático, claro y oscuro);
-   - detección con `prefers-color-scheme` y escucha del cambio del sistema en vivo;
-   - `theme-color` del navegador acorde.
-4. **i18n**: `es` por defecto y `en`, selector en Ajustes; fechas y números con `Intl` (formato español, coma decimal).
-5. **Shell de la app**:
-   - layout móvil con barra inferior (Hoy, Calendario, Rutinas, Progreso, Ajustes) y en escritorio arriba;
-   - rutas vacías;
-   - componentes base de `src/ui`: Button, IconButton, Chip, Tag, Card, Dialog (sustituye a `confirm`), Sheet, Toast, NumberField, Segmented, Switch y EmptyState;
-   - página interna `/dev/ui` para verlos.
-
-**Criterios de aceptación**:
-- El tema sigue al sistema y el botón lo cambia.
-- Toda la UI está en español y en inglés.
-- El Dialog es accesible: foco atrapado, Escape y lector de pantalla.
-- El tester valida tema, idioma y navegación en 390×844.
-
-**Prompt (paso 1)**:
-
-```text
-Lee context.md y CLAUDE.md. FASE 1, paso 1: selector de diseño.
-Crea docs/design/selector.html, autónomo (sin CDN; fuentes en base64 o desde node_modules/@fontsource si
-ya están instaladas — si hacen falta paquetes, pídemelos), con 5 paletas y 4 combinaciones de fuentes
-pensadas para una app de entrenamiento de fuerza que se usa en el gimnasio (legible de un vistazo, números
-grandes, estado de serie hecha/calentamiento muy claro). Cada opción aplicada en claro y oscuro a tres
-pantallas en miniatura: Hoy, sesión activa (con una serie de calentamiento marcada con su símbolo) y Progreso.
-Interruptores para combinar paleta + fuente + tema. Comprueba contraste AA de texto y acentos y muéstralo.
-No toques src/. Al terminar, dime cómo abrirlo y para.
-```
-
-**Prompt (pasos 2-5)**, tras elegir:
-
-```text
-Elegí la paleta <X> y las fuentes <Y> (apuntado en docs/design/decision.md). FASE 1, pasos 2 a 5 de context.md:
-tokens de diseño, tema system/light/dark con botón en cabecera y detección en vivo, i18n es/en y shell de
-la app con los componentes base de src/ui y la página /dev/ui. Escribe la especificación funcional de
-tema, idioma y navegación en docs/spec/ (la usará el blind-tester). Tests de componentes con RTL.
-Al terminar, /close-phase.
-```
+**Log (History)**: [Fase 1](docs/history.md#fase1)
 
 ---
 
@@ -904,240 +622,39 @@ Al terminar, /close-phase.
 
 **Rama**: `feature/domain-model`
 
-**Estado (2026-11-03)**: **cerrada**. El usuario hizo los commits, el PR #6 a `dev`, el PR #7 `dev → main` y el tag `v0.3.0` (sobre el merge del PR #7). No hubo commit `chore(release): v0.3.0`: `package.json` quedó en 0.2.0 y la entrada `[0.3.0]` del `CHANGELOG.md` se añadió después, en `feature/local-db`. Decisiones en la sección 2.3.
+**Estado (2026-11-03)**: **cerrada**.
 
-- **Implementado — `src/domain`** (TS puro, sin React, Dexie ni `fetch`; mergeado en `dev` con el PR #6):
-  - `model/`: esquemas zod + tipos de todas las entidades de 4.1 con la envoltura (`envelope.ts`: `RECORD_TYPES` `exercise`, `routine`, `weekPlan`, `session`, `set`, `note`, `activity`, `bodyWeight`, `block`, `blockLog`, `weeklyMetric`, `settings`; esquema de tombstone; `TextRef` = `{ key }` (clave i18n, datos semilla) | `{ text }` (texto del usuario)); `enums.ts` (tuplas `as const`); `records.ts` con `RECORD_SCHEMAS` y `parseRecord` (valida por tipo; los registros borrados solo necesitan la envoltura). Ids derivados: `week_<lunes>`, `bw_<lunes>`, `note_<sesión>_<ejercicio>`, `blocklog_<bloque>_<fecha>`, `wmetric_<bloque>_<métrica>_<lunes>`, ajustes `settings`.
-  - `dates.ts`: fechas locales ISO `YYYY-MM-DD`, semanas desde el lunes.
-  - `rules/`: 1RM Epley (ignora calentamiento y aproximación); series efectivas (la aproximación cuenta, el calentamiento no, 0 reps no); back-off (−10 % redondeado al incremento, al menos un escalón por debajo del top); progresión (`progressionAdvice`); referencia «la última vez» (`lastReference`: salta sesiones «no cuenta» y de descarga); series semanales por grupo frente al plan; plan semanal (vivo frente a congelado al cerrar, `closeWeek`, `weeksToClose`); descarga (port de gym_app); semana corta (`WEEK_ROUTINES`); récords (peso máximo, mejor 1RM estimado, mejor volumen, récords por repeticiones con la regla de Hevy, eventos de récord).
-  - `seed/`: **45 ejercicios** (todos los ids de gym_app salvo `abdomen`, más el nuevo `hack-banda`); **6 rutinas** de `rutina-actual.md`; bloque «Rehabilitación del tobillo» (8 elementos, métricas de dolor escaleras/pogos 0-10 con umbral 3, métrica semanal test de la pared izquierda/derecha en cm) y bloque «Estiramientos» vacío e inactivo; `legacyAliases.ts` (`abdomen` → `crunch-maquina`, `resolveExerciseId`).
-- **i18n**: claves nuevas en `es.json`/`en.json`: `exercises.names.*`, `exercises.groups.*`, `exercises.equipment.*`, `routines.names.*`, `routines.notes.*`, `blocks.*`; el test `src/i18n/seedKeys.test.ts` comprueba que cada clave semilla existe en los dos idiomas.
-- **Tests**: Vitest dividido en dos proyectos en `vite.config.ts`: `domain` (entorno node, `src/domain/**/*.test.ts`; cualquier uso del DOM falla, lo vigila `src/domain/environment.test.ts`) y `ui` (jsdom + setup de RTL, el resto). Cobertura v8 sobre `src/domain/**` con umbrales del 90 % (líneas, funciones, ramas, sentencias); script nuevo `npm run test:coverage`. CI (`.github/workflows/ci.yml`) ejecuta `npm run test:coverage` en lugar de `npm run test`. La suite pasó de ~39 s a ~18 s en local.
-- **Paquetes añadidos en la fase** (instalados por el usuario): `zod` 4.6.7 (runtime); dev: `@vitest/coverage-v8` 5.1.0.
-- **Documentación**: `docs/spec/rules.md` nuevo (las reglas desde el punto de vista del usuario, con ejemplos numéricos); índice `docs/spec/README.md` (enlaza `rules.md` y marca `theme-language-navigation.md` como cubierta por e2e); `docs/migration.md`: sección de ids semilla de la Fase 2 (alias de `abdomen`, ejercicios fuera de rutina, ids de rutina, mapeo de `kind`/`slot` de series: `aprox` → `approach`, `work` → `straight`, slots `w/p/x` → número de slot, `hiking` frente a `size`, `updatedAt` 0 en la semilla).
-- **Verificado en `feature/domain-model` (2026-11-03)**: `lint` ✅, `typecheck` ✅, `test` ✅ (**326 tests en 27 archivos**; antes 179 en 16), `build` ✅, `format:check` ✅.
-  - `test:coverage` ✅: `src/domain` sentencias 100 %, ramas 96,86 %, funciones 100 %, líneas 100 %. Comprobado que subir el umbral por encima del valor real hace que el comando salga con código 1.
-  - Regresión e2e (blind-tester, `npm run e2e`, una sola ejecución, Chromium, 2 workers): **38 pasados, 0 fallidos, 0 omitidos en 46,1 s**. Sin specs e2e nuevas (la fase no tiene pantallas).
-  - Puertos 5173, 4173, 8888, 8787 y 9323 libres.
-- **Criterios de aceptación** ✅: cobertura ≥ 90 % en `src/domain`; test de que las series planificadas de la semana normal suman **104** y cuadran por grupo (cuádriceps 16, isquios-glúteos 15, espalda 14, pecho 13, hombros 13, tríceps 8, bíceps 8, gemelos 8, core 6, antebrazos 3). Verificado también: semana de 4 sesiones 81, de 3 sesiones 63 y de descarga 62.
-- **Aplazado a la Fase 7**: regla del gemelo durante la rehabilitación y revisión del ciclo (ver la Fase 7).
-- **Release (hecha por el usuario)**: commits de `feature/domain-model`, PR #6 a `dev`, PR #7 `dev → main` y tag `v0.3.0`.
-
-**Objetivo**: todo el modelo de la sección 4 en `src/domain`, puro y con tests. Sin UI.
-
-**Entregables**:
-- Tipos y esquemas zod de todas las entidades.
-- Reglas: 1RM, progresión, back-off, recuento semanal, récords, descarga, semana corta y plan semanal.
-- **Catálogo semilla** con equipo, straps, banda, grupos, secundarios e incrementos (tabla 4.3).
-- **Rutinas semilla** de `rutina-actual.md` y bloque de rehabilitación semilla.
-
-**Antes de empezar**: revisa y corrige la tabla de equipo y straps de la sección 4.3 (las «?»).
-
-**Criterios de aceptación**:
-- Cobertura ≥ 90 % en `src/domain`.
-- Test de que las series planificadas de la semana normal suman **104** y cuadran por grupo con `rutina-actual.md`.
-
-**Prompt**:
-
-```text
-Lee context.md (secciones 4 y 5) y CLAUDE.md. FASE 2: modelo de dominio en src/domain, TypeScript puro sin
-React ni Dexie. Tipos + esquemas zod de todas las entidades de 4.1 con la envoltura SyncEnvelope; reglas de
-4.2 como funciones puras (y clases solo donde aporten); catálogo semilla con la tabla 4.3 corregida que te
-paso aquí: <pega la tabla corregida>; rutinas semilla según la rutina vigente que te paso: <pega
-rutina-actual.md>; bloque de rehabilitación semilla. Conserva los ids de ejercicio de gym_app.
-Tests exhaustivos (incluido: total semanal 104 y por grupo). Documenta las reglas en docs/spec/rules.md.
-Al terminar, /close-phase.
-```
+**Log (History)**: [Fase 2](docs/history.md#fase2)
 
 ---
 
 ### Fase 3 · Datos locales, importador y exportaciones → `v0.4.0` ✅
 
-**Ramas**: `feature/local-db` y `feature/import-export` (antes `feature/legacy-import`; incluye el importador de gym_app, la importación de JSON propio y las exportaciones JSON/CSV)
+**Ramas**: `feature/local-db` y `feature/import-export`
 
-**Estado (2026-11-03)**: **cerrada**. Rama 1 (`feature/local-db`) mergeada en `dev` con el **PR #8** (7 commits); rama 2 (`feature/import-export`) mergeada en `dev` con el **PR #9**; el usuario hizo el PR `dev → main`, el commit `chore(release): v0.4.0` en `dev` y el tag `v0.4.0`. Decisiones en la sección 2.4.
+**Estado (2026-11-03)**: **cerrada**. 
 
-- **Implementado — `feature/local-db`** (mergeada en `dev` con el PR #8):
-  - `src/data/db.ts` (`openDatabase`, `TABLES`, `tableOf`, `recordTables`, `isLive`; tipos `StoredRecord`, `TombstoneOf`, `PendingEntry`, `MetaEntry`, `CertaviDb`), `clock.ts` (`reserveTimestamps`), `repository.ts` (`createRepository`, `createRepositories`: `get`/`list`/`put`/`putMany`/`remove`), `seed.ts` (`ensureSeed`), `persistence.ts` (`getStorageStatus`, `requestPersistentStorage`), `queries.ts` (`countLiveRecords`, `countPending`), `startup.ts` (`startDatabase`), `DatabaseContext.ts` (`useDatabase`) y `DatabaseProvider.tsx`.
-  - `main.tsx` abre la base de datos y ejecuta `startDatabase`; `Providers` recibe ahora una prop `db`; `src/test/render.tsx` añade `openTestDatabase()` y una opción `db` (base de datos nueva y vacía en cada render, sin semilla); `src/test/setup.ts` carga `fake-indexeddb/auto`.
-  - Dominio: tipo `RecordOf<K>` en `records.ts`; `OptionalBlock.startDate`/`reviewDate`; métrica `max-pain`; `SEED_SETTINGS` (`src/domain/seed/settings.ts`).
-  - Ajustes → tarjeta nueva **«Datos»/«Data»** (`src/features/settings/DataCard.tsx`) entre Apariencia y Desarrollador: recuentos en vivo por tipo de registro (`useLiveQuery`), «Pendientes de sincronizar» y estado de «Almacenamiento». Claves i18n `settings.data.*` (es/en) y `blocks.metrics.maxPain`.
-  - Documentación: `docs/spec/data-import-export.md` (parte A definitiva, parte B en borrador), índice `docs/spec/README.md` actualizado, `docs/spec/rules.md` menciona la tercera métrica de dolor, ADR-0003 (`docs/adr/0003-local-storage-dexie.md`).
-  - E2E: el blind-tester escribió `tests/e2e/data.spec.ts` (7 tests: AC-DATA-01..05 + caso límite de dos pestañas / sin conexión).
-- **Paquetes añadidos en la fase** (instalados por el usuario): runtime `dexie` 4.4.7, `dexie-react-hooks` 4.4.0; dev `fake-indexeddb` 6.2.7.
-- **Verificado en `feature/local-db` (2026-11-03)**: `lint` ✅, `typecheck` ✅, `test:coverage` ✅ (**364 tests en 32 archivos**; `src/data` 99,04 % sentencias / 97,56 % ramas / 100 % funciones / 100 % líneas; `src/domain` sigue por encima del 90 %), `build` ✅ (Vite avisa de que el chunk principal pesa 618 kB > 500 kB; informativo), `format:check` ✅.
-  - E2E (blind-tester, `npm run e2e`, una sola ejecución, Chromium, 2 workers): **45 pasados, 0 fallidos, 0 omitidos en 34,7 s**.
-  - Puertos 5173, 4173, 8888, 8787 y 9323 libres.
-- **Implementado — `feature/import-export`** (mergeada en `dev` con el PR #9):
-  - Importador de gym_app `src/data/legacy/gymApp.ts` (`readGymAppExport(text)`): esquemas zod tolerantes de las formas reales de gym_app (`t`: `session`, `set`, `note`, `act`, `bw`, `week`, `tpl`, `excfg`, `rec`, `wall`, `cfg`, `mig`), conversión y validación final con `parseRecord`; acepta `{ app: 'winter-arc', records }` o un array suelto; borrados, `cfg_exp_brazos`, `mig_*`, `t` desconocido y plantillas/ejercicios desconocidos → ignorados; mal formados → no válidos. Mapeo completo en la sección 6.
-  - `src/data/importFile.ts` (tipo `ImportFile`, `dedupeNewest`: dos registros con el mismo id de Certavi → gana el más reciente).
-  - `src/data/importRecords.ts`: `planImport` (vista previa, solo lectura) y `applyImport` (una transacción, LWW con empate a favor de lo local, cola de pendientes, sin `serverSeq`, reloj adelantado con `advanceClock` en `clock.ts`).
-  - Copias de Certavi `src/data/backup.ts`: `exportAll` (`certavi-backup-<hoy>.json`), `exportSession` (`certavi-session-<fecha>-<id>.json`), `exportWeek` (`certavi-week-<lunes>.json`), `readBackup`; formato en 2.4. **Exportar sesión y semana aún no tienen UI** (Fases 5 y 7).
-  - CSV `src/data/csv.ts`: `toCsv`, `exportSetsCsv` (`certavi-sets-<hoy>.csv`), `exportActivityWeightCsv` (`certavi-activity-weight-<hoy>.csv`); formato Excel en español siempre (2.4); columna de efectiva con `isEffectiveSet`. Tipo `ExportFile` en `src/data/exportFile.ts`.
-  - UI `src/features/settings/ImportExport.tsx` dentro de la tarjeta «Datos»: encabezados de nivel 3 «Importar» / «Exportar»; botones «Importar desde la app anterior», «Importar copia de Certavi», «Exportar copia completa (.json)», «Exportar series (.csv)», «Exportar actividad y peso (.csv)»; vista previa en un `alertdialog` «Resumen de la importación» (filas por tipo + sin cambios / ignorados / no válidos, foco en «Cancelar»; «No hay nada nuevo que importar.» + «Cerrar»); toasts de éxito («Registros importados: N») y de error. Ayudas `download.ts` (`downloadFile`), `recordTypes.ts` (`LISTED_TYPES`, `COUNTED_TYPES`) y `src/i18n/text.ts` (`resolveText` para `TextRef`).
-  - i18n (es/en): `settings.data.*` (importar/exportar, vista previa, errores, cabeceras CSV), `settings.data.types.settings`, `sets.kinds.*`, `activities.kinds.*`, `routines.free`.
-  - Fixtures sintéticos: `tests/fixtures/gym-app-sample.json` (todos los tipos de gym_app; 29 registros escritos, 5 ignorados) y `tests/fixtures/not-a-backup.txt`.
-  - Documentación: `docs/spec/data-import-export.md` parte B definitiva (AC-IMPORT-01..06, AC-EXPORT-01..02); `docs/spec/README.md` la marca ✅; `docs/migration.md` corregido con los valores reales de `t`, las formas y el mapeo completo; sección 6 de este documento corregida.
-  - E2E: el blind-tester escribió `tests/e2e/import-export.spec.ts` (8 tests).
-- **Verificado en `feature/import-export` (2026-11-03)**: `lint` ✅, `typecheck` ✅, `npm run test` ✅ (**417 tests en 39 archivos**, dos ejecuciones sin fallos intermitentes tras corregir un test de exportación que dependía del orden), `test:coverage` ✅ (`src/data` 99,59 % sentencias / 92,68 % ramas / 100 % funciones / 100 % líneas; `src/data/legacy` 100 / 95,34 / 100 / 100; `src/domain` sin cambios, ramas ≥ 96 %), `build` ✅ (chunk principal 638 kB, aviso informativo de Vite > 500 kB), `format:check` ✅.
-  - E2E (blind-tester, `npm run e2e`, Chromium, 2 workers): 1.ª ejecución 19 pasados / 3 fallidos y parada por `maxFailures` — problema del test (buscaba el rol `dialog`; la vista previa es `alertdialog`), corregido solo en el test; 2.ª ejecución **53 pasados, 0 fallidos, 0 omitidos en 49,9 s** (45 anteriores + 8 nuevos).
-  - Puertos libres y ningún navegador de Playwright abierto.
-  - Sin cubrir por e2e (sí por tests unitarios): la fila «No válidos», el mensaje de fallo al guardar y cancelar el selector de archivos del sistema.
-- **Criterios de aceptación**:
-  - «El importador transforma un JSON sintético con todos los tipos de registro de gym_app (borrados, `abdomen`, `libre`, overrides, `rec`, `wall`) y los números cuadran»: ✅ (tests unitarios con el fixture: 29 escritos, 5 ignorados; e2e importando desde Ajustes).
-  - «Recargar la app no pierde nada»: ✅ (test unitario que reabre la base de datos + e2e de recarga / página nueva, también tras importar y sin conexión).
-  - Cumplido también: registro + entrada de cola atómicos (test que fuerza el fallo de la escritura en la cola); el borrado lógico oculta el registro y encola el tombstone.
-- **Release (hecha por el usuario)**: commits de `feature/import-export`, PR #9 a `dev`, PR `dev → main`, commit `chore(release): v0.4.0` en `dev` y tag `v0.4.0`. Nota: commitlint no tiene el ámbito `e2e`; los commits de tests e2e usan `test:` sin ámbito.
-
-**Entregables**:
-- Dexie con esquema y versiones de migración.
-- Repositorios por entidad (toda escritura marca `updatedAt` y añade a la cola de pendientes **en la misma transacción**).
-- Borrados lógicos.
-- **Importador de gym_app** (sección 6) con vista previa y resumen.
-- Exportación JSON completa, de sesión y de semana, y CSV para Excel en español.
-- Importación de JSON propio.
-
-**Criterios de aceptación**:
-- El importador transforma un JSON sintético con todos los tipos de registro de gym_app (incluidos borrados, `abdomen`, `libre`, overrides, `rec` y `wall`) y los números cuadran.
-- Recargar la app no pierde nada.
-
-**Prompt**:
-
-```text
-Lee context.md (secciones 3, 4 y 6) y CLAUDE.md. FASE 3: capa de datos local con Dexie (src/data):
-esquema y migraciones, repositorios por entidad, escritura + cola de pendientes en la misma transacción,
-borrados lógicos. Importador de gym_app según la tabla de la sección 6, con validación zod, vista previa
-y resumen (componente simple en Ajustes). Exportaciones JSON (completa, sesión, semana) y CSV (series;
-actividad y peso) con formato de Excel en español. Tests con fake-indexeddb y un JSON sintético que
-cubra todos los tipos de registro. No uses nunca datos reales. Al terminar, /close-phase.
-```
+**Log (History)**: [Fase 3](docs/history.md#fase3)
 
 ---
 
-### Fase 4 · Sincronización y backend → `v0.5.0` 🚧
+### Fase 4 · Sincronización y backend → `v0.5.0` ✅
 
-**Ramas**: `feature/sync-server` y `feature/sync-client` (en lugar de `feature/sync`, 2.5)
+**Ramas**: `feature/sync-server` y `feature/sync-client`, más el arreglo `fix/e2e-webkit-sync`
 
-**Estado (2026-11-04)**: **mergeada en `dev`, sin tag; el PR `dev → main` falló en CI (e2e en WebKit) y el arreglo está en `fix/e2e-webkit-sync`, sin commits.** Rama 1 (`feature/sync-server`) mergeada con el **PR #11**; rama 2 (`feature/sync-client`) mergeada con el **PR #12**; commit `chore(release): v0.5.0` en `dev` (95a2833), **sin tag**. El arreglo está verificado en local en Chromium y WebKit (`npm run e2e:all` del usuario, 2026-11-04: 133 pasados, 5 omitidos a propósito, 0 fallidos); el job e2e de CI aún no se ha ejecutado. Pendiente: ver «Arreglo `fix/e2e-webkit-sync`» abajo. Decisiones en la sección 2.5.
+**Estado (2026-11-04)**: **cerrada**. 
 
-- **Implementado — `feature/sync-server`** (mergeada en `dev` con el PR #11; commits: `build(deps)` Netlify Blobs/Functions, `feat(domain)` esquemas del contrato sync v1 y regla de fusión, `feat(api)` servidor sync v1 y función de Netlify, `test(api)` test de contrato, `build` config de Netlify y `robots.txt`, `docs` guía de despliegue):
-  - Dominio: `src/domain/sync/contract.ts` (esquemas zod y constantes del contrato, `ERROR_STATUS`) y `src/domain/sync/merge.ts` (`mergeRecords`, `changesSince`, `SyncDocument` con un `Map`, a salvo de `"__proto__"`).
-  - `server/sync/`: `handler.ts` (`createSyncHandler`: `Request` → `Response`; autenticación SHA-256 + `timingSafeEqual` con retardo de 400 ms; `500 server-misconfigured` si `CLAVE_SYNC` < 32; 404/405 con `Allow`; 413 por encima de 8 MiB; leer–fusionar–escribir con etag y 5 intentos → 409; copia diaria en hora de Madrid, se guardan 14; un fallo de la copia solo se registra), `store.ts` (interfaz `SyncStore`, `storeNameFor`), `memoryStore.ts`, `netlifyStore.ts`, `auth.ts`, `backups.ts`, `testing.ts`; tests, incluido `contract.test.ts` (comprueba los ejemplos, la tabla de errores y las constantes de `docs/api/sync-v1.md` contra los esquemas y el manejador).
-  - `netlify/functions/sync.ts` (adaptador fino: `getStore({ name, consistency: 'strong' })`, `config.path` con las 3 rutas).
-  - `netlify.toml` (build, redirección SPA, cabeceras de seguridad/CSP y de caché), `public/robots.txt`, `tsconfig.server.json` (referenciado desde `tsconfig.json`), globales de Node en ESLint para `server/` y `netlify/`, proyecto de Vitest `server` (Node) y umbral de cobertura del 90 % en `server/**`.
-  - Documentación: `docs/api/sync-v1.md` con estado «Implemented», código `500 internal-error` nuevo y el ejemplo de archivo de copia corregido a JSON válido; `docs/deploy-netlify.md` (producción `main`, despliegues de rama solo `dev`, sin deploy previews, `CLAVE_SYNC` ≥ 32 como secreto con ámbito Functions, nombre de proyecto difícil de adivinar, comprobaciones con `curl.exe`).
-- **Implementado — `feature/sync-client`** (mergeada en `dev` con el PR #12; después `docs: record phase 4 close` y `chore(release): v0.5.0`):
-  - `src/data/sync/`: `transport.ts` (`SyncTransport`; `SyncError` con `kind` `fatal`/`retryable`/`bug`; `SyncErrorCode` = códigos del contrato + `network`/`timeout`/`bad-response`/`http`/`client-error`), `httpTransport.ts` (`createHttpTransport`: `fetch` a `/api/v1/*`, `Bearer`, respuestas validadas con zod, timeout de 15 s, `keepalive` con 30 s), `queue.ts` (`nextBatch`, `keepaliveBatch` ≤ 55 KB, `queueEverything`, `readSince`/`advanceSince`, clave meta `since`), `commit.ts` (`commitResponse`: una transacción; desencola solo si `updatedAt` no cambió; aplica solo los registros entrantes estrictamente más nuevos, sin `serverSeq`; quita las entradas pendientes a las que ganan; adelanta el reloj; `since` = máximo; el eco no escribe en ninguna tabla de registros), `restore.ts` (`restoreBackup`, 2.5), `attemptLog.ts` (últimos 40 intentos), `serverBackup.ts` (copia del servidor como copia completa de Certavi importable, `certavi-server-backup-<fecha>.json`), `engine.ts` (`createSyncEngine`, ADR-0004; además: cambio de clave → `since` 0 y se encolan los registros con `updatedAt > 0`; olvidar la clave; listar, descargar y restaurar copias), `browserTriggers.ts` (`online`, `offline`, `focus`, `pageshow`, `visibilitychange`, `pagehide`), `syncKey.ts` (clave solo del dispositivo en `localStorage` `certavi.syncKey`), `SyncContext.ts`/`SyncProvider.tsx` (`useSyncEngine`, `useSyncState`), `testing.ts` (servidor falso sobre la regla de fusión del dominio, planificador manual, `createTestEngine`; excluido de la cobertura).
-  - Datos: `db.version(2)` con la tabla `syncLog` (`++id`), v1 intacta, test de migración v1 → v2; `SCHEMAS` exportado desde `db.ts`; `deviceStorage.removeDeviceSetting`; `seedRecordsOf(type)` en `src/data/seed.ts`; `fullBackupFile` exportado desde `src/data/backup.ts`.
-  - UI: indicador de sync en la cabecera (`src/features/settings/SyncIndicator.tsx`: enlace a `/settings`, nombre accesible «Sincronización: <estado>» + « · N pendientes», anuncia sin conexión / error); tarjeta **«Sincronización»** la primera de Ajustes (`SyncCard.tsx`: estado, última sync, pendientes, motivo del error, formulario de clave con mostrar/ocultar, guardar/cambiar/olvidar con `ConfirmDialog`, «Sincronizar ahora», enlace «Registro y copias del servidor»); subpágina `/settings/sync` (`SyncPage.tsx`: registro de intentos y copias del servidor: listar, descargar, restaurar con `ConfirmDialog`); iconos nuevos (`cloud`, `cloudOff`, `refresh`, `warning`, `download`, `eye`); claves i18n `settings.sync.*` y `sync.*` (estado, indicador, errores) en es y en; título de ruta `settings.sync.title`.
-  - Arranque: `main.tsx` crea el motor (`localKeyStore`, `createHttpTransport`), conecta los disparadores del navegador y lo arranca tras `startDatabase`. `Providers` recibe una prop `sync`; `renderWithProviders` admite una opción `sync` (por defecto: motor de test sin clave y sin arrancar).
-  - Servidor falso de e2e `tests/mocks/sync-server.ts` (2.5): API `E2E_SYNC_KEY`, `E2E_WRONG_KEY`, `failNext`, `setDelay`, `requestCount`, `records`, `addBackup`.
-  - Documentación: `docs/spec/sync.md` (nueva, AC-SYNC-01..14); `docs/spec/README.md` (sync.md ✅, e2e en `tests/e2e/sync.spec.ts`); ADR-0004 `docs/adr/0004-client-sync-engine.md` (nuevo); `docs/api/sync-v1.md` (referencia al cliente; nota de «clave nueva»: la semilla sin tocar puede quedarse fuera); `docs/deploy-netlify.md` (§4 usa Ajustes → Sincronización de la app; restaurar en el día a día).
-  - Test existente cambiado a propósito: `DataCard.test.tsx` espera el nuevo orden de tarjetas de Ajustes (Sincronización, Apariencia, Datos, Desarrollo).
-- **Paquetes añadidos en la fase** (instalados por el usuario, en la rama 1): runtime `@netlify/blobs` 11.1.7; dev `@netlify/functions` 6.0.3. Ninguno en la rama 2.
-- **Verificado en `feature/sync-client` (2026-11-03)**: `lint` ✅, `typecheck` ✅, `test` ✅ (**621 tests en 58 archivos**; 518 en 44 tras la rama 1), `build` ✅ (chunk principal 666 kB, aviso informativo de Vite > 500 kB), `format:check` ✅.
-  - `test:coverage` ✅: todos los archivos 99,38 % sentencias / 96,6 % ramas / 99,01 % funciones / 99,51 % líneas; cada glob ≥ 90 %. Nota: una primera ejecución de `test:coverage` informó de 57/58 archivos sin mostrar ningún fallo; las cinco ejecuciones posteriores (3 con cobertura, 2 sin ella) dieron 58/58. Posible archivo intermitente, no reproducido.
-  - E2E (blind-tester, `npm run e2e`, Chromium, 2 workers, una sola ejecución): **69 pasados, 0 fallidos, 0 omitidos en 55,4 s** (53 anteriores + 16 nuevos en `tests/e2e/sync.spec.ts`: AC-SYNC-01..14, con axe en claro/oscuro e inglés).
-  - Sin cubrir por e2e (sí por tests unitarios): guardar otra vez la misma clave, más de 300 pendientes, el timeout de 15 s y el modo privado. Una recarga totalmente sin conexión no se prueba (no hay service worker hasta la Fase 8).
-  - Puertos 5173, 4173, 8888, 8787 y 9323 libres.
-- **Criterios de aceptación**:
-  - «Pruebas sin conexión e intermitentes: abortar peticiones, recargar con pendientes, dos dispositivos editando lo mismo»: ✅ (e2e AC-SYNC-05/06/07/09 + tests unitarios).
-  - «No se pierde ningún dato»: ✅ (desencolado seguro y commit en la misma transacción; tests unitarios + e2e).
-  - «El contrato de `docs/api/sync-v1.md` coincide con la implementación»: ✅ (`server/sync/contract.test.ts` + `server/sync/httpTransport.test.ts`, que ejecuta el transporte del cliente contra el manejador real).
-- ~~Pendiente (usuario): commits de `feature/sync-client`, PR a `dev`, PR `dev → main`, commit `chore(release): v0.5.0`~~ Hecho (PR #12 y 95a2833 en `dev`). Siguen pendientes el tag `v0.5.0` y el despliegue (ver abajo).
-- **Incidente en CI (2026-11-04)**: el PR `dev → main` de la Fase 4 falló en el job `e2e` (`npm run e2e:all`) tras **14 min 14 s**; el job de checks pasó en 2 min 28 s. Fallaron en **WebKit** AC-SYNC-06 (`tests/e2e/sync.spec.ts:513`, 22,3 s y reintento #1 21,0 s) y AC-SYNC-09 (`:607`, 30,7 s). WebKit no se había ejecutado nunca en la Fase 4 (al cerrar, solo `npm run e2e`, Chromium, 69/69). El usuario lo reprodujo en local (WebKit, 1 worker, sin reintentos, con trazas): 06 esperaba «Error» en L526 y vio «Sincronizando…» y luego «Sincronizado»; 09 seguía con «Cargando…» en la tarjeta Datos en L629 tras 5 s. Causas (de las trazas):
-  1. **Bug de la app**: `setKey()` (`src/data/sync/engine.ts`) ponía `status: 'idle'` («Sincronizado») antes de cualquier petición, y el motor arrancaba en `idle` con clave, en contra de `docs/spec/sync.md` §2.1. Invisible en Chromium (primera petición en ms); visible en WebKit, donde los pasos con IndexedDB tardan segundos (vista previa de importación 2–3 s, confirmar 2,7 s, primera lectura de Datos > 7 s). En AC-SYNC-06 la clave se guardó a los 11,27 s, `expectSynced` pasó a los 11,63 s y la primera petición salió a los 15,45 s, así que `failNext('abort')` cayó en la primera sync de la clave y no en la de la importación.
-  2. **Tests**: se fiaban del «Sincronizado» visible y esperaban tiempo real (debounce de 2 s, backoff de 4 s, `waitForTimeout` de 1,5/6/3/1 s); `expectCounts` mezclaba timeouts de 5 y 10 s.
-  3. **Descartado**: `online`/`offline` sí se disparan en WebKit con `setOffline` (AC-SYNC-05/07 pasan); `visibilitychange`/`keepalive` no intervienen; `route.abort` funciona en WebKit; en 09 los `updatedAt` nunca empatan (A = u+1000, B = u+2000; en empate, `>` estricto en `merge.ts`/`commit.ts`, gana el primero guardado).
-  4. **Tiempo de CI**: ~1 min de preparación + `npm ci`, 2–3 min de `playwright install --with-deps` sin caché, otro `vite build` y los tests con 10 min de timeout global, 2 workers y 2 reintentos: lo más probable es que saltara el timeout global (06 mostró 2 de 3 intentos y 09 uno).
-- **Arreglo `fix/e2e-webkit-sync`** (sale de `dev`, **sin commits**; decisiones en 2.5, 2026-11-04):
-  - `docs/spec/sync.md`: «Sincronizando…» también mientras el primer intento no ha terminado; «Sincronizado» solo cuando el servidor ha respondido (al guardar una clave y al abrir la app con clave); AC-SYNC-03 añade esa comprobación.
-  - `src/data/sync/engine.ts`: estado inicial con clave = `syncing`; `setKey()` pone `syncing` y ejecuta `trigger('key')` en un `finally`; `idle` solo tras un intento correcto.
-  - Tests unitarios: 6 nuevos en `src/data/sync/engine.test.ts` («before the first answer»: `syncing` hasta que responde el servidor, error sin pasar por `idle`, sin conexión sin red, arranque en `syncing`, arranque sin conexión, el intento se ejecuta aunque falle volver a encolar); `src/features/settings/SyncCard.test.tsx`: test nuevo «Sincronizando…» hasta la primera respuesta y dos tests que ahora arrancan el motor como `main.tsx` (el botón está desactivado mientras sincroniza).
-  - `tests/e2e/sync.spec.ts` (blind-tester): sin ningún `waitForTimeout`; `page.clock.install()` antes de `goto`, `pauseClock` y un helper `paused()` (avanza el reloj a pasos pequeños con un presupuesto máximo, porque Dexie retrasa las notificaciones con `setTimeout(0)` cuando el reloj está en pausa); `expectSynced(page, server, after)` espera primero al servidor; `syncCount` cuenta solo `/api/v1/sync`; `expectCounts` usa 15 s en los dos pasos; AC-SYNC-03 comprueba «Sincronizando…» con `setDelay(2000)`; AC-SYNC-04 con `runFor(60 s)` (sin reintento ni intervalo de 45 s con clave errónea); AC-SYNC-06 rehecho con el reloj en pausa durante las comprobaciones de «Error»; AC-SYNC-09 espera al servidor para B y para A; `test.slow()` solo en WebKit (quitarlo si la ejecución en WebKit demuestra que sobra).
-  - `.github/workflows/ci.yml` (job `e2e`): caché de navegadores por versión, `install-deps` si acierta, sube `playwright-report/` y `test-results/` si falla, `timeout-minutes` 20 → 12 (2.5).
-  - `.claude/agents/blind-tester.md` (sección nueva «Time and waits» + `e2e:all` en la última rama de `/close-phase`), `.claude/rules.md` (misma regla + excepción de `e2e:all`), `.claude/commands/close-phase.md` (`e2e:all` una vez en la última rama antes del PR `dev → main`), `CLAUDE.md` §9 (actualizado por el agente principal).
-  - **Verificado (2026-11-04)**: `lint` ✅, `typecheck` ✅, `format:check` ✅, `test:coverage` ✅ (**628 tests en 58 archivos**; todos los archivos 99,52 / 96,6 / 99,5 / 99,67 %; `src/data` 99,61 / 92,96 / 100 / 100 %). E2E `npm run e2e` (blind-tester, **solo Chromium**, 2 workers, una ejecución): **69/69 en 1,9 min** (lo más lento, los tests de tema con axe, ~13 s cada uno; los de sync 3–7 s; AC-SYNC-06 3,1 s). Puertos libres. `npm run build` no consta en el resumen (la rama no toca build, PWA ni funciones; `npm run e2e` hace su propio `vite build`).
-  - **Verificado en WebKit (2026-11-04, ejecución del usuario)**: `npm run e2e:all` (Chromium + WebKit) → **133 pasados, 5 omitidos, 0 fallidos** (138 = 69 tests × 2 navegadores). **AC-SYNC-06 y AC-SYNC-09 pasan ya en WebKit en local.** Los 5 omitidos son de WebKit, a propósito y ya documentados: AC-NAV-09 (Tab al enlace «saltar al contenido», `tests/e2e/navigation.spec.ts:210`, WebKit no llega con Tab a los enlaces por defecto; excepción desde la Fase 1), AC-THEME-08 axe claro + oscuro (2, `tests/e2e/theme.spec.ts:154`) y AC-SYNC-14 axe claro + oscuro (2, `tests/e2e/sync.spec.ts:1060`): axe solo en Chromium. No consta la duración de la ejecución ni la de AC-SYNC-09 en WebKit, así que sigue abierto si `test.slow()` sobra.
-  - **Sin verificar: CI.** El job e2e de CI no se ha ejecutado todavía con el arreglo; tampoco se ha medido su tiempo (< 5 min).
-- **Pendiente (usuario)**: commits de `fix/e2e-webkit-sync`, PR a `dev`, nuevo PR `dev → main` (CI e2e en verde y < 5 min), tag `v0.5.0` (o `v0.5.1`, 2.5), despliegue en Netlify con `docs/deploy-netlify.md` y, en el iPhone tras desplegar, comprobar que al guardar la clave se ve «Sincronizando…» y después «Sincronizado».
-
-**Entregables**:
-- `netlify/functions/sync.ts`: contrato v1, clave `CLAVE_SYNC`, etag, reintentos, copias diarias (14) y acciones de copias.
-- `SyncEngine` en el cliente:
-  - cola y reintentos con backoff;
-  - `keepalive` al ocultar la app;
-  - sincronización al volver, al recuperar la red y cada 45 s si hay pendientes;
-  - el eco no repinta;
-  - registro de intentos.
-- `SyncTransport` intercambiable.
-- Servidor falso para tests.
-- Indicador de estado en la cabecera.
-- Pantalla de clave en Ajustes.
-- Copias del servidor: listar, descargar y restaurar.
-
-**Despliegue** (a mano, al cerrar):
-1. Netlify → Add new project → importar `certavi`.
-2. **Production branch: `main`**.
-3. **Branch deploys: solo `dev`**.
-4. **Deploy previews: desactivados** (cada despliegue gasta créditos del plan gratuito; las `feature` se prueban en local).
-5. Variable `CLAVE_SYNC` nueva (≥ 32 caracteres) y nombre de proyecto difícil de adivinar.
-
-**Criterios de aceptación**:
-- Pruebas sin conexión e intermitentes: abortar peticiones, recargar con pendientes, dos dispositivos editando lo mismo.
-- No se pierde ningún dato.
-- El contrato de `docs/api/sync-v1.md` coincide con la implementación (test de contrato).
-
-**Prompt**:
-
-```text
-Lee context.md (3.4, 3.5) y docs/api/sync-v1.md. FASE 4: sincronización. Función de Netlify en TypeScript
-que cumpla el contrato v1 (misma lógica que gym_app: LWW por updatedAt, serverSeq, etag condicional con
-reintentos, copia diaria hora de Madrid con 14 copias, acciones listar/descargar copia, clave CLAVE_SYNC
-comparada en tiempo constante). En el cliente: SyncEngine y SyncTransport (NetlifyTransport) con todo lo
-de 3.4. Servidor falso en tests/mocks para e2e. Indicador de estado y pantalla de sync/copias en Ajustes.
-Tests unitarios del motor (fusión, reintentos, cola) y test de contrato. Explícame paso a paso cómo
-configurar el proyecto nuevo en Netlify (rama de producción main, despliegues de rama solo dev, sin deploy
-previews). Al terminar, /close-phase.
-```
+**Log (History)**: [Fase 4](docs/history.md#fase4)
 
 ---
 
-### Fase 5 · Hoy y sesión activa → `v0.6.0` ⏳
+### Fase 5 · Hoy y sesión activa → `v0.6.0` ✅
 
-**Ramas**: `feature/today` y `feature/active-session`
+**Ramas** `feature/today`, `feature/active-session` y `feature/session-tools`, más el arreglo de `chore/ci-e2e-shards`
 
-**Entregables**:
-- Todo lo de «Hoy» y «Sesión activa» de la sección 5.1.
-- Novedades:
-  - **sesión libre**;
-  - **añadir y quitar series efectivas** (también las de la rutina);
-  - **calentamiento con símbolo** («C»/«W»);
-  - **diálogos propios**;
-  - **filtro** al añadir ejercicio;
-  - tarjeta de **bloques del día**.
-- Temporizador de descanso.
-- Borradores que sobreviven a repintados.
-- Aviso de cambios remotos.
+**Estado (2026-11-06)**: **cerrada**
 
-**Revisar al empezar** (sugerencias de la Fase 4, 2026-11-03):
-- El **aviso de cambios remotos** puede apoyarse en el motor de sync (`src/data/sync/engine.ts`): `commitResponse` (`src/data/sync/commit.ts`) ya devuelve cuántos registros llegaron del servidor (`applied`), y el eco de lo propio no escribe nada. Decidir en la spec cómo se avisa sin perder lo escrito sin guardar.
-- **Vigilar `test:coverage`**: en la Fase 4 una ejecución informó de 57/58 archivos sin mostrar ningún fallo y no se reprodujo en cinco ejecuciones más. Si vuelve a pasar, guardar la salida completa (`npm run test:coverage > cov.txt 2>&1`), buscar el archivo que no termina (posibles candidatos: los tests con temporizadores o `liveQuery` de `src/data/sync/` y `src/features/settings/Sync*.test.tsx`) y arreglar la causa, no reintentar.
-- **Medir IndexedDB en el iPhone** (sugerencia del 2026-11-04, no hecha): en WebKit de escritorio los pasos con IndexedDB tardaron segundos (vista previa de importación 2–3 s, primera lectura de Datos > 7 s). Antes de optimizar, medir en Safari del iPhone real (duraciones del registro de intentos, vista previa de importación). Si es lento, contar con índices/`getAll` en lugar de cursores con `filter()` (`countLiveRecords`, `queueEverything`). La sesión activa de esta fase depende de que las escrituras sean rápidas.
-
-**Criterios de aceptación**:
-- Flujo completo en el iPhone sin conexión: empezar, registrar, recargar, seguir y terminar.
-- El blind-tester cubre: 0 kg, ✓ en vacío con referencia, quitar una serie de la rutina, reordenar, sesión libre, calentamiento fuera de estadísticas y modo oscuro.
-
-**Prompt**:
-
-```text
-Lee context.md (5.1 y 5.2) y CLAUDE.md. FASE 5: pantalla Hoy y sesión activa. Paridad con gym_app en todo lo
-listado en 5.1 para Hoy y Sesión, más las novedades 5.2 números 7, 8, 9 (tarjeta del día), 10 y el filtro
-del punto 4 en el selector de añadir ejercicio. Escribe primero la especificación en docs/spec/today.md y
-docs/spec/session.md con criterios de aceptación claros; después implementa. Divide en ramas si es grande y
-dime cuáles crear. Tests de componentes y de lógica; luego lanza al blind-tester. Al terminar, /close-phase.
-```
+**Log (History)**: [Fase 5](docs/history.md#fase5)
 
 ---
 
@@ -1203,7 +720,7 @@ gym_app según 5.1. Especificación, implementación, tests y blind-tester. /clo
 - Animaciones con `prefers-reduced-motion`.
 
 **Revisar al empezar** (sugerencias de fases anteriores):
-- **Code-splitting**: el chunk principal pesa **666 kB** tras la Fase 4 (618 kB tras `feature/local-db`, 638 kB tras `feature/import-export`); Vite avisa por encima de 500 kB. Candidatos: cargar `/dev/ui`, `/settings/sync` y las pantallas con `lazy()` de las rutas.
+- **Code-splitting**: el chunk principal pesa **702 kB** tras `feature/today` (618 kB tras `feature/local-db`, 638 kB tras `feature/import-export`, 666 kB tras la Fase 4); Vite avisa por encima de 500 kB. Candidatos: cargar `/dev/ui`, `/settings/sync` y las pantallas con `lazy()` de las rutas.
 - **E2E de recarga totalmente sin conexión** cuando exista el service worker: en la Fase 4 el blind-tester no pudo probar AC-SYNC-07 con la página recargada sin red (sin service worker la página no carga) y cortó solo `/api/v1/**`. Añadir un test que recargue con `context.setOffline(true)` y compruebe que los pendientes siguen ahí y se envían al volver la red.
 - **Esperas fijas que quedan en e2e** (sugerencia del 2026-11-04, no hecha): `waitForTimeout` de 300–500 ms por animaciones en `tests/e2e/components.spec.ts:71, 95, 201, 205` y `tests/e2e/theme.spec.ts:117, 167`; sustituirlas por aserciones web-first (regla de 2.5). Encaja con el trabajo de `prefers-reduced-motion`.
 - **E2E en WebKit del envío final con `keepalive`** al ocultar o cerrar la app (sugerencia del 2026-11-04, no hecha).
@@ -1257,54 +774,36 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
 
 ## 12. Registro de progreso
 
-> Lo mantiene el agente **context-keeper**. Una línea por cambio relevante, la más reciente arriba.
+[Tabla Registro](docs/history.md#seccion12)
 
-| Fecha | Fase | Qué | Versión |
-|---|---|---|---|
-| 2026-11-04 | 4 | **Arreglo `fix/e2e-webkit-sync`** (sale de `dev`, **sin commits**): estado «Sincronizado» solo tras un intento correcto (`engine.ts`: arranque con clave y `setKey()` en `syncing`, `trigger('key')` en `finally`; `docs/spec/sync.md` §2.1 y AC-SYNC-03), 6 tests nuevos del motor y 1 de `SyncCard`, `tests/e2e/sync.spec.ts` sin `waitForTimeout` (`page.clock`, esperar al servidor falso antes de `failNext`, timeouts de 15 s), caché de navegadores de Playwright en CI con informe y trazas si falla (`timeout-minutes` 12), reglas de esperas en e2e y `e2e:all` en la última rama de `/close-phase`. lint, typecheck, format:check y `test:coverage` ✅ (**628 en 58 archivos**; 99,52 / 96,6 / 99,5 / 99,67 %; `src/data` 99,61 / 92,96 / 100 / 100 %). E2E `npm run e2e` (**solo Chromium**, una ejecución): **69/69 en 1,9 min**. Puertos libres. Después, `npm run e2e:all` del usuario (Chromium + WebKit): **133 pasados, 5 omitidos, 0 fallidos** (69 × 2; los 5 omitidos, de WebKit y a propósito: AC-NAV-09 y axe de AC-THEME-08 y AC-SYNC-14 en claro/oscuro); **AC-SYNC-06 y AC-SYNC-09 pasan en WebKit en local**. CI e2e sin ejecutar. Decisiones en 2.5 | `v0.5.0` (sin tag) |
-| 2026-11-04 | 4 | **Incidente en CI**: el PR `dev → main` de la Fase 4 (release `chore(release): v0.5.0`, 95a2833 en `dev`, sin tag) falló en el job `e2e` (`npm run e2e:all`, 14 min 14 s): AC-SYNC-06 y AC-SYNC-09 en **WebKit**, que no se había ejecutado nunca en la fase. Reproducido en local por el usuario. Causa: «Sincronizado» antes de la primera respuesta del servidor (bug de la app, contra la spec), visible solo con el IndexedDB lento de WebKit, más tests con esperas de tiempo real; probablemente saltó el timeout global de 10 min. Detalle en la Fase 4 | `v0.5.0` (sin tag) |
-| 2026-11-03 | 4 | `feature/sync-client` mergeada en `dev` (**PR #12**), `docs: record phase 4 close` y `chore(release): v0.5.0` (95a2833) en `dev` por el usuario; sin tag | `v0.5.0` (sin tag) |
-| 2026-11-03 | 4 | **`feature/sync-client` implementada y verificada** (rama 2 de 2, **sin commits**): motor de sync del cliente en `src/data/sync/` (ADR-0004: lotes de 300, 413 parte el lote, backoff 4/8/15/30/60 s, 2 s tras crecer la cola, 45 s con pendientes, `keepalive` al salir, commit en una transacción con desencolado seguro, el eco no repinta), `createHttpTransport` genérico para sync-v1, clave solo del dispositivo, registro de intentos (Dexie v2 con `syncLog`), restaurar y descargar copias del servidor, indicador en la cabecera, tarjeta «Sincronización» (la primera en Ajustes) y subpágina `/settings/sync`, servidor falso de e2e con `context.route` (sin puerto), spec `docs/spec/sync.md` (AC-SYNC-01..14). lint, typecheck, test (**621 en 58 archivos**), `test:coverage` (99,38 / 96,6 / 99,01 / 99,51 %; cada glob ≥ 90 %; una ejecución temprana con 57/58 archivos sin fallo visible, no reproducida en 5 ejecuciones más), build (aviso informativo: chunk de 666 kB) y format:check ✅. E2E `npm run e2e` (Chromium, 2 workers, una ejecución): **69/69 en 55,4 s** (16 nuevos en `sync.spec.ts`). Puertos libres. Criterios de aceptación de la Fase 4 ✅. Decisiones en 2.5. Pendiente: commits, PR a `dev`, PR `dev → main`, `chore(release): v0.5.0`, tag y despliegue en Netlify por el usuario | `v0.5.0` (pendiente de tag) |
-| 2026-11-03 | 4 | `feature/sync-server` mergeada en `dev` por el usuario (**PR #11**): contrato sync v1 en el dominio (`contract.ts`, `merge.ts`), servidor `server/sync/` (manejador `Request → Response`, almacén en memoria / Netlify Blobs, etag con 5 intentos, copias diarias 14, código `500 internal-error`), `netlify/functions/sync.ts`, `netlify.toml`, `robots.txt`, `tsconfig.server.json`, proyecto de Vitest `server` con umbral del 90 %, test de contrato, `docs/deploy-netlify.md`. Verificado antes del merge: 518 tests en 44 archivos. Paquetes: `@netlify/blobs` 11.1.7, `@netlify/functions` 6.0.3 | `v0.5.0` (en curso) |
-| 2026-11-03 | 3 | Release de la Fase 3 por el usuario: `feature/import-export` mergeada en `dev` (PR #9), PR `dev → main`, `chore(release): v0.4.0` en `dev` y tag `v0.4.0` | `v0.4.0` |
-| 2026-11-03 | 3 | **`feature/import-export` implementada y verificada** (rama 2 de 2, **sin commits**): importador de gym_app (`src/data/legacy/gymApp.ts`) con el mapeo corregido (sección 6, `docs/migration.md`), `planImport`/`applyImport` (una transacción, LWW con empate a favor de lo local, cola de pendientes), copias de Certavi (`backup.ts`: completa, sesión y semana; sin tombstones ni `serverSeq`), CSV de series y de actividad y peso en formato Excel en español (`csv.ts`), UI de importar/exportar en la tarjeta «Datos», fixtures sintéticos en `tests/fixtures/`, spec parte B (AC-IMPORT-01..06, AC-EXPORT-01..02). lint, typecheck, test (**417 en 39 archivos**, dos ejecuciones), `test:coverage` (`src/data` 99,59 % / 92,68 % / 100 % / 100 %; `src/data/legacy` 100 / 95,34 / 100 / 100), build (aviso informativo: chunk de 638 kB) y format:check ✅. E2E `npm run e2e` (Chromium): 1.ª ejecución 19/3 parada por `maxFailures` (fallo del test: rol `dialog` en vez de `alertdialog`, corregido solo en el test); 2.ª **53/53 en 49,9 s** (8 nuevos en `import-export.spec.ts`). Puertos libres. Criterios de aceptación de la Fase 3 ✅. Decisiones en 2.4. Pendiente: commits, PR a `dev`, PR `dev → main`, `chore(release): v0.4.0` y tag por el usuario | `v0.4.0` (pendiente de tag) |
-| 2026-11-03 | 3 | `feature/local-db` mergeada en `dev` por el usuario (PR #8, 7 commits) | `v0.4.0` (en curso) |
-| 2026-11-03 | 3 | **`feature/local-db` implementada y verificada** (rama 1 de 2 de la Fase 3, **sin commits**): Dexie con una tabla por tipo + `pending` + `meta` (ADR-0003), repositorios con validación zod, reloj monótono y cola en la misma transacción, borrados lógicos, `ensureSeed` al arrancar, `navigator.storage.persist()`, tarjeta «Datos» en Ajustes, métrica `max-pain`, `startDate`/`reviewDate` en bloques, `SEED_SETTINGS`, spec `docs/spec/data-import-export.md` (parte A). lint, typecheck, `test:coverage` (**364 en 32 archivos**; `src/data` 99,04 % / 97,56 % / 100 % / 100 %, umbral 90 % ahora también en `src/data`), build (aviso informativo: chunk de 618 kB) y format:check ✅. E2E `npm run e2e` (Chromium, 2 workers): **45/45 en 34,7 s** (7 nuevos en `data.spec.ts`). Puertos libres. Decisiones en 2.4. Paquetes: `dexie` 4.4.7, `dexie-react-hooks` 4.4.0, `fake-indexeddb` 6.2.7. Rama 2 renombrada a `feature/import-export`, sin empezar | `v0.4.0` (en curso) |
-| 2026-11-03 | 2 | Release de la Fase 2 por el usuario: PR #6 (`feature/domain-model`) a `dev`, PR #7 `dev → main` y tag `v0.3.0`. Sin commit `chore(release)`: `package.json` quedó en 0.2.0; la entrada `[0.3.0]` del `CHANGELOG.md` se añadió en `feature/local-db` | `v0.3.0` |
-| 2026-11-03 | 2 | **Fase 2 implementada y verificada** en `feature/domain-model`: modelo de dominio (zod), reglas, catálogo semilla (45 ejercicios), 6 rutinas y bloques semilla, claves i18n de la semilla, `docs/spec/rules.md`, proyectos de Vitest node/jsdom y `test:coverage` en CI. lint, typecheck, test (**326 en 27 archivos**), build y format:check ✅; cobertura de `src/domain` 100 % sentencias / 96,86 % ramas / 100 % funciones / 100 % líneas (umbral 90 % comprobado). Criterios de aceptación ✅ (semana normal 104 y por grupo; también 81 / 63 / descarga 62). Regresión e2e `npm run e2e` (Chromium, 2 workers): **38/38 en 46,1 s**. Puertos libres. Decisiones en 2.3; regla del gemelo y revisión del ciclo aplazadas a la Fase 7. Paquetes: `zod` 4.6.7, `@vitest/coverage-v8` 5.1.0. Pendiente: commits, PR a `dev`, PR `dev → main` y tag por el usuario | `v0.3.0` (pendiente de tag) |
-| 2026-11-03 | 1 | Release de la Fase 1 por el usuario: commits de `feature/app-shell`, PR #4 a `dev`, PR `dev → main`, `chore(release): v0.2.0` y tag | `v0.2.0` |
-| 2026-11-02 | 1 | **Fase 1 implementada y verificada** en `feature/app-shell`: lint, typecheck, test (179 en 16 archivos), build y format:check ✅; puertos libres. Suite e2e reducida por decisión del usuario de 111 a 38 tests por navegador (2.2); ejecución válida `npm run e2e` (Chromium, 2 workers): **38/38 en 18,2 s**. Antes, la suite de 111 pasó entera en 33 s (ejecución del usuario). Todos los criterios de aceptación cubiertos. Pendiente: commits, PR a `dev`, PR `dev → main` y tag por el usuario | `v0.2.0` (pendiente de tag) |
-| 2026-11-02 | 1 | **Incidente e2e** durante `/close-phase` (20:13–20:32 hora local): el blind-tester lanzó la suite de Playwright 3 veces (+1 sonda) en ~18 min. La 1.ª ejecución usó los 8 workers por defecto de Playwright (50 % de 16 CPU lógicas) con Chromium (`deviceScaleFactor` 3) + WebKit, ~36 escaneos de axe y eslint/tsc a la vez: 7,9 min y 62 fallos, todos timeouts de `page.goto` / `ERR_ABORTED` (falta de recursos). La misma suite con 4 workers tardó 52 s con 1 fallo. Parar el agente no paró la última ejecución (siguió ~1 min). El PC del usuario se volvió muy lento, Chrome dejó de responder y se cayó la conexión (registro de Windows: fallo de handshake del adaptador Wi-Fi USB a las 20:20; causa atribuida a la saturación, no confirmada). No intervinieron: descargas de navegadores, servidor del informe HTML, reintentos automáticos ni el Chrome del usuario. **Decisión**: límites de e2e de la sección 2.2 (2 workers en local, `e2e` solo Chromium, `e2e:all`, job e2e en CI solo en PR a `main`, puerto 9323, reglas nuevas para agentes) | — |
-| 2026-11-02 | 1 | `feature/app-shell` implementada (i18n es/en, shell con react-router 8, páginas vacías, Ajustes, componentes base de `src/ui`, `/dev/ui`, spec de tema/idioma/navegación). lint, typecheck, test (179) y build ✅; axe sin violaciones. **Sin commits** y **sin ejecución e2e válida** todavía | `v0.2.0` (en curso) |
-| 2026-11-02 | 1 | `feature/design-system` mergeada en `dev` (PR #3): selector, decisión Hierro + Archivo, tokens y motor de tema | `v0.2.0` (en curso) |
-| 2026-11-02 | 0 | Release de la Fase 0 por el usuario: commits, PR a `dev`, PR `dev → main` y tag | `v0.1.0` |
-| 2026-11-02 | 0 | Base del proyecto implementada y verificada (lint, typecheck, test, build, format:check, e2e en chromium + webkit, puertos libres; commit denegado a Claude). Decisiones en 2.1. Pendiente: commits, PR y tag por el usuario | `v0.1.0` (pendiente de tag) |
-| 2026-11-01 | — | Plan inicial y decisiones (este documento) | — |
-
-**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 🚧 (las dos ramas en `dev`, PR #11 y #12; `chore(release): v0.5.0` en `dev` sin tag; PR `dev → main` falló en CI por WebKit; arreglo `fix/e2e-webkit-sync` verificado en local en Chromium y WebKit (`e2e:all` 133 pasados / 5 omitidos / 0 fallidos), pendiente de commits, PR a `dev`, nuevo PR `dev → main`, tag `v0.5.0` y despliegue en Netlify por el usuario) · 5 ⏳ (siguiente: `feature/today` y `feature/active-session`) · 6 ⏳ · 7 ⏳ · 8 ⏳ · 9 ⏳
+**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ⏳ · 7 ⏳ · 8 ⏳ · 9 ⏳
 
 **Preguntas abiertas**:
 - Qué estiramientos van en el bloque «Estiramientos» (antes de la Fase 7).
-- (2026-11-04) ¿Es IndexedDB tan lento en el iPhone real (Safari) como en WebKit de escritorio (segundos por importación o primera lectura)? Medir antes de optimizar (Fase 5, «Revisar al empezar»).
-- (2026-11-04) ¿Hace falta `test.slow()` en WebKit en `tests/e2e/sync.spec.ts`? Quitarlo si demuestra que sobra. `npm run e2e:all` pasó (2026-11-04), pero no consta la duración de AC-SYNC-09 en WebKit: hace falta medirla.
-- (2026-11-04) ¿Baja el job e2e de CI de 5 min con la caché de navegadores? Sin medir.
+- (2026-11-04) ¿Es IndexedDB tan lento en el iPhone real (Safari) como en WebKit de escritorio (segundos por importación o primera lectura)? Medir antes de optimizar (Fase 5, «Revisar al empezar»). Sin medir; ya se puede, porque la app está desplegada.
+- ~~(2026-11-04) ¿Hace falta `test.slow()` en WebKit en `tests/e2e/sync.spec.ts`?~~ Resuelto el 2026-11-05: sustituido por el `timeout` de 60 s del proyecto `webkit` (2.6).
+- (2026-11-04) ¿Baja el job e2e de CI de 5 min con la caché de navegadores? Sin medir (el PR `dev → main` de la Fase 4 pasó en verde, pero no consta la duración). Con la suite de `feature/today` (166 tests en `e2e:all`) se estima ≥ 14 min con 1 worker: ver `chore/ci-e2e-shards` en la Fase 5.
+- (2026-11-06) Medir en el iPhone real el sonido del temporizador con la pantalla bloqueada y el flujo sin conexión de la sesión (Fase 5, pendiente manual).
 
 **Pendiente para fases futuras**:
 - Fase 7: regla del gemelo durante la rehabilitación (60 kg en la semana 1, +5 kg/semana sin dolor al día siguiente hasta 80 kg, y solo si bajar escaleras no duele), con cambios aditivos en el modelo de progresión (ver la Fase 7).
 - Fase 7: revisión del ciclo (`sixWeekReview` de gym_app) en las pantallas de progreso.
 - ~~Fase 3 (`feature/import-export`): corregir la tabla de la sección 6 y `docs/migration.md` con los nombres reales de gym_app (2.4).~~ Hecho el 2026-11-03.
-- Fase 5: UI para exportar el JSON de una sesión (`exportSession` ya existe en `src/data/backup.ts`). Fase 7: UI para exportar el JSON de una semana (`exportWeek`).
+- ~~Fase 5: UI para exportar el JSON de una sesión~~ Hecho el 2026-11-06 (`v0.6.0`). Fase 7: UI para exportar el JSON de una semana (`exportWeek`).
 - Sugerencia (no hecha, 2026-11-03) para la Fase 8 (estados de error): mostrar un error visible si la base de datos local no se puede abrir.
 - Sugerencia (no hecha, 2026-11-03) para la Fase 8: con un `Dialog` abierto, la página de fondo sigue en el árbol de accesibilidad (solo `aria-modal`); valorar `inert` en el fondo (afecta al `Dialog` compartido).
 - Sugerencia (no hecha, 2026-11-03) para las Fases 5 y 7: resúmenes legibles dentro de los JSON de sesión y de semana.
 - Sugerencia (no hecha, 2026-11-03) para la Fase 7: el CSV de recuperación de gym_app.
 - Nota (2026-11-03): commitlint no tiene el ámbito `e2e`; los commits de tests e2e usan `test:` sin ámbito.
-- Fase 4 (usuario, tras el tag `v0.5.0`): desplegar en Netlify siguiendo `docs/deploy-netlify.md` (paso manual, pendiente).
-- Sugerencia (no hecha, 2026-11-03) para la Fase 8: code-splitting; el chunk principal pesa ya **666 kB** tras la Fase 4 (618 kB tras `feature/local-db`, 638 kB tras `feature/import-export`). Detalle en «Revisar al empezar» de la Fase 8.
-- Sugerencia (no hecha, 2026-11-03) para la Fase 5: el «aviso de cambios remotos» de la sesión activa puede apoyarse en el motor de sync (`src/data/sync/engine.ts`). Detalle en «Revisar al empezar» de la Fase 5.
+- ~~Fase 4 (usuario, tras el tag `v0.5.0`): desplegar en Netlify siguiendo `docs/deploy-netlify.md`.~~ Hecho el 2026-11-04.
+- **`chore/ci-e2e-shards`** (2026-11-04, después de mergear `feature/today` en `dev`, antes de `feature/active-session`): el e2e de CI no cabe (≥ 14 min estimados con 1 worker frente a 10 min de `--global-timeout` y 12 de `timeout-minutes`). Etiqueta `@all-engines` + `grep` en el proyecto `webkit`, job e2e en matriz (chromium, webkit) con `fail-fast: false`, `--shard` si WebKit pasa de ~8 min, y documentación. Detalle en la Fase 5 («Pendiente: e2e de CI»).
+- ~~Fase 5 (`feature/session-tools`): UI para exportar el JSON de la sesión y aviso de cambios remotos (2.6).~~ Hecho el 2026-11-06.
+- Sugerencia (no hecha, 2026-11-04): añadir `TextField`/`TextArea`, `Checkbox`, `ScalePicker` y `Notice` a `/dev/ui`.
+- Sugerencia (no hecha, 2026-11-03) para la Fase 8: code-splitting; el chunk principal pesa ya **702 kB** tras `feature/today` (618 kB tras `feature/local-db`, 638 kB tras `feature/import-export`, 666 kB tras la Fase 4). Detalle en «Revisar al empezar» de la Fase 8.
+- ~~Sugerencia (2026-11-03) para la Fase 5: el «aviso de cambios remotos» de la sesión activa puede apoyarse en el motor de sync.~~ Decidido el 2026-11-04 (2.6); se implementa en `feature/session-tools`.
 - Sugerencia (no hecha, 2026-11-03) para la Fase 8: un e2e de recarga totalmente sin conexión cuando exista el service worker. Detalle en «Revisar al empezar» de la Fase 8.
 - Sugerencia (no hecha, 2026-11-04) para la Fase 5: medir IndexedDB en el iPhone y, si es lento, contar con índices/`getAll` en lugar de cursores con `filter()` (`countLiveRecords`, `queueEverything`). Detalle en «Revisar al empezar» de la Fase 5.
-- Sugerencia (no hecha, 2026-11-04) para CI: usar el contenedor `mcr.microsoft.com/playwright:v1.64.1-noble` en el job e2e (sin instalar navegadores ni dependencias).
+- Sugerencia (no hecha, 2026-11-04) para CI: usar el contenedor `mcr.microsoft.com/playwright:v1.64.1-noble` en el job e2e (sin instalar navegadores ni dependencias). Valorado el 2026-11-05: no acelera WebKit (no arregla los timeouts); solo recorta el tiempo de instalación y obliga a subir la etiqueta con cada versión de `@playwright/test`.
 - Sugerencia (no hecha, 2026-11-04) para la Fase 8: e2e en WebKit del envío final con `keepalive`, y quitar los `waitForTimeout` de animaciones que quedan (`components.spec.ts:71, 95, 201, 205`, `theme.spec.ts:117, 167`). Detalle en «Revisar al empezar» de la Fase 8.
 - Sugerencia (no hecha, 2026-11-04): AC-SYNC-03 en `tests/e2e/sync.spec.ts` depende de que sus comprobaciones terminen dentro de los 2 s que el servidor falso retiene la respuesta (`setDelay(2000)`); puede volverse frágil en una máquina lenta.
 - Sugerencia (no hecha, 2026-11-03): si vuelve a aparecer una ejecución de `test:coverage` con 57/58 archivos y sin fallo visible, investigar qué archivo no termina (solo pasó una vez en la Fase 4; no reproducido). Detalle en «Revisar al empezar» de la Fase 5.

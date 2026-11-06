@@ -23,10 +23,6 @@
   },
   "pages": {
     "comingSoon": "Coming soon",
-    "today": {
-      "title": "Today's session",
-      "text": "Here you will see the routine for today and start it, pick another one or log a free session."
-    },
     "calendar": {
       "title": "Your calendar",
       "text": "Here you will see your sessions, activities and special weeks for each month."
@@ -186,6 +182,14 @@
       "restoreMessage": "Your data goes back to how it was that day, also on your other devices when they sync. Anything changed afterwards is lost. If in doubt, export a full backup first.",
       "restored": "Backup restored. Records changed: {{total}}",
       "restoreFailed": "The backup could not be restored. Nothing was changed."
+    },
+    "rest": {
+      "title": "Rest",
+      "compound": "Rest after basic exercises (s)",
+      "isolation": "Rest after isolation exercises (s)",
+      "sound": "Sound when the rest ends",
+      "vibration": "Vibration",
+      "vibrationHint": "Does not work on iPhone."
     }
   },
   "sync": {
@@ -213,6 +217,7 @@
   },
   "sets": {
     "warmupSymbol": "W",
+    "dropsetSymbol": "D",
     "warmup": "Warm-up",
     "kinds": {
       "warmup": "Warm-up",
@@ -221,6 +226,7 @@
       "backoff": "Back-off",
       "straight": "Working set",
       "bilbo": "Bilbo",
+      "dropset": "Dropset",
       "extra": "Extra set"
     }
   },
@@ -423,6 +429,298 @@
       "mobility": "Mobility",
       "cycling": "Cycling",
       "other": "Other"
+    }
+  },
+  "plan": {
+    "exercises_one": "{{count}} exercise",
+    "exercises_other": "{{count}} exercises",
+    "sets_one": "{{count}} set",
+    "sets_other": "{{count}} sets",
+    "summary": "{{exercises}} · {{sets}}",
+    "exerciseSets": "{{exercise}} · {{sets}}",
+    "optional": "(optional)"
+  },
+  "today": {
+    "title": "Today's session",
+    "start": "Start {{routine}}",
+    "continue": "Continue {{routine}}",
+    "done": "Session done · view or edit",
+    "seeExercises": "See the exercises",
+    "tags": {
+      "hiking": "Hiking",
+      "deload": "Deload"
+    },
+    "rest": {
+      "names": {
+        "active-rest": "Active rest",
+        "football": "Football",
+        "hiking": "Hiking",
+        "rest": "Rest day"
+      },
+      "short": {
+        "active-rest": "Active",
+        "football": "Football",
+        "hiking": "Hike",
+        "rest": "Rest"
+      },
+      "notes": {
+        "active-rest": "Swimming or mobility. No running.",
+        "football": "Match (+ a swim if it fits).",
+        "hiking": "Hiking week. Careful: the descents load quads and calves, it is not rest.",
+        "rest": "No routine today."
+      }
+    },
+    "quickActivity": "+ {{activity}}",
+    "alsoToday": "Also today:",
+    "inProgress": "(in progress)",
+    "finished": "(done)",
+    "saveError": "Could not save. Try again.",
+    "notices": {
+      "noKey": "This device has no sync key yet: what you log stays only here.",
+      "setKey": "Set it in Settings",
+      "deload_one": "{{count}} week without a deload. One every 6–8 weeks is recommended: turn it on below when it suits you.",
+      "deload_other": "{{count}} weeks without a deload. One every 6–8 weeks is recommended: turn it on below when it suits you."
+    },
+    "week": {
+      "title": "This week",
+      "number": "Week {{number}}",
+      "days": "Days of the week",
+      "day": "{{day}}: {{plan}}",
+      "dayDone": "{{day}}: {{plan}}, done",
+      "effectiveSets": "Effective sets",
+      "sessions": "Sessions",
+      "sessionsOf": "{{done}} of {{size}}",
+      "size": "Sessions this week",
+      "sizeHint": "With 4, Upper is dropped; with 3: Push, Pull and Lower Full.",
+      "hiking": "Hiking week",
+      "hikingHint": "For the whole week: Wednesday becomes Lower Full and Sunday is hiking.",
+      "deload": "Deload week",
+      "deloadOff": "Half the sets and RIR 3-4.",
+      "deloadStreak_one": "{{count}} week in a row without a deload.",
+      "deloadStreak_other": "{{count}} weeks in a row without a deload.",
+      "deloadOn": "On: new sessions get half the sets and RIR 3-4. They do not count for records.",
+      "deloadToastOn": "Deload week: new sessions come out reduced",
+      "deloadToastOff": "Normal week"
+    },
+    "other": {
+      "title": "Another session or day",
+      "date": "Date",
+      "hintToday": "Choose what you trained. Use it to change today's order or to log a day you forgot.",
+      "hintOther": "It will be logged on {{date}}. No timer; you can adjust the time.",
+      "routines": "What you trained",
+      "future": "You can't log a future date.",
+      "existing": "There was already a “{{routine}}” session that day: opening it."
+    },
+    "activity": {
+      "title": "Activity",
+      "kind": "Activity type",
+      "minutes": "Minutes",
+      "note": "Note",
+      "notePlaceholder": "Optional",
+      "save": "Save today's activity",
+      "saved": "Activity saved: {{activity}}",
+      "today": "Today: {{list}}",
+      "withMinutes": "{{activity}} {{minutes}} min"
+    },
+    "weight": {
+      "title": "Average weekly weight",
+      "week": "Week",
+      "thisWeek": "This week · {{range}}",
+      "lastWeek": "Last week · {{range}}",
+      "field": "Average weight",
+      "save": "Save weight",
+      "invalid": "Enter a weight between 20 and 300 kg.",
+      "saved": "Weight saved · {{range}}",
+      "previous": "Previous entry ({{range}}): {{kg}} kg"
+    }
+  },
+  "blocksDay": {
+    "reviewToday": "Review today",
+    "reviewIn_one": "Review: {{date}} (tomorrow)",
+    "reviewIn_other": "Review: {{date}} (in {{count}} days)",
+    "checklist": "Exercises · {{done}}/{{total}}",
+    "timesPerWeek": "{{dose}} · {{times}} days a week",
+    "warning": "Above {{threshold}}/10: go easier on whatever loads that area.",
+    "note": "Note for the day",
+    "noteSaved": "Note saved"
+  },
+  "session": {
+    "title": "Session",
+    "when": "{{date}} · {{time}}",
+    "inProgress": "In progress",
+    "finished": "Finished",
+    "empty": "No exercises yet.",
+    "notFound": "Session not found",
+    "backToToday": "Back to Today",
+    "progress": "{{done}} of {{total}} done",
+    "deloadNotice": "Deload week. Fewer sets and RIR 3-4: the usual weight or 10 % less. It does not count for records.",
+    "readiness": "How do you feel?",
+    "readinessScale": "1 awful · 5 great",
+    "finishedHint": "Session finished. You can correct any data: it is saved immediately.",
+    "effectiveSets": "Effective sets",
+    "volume": "Volume",
+    "exercise": {
+      "basic": "Basic",
+      "isolation": "Isolation",
+      "optional": "Optional",
+      "done": "Done",
+      "reps": "{{range}} reps",
+      "rir": "RIR {{rir}}",
+      "lastTime": "Last time ({{date}}): {{sets}}",
+      "noLast": "No previous records",
+      "lastSet": "{{weight}} kg × {{reps}}",
+      "straps": "With straps",
+      "band": "Band",
+      "backoff": "Suggested back-off: {{weight}} kg (−10 % of top)",
+      "addWarmup": "+ Warm-up",
+      "addExtra": "+ Extra set",
+      "note": "Note",
+      "noteFilled": "Note ✎",
+      "summary": "{{weight}} × {{reps}}",
+      "moveUp": "Move {{name}} up",
+      "moveDown": "Move {{name}} down",
+      "removeExercise": "Remove exercise",
+      "outside": "Outside the routine"
+    },
+    "hint": {
+      "increase": "Go up to {{weight}} kg",
+      "hold": "Repeat {{weight}} kg and aim for {{reps}} reps",
+      "deload": "Deload: usual weight or 10 % less",
+      "thinnerBand": "Try a thinner band (or none)",
+      "sameBand": "Same band: aim for {{reps}} reps"
+    },
+    "row": {
+      "set": "Set",
+      "previous": "Previous",
+      "weight": "kg",
+      "added": "Added",
+      "reps": "Reps",
+      "rir": "RIR",
+      "noCount": "doesn't count",
+      "role": {
+        "approach": "Approach",
+        "top": "Top",
+        "backoff": "Back-off",
+        "straight": "Set",
+        "bilbo": "Bilbo",
+        "extra": "Extra",
+        "dropset": "Dropset"
+      },
+      "markDone": "Mark set done",
+      "isDone": "Set done (tap to remove)",
+      "weightOf": "Weight of set {{name}}",
+      "addedOf": "Added weight of set {{name}}",
+      "repsOf": "Reps of set {{name}}",
+      "rirOf": "RIR of set {{name}}",
+      "typeOf": "Type of set {{name}}: {{type}}",
+      "typeTitle": "Set type",
+      "types": {
+        "warmup": "Warm-up",
+        "effective": "Effective",
+        "dropset": "Dropset"
+      },
+      "remove": "Remove",
+      "removeOf": "Remove set {{name}}"
+    },
+    "notes": {
+      "exercise": "Exercise note",
+      "exclude": "Does not count for progression",
+      "reason": "Reason",
+      "reasons": {
+        "machine-busy": "Machine busy",
+        "missing-plates": "Missing plates",
+        "other-band": "Other band",
+        "other": "Other"
+      },
+      "session": "Session notes"
+    },
+    "actions": {
+      "finish": "Finish session",
+      "reopen": "Mark as in progress",
+      "delete": "Delete session",
+      "details": "Session details",
+      "json": "Download JSON"
+    },
+    "toast": {
+      "saved": "Session saved",
+      "savedRecords_one": "Session saved · {{count}} record",
+      "savedRecords_other": "Session saved · {{count}} records",
+      "deleted": "Session deleted",
+      "failed": "Could not save. Try again.",
+      "rowRemoved": "Set removed",
+      "rowRestored": "Set restored",
+      "exerciseRemoved": "Exercise removed",
+      "exerciseRestored": "Exercise restored",
+      "restored": "Session restored",
+      "undo": "Undo",
+      "cannotUndo": "Cannot undo: there is new data"
+    },
+    "dialog": {
+      "cancel": "Cancel",
+      "unsaveTitle": "Remove this set from the log?",
+      "unsaveConfirm": "Remove",
+      "removeTitle": "Remove set {{name}}?",
+      "removeMessage": "What was logged will be deleted ({{set}}). The routine does not change.",
+      "removeConfirm": "Remove",
+      "strapsTitle_one": "Also correct the set already saved?",
+      "strapsTitle_other": "Also correct the {{count}} sets already saved?",
+      "strapsFix_one": "Correct the saved one",
+      "strapsFix_other": "Correct the {{count}} saved",
+      "strapsOnlyNext": "Only the next ones",
+      "deleteTitle": "Delete this session?",
+      "deleteMessage": "The session and all its sets and notes will be deleted.",
+      "deleteConfirm": "Delete",
+      "removeExerciseTitle": "Remove {{name}} from this session?",
+      "removeExerciseSets_one": "Its set will be deleted. The routine does not change.",
+      "removeExerciseSets_other": "Its {{count}} sets will be deleted. The routine does not change.",
+      "removeExerciseNote": "Its note will be deleted. The routine does not change.",
+      "removeExerciseSetsAndNote_one": "Its set and its note will be deleted. The routine does not change.",
+      "removeExerciseSetsAndNote_other": "Its {{count}} sets and its note will be deleted. The routine does not change.",
+      "removeExerciseConfirm": "Remove",
+      "routineTitle": "Change the session to {{name}}?",
+      "routineMessage": "The exercise list will become that of the routine. The sets already logged are kept.",
+      "routineConfirm": "Change"
+    },
+    "add": {
+      "button": "+ Add exercise",
+      "title": "Add exercise",
+      "search": "Search exercise",
+      "group": "Muscle group",
+      "equipment": "Equipment",
+      "kind": "Type",
+      "others": "Others",
+      "straps": "Straps",
+      "custom": "Created by me",
+      "inRoutine": "In a routine",
+      "results": "Exercises",
+      "none": "No exercise matches",
+      "already": "Already in the session"
+    },
+    "details": {
+      "title": "Session details",
+      "date": "Date",
+      "start": "Start",
+      "end": "End",
+      "routine": "Routine",
+      "save": "Save",
+      "errors": {
+        "future": "The date cannot be in the future",
+        "endBeforeStart": "The end cannot be earlier than the start",
+        "invalid": "Check the date and the hours"
+      }
+    },
+    "rest": {
+      "title": "Rest",
+      "next": "Next: {{name}}",
+      "go": "Go for the next set!",
+      "minus": "−15 s",
+      "plus": "+15 s",
+      "close": "Close rest",
+      "started": "Rest of {{time}}"
+    },
+    "remote": {
+      "notice": "There are changes from another device in this session.",
+      "close": "Close"
     }
   }
 }

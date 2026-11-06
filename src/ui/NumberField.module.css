@@ -83,3 +83,8 @@
   font-weight: var(--fw-semibold);
   color: var(--danger);
 }
+
+.compact .input {
+  padding: 0 var(--space-1);
+  font-size: var(--fs-lg);
+}
