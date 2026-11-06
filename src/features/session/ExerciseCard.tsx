@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   backoffWeight,
@@ -31,6 +31,7 @@ import { Switch } from '../../ui/Switch';
 import { Tag } from '../../ui/Tag';
 import { TextArea, TextField } from '../../ui/TextField';
 import { Button } from '../../ui/Button';
+import { IconButton } from '../../ui/IconButton';
 import styles from './ExerciseCard.module.css';
 import { SetRow } from './SetRow';
 import type { SessionActions } from './useSessionActions';
@@ -45,6 +46,11 @@ interface ExerciseCardProps {
   reference: HistoryEntry | undefined;
   deload: boolean;
   drafts: Record<string, RowDraft> | undefined;
+  /** Where the card is in the session, to enable "up" and "down". */
+  isFirst: boolean;
+  isLast: boolean;
+  /** The exercise was just added: take the focus (once no sheet is open). */
+  focusHeading: boolean;
   actions: SessionActions;
 }
 
@@ -56,6 +62,9 @@ export function ExerciseCard({
   reference,
   deload,
   drafts,
+  isFirst,
+  isLast,
+  focusHeading,
   actions,
 }: ExerciseCardProps) {
   const { t } = useTranslation();
@@ -71,6 +80,16 @@ export function ExerciseCard({
   );
   const progress = exerciseProgress(rows);
   const complete = isExerciseComplete(progress);
+
+  // An exercise just added takes the focus and scrolls into view.
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const { clearExerciseFocus } = actions;
+  useEffect(() => {
+    if (!focusHeading) return;
+    toggleRef.current?.focus();
+    toggleRef.current?.scrollIntoView({ block: 'center' });
+    clearExerciseFocus();
+  }, [focusHeading, clearExerciseFocus]);
 
   // Completed exercises fold; one that stops being complete (a set removed) unfolds again.
   const [open, setOpen] = useState(!complete);
@@ -176,18 +195,39 @@ export function ExerciseCard({
 
   return (
     <Card element="article" className={styles.card}>
-      <h3 className={styles.heading}>
-        <button
-          type="button"
-          className={styles.toggle}
-          aria-expanded={open}
-          onClick={() => {
-            setOpen(!open);
-          }}
-        >
-          {name}
-        </button>
-      </h3>
+      <div className={styles.top}>
+        <h3 className={styles.heading}>
+          <button
+            ref={toggleRef}
+            type="button"
+            className={styles.toggle}
+            aria-expanded={open}
+            onClick={() => {
+              setOpen(!open);
+            }}
+          >
+            {name}
+          </button>
+        </h3>
+        <div className={styles.tools}>
+          <IconButton
+            icon="chevronUp"
+            label={t('session.exercise.moveUp', { name })}
+            disabled={isFirst}
+            onClick={() => {
+              void actions.moveExercise(exerciseId, -1);
+            }}
+          />
+          <IconButton
+            icon="chevronDown"
+            label={t('session.exercise.moveDown', { name })}
+            disabled={isLast}
+            onClick={() => {
+              void actions.moveExercise(exerciseId, 1);
+            }}
+          />
+        </div>
+      </div>
       <div className={styles.tags}>
         {exercise && (
           <Tag>
@@ -199,6 +239,7 @@ export function ExerciseCard({
           </Tag>
         )}
         {item.optional && <Tag>{t('session.exercise.optional')}</Tag>}
+        {item.added && <Tag tone="warning">{t('session.exercise.outside')}</Tag>}
         {complete && <Tag tone="success">{t('session.exercise.done')}</Tag>}
       </div>
 
@@ -318,6 +359,14 @@ export function ExerciseCard({
               {t('session.exercise.addExtra')}
             </Button>
             <NoteButton exerciseId={exerciseId} note={note} actions={actions} />
+            <Button
+              variant="danger"
+              onClick={() => {
+                actions.requestRemoveExercise(exerciseId, name, sets.length, note !== undefined);
+              }}
+            >
+              {t('session.exercise.removeExercise')}
+            </Button>
           </div>
         </>
       )}

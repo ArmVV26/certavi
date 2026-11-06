@@ -13,7 +13,7 @@ import {
 } from '../../domain';
 import type { CertaviDb, SyncTrigger } from '../db';
 import { addAttempt, lastSuccessAt } from './attemptLog';
-import { commitResponse } from './commit';
+import { commitResponse, type AppliedChange } from './commit';
 import { keepaliveBatch, nextBatch, queueEverything, readSince } from './queue';
 import { restoreBackup } from './restore';
 import { isValidKey, normalizeKey, type KeyStore } from './syncKey';
@@ -61,6 +61,11 @@ export interface SyncEngine {
   getState: () => SyncState;
   /** For `useSyncExternalStore`. */
   subscribe: (listener: () => void) => () => void;
+  /**
+   * Calls the listener with what a sync wrote that came from the server (other devices); this
+   * device's own records coming back are not reported. Returns the unsubscribe function.
+   */
+  subscribeRemote: (listener: (changes: AppliedChange[]) => void) => () => void;
   /** Starts watching the queue and runs the first sync. */
   start: () => void;
   stop: () => void;
@@ -125,6 +130,7 @@ export function createSyncEngine({
     error: null,
   };
   const listeners = new Set<() => void>();
+  const remoteListeners = new Set<(changes: AppliedChange[]) => void>();
   let running: Promise<void> | null = null;
   let rerun: SyncTrigger | null = null;
   let timer: { handle: unknown; kind: TimerKind } | null = null;
@@ -214,6 +220,9 @@ export function createSyncEngine({
         }
         if (key !== activeKey) return; // the key changed meanwhile: this answer is stale
         const result = await commitResponse(db, batch.entries, response);
+        if (result.changes.length > 0) {
+          for (const listener of remoteListeners) listener(result.changes);
+        }
         sent += batch.records.length;
         received += response.records.length;
         remaining = await db.pending.count();
@@ -283,6 +292,13 @@ export function createSyncEngine({
       listeners.add(listener);
       return () => {
         listeners.delete(listener);
+      };
+    },
+
+    subscribeRemote(listener) {
+      remoteListeners.add(listener);
+      return () => {
+        remoteListeners.delete(listener);
       };
     },
 

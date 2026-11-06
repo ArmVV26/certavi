@@ -597,7 +597,10 @@ test.describe('active session', { tag: '@all-engines' }, () => {
     const r = rows(inc);
     const n = await r.count();
     expect(n).toBeGreaterThan(1);
-    const heading = inc.getByRole('button', { name: 'Press inclinado con mancuernas' });
+    const heading = inc.getByRole('button', {
+      name: 'Press inclinado con mancuernas',
+      exact: true,
+    });
 
     // AC-19: it folds when the last working row is saved.
     for (let i = 0; i < n - 1; i++) await logSet(inc, i, '20', '10');

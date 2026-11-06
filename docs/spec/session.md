@@ -17,10 +17,11 @@ moving. None of this changes the routine.
 How a session is started is described in [today.md](today.md). The rules behind "last time", the
 progression hint, the back-off and what counts as an effective set are in [rules.md](rules.md).
 
-**Not in this branch** (see §5): rest timer, adding or reordering exercises, editing date, hours
-and routine, the "changes from another device" banner, downloading the session as JSON and
-"Undo". A **free session** can be started and finished here, but it cannot get exercises until
-the next branch.
+The screen also has the **session tools**: a **rest timer** after each new set of today's session
+(§2.6), **adding, moving and removing exercises** with a filter (§2.7), **editing the date, the
+hours and the routine** (§2.8), a **banner** when another device changes the session (§2.9),
+**downloading the session as JSON** (§2.4) and **"Undo"** after removing a row, an exercise or
+the session (§2.5). A **free session** gets its exercises with "+ Añadir ejercicio".
 
 ## 2. Screens and elements
 
@@ -29,8 +30,9 @@ comma ("62,5 kg"), English a decimal point ("62.5 kg"). In both languages the fi
 comma or a point.
 
 The page keeps the existing header (title **"Sesión" / "Session"**, sync indicator, theme
-button). Below it, in this order: the session card (§2.1), the exercises (§2.2), the session
-notes (§2.3) and the actions (§2.4).
+button). Below it, in this order: the banner of §2.9 (only when it applies), the session card
+(§2.1), the exercises (§2.2), the button "+ Añadir ejercicio" (§2.7), the session notes (§2.3)
+and the actions (§2.4). The rest timer (§2.6) is a bar fixed above the navigation bar.
 
 ### 2.1 Session card
 
@@ -60,10 +62,15 @@ link **"Volver a Hoy" / "Back to Today"** (as before).
 ### 2.2 Exercise card
 
 One card per exercise, in the order of the session. The heading is the exercise name; tapping it
-folds or unfolds the card (it is a button, announced as expanded or collapsed).
+folds or unfolds the card (it is a button, announced as expanded or collapsed). Next to the
+heading: two icon buttons named with the exercise, **"Subir Remo en T" / "Move Remo en T up"** and
+**"Bajar Remo en T" / "Move Remo en T down"** (the first card cannot go up and the last cannot go
+down: those buttons are disabled). They stay visible when the card is folded (§2.7).
 
 - **Tags:** "Básico" / "Basic" or "Aislamiento" / "Isolation"; "Opcional" / "Optional" when the
-  routine marks it so; and **"Completo" / "Done"** when all its working rows are saved.
+  routine marks it so; **"Fuera de la rutina" / "Outside the routine"** when the exercise is not
+  part of the session's routine (it was added by hand, or kept when the routine changed; never
+  in a free session); and **"Completo" / "Done"** when all its working rows are saved.
 - **Plan line:** "3 series · 6-8 reps · RIR 1-2" / "3 sets · 6-8 reps · RIR 1-2": the working
   rows of the exercise that day (it follows the rows removed or changed), their rep targets and
   the routine's RIR.
@@ -118,8 +125,9 @@ folds or unfolds the card (it is a button, announced as expanded or collapsed).
   saved), "Back-off sugerido: 57,5 kg (−10 % del top)" / "Suggested back-off: 57.5 kg (−10 % of
   top)". It updates while the top weight is typed. It is only a text: it does not fill any field.
 - **Buttons:** "+ Calentamiento" / "+ Warm-up", "+ Serie extra" / "+ Extra set", "Nota" /
-  "Note" (reads "Nota ✎" / "Note ✎" when the exercise has a note). An extra set is an effective
-  row with the caption "Extra" that is added at the bottom.
+  "Note" (reads "Nota ✎" / "Note ✎" when the exercise has a note) and **"Quitar ejercicio" /
+  "Remove exercise"** (danger; §2.7). An extra set is an effective row with the caption "Extra"
+  that is added at the bottom.
 - **Note area** (opened by "Nota"): a text area **"Nota del ejercicio" / "Exercise note"**, a
   checkbox **"No cuenta para la progresión" / "Does not count for progression"** and, when it
   is checked, a choice of reason: "Máquina ocupada" / "Machine busy", "Faltan discos" / "Missing
@@ -137,6 +145,10 @@ A text area **"Notas de la sesión" / "Session notes"**, saved while typing (aft
 
 - **"Terminar sesión" / "Finish session"** (primary) while in progress; **"Marcar como en curso"
   / "Mark as in progress"** when finished.
+- **"Datos de la sesión" / "Session details"**: opens the sheet of §2.8.
+- **"Descargar JSON" / "Download JSON"**: downloads the session (its data, sets and exercise
+  notes) as `certavi-session-<date>-<id>.json`. It works offline. Typed values that were not
+  saved are not included.
 - **"Eliminar sesión" / "Delete session"** (danger).
 
 ### 2.5 Dialogs
@@ -155,6 +167,124 @@ All confirmations use Certavi's dialogs (never the browser's). Each has a primar
 - Delete the session: "¿Eliminar esta sesión?" / "Delete this session?" with "Se borrarán la
   sesión y todas sus series y notas." / "The session and all its sets and notes will be
   deleted." — **"Eliminar" / "Delete"**.
+- Remove an exercise that has saved sets or a note: "¿Quitar Remo en T de esta sesión?" /
+  "Remove Remo en T from this session?" with "Se borrarán sus 3 series y su nota. La rutina no
+  cambia." / "Its 3 sets and its note will be deleted. The routine does not change." —
+  **"Quitar" / "Remove"**. An exercise with nothing saved is removed at once.
+- Change the routine of the session (§2.8): "¿Cambiar la sesión a Pull?" / "Change the session
+  to Pull?" with "La lista de ejercicios pasará a ser la de esa rutina. Las series ya apuntadas
+  se mantienen." / "The exercise list will become that of the routine. The sets already logged
+  are kept." — **"Cambiar" / "Change"**.
+
+**Undo.** Every removal is followed, once it is done, by a notification with a **"Deshacer" /
+"Undo"** button that stays about 6 seconds (see AC-DIALOG-05) and brings back exactly what was
+removed, in its place, with its saved data:
+
+| Removed                      | Notification                             | After "Deshacer"                             |
+| ---------------------------- | ---------------------------------------- | -------------------------------------------- |
+| A row (empty or saved)       | "Serie quitada" / "Set removed"          | "Serie recuperada" / "Set restored"          |
+| An exercise                  | "Ejercicio quitado" / "Exercise removed" | "Ejercicio recuperado" / "Exercise restored" |
+| The session (shown on Today) | "Sesión eliminada" / "Session deleted"   | "Sesión recuperada" / "Session restored"     |
+
+Typed values that were not saved are never brought back. Un-saving a set (✓) has no "Undo": it
+already asks first and the row stays.
+
+### 2.6 Rest timer
+
+A bar fixed above the navigation bar, only on the session screen:
+
+- **Text:** "Descanso" / "Rest" and, when there is an empty working row left, **"Siguiente: Press
+  de pecho en máquina vertical" / "Next: …"** (the exercise of the next empty row, in screen
+  order); the time left as **m:ss** ("2:45"); a progress bar. It is announced politely to screen
+  readers when it starts and when it ends, not every second.
+- **Buttons:** **"−15 s"**, **"+15 s"** and **"Cerrar descanso" / "Close rest"** (✕).
+- **When it starts:** every time a **new** set is saved with ✓ (including ✓ on an empty row that
+  saves "Anterior"), if the session is **of today** and **in progress**. Saving again while it
+  runs restarts it. It does not start when a saved set is corrected, when the session is of
+  another day, or when it is finished. Finishing or deleting the session closes it.
+- **How long** (depends on the row just saved):
+
+  | Row saved           | Rest                                                                               |
+  | ------------------- | ---------------------------------------------------------------------------------- |
+  | Warm-up             | 60 s                                                                               |
+  | Approach ("Aprox.") | 90 s                                                                               |
+  | Top                 | the "basic" rest + 30 s                                                            |
+  | Any other row       | the "basic" rest for basic exercises, the "isolation" rest for isolation exercises |
+
+  The "basic" and "isolation" rests are set in Settings (§ "Descanso" of
+  [theme-language-navigation.md](theme-language-navigation.md)): 180 s and 120 s at first.
+
+- **−15 s / +15 s** change the time left (never below 0:15 while counting). After it ended, they
+  start it again with that time (at least 15 s).
+- **When the time is up:** the text becomes **"¡A por la siguiente serie!" / "Go for the next
+  set!"**, the bar is full, and, if **"Sonido al acabar el descanso"** is on, two short beeps
+  sound; if **"Vibración"** is on and the device can vibrate, it vibrates. The bar closes by
+  itself about 30 seconds later.
+- The time is counted from the moment it started, so it is right after the phone was locked or
+  the app was in the background (the beeps are not guaranteed in that case, above all on iPhone).
+  It is not kept after a reload.
+
+### 2.7 Adding, moving and removing exercises
+
+- **"+ Añadir ejercicio" / "+ Add exercise"** (below the cards; also in a free session, where it
+  is the way to get exercises) opens a bottom **sheet "Añadir ejercicio" / "Add exercise"** with:
+  - a search field **"Buscar ejercicio" / "Search exercise"** (ignores case and accents:
+    "remo" finds "Remo en T");
+  - filter chips, shown as pressed when on, tapping again clears them: **muscle group** (one),
+    **equipment** (one: "Discos" / "Plate-loaded", "Placas" / "Selectorized", "Mancuernas" /
+    "Dumbbell", "Polea" / "Cable", "Barra" / "Barbell", "Peso corporal" / "Bodyweight", "Otro" /
+    "Other"), **type** ("Básico" / "Basic" or "Aislamiento" / "Isolation"), **"Straps"**,
+    **"Creados por mí" / "Created by me"** and **"En alguna rutina" / "In a routine"**. All the
+    active filters apply together;
+  - the results: name, muscle group and equipment of each exercise, in alphabetical order, or
+    **"Ningún ejercicio coincide" / "No exercise matches"**. Archived exercises are not listed.
+    An exercise that is already in the session is shown disabled with **"Ya está en la sesión" /
+    "Already in the session"** (an exercise appears only once per session).
+- Tapping an exercise adds it **at the end** with its default scheme, closes the sheet, and the
+  new card is shown unfolded with the focus on it. In a session of a routine it is tagged
+  "Fuera de la rutina". The routine itself does not change.
+- **Moving:** "Subir ejercicio" / "Bajar ejercicio" swap the card with its neighbour. The order
+  is only for that session. Saved sets and notes do not change.
+- **Removing:** "Quitar ejercicio" (see the dialog in §2.5). The session summary
+  ("n ejercicios · m series") updates, and "Undo" is offered. The routine does not change.
+
+### 2.8 Session details
+
+The sheet **"Datos de la sesión" / "Session details"** (opened from the actions) has:
+
+- **"Fecha" / "Date"** (a date field), not later than today.
+- **"Inicio" / "Start"** (time) and, when the session is finished, **"Fin" / "End"** (time).
+  The times belong to the chosen date. "Fin" cannot be earlier than "Inicio".
+- **"Rutina" / "Routine"**: "Sesión libre" / "Free session" and the routines, with the current
+  one chosen.
+- **"Guardar" / "Save"** and **"Cancelar" / "Cancel"**. Errors show next to the field:
+  **"La fecha no puede ser futura" / "The date cannot be in the future"** and **"El fin no puede
+  ser anterior al inicio" / "The end cannot be earlier than the start"**; nothing is saved
+  while there is an error.
+
+Saving moves the session in Today, in the week and in the figures of the week. Changing the
+routine first asks for confirmation (§2.5) and then works like this: the exercise list becomes
+that of the new routine (a copy, reduced in a deload week); an exercise that is in both keeps
+its rows if it has saved sets, otherwise it takes the scheme of the new routine; an exercise
+that has saved sets or a note and is **not** in the new routine stays at the end tagged "Fuera
+de la rutina"; the other old exercises go away. With "Sesión libre", exercises with saved data
+stay and the rest go. **No saved set or note is ever lost by changing the routine.** A session
+of today can keep using the rest timer after the change; the date change to another day stops
+the timer.
+
+### 2.9 Changes from another device
+
+When a change **made on another device** reaches this device (sync) and affects this session
+(the session itself, one of its sets or one of its exercise notes), a notice appears at the top:
+**"Hay cambios de otro dispositivo en esta sesión." / "There are changes from another device in
+this session."** with a button **"Cerrar" / "Close"**.
+
+- The saved values on the screen are already updated when the notice shows (rows, notes,
+  readiness, finished state, exercises).
+- **What is typed and not saved is never touched.**
+- The notice stays until it is closed; if more changes arrive later, it shows again.
+- This device's own writes coming back from the server, and changes to other sessions, do not
+  show it.
 
 ## 3. Acceptance criteria
 
@@ -194,9 +324,8 @@ And the progress does not change.
 Given an exercise with an empty row
 When I type 0 in kg, 10 in reps and tap ✓
 Then the set is saved as 0 kg × 10
-And for a bodyweight exercise, leaving "Lastre" empty and typing 8 reps saves 0 kg × 8 (no seed
-routine has one: pull-ups stay outside the routines, so this is covered by component tests until
-exercises can be added to a session in the next branch).
+And for a bodyweight exercise (add one to a session with "+ Añadir ejercicio"), leaving "Lastre"
+empty and typing 8 reps saves 0 kg × 8.
 
 **AC-SESSION-06 · Reps must be positive**
 Given a row with 60 in kg and 0 or nothing in reps (and no "Anterior")
@@ -232,6 +361,8 @@ And if the third row was saved, it is now row 2 with its values.
 When I cancel the dialog, nothing changes.
 And an empty row is removed at once, without a dialog.
 And with the keyboard, focusing "Quitar serie 2" and activating it does the same.
+And after any removal a notification "Serie quitada" with "Deshacer" appears; tapping it shows
+"Serie recuperada" and the row is back in its place with its saved values (also after a reload).
 
 **AC-SESSION-10 · Un-save and edit a saved set**
 Given a saved row
@@ -303,7 +434,10 @@ When I tap "Eliminar sesión"
 Then the dialog asks for confirmation; "Cancelar" changes nothing
 When I confirm "Eliminar"
 Then I am taken to Today, which no longer counts that session
-And opening its address shows "Sesión no encontrada".
+And a notification "Sesión eliminada" with "Deshacer" appears there
+And opening its address shows "Sesión no encontrada"
+When I tap "Deshacer" before it goes away, "Sesión recuperada" appears, Today counts the session
+again and its address opens it with all its sets, notes and exercises.
 
 **AC-SESSION-19 · Completed exercises fold**
 Given an exercise with 2 working rows, one saved
@@ -314,6 +448,7 @@ When I tap its heading, it unfolds.
 **AC-SESSION-20 · Free session**
 Given a free session
 Then the card shows "Sesión libre" and "Sin ejercicios todavía."
+And "+ Añadir ejercicio" is shown (AC-SESSION-24)
 And "¿Cómo llegas?", the session notes, "Terminar sesión" and "Eliminar sesión" work as in a
 routine session.
 
@@ -344,6 +479,129 @@ When I choose "Efectiva" for a warm-up or dropset row, it is numbered again with
 "Serie"
 And the change is still there after a reload.
 
+**AC-SESSION-24 · Add an exercise to a free session**
+Given a free session with no exercises
+When I tap "+ Añadir ejercicio"
+Then a sheet "Añadir ejercicio" opens with the search field, the filter chips and the list of
+exercises
+When I tap "Remo en T"
+Then the sheet closes, a card "Remo en T" appears with its default rows, without the tag "Fuera de
+la rutina", the summary reads "1 ejercicio · …" (singular) and "Sin ejercicios todavía." is gone
+And I can log sets in it, and it is still there after a reload.
+
+**AC-SESSION-25 · Filter the exercises**
+Given the sheet "Añadir ejercicio" is open
+When I type "remo" in "Buscar ejercicio"
+Then only the exercises whose name contains it (any case, with or without accents) are listed
+When I also press the chip "Espalda" and the chip "Básico"
+Then only the basic back exercises matching the text are listed
+When I press "Straps" the list keeps only those with straps; when I press "Creados por mí" the
+list only has exercises I created (empty with the fresh install: "Ningún ejercicio coincide");
+"En alguna rutina" keeps those that are in some routine
+When I press a pressed chip again, its filter is cleared
+And exercises already in the session show "Ya está en la sesión" and cannot be chosen.
+
+**AC-SESSION-26 · Add an exercise to a routine session**
+Given a session of "Push"
+When I add "Remo en T" (not part of Push)
+Then it appears at the end of the cards with the tag "Fuera de la rutina", the summary and the
+progress count its rows ("8 ejercicios · …")
+And starting "Push" another day still gives the original 7 exercises
+And the tag stays after a reload.
+
+**AC-SESSION-27 · Move exercises**
+Given a session with exercises A, B and C
+Then "Subir A" and "Bajar C" are disabled
+When I tap "Bajar A"
+Then the order is B, A, C, and it is still B, A, C after a reload
+When I tap "Subir C", the order is B, C, A
+And sets and notes stay with their exercise, and the routine does not change.
+
+**AC-SESSION-28 · Remove an exercise and undo**
+Given "Remo en T" has 2 saved sets and a note
+When I tap "Quitar ejercicio" on it
+Then the dialog asks "¿Quitar Remo en T de esta sesión?" with "Se borrarán sus 2 series y su
+nota. La rutina no cambia."; "Cancelar" changes nothing
+When I confirm "Quitar", the card is gone, the summary and progress go down and "Ejercicio
+quitado" with "Deshacer" appears
+When I tap "Deshacer", "Ejercicio recuperado" appears and the card is back in the same place
+with its rows, its 2 saved sets and its note (also after a reload)
+And an exercise with nothing saved is removed without a dialog, with the same notification.
+
+**AC-SESSION-29 · Edit date and hours**
+Given a finished session of today that started at 18:00 and ended at 19:15
+When I open "Datos de la sesión", change "Fecha" to the day before, "Inicio" to 17:30 and "Fin"
+to 18:45, and tap "Guardar"
+Then the session card shows that day and 17:30, Today no longer counts it in today and counts it
+in that day, and everything is still there after a reload
+When I set "Fin" earlier than "Inicio", "El fin no puede ser anterior al inicio" shows and
+"Guardar" saves nothing
+When I set a date after today, "La fecha no puede ser futura" shows and nothing is saved
+And for a session in progress the sheet has no "Fin" field.
+
+**AC-SESSION-30 · Change the routine**
+Given a session of "Push" with sets saved in its first exercise and nothing in the others
+When I choose the routine "Pull" in "Datos de la sesión" and tap "Guardar"
+Then the dialog asks "¿Cambiar la sesión a Pull?"; "Cancelar" changes nothing
+When I confirm "Cambiar", the session reads "Pull", its cards are those of Pull, and the first
+exercise of Push, which has saved sets, stays at the end tagged "Fuera de la rutina" with its
+sets
+And the exercises of Push without sets are gone
+And an exercise that is in both routines and has saved sets keeps its rows and sets
+When I choose "Sesión libre", the heading reads "Sesión libre", the exercises with saved sets stay
+without the tag and the others go away.
+
+**AC-SESSION-31 · Download the session as JSON**
+Given a session with 2 saved sets and an exercise note
+When I tap "Descargar JSON"
+Then a file `certavi-session-<date>-<id>.json` is downloaded containing the session, its sets
+and its note, and no typed value that was not saved
+And it also works offline.
+
+**AC-SESSION-32 · The rest timer starts after a new set**
+Given an in-progress session of today, with the basic rest at 180 s and the isolation rest at
+120 s
+When I save the top row of a basic exercise with ✓
+Then the bar shows "Descanso", "Siguiente: …" and a time of 3:30 counting down
+When I save a warm-up row, the bar restarts at 1:00; an approach row, at 1:30; a back-off row of
+a basic exercise, at 3:00; any row of an isolation exercise, at 2:00
+And saving by ✓ on an empty row ("Anterior") also starts it.
+
+**AC-SESSION-33 · Rest timer controls and end**
+Given the bar is counting
+When I tap "+15 s" the time grows by 15 s; when I tap "−15 s" it shrinks by 15 s (never below
+0:15 while counting)
+When the time is up, the bar reads "¡A por la siguiente serie!"; with "Sonido al acabar el
+descanso" on, two beeps sound; with "Vibración" on and a device that vibrates, it vibrates
+And about 30 seconds later the bar closes by itself
+When I tap "Cerrar descanso" at any moment, the bar closes
+And after the time is up, "+15 s" starts the rest again with 15 s.
+
+**AC-SESSION-34 · When the timer does not start**
+Then the timer does not start when: I correct a set that was already saved; the session is of
+another day; the session is finished
+And finishing or deleting the session closes the bar if it is open
+And changing the date of the session to another day closes it
+And after a reload the bar is not there.
+
+**AC-SESSION-35 · Changes from another device**
+Given the session is open on this device and on another one with the same key
+When the other device saves a set in this session and syncs
+Then this device shows the saved set and the notice "Hay cambios de otro dispositivo en esta
+sesión."
+And a value typed here and not saved is still there, untouched
+When I tap "Cerrar", the notice goes away; when the other device changes something else in the
+session, it shows again
+And it does not show for this device's own changes, nor for changes to another session.
+
+**AC-SESSION-36 · English, dark mode and small screens for the tools**
+Given English and dark mode are on
+Then the rest bar, the sheets "Add exercise" and "Session details", the buttons of the cards, the
+notices and the notifications are in English, with correct contrast
+And at 390×844 there is no horizontal scroll, the rest bar does not cover the last card or the
+actions (the page can be scrolled until they show), and the sheets fit with their buttons
+reachable.
+
 ## 4. Edge cases
 
 - **Double tap on ✓**: saves the set once.
@@ -352,7 +610,28 @@ And the change is still there after a reload.
   kept; typed values are kept as drafts (AC-SESSION-16). Folded or unfolded state of the cards
   is not kept.
 - **The last row of an exercise cannot be removed** (it has no "Quitar" button); the exercise
-  itself is removed in the next branch.
+  itself is removed with "Quitar ejercicio".
+- **Removing the last exercise** of a routine session leaves it with no exercises ("Sin
+  ejercicios todavía.") and "+ Añadir ejercicio".
+- **Undo after something else changed**: "Deshacer" brings back what was removed even if other
+  rows or exercises changed meanwhile (a removed row goes back to its position and the rows
+  below move down; what was added later is not touched). If the same exercise was added again
+  in the meantime, nothing is restored and the notification says **"No se puede deshacer: ya
+  hay datos nuevos" / "Cannot undo: there is new data"**; the same message shows if the
+  session no longer exists. Un-doing the removal of the session does not depend on anything
+  else.
+- **Notifications are stacked**: removing two things in a row shows two notifications (at most
+  3 at once, see AC-DIALOG-05); each "Deshacer" only brings back its own.
+- **Reload while a notification with "Deshacer" is open**: the removal stays done and the
+  notification is gone (no "Undo" after a reload).
+- **Date and routine together**: changing both in one "Guardar" asks for the routine
+  confirmation once; cancelling that dialog saves neither.
+- **Another session with the same date and routine** may already exist: nothing is merged, both
+  stay.
+- **Rest timer in a deload week** uses the same times. **Two beeps** are played once per rest;
+  closing the bar before the time is up plays none.
+- **Vibration** needs a device that supports it (not iPhone's Safari): with the switch on and no
+  support, nothing happens and nothing fails.
 - **Removing a row that is the only one of its role** (e.g. the top set): the remaining rows keep
   their order and the numbers are recalculated.
 - **Dropset and records**: a dropset counts as an effective set and in volume, but not for the
@@ -370,12 +649,10 @@ And the change is still there after a reload.
 
 ## 5. Out of scope
 
-- Rest timer with beep and vibration (next branch).
-- Adding, removing and reordering exercises, with the filter; getting exercises in a free
-  session (next branch).
-- Editing the date, hours and routine of a session (next branch).
-- The "changes from another device" banner (next branch; until then, other devices' data
-  refreshes the saved values but never touches typed ones).
-- Downloading a session as JSON and "Undo" for removals (next branch).
+- A rest timer that survives a reload or works with the app closed (notifications), and a
+  per-exercise rest time.
+- Dragging exercises to reorder them (the buttons "Subir" / "Bajar" are the way), creating a new
+  exercise from the "Añadir ejercicio" sheet (Phase 6) and choosing a scheme when adding one.
+- "Undo" after a reload, and "Undo" for un-saving a set, changing a type or finishing.
 - Other set types (failure…), dragging rows to reorder them, tapping "Anterior" to fill the row.
 - The exercise detail page ("Ficha", Phase 6) and the calendar day view (Phase 7).

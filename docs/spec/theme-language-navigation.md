@@ -66,6 +66,17 @@ Card **"Apariencia" / "Appearance"** with two groups of options (radio buttons):
 - **"Tema" / "Theme":** "Automático" / "Automatic", "Claro" / "Light", "Oscuro" / "Dark".
 - **"Idioma" / "Language":** "Español", "English" (each in its own language).
 
+Card **"Descanso" / "Rest"** (between "Apariencia" and the data cards), for the rest timer of the
+session (see [session.md](session.md) §2.6):
+
+- **"Descanso en ejercicios básicos (s)" / "Rest after basic exercises (s)"** and **"Descanso en
+  aislamiento (s)" / "Rest after isolation exercises (s)"**: number fields in seconds, from 15 to
+  900, steps of 15 (180 and 120 at first). They sync between devices.
+- Switch **"Sonido al acabar el descanso" / "Sound when the rest ends"** (on at first).
+- Switch **"Vibración" / "Vibration"** (off at first) with the description **"No funciona en
+  iPhone." / "Does not work on iPhone."**
+- Sound and vibration belong to this device only (they are not synced).
+
 Card **"Desarrollo" / "Developer"** with a link **"Catálogo de componentes" / "Component
 catalog"** to `/dev/ui`.
 
@@ -187,6 +198,24 @@ The page's `theme-color` matches the background: `#f4f5f7` in light, `#0b0f14` i
 **AC-THEME-08 · Readable in both themes**
 Every page passes an automatic accessibility check (axe) with no serious or critical issues,
 including colour contrast, in light and in dark.
+
+### Rest settings
+
+**AC-REST-01 · Rest times**
+Given a fresh install and I am on Ajustes
+Then the card "Descanso" shows 180 in the basic field and 120 in the isolation field
+When I change the basic rest to 200 and the isolation rest to 90
+Then both values are still there after a reload
+And a value below 15 or above 900 is not accepted (the field shows the closest allowed value or
+marks an error) and the saved value does not change
+And with the sync key set, the new values reach another device with the same key.
+
+**AC-REST-02 · Sound and vibration**
+Given a fresh install
+Then "Sonido al acabar el descanso" is on and "Vibración" is off, with "No funciona en iPhone."
+When I turn the sound off and the vibration on
+Then they are still like that after a reload
+And they do not travel to other devices.
 
 ### Language
 

@@ -61,6 +61,11 @@ export function setDraft(
   return Object.keys(next).length === 0 ? others : { ...others, [exerciseId]: next };
 }
 
+/** The drafts without those of one exercise (it left the session). */
+export function dropExerciseDrafts(drafts: SessionDrafts, exerciseId: string): SessionDrafts {
+  return Object.fromEntries(Object.entries(drafts).filter(([key]) => key !== exerciseId));
+}
+
 /** Moves the drafts of an exercise to follow an edit of its rows; those of removed rows go. */
 export function remapDrafts(
   drafts: SessionDrafts,

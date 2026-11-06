@@ -7,10 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Today screen (Phase 5, branch 1 of 3: `feature/today`).
+## [0.6.0] - 2026-11-06
+
+Today screen and active session (Phase 5).
 
 ### Added
 
+- Active session (`feature/active-session`; spec `docs/spec/session.md`, AC-SESSION-01..24):
+  each exercise is a list of rows (warm-up, effective, dropset, extra) with the warm-up symbol
+  C/W; "previous" reference; ✓ validation; a row is removed by swiping or with a keyboard
+  "Remove" button; drafts survive reloads on the device; finish and delete session; new set type
+  `dropset`; gym_app sessions are converted on import.
+- Session tools (`feature/session-tools`): session details sheet (date, start and end time,
+  routine; confirmation when the routine changes); add, move and remove exercises with a filter,
+  with undo; download one session as JSON; rest timer after each saved set (180, 120 or 60 s by
+  row kind, +30 s after a top set, −15 s / +15 s, sound and vibration when it ends); notice
+  "changes from another device" that refreshes saved data and never touches typed values.
+- Rest settings card (`src/features/settings/RestCard.tsx`): rest times 15–900 s (synced) and
+  sound and vibration (this device only); `src/data/restSettings.ts`.
+- Sync: `SyncEngine.subscribeRemote` and `CommitResult.changes` (ADR-0004, decision 10).
 - Functional spec `docs/spec/today.md` (AC-TODAY-01..19).
 - Day plan rule (`src/domain/rules/dayPlan.ts`: `weekSchedule`, `dayPlan`, `routineDays`):
   routines keep their weekday; Thursday is "active rest" (quick activities swimming and
@@ -43,6 +58,10 @@ Today screen (Phase 5, branch 1 of 3: `feature/today`).
 
 ### Changed
 
+- E2E in CI: the `e2e` job is a matrix (chromium, webkit 1/2, webkit 2/2) run one after another;
+  the WebKit project only runs tests tagged `@all-engines` (`playwright.config.ts`, `ci.yml`).
+- `downloadFile` moved from `src/features/settings/download.ts` to the shared layer
+  `src/ui/download.ts`.
 - Hiking week works as in gym_app: Sunday is hiking, Lower A is dropped and Lower B becomes
   Lower Full (`weekRoutines` in `src/domain/rules/weekPlan.ts`; `livePlan` and
   `weekPlanSummary` take `hiking`). A normal hiking week plans 86 sets in 4 sessions; a week of
@@ -53,6 +72,13 @@ Today screen (Phase 5, branch 1 of 3: `feature/today`).
 - Tests: RTL `asyncUtilTimeout` raised to 5 s (`src/test/setup.ts`) and the `ui` Vitest
   project's `testTimeout` to 15 s (`vite.config.ts`), because under `test:coverage` component
   tests failed at random when a write → live query → re-render took over 1 s.
+
+### Fixed
+
+- Settings: a value typed right after a previous save could be overwritten when that save was
+  read back late (slow WebKit); covered by a unit test.
+- Today: activities are listed in save order, and the activity label shows the activity
+  instead of the planned routine.
 
 ## [0.5.0] - 2026-11-04
 
