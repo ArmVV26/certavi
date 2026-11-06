@@ -18,7 +18,7 @@ import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import { cx } from '../../ui/cx';
 import { Icon } from '../../ui/Icon';
 import { useToast } from '../../ui/ToastContext';
-import { downloadFile } from './download';
+import { downloadFile } from '../../ui/download';
 import styles from './SyncPage.module.css';
 import { errorKeyOf } from './syncText';
 
