@@ -20,7 +20,9 @@ const WEBKIT_EXPECT_TIMEOUT = 15_000;
 // Limits that keep a local run from saturating the PC (incident of 2026-11-02, see context.md):
 // - `npm run e2e`     → Chromium only (every test), 2 workers, stops after 3 failures, 5 min cap.
 // - `npm run e2e:all` → Chromium (every test) + WebKit (only tests tagged `@all-engines`),
-//                       10 min cap (passed with --global-timeout).
+//                       20 min cap (passed with --global-timeout). It was 10 min until Phase 5, but 93
+//                       Chromium tests (~3 min with 2 workers) + the WebKit ones (~8 min) no longer fit;
+//                       the cap hit whichever test was running (AC-SESSION-27 / 28).
 // - CI                → a matrix of jobs run one after another (chromium; webkit shard 1/2 and
 //                       2/2), each with Playwright's default workers (1 on a 2-vCPU runner)
 //                       and 2 retries.

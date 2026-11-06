@@ -275,7 +275,7 @@ sessions (`session.ts`), Today helpers (`today.ts`) and blocks of the day (`bloc
   own browser and uploads its own report. Locally **2 workers**, no retries, `maxFailures` 3;
   CI uses default workers (1 on a 2-vCPU runner) + 2 retries.
   30 s per test (60 s in WebKit: the project's `timeout` in `playwright.config.ts`; no
-  `test.slow` for WebKit) and 5 s per assertion (15 s in WebKit: the project's `expect.timeout`); global timeout 5 min (`npm run e2e`) / 10 min (`npm run e2e:all`). Reporters:
+  `test.slow` for WebKit) and 5 s per assertion (15 s in WebKit: the project's `expect.timeout`); global timeout 5 min (`npm run e2e`) / 20 min (`npm run e2e:all`). Reporters:
   locally `dot` + `html`, in CI `list` + `html` (`open: 'never'`, report port 9323). Chromium
   `deviceScaleFactor` 2; never `channel: 'chrome'`.
 - Vitest prints the `dot` reporter (`test`, `test:coverage`) and coverage uses `text-summary` +
@@ -312,7 +312,7 @@ sessions (`session.ts`), Today helpers (`today.ts`) and blocks of the day (`bloc
 | `npm run test:watch`              | Vitest in watch mode (user only — never leave it running)                                  |
 | `npm run test:coverage`           | Vitest single run with v8 coverage; fails if `src/domain` or `src/data` < 90 % (CI)        |
 | `npm run e2e`                     | Playwright, **Chromium only** (builds, serves, tests, stops the server)                    |
-| `npm run e2e:all`                 | Playwright, Chromium + WebKit (`@all-engines` only); 10 min cap; CI runs it on PRs to main |
+| `npm run e2e:all`                 | Playwright, Chromium + WebKit (`@all-engines` only); 20 min cap; CI runs it on PRs to main |
 | `npm run format` / `format:check` | Prettier write / check                                                                     |
 | `npm run ports:check`             | Lists which of 5173 / 4173 / 8888 / 8787 / 9323 are busy and by whom; exit 1 if any        |
 | `npm run ports:kill`              | Frees those ports                                                                          |
