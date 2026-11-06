@@ -40,21 +40,44 @@ function Times({ stored }: { stored: RestTimes }) {
   const [compound, setCompound] = useState<number | null>(stored.compound);
   const [isolation, setIsolation] = useState<number | null>(stored.isolation);
   const [synced, setSynced] = useState(stored);
+  // Saves made from this screen that the live query has not read back yet (a slow browser can
+  // take a while). Reading one of them back is not a change from outside.
+  const [unread, setUnread] = useState<RestTimes[]>([]);
 
-  // A change that arrives from outside (sync) replaces the field that changed.
-  if (stored.compound !== synced.compound || stored.isolation !== synced.isolation) {
-    if (stored.compound !== synced.compound) setCompound(stored.compound);
-    if (stored.isolation !== synced.isolation) setIsolation(stored.isolation);
+  if (!sameTimes(stored, synced)) {
     setSynced(stored);
+    const own = unread.findIndex((times) => sameTimes(times, stored));
+    if (own >= 0) {
+      // Our own save: the fields already show it, and may already hold the next typed value.
+      setUnread(unread.slice(own + 1));
+    } else {
+      // A change that arrives from outside (sync) replaces the field that changed.
+      if (stored.compound !== synced.compound) setCompound(stored.compound);
+      if (stored.isolation !== synced.isolation) setIsolation(stored.isolation);
+      setUnread([]);
+    }
   }
+
+  const inRange = (seconds: number) => Math.min(MAX_REST, Math.max(MIN_REST, Math.round(seconds)));
 
   /** Keeps a whole number from 15 to 900; an empty field goes back to the saved value. */
   const settle = (key: keyof RestTimes) => {
+    // The latest save, even if `stored` (the database read back) does not hold it yet.
+    const saved = unread[unread.length - 1] ?? stored;
     const typed = key === 'compound' ? compound : isolation;
-    const next =
-      typed === null ? stored[key] : Math.min(MAX_REST, Math.max(MIN_REST, Math.round(typed)));
+    const next = typed === null ? saved[key] : inRange(typed);
     (key === 'compound' ? setCompound : setIsolation)(next);
-    if (next !== stored[key]) void saveRestTimes(db, { ...stored, [key]: next });
+    // The other time comes from this screen too, so a save never writes an old value back.
+    const other = key === 'compound' ? isolation : compound;
+    const otherKey = key === 'compound' ? 'isolation' : 'compound';
+    const times = {
+      ...saved,
+      [key]: next,
+      [otherKey]: other === null ? saved[otherKey] : inRange(other),
+    };
+    if (sameTimes(times, saved)) return;
+    setUnread([...unread, times]);
+    void saveRestTimes(db, times);
   };
 
   return (
@@ -87,6 +110,10 @@ function Times({ stored }: { stored: RestTimes }) {
       />
     </>
   );
+}
+
+function sameTimes(a: RestTimes, b: RestTimes): boolean {
+  return a.compound === b.compound && a.isolation === b.isolation;
 }
 
 function Alerts() {
