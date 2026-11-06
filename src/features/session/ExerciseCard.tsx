@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import {
   backoffWeight,
@@ -377,7 +378,7 @@ export function ExerciseCard({
 function hintText(
   advice: ProgressionAdvice,
   kg: (value: number) => string,
-  t: ReturnType<typeof useTranslation>['t'],
+  t: TFunction,
 ): string | null {
   switch (advice.action) {
     case 'increase':
