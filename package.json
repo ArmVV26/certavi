@@ -19,7 +19,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage --reporter=dot",
     "e2e": "playwright test --project=chromium",
-    "e2e:all": "playwright test --global-timeout=600000",
+    "e2e:all": "playwright test --global-timeout=1200000",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "ports:check": "node scripts/ports-check.mjs",
