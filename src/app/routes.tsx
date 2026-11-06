@@ -1,6 +1,9 @@
 import type { RouteObject } from 'react-router';
 import { CalendarPage } from '../features/calendar/CalendarPage';
 import { DevUiPage } from '../features/dev-ui/DevUiPage';
+import { ExerciseDetailPage } from '../features/exercises/ExerciseDetailPage';
+import { ExerciseFormPage } from '../features/exercises/ExerciseFormPage';
+import { ExercisesPage } from '../features/exercises/ExercisesPage';
 import { ProgressPage } from '../features/progress/ProgressPage';
 import { RoutinesPage } from '../features/routines/RoutinesPage';
 import { SessionPage } from '../features/session/SessionPage';
@@ -23,6 +26,22 @@ export const routes: RouteObject[] = [
       { path: 'session/:sessionId', element: <SessionPage />, handle: handle('session.title') },
       { path: 'calendar', element: <CalendarPage />, handle: handle('nav.calendar') },
       { path: 'routines', element: <RoutinesPage />, handle: handle('nav.routines') },
+      { path: 'exercises', element: <ExercisesPage />, handle: handle('exercises.title') },
+      {
+        path: 'exercises/new',
+        element: <ExerciseFormPage />,
+        handle: handle('exercises.form.createTitle'),
+      },
+      {
+        path: 'exercises/:exerciseId',
+        element: <ExerciseDetailPage />,
+        handle: handle('exercises.detail.title'),
+      },
+      {
+        path: 'exercises/:exerciseId/edit',
+        element: <ExerciseFormPage />,
+        handle: handle('exercises.form.editTitle'),
+      },
       { path: 'progress', element: <ProgressPage />, handle: handle('nav.progress') },
       { path: 'settings', element: <SettingsPage />, handle: handle('nav.settings') },
       { path: 'settings/sync', element: <SyncPage />, handle: handle('settings.sync.title') },

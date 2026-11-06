@@ -3,17 +3,41 @@ import type { IconName } from '../ui/Icon';
 
 export type NavKey = 'today' | 'calendar' | 'routines' | 'progress' | 'settings';
 
-export const NAV_ITEMS: readonly { to: string; key: NavKey; icon: IconName }[] = [
+interface NavItem {
+  to: string;
+  key: NavKey;
+  icon: IconName;
+  /** Other sections that belong to this tab (the exercises live inside Routines). */
+  also?: readonly string[];
+}
+
+export const NAV_ITEMS: readonly NavItem[] = [
   { to: '/', key: 'today', icon: 'today' },
   { to: '/calendar', key: 'calendar', icon: 'calendar' },
-  { to: '/routines', key: 'routines', icon: 'routines' },
+  { to: '/routines', key: 'routines', icon: 'routines', also: ['/exercises'] },
   { to: '/progress', key: 'progress', icon: 'progress' },
   { to: '/settings', key: 'settings', icon: 'settings' },
 ];
 
+/** The tab is the current one: the path is its own or inside one of its sections. */
+export function isNavItemActive(item: NavItem, pathname: string): boolean {
+  if (item.to === '/') return pathname === '/';
+  return [item.to, ...(item.also ?? [])].some(
+    (base) => pathname === base || pathname.startsWith(`${base}/`),
+  );
+}
+
 /** i18n key of a page title. Each route declares one in its `handle`. */
 export type TitleKey =
-  `nav.${NavKey}` | 'session.title' | 'settings.sync.title' | 'devUi.title' | 'notFound.title';
+  | `nav.${NavKey}`
+  | 'session.title'
+  | 'settings.sync.title'
+  | 'devUi.title'
+  | 'notFound.title'
+  | 'exercises.title'
+  | 'exercises.detail.title'
+  | 'exercises.form.createTitle'
+  | 'exercises.form.editTitle';
 
 export interface RouteHandle {
   titleKey: TitleKey;

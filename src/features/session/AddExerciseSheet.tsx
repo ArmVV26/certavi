@@ -1,18 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  EMPTY_EXERCISE_FILTER,
-  EQUIPMENT,
-  EXERCISE_KINDS,
-  MUSCLE_GROUPS,
-  filterExercises,
-  type Exercise,
-  type ExerciseFilter,
-} from '../../domain';
+import { filterExercises, type Exercise } from '../../domain';
 import { resolveText } from '../../i18n/text';
-import { Chip } from '../../ui/Chip';
+import { Button } from '../../ui/Button';
 import { Sheet } from '../../ui/Sheet';
-import { TextField } from '../../ui/TextField';
+import { ExerciseFilters } from '../exercises/ExerciseFilters';
+import { useExerciseFilter } from '../exercises/useExerciseFilter';
 import styles from './AddExerciseSheet.module.css';
 
 interface AddExerciseSheetProps {
@@ -25,6 +18,8 @@ interface AddExerciseSheetProps {
   /** Exercises that are in at least one routine (for the "in a routine" filter). */
   routineExerciseIds: ReadonlySet<string>;
   onChoose: (exerciseId: string) => void;
+  /** Opens the form to create an exercise, which is then added to the session. */
+  onCreate?: () => void;
 }
 
 /** Bottom sheet to pick an exercise to add to the session, with search and filters. */
@@ -39,13 +34,10 @@ export function AddExerciseSheet({ open, onClose, ...rest }: AddExerciseSheetPro
 
 type Rest = Omit<AddExerciseSheetProps, 'open' | 'onClose'>;
 
-function Picker({ exercises, inSession, routineExerciseIds, onChoose }: Rest) {
+function Picker({ exercises, inSession, routineExerciseIds, onChoose, onCreate }: Rest) {
   const { t } = useTranslation();
   // The sheet content is only mounted while it is open, so every opening starts without filters.
-  const [filter, setFilter] = useState<ExerciseFilter>(EMPTY_EXERCISE_FILTER);
-  const change = (patch: Partial<ExerciseFilter>) => {
-    setFilter((current) => ({ ...current, ...patch }));
-  };
+  const { filter, change } = useExerciseFilter();
 
   const results = useMemo(
     () =>
@@ -58,84 +50,13 @@ function Picker({ exercises, inSession, routineExerciseIds, onChoose }: Rest) {
 
   return (
     <div className={styles.picker}>
-      <TextField
-        label={t('session.add.search')}
-        type="search"
-        autoComplete="off"
-        value={filter.text}
-        onChange={(event) => {
-          change({ text: event.target.value });
-        }}
-      />
+      {onCreate && (
+        <Button variant="secondary" icon="plus" onClick={onCreate}>
+          {t('session.add.create')}
+        </Button>
+      )}
 
-      <div role="group" aria-label={t('session.add.group')} className={styles.chips}>
-        {MUSCLE_GROUPS.map((group) => (
-          <Chip
-            key={group}
-            selected={filter.group === group}
-            onClick={() => {
-              change({ group: filter.group === group ? null : group });
-            }}
-          >
-            {t(`exercises.groups.${group}`)}
-          </Chip>
-        ))}
-      </div>
-
-      <div role="group" aria-label={t('session.add.equipment')} className={styles.chips}>
-        {EQUIPMENT.map((equipment) => (
-          <Chip
-            key={equipment}
-            selected={filter.equipment === equipment}
-            onClick={() => {
-              change({ equipment: filter.equipment === equipment ? null : equipment });
-            }}
-          >
-            {t(`exercises.equipment.${equipment}`)}
-          </Chip>
-        ))}
-      </div>
-
-      <div role="group" aria-label={t('session.add.kind')} className={styles.chips}>
-        {EXERCISE_KINDS.map((kind) => (
-          <Chip
-            key={kind}
-            selected={filter.kind === kind}
-            onClick={() => {
-              change({ kind: filter.kind === kind ? null : kind });
-            }}
-          >
-            {t(kind === 'compound' ? 'session.exercise.basic' : 'session.exercise.isolation')}
-          </Chip>
-        ))}
-      </div>
-
-      <div role="group" aria-label={t('session.add.others')} className={styles.chips}>
-        <Chip
-          selected={filter.straps}
-          onClick={() => {
-            change({ straps: !filter.straps });
-          }}
-        >
-          {t('session.add.straps')}
-        </Chip>
-        <Chip
-          selected={filter.custom}
-          onClick={() => {
-            change({ custom: !filter.custom });
-          }}
-        >
-          {t('session.add.custom')}
-        </Chip>
-        <Chip
-          selected={filter.inRoutine}
-          onClick={() => {
-            change({ inRoutine: !filter.inRoutine });
-          }}
-        >
-          {t('session.add.inRoutine')}
-        </Chip>
-      </div>
+      <ExerciseFilters filter={filter} onChange={change} />
 
       {results.length === 0 ? (
         <p className={styles.empty} role="status">
