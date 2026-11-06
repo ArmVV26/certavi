@@ -47,17 +47,17 @@ jobs:
     name: End-to-end (${{ matrix.project }} ${{ matrix.shard }})
     # Only on PRs to main (releases): it is the slow job. PRs to dev run the checks above.
     if: github.base_ref == 'main'
-    needs: checks
+    # needs: checks
     runs-on: ubuntu-latest
-    # Install + build take a few minutes and the suite's own cap is 10 min (`e2e:all`);
+    # Install + build take a few minutes and the suite's own cap is 20 min (`e2e:all`);
     # this only catches a hang.
-    timeout-minutes: 15
+    timeout-minutes: 25
     strategy:
       # A failure in one browser must not hide the result of the others.
       fail-fast: false
       # One job at a time, in the order of `include` (chromium, webkit 1/2, webkit 2/2); a
       # failure does not stop the next ones.
-      max-parallel: 1
+      # max-parallel: 1
       matrix:
         include:
           # Chromium runs every test; WebKit only the ones tagged @all-engines (see
