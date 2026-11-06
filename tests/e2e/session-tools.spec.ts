@@ -232,6 +232,19 @@ async function pauseClock(page: Page): Promise<void> {
   await page.clock.pauseAt(now + 500);
 }
 
+/**
+ * Clicks "Deshacer" on the toast. The toast disappears after 6 s of page time and the clock runs
+ * in real time, so in WebKit on CI the click (waiting for the toast animation to settle) took
+ * longer than that and the toast was detached mid-click (AC-SESSION-27 / 28, 2026-11-06). The
+ * clock is stopped only for the click, once the removal is already drawn: with it stopped the
+ * live queries do not redraw in WebKit, so the app must not be left waiting on it.
+ */
+async function clickUndo(page: Page): Promise<void> {
+  await pauseClock(page);
+  await button(page, 'Deshacer').click();
+  await page.clock.resume();
+}
+
 // --- Rest bar --------------------------------------------------------------------------------
 
 function closeRest(page: Page): Locator {
@@ -490,7 +503,7 @@ test.describe('session tools', { tag: '@all-engines' }, () => {
       .toBe(before.exercises - 1);
     expect((await summaryNumbers(page)).sets).toBeLessThan(before.sets);
 
-    await button(page, 'Deshacer').click();
+    await clickUndo(page);
     await expect(toast(page, 'Ejercicio recuperado')).toBeVisible();
     for (const reload of [false, true]) {
       if (reload) {
@@ -516,7 +529,7 @@ test.describe('session tools', { tag: '@all-engines' }, () => {
     await expect(toast(page, 'Ejercicio quitado')).toBeVisible();
     await expect(page.getByRole('alertdialog')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: first, exact: true })).toHaveCount(0);
-    await button(page, 'Deshacer').click();
+    await clickUndo(page);
     await expect(toast(page, 'Ejercicio recuperado')).toBeVisible();
     await expect(page.getByRole('heading', { name: first, exact: true })).toBeVisible();
   });
@@ -700,6 +713,7 @@ test.describe('session tools', { tag: '@all-engines' }, () => {
     await ensureOpen(banca, BENCH);
     await button(banca, '+ Serie extra').click();
     await expect.poll(() => r.count()).toBe(5);
+    await expect(r.kg(4)).toBeFocused(); // typed values are only safe once the row is focused
     await logSet(banca, 4, '50', '10');
     await page.clock.runFor(500);
     await expect(closeRest(page)).toHaveCount(0);
@@ -710,6 +724,7 @@ test.describe('session tools', { tag: '@all-engines' }, () => {
     await ensureOpen(banca, BENCH);
     await button(banca, '+ Serie extra').click();
     await expect.poll(() => r.count()).toBe(6);
+    await expect(r.kg(5)).toBeFocused();
     await logSet(banca, 5, '50', '10');
     await expect(closeRest(page)).toBeVisible();
     await page.reload();
