@@ -486,7 +486,7 @@ Then a sheet "Añadir ejercicio" opens with the search field, the filter chips a
 exercises
 When I tap "Remo en T"
 Then the sheet closes, a card "Remo en T" appears with its default rows, without the tag "Fuera de
-la rutina", the card summary reads "1 ejercicios · …" and "Sin ejercicios todavía." is gone
+la rutina", the summary reads "1 ejercicio · …" (singular) and "Sin ejercicios todavía." is gone
 And I can log sets in it, and it is still there after a reload.
 
 **AC-SESSION-25 · Filter the exercises**
