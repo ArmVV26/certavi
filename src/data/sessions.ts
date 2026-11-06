@@ -6,6 +6,7 @@ import {
   lastReference,
   mondayOf,
   newSession,
+  routineExerciseIds,
   weekPlanId,
   type Exercise,
   type ExerciseNote,
@@ -143,7 +144,7 @@ export function readSession(db: CertaviDb, id: string): Promise<SessionView | nu
         references,
         deload: isDeloadDate(row.date, deloadWeeks(weekPlans)),
         routines,
-        routineExerciseIds: new Set(routines.flatMap((r) => r.items.map((i) => i.exerciseId))),
+        routineExerciseIds: routineExerciseIds(routines),
       };
     },
   );

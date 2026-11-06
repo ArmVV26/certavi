@@ -2,6 +2,7 @@ export * from './backoff';
 export * from './blocks';
 export * from './dayPlan';
 export * from './deload';
+export * from './exerciseEdit';
 export * from './exerciseFilter';
 export * from './history';
 export * from './progression';
