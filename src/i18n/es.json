@@ -27,10 +27,6 @@
       "title": "Tu calendario",
       "text": "Aquí verás tus sesiones, actividades y semanas especiales de cada mes."
     },
-    "routines": {
-      "title": "Tus rutinas",
-      "text": "Aquí podrás ver y editar tus rutinas, sus ejercicios y sus series."
-    },
     "progress": {
       "title": "Tu progreso",
       "text": "Aquí verás las series por grupo muscular, tus récords y cómo evolucionan tus ejercicios."
@@ -503,7 +499,78 @@
       "crunch": "Sube carga hasta terminar a RIR 1-2.",
       "legPress": "Coloca los discos siempre igual y apúntalo en la nota."
     },
-    "free": "Sesión libre"
+    "free": "Sesión libre",
+    "yourRoutines": "Tus rutinas",
+    "anyDay": "Sin día fijo",
+    "edited": "Editada",
+    "optional": "Opcional",
+    "summary": {
+      "exercises_one": "{{count}} ejercicio",
+      "exercises_other": "{{count}} ejercicios",
+      "sets_one": "{{count}} serie",
+      "sets_other": "{{count}} series"
+    },
+    "scheme": {
+      "approach": "{{count}} aprox.",
+      "top": "{{count}} top",
+      "backoff": "{{count}} back-off",
+      "bilbo": "{{count}} bilbo",
+      "straight": "{{count}} × {{reps}}",
+      "plain_one": "{{count}} serie",
+      "plain_other": "{{count}} series",
+      "rir": "RIR {{rir}}"
+    },
+    "view": {
+      "title": "Rutina",
+      "back": "Volver a Rutinas",
+      "edit": "Editar",
+      "restore": "Restaurar original",
+      "exercises": "Ejercicios",
+      "list": "Ejercicios de la rutina",
+      "empty": "Esta rutina no tiene ejercicios",
+      "notFound": "No encontramos esta rutina",
+      "restoreTitle": "¿Restaurar la rutina original?",
+      "restoreText": "Se perderán los cambios que hiciste en {{name}}. Las sesiones ya empezadas no cambian.",
+      "restoreConfirm": "Restaurar",
+      "restoreCancel": "Cancelar",
+      "restored": "Rutina restaurada",
+      "failed": "No se pudo restaurar. Inténtalo de nuevo."
+    },
+    "edit": {
+      "title": "Editar rutina",
+      "save": "Guardar",
+      "discard": "Descartar",
+      "saved": "Rutina guardada",
+      "failed": "No se pudo guardar. Inténtalo de nuevo.",
+      "list": "Ejercicios de la rutina",
+      "moveUp": "Subir {{name}}",
+      "moveDown": "Bajar {{name}}",
+      "remove": "Quitar {{name}}",
+      "removed": "{{name}} quitado",
+      "undo": "Deshacer",
+      "optional": "Opcional",
+      "sets": "Series",
+      "setKind": "Tipo de la serie {{n}}",
+      "setReps": "Repeticiones de la serie {{n}}",
+      "removeSet": "Quitar serie {{n}}",
+      "addSet": "Añadir serie",
+      "rir": "RIR objetivo",
+      "rirHint": "Por ejemplo 2 o 1-2",
+      "note": "Nota",
+      "addExercise": "Añadir ejercicio",
+      "alreadyIn": "Ya está en la rutina",
+      "errorsTitle": "Revisa la rutina: hay campos con errores",
+      "errors": {
+        "repsRequired": "Indica las repeticiones",
+        "repsInvalid": "Escribe las repeticiones como 8, ~10 o 6-8",
+        "rirInvalid": "Escribe el RIR como 2 o 1-2",
+        "noExercises": "La rutina necesita al menos un ejercicio"
+      },
+      "discardTitle": "¿Descartar los cambios?",
+      "discardText": "Tienes cambios sin guardar en esta rutina.",
+      "discardConfirm": "Descartar cambios",
+      "keepEditing": "Seguir editando"
+    }
   },
   "blocks": {
     "names": {

@@ -13,8 +13,10 @@ interface AddExerciseSheetProps {
   onClose: () => void;
   /** Every live exercise; the sheet hides the archived ones. */
   exercises: readonly Exercise[];
-  /** Exercises the session already has: shown, but they cannot be chosen again. */
+  /** Exercises the session (or routine) already has: shown, but they cannot be chosen again. */
   inSession: ReadonlySet<string>;
+  /** What the disabled ones say; defaults to "Already in the session". */
+  alreadyLabel?: string;
   /** Exercises that are in at least one routine (for the "in a routine" filter). */
   routineExerciseIds: ReadonlySet<string>;
   onChoose: (exerciseId: string) => void;
@@ -34,7 +36,14 @@ export function AddExerciseSheet({ open, onClose, ...rest }: AddExerciseSheetPro
 
 type Rest = Omit<AddExerciseSheetProps, 'open' | 'onClose'>;
 
-function Picker({ exercises, inSession, routineExerciseIds, onChoose, onCreate }: Rest) {
+function Picker({
+  exercises,
+  inSession,
+  alreadyLabel,
+  routineExerciseIds,
+  onChoose,
+  onCreate,
+}: Rest) {
   const { t } = useTranslation();
   // The sheet content is only mounted while it is open, so every opening starts without filters.
   const { filter, change } = useExerciseFilter();
@@ -79,7 +88,7 @@ function Picker({ exercises, inSession, routineExerciseIds, onChoose, onCreate }
                   <span className={styles.name}>{resolveText(t, exercise.name)}</span>
                   <span className={styles.meta}>
                     {already
-                      ? t('session.add.already')
+                      ? (alreadyLabel ?? t('session.add.already'))
                       : `${t(`exercises.groups.${exercise.primaryGroup}`)} · ${t(`exercises.equipment.${exercise.equipment}`)}`}
                   </span>
                 </button>

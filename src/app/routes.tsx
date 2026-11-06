@@ -5,7 +5,9 @@ import { ExerciseDetailPage } from '../features/exercises/ExerciseDetailPage';
 import { ExerciseFormPage } from '../features/exercises/ExerciseFormPage';
 import { ExercisesPage } from '../features/exercises/ExercisesPage';
 import { ProgressPage } from '../features/progress/ProgressPage';
+import { RoutineEditorPage } from '../features/routines/RoutineEditorPage';
 import { RoutinesPage } from '../features/routines/RoutinesPage';
+import { RoutineViewPage } from '../features/routines/RoutineViewPage';
 import { SessionPage } from '../features/session/SessionPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { SyncPage } from '../features/settings/SyncPage';
@@ -26,6 +28,16 @@ export const routes: RouteObject[] = [
       { path: 'session/:sessionId', element: <SessionPage />, handle: handle('session.title') },
       { path: 'calendar', element: <CalendarPage />, handle: handle('nav.calendar') },
       { path: 'routines', element: <RoutinesPage />, handle: handle('nav.routines') },
+      {
+        path: 'routines/:routineId',
+        element: <RoutineViewPage />,
+        handle: handle('routines.view.title'),
+      },
+      {
+        path: 'routines/:routineId/edit',
+        element: <RoutineEditorPage />,
+        handle: handle('routines.edit.title'),
+      },
       { path: 'exercises', element: <ExercisesPage />, handle: handle('exercises.title') },
       {
         path: 'exercises/new',
