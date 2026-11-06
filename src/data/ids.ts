@@ -19,4 +19,5 @@ export const ID_PREFIX = {
   session: 'ses',
   activity: 'act',
   set: 'set',
+  exercise: 'exe',
 } as const;
