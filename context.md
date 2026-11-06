@@ -667,35 +667,28 @@ Cada fase sigue el mismo ciclo:
 
 ### Fase 6 · Catálogo, ejercicios propios y rutinas → `v0.7.0` ✅
 
-**Ramas**: `feature/exercise-catalog` y `feature/routine-editor`
+**Ramas**: `feature/exercise-catalog` y `feature/routine-editor`, más el añadido de `feature/add-changes-phases`
 
-**Estado (2026-11-06)**: **cerrada** (`v0.7.0`, sin publicar). Ramas `feature/exercise-catalog` (PR #24, mergeada en `dev`) y `feature/routine-editor` verificadas (lint, typecheck, `test:coverage`, build, e2e de la rama, `e2e:all`); code-reviewer y security-reviewer sin bloqueantes. Decisiones en la sección 2.8; detalle en `CHANGELOG.md` 0.7.0; log: [Fase 6](docs/history.md#fase6).
+**Estado (2026-11-06)**: **cerrada** 
 
-**Entregables**:
-- Lista de ejercicios con **filtros**, **etiqueta de equipo**, straps visibles y **crear ejercicio desde cero** (editar y archivar los propios).
-- Ficha de ejercicio completa.
-- Editor de rutinas: añadir, quitar y ordenar ejercicios, **añadir y quitar series**, esquema y RIR; restaurar la rutina semilla.
-
-**Prompt**:
-
-```text
-Lee context.md y CLAUDE.md. FASE 6: catálogo de ejercicios con filtros combinables (texto, grupo, equipo,
-tipo, straps, propios, en rutina), etiqueta de equipo, creación/edición/archivado de ejercicios propios,
-ficha de ejercicio (paridad con gym_app) y editor de rutinas con edición de series. Especificación primero
-en docs/spec/, luego implementación y tests; blind-tester al final. /close-phase.
-```
+**Log (History)**: [Fase 6](docs/history.md#fase6)
 
 ---
 
 ### Fase 7 · Calendario, progreso y bloques → `v0.8.0` ⏳
 
-**Ramas**: `feature/calendar`, `feature/progress` y `feature/optional-blocks`
+**Ramas**: `feature/calendar`, `feature/progress`, `feature/training-stats` y `feature/optional-blocks`
 
 **Entregables**:
 - Calendario completo con semanas especiales y cierre de semana.
 - Progreso completo (sección 5.1), con la evolución por métricas en la ficha de ejercicio (`/exercises/:id`, aplazada desde la Fase 6).
 - **Bloques opcionales**: configuración de movilidad, estiramientos y rehabilitación (ejercicios, días, métricas), checklist diario, métricas, gráfica con línea de 3/10 y métrica semanal (test de la pared).
 - Peso corporal de cualquier semana.
+- **Escala 0-10 en una sola fila** (añadido el 2026-11-06, `feature/optional-blocks`): en móvil (390 px) el «10» salta de línea porque `ScalePicker` (`src/ui/ScalePicker.module.css`) pide 30 px por casilla y dentro de la tarjeta no caben 11. Se **mantiene la escala 0-10** (cambiarla a 0-5 tocaría el umbral 3/10, las gráficas, el importador y los datos guardados). Decidir en la spec: 11 casillas que se encogen para caber siempre en una fila, o un deslizador 0-10 con marcas. Afecta también a «¿cómo llegas?» (1-5) de la sesión, que usa el mismo componente.
+- **Estadísticas de entrenamiento** (añadido el 2026-11-06, `feature/training-stats`):
+  - **Racha semanal**: marcador (en Hoy y/o Progreso) con las semanas seguidas con ejercicio. Definir en la spec qué cuenta como semana activa (al menos una sesión que cuenta; ¿vale una actividad?), si una semana de descarga o de senderismo mantiene la racha y cuándo se rompe (semana en curso aún sin sesión no rompe).
+  - **Peso levantado, ejercicios y series hechas** por **semana** y por **mes**, con un selector simple semana / mes. Regla de dominio nueva y con tests (`src/domain/rules`): volumen = peso × repeticiones, sin calentamientos ni series de sesiones que «no cuentan»; 0 kg y peso corporal suman 0.
+  - **Peso levantado por rutina**, sesión a sesión, con la variación entre sesiones (misma idea que la ficha de ejercicio, pero agrupando por `routineId`) y una gráfica pequeña en la vista de la rutina. Es poco lío porque reutiliza la regla de volumen anterior. Avisos para la spec: si se edita la rutina, las sesiones dejan de ser comparables; una semana de descarga baja el volumen (marcarla); las sesiones libres (`routineId: null`) no entran. **Si la fase se alarga, esto pasa al backlog v2**; lo demás se queda.
 - **Revisión del ciclo** (el `sixWeekReview` de gym_app) en las pantallas de progreso. Aplazada desde la Fase 2.
 - **Regla del gemelo durante la rehabilitación** (aplazada desde la Fase 2, 2026-11-03). `rutina-actual.md` §5, «Lower A», nota «Gemelo»: 60 kg en la semana 1; desde la semana 2, +5 kg por semana si no hay dolor al día siguiente, siempre con pausa abajo y sin rebote, hasta volver a 80 kg; y la regla de gym_app: solo se sube si bajar escaleras no duele. Depende del bloque de rehabilitación del tobillo y de sus métricas, por eso va en esta fase. El modelo de progresión actual lo permite sin reescribirlo, con cambios aditivos:
   - un `context` opcional en `ProgressionInput` (bloques activos + últimas métricas de los bloques);
@@ -709,8 +702,10 @@ en docs/spec/, luego implementación y tests; blind-tester al final. /close-phas
 ```text
 Lee context.md y CLAUDE.md. FASE 7: calendario, progreso (gráficas SVG propias, accesibles, claro/oscuro),
 bloques opcionales configurables (movilidad, estiramientos, rehabilitación) con checklist diario, métricas
-0-10 con línea de referencia y métrica semanal, y peso corporal editable en cualquier semana. Paridad con
-gym_app según 5.1. Especificación, implementación, tests y blind-tester. /close-phase.
+0-10 con línea de referencia (escala 0-10 que cabe en una fila a 390 px) y métrica semanal, y peso corporal
+editable en cualquier semana. Estadísticas: racha semanal, peso levantado / ejercicios / series por semana o
+mes (selector) y peso levantado por rutina entre sesiones. Paridad con gym_app según 5.1. Especificación,
+implementación, tests y blind-tester. /close-phase.
 ```
 
 ---
@@ -720,13 +715,17 @@ gym_app según 5.1. Especificación, implementación, tests y blind-tester. /clo
 **Rama**: `chore/pwa-polish`
 
 **Entregables**:
-- Manifest e iconos definitivos y pantalla de inicio en iOS.
+- Manifest e iconos definitivos y pantalla de inicio en iOS (ver «Fallo conocido en iOS» abajo).
+- **Icono de la app** (añadido el 2026-11-06): Claude genera un icono provisional en SVG y propone ideas de logo; el definitivo lo diseñas tú. Para iOS: fondo sólido (iOS no respeta transparencias), forma sencilla legible a 60 px y sin texto. Ideas: disco olímpico con una «C» en el agujero; barra con discos que dibuja un ✓; tres barras crecientes (la última, un disco); nube tachada con mancuerna («sin cobertura»); monograma «C» geométrico con un corte; escalones de series (aproximación → top → back-off) en forma de «C» o de flecha.
 - Aviso de nueva versión.
-- Auditoría Lighthouse (PWA, rendimiento y accesibilidad ≥ 90).
+- Auditoría Lighthouse: rendimiento, accesibilidad y buenas prácticas ≥ 90. Lighthouse retiró la categoría «PWA» en la v12, así que la **instalabilidad** (manifest, service worker, funciona sin conexión) se comprueba aparte, a mano en el iPhone y con el panel de Aplicación de Chrome. Las notas alimentan las insignias del README (Fase 9).
+- **Limpieza del proyecto** (añadido el 2026-11-06): repaso general para quitar lo sobrante: código muerto y exports sin uso, dependencias sin uso, claves i18n huérfanas, la ruta `/dev/ui` (¿se queda como galería de componentes o sale de producción?), `.gitkeep` que ya no hacen falta, archivos sueltos. Posible herramienta: `knip` (paquete de desarrollo: Claude pide permiso antes de proponerlo). Lista de candidatos antes de borrar nada.
 - Revisión de i18n en inglés.
 - Estados vacíos y de error.
 - Mensajes revisados (tono, claridad).
 - Animaciones con `prefers-reduced-motion`.
+
+**Fallo conocido en iOS** (detectado el 2026-11-06 en el iPhone con la app añadida a la pantalla de inicio): al abrirla y tocar «Hoy» aparece arriba la barra con la URL y abajo los botones de Safari, y desde ahí se llega a todas las pestañas; en la vista sin barras solo se alcanzan «Progreso» y «Hoy». Causa probable: `index.html` no tiene `<link rel="manifest">` ni las metas de app web de iOS (`apple-mobile-web-app-capable`, `apple-touch-icon`) y no hay manifest generado todavía (`vite-plugin-pwa` llega en esta fase), así que iOS la abre como una pestaña de Safari y sus barras tapan la barra de pestañas fija (`.nav` en `src/app/Layout.module.css`). Pasos: manifest con `display: standalone`, `start_url` y `scope`, metas de iOS e icono; comprobar en el iPhone real que arranca sin barras y que se llega a las cinco pestañas (si en standalone siguen tapadas, revisar `--app-bottom-inset` y las áreas seguras). Falta la captura que ibas a adjuntar.
 
 **Revisar al empezar** (sugerencias de fases anteriores):
 - **Code-splitting**: el chunk principal pesa **702 kB** tras `feature/today` (618 kB tras `feature/local-db`, 638 kB tras `feature/import-export`, 666 kB tras la Fase 4); Vite avisa por encima de 500 kB. Candidatos: cargar `/dev/ui`, `/settings/sync` y las pantallas con `lazy()` de las rutas.
@@ -737,8 +736,10 @@ gym_app según 5.1. Especificación, implementación, tests y blind-tester. /clo
 **Prompt**:
 
 ```text
-Lee context.md y CLAUDE.md. FASE 8: pulido. Manifest/iconos/iOS, aviso de versión nueva, auditoría Lighthouse
-(dame el informe y corrige hasta ≥ 90 en PWA, rendimiento y accesibilidad), revisión completa de textos en
+Lee context.md y CLAUDE.md. FASE 8: pulido. Manifest/iconos/iOS (incluido el fallo de la app en la pantalla de
+inicio del iPhone), icono provisional con ideas de logo, aviso de versión nueva, auditoría Lighthouse
+(dame el informe y corrige hasta ≥ 90 en rendimiento, accesibilidad y buenas prácticas; comprueba aparte la
+instalabilidad), limpieza del proyecto (lista de sobrantes antes de borrar), revisión completa de textos en
 es y en (lista de cambios propuestos antes de aplicarlos), estados vacíos y de error, reduced motion.
 blind-tester con una pasada completa de toda la app. /close-phase.
 ```
@@ -753,17 +754,30 @@ blind-tester con una pasada completa de toda la app. /close-phase.
 1. El blind-tester hace una regresión completa, en español y en inglés, claro y oscuro, sin conexión.
 2. Tú usas Certavi en paralelo con gym_app durante 1 semana.
 3. Exportas por última vez desde gym_app, importas en Certavi y compruebas los recuentos.
-4. Release `v1.0.0`, tag y despliegue a producción.
-5. Archivas `gym_app`.
-6. Cuando quieras, haces público el repo y activas la protección de ramas.
+4. **Quitar el rastro de gym_app** (añadido el 2026-11-06), solo **después** de la migración real del paso 3, porque hasta entonces hace falta el importador: eliminar «Importar desde la app anterior» (`ImportExport.tsx`, claves i18n `importLegacy`/`notLegacy`…), `src/data/legacy/`, `src/domain/seed/legacyAliases.ts` (los alias solo sirven para datos de gym_app), `docs/migration.md`, la sección 6 de este archivo y las menciones en README, spec y ADR. Decidir si `context.md` y `docs/history.md` (que cuentan el origen del proyecto) se quedan en el repo público o se resumen. Motivo: la intención es que lo usen tú y gente de tu entorno, no que sea «la v2 de otra app». Importar datos de otras apps (Hevy, Strong…) queda en el backlog v2.
+5. Release `v1.0.0`, tag y despliegue a producción.
+6. Archivas `gym_app`.
+7. **Documentación de portfolio** (añadido el 2026-11-06):
+   - README en **español** (`README.es.md`) y en inglés, con enlace cruzado entre ambos.
+   - **Banner** arriba en los dos: nombre del proyecto y un visual (un teléfono con Hoy o una gráfica de progreso). Claude puede generar un SVG; si prefieres hacerlo tú, la plantilla es 1280 × 320 px, texto dentro de los 960 px centrales, logo a la izquierda, «Certavi» en Archivo Bold, subtítulo, fondo `--bg` y acento `#1d4ed8`, versión clara y oscura (`banner-light` / `banner-dark` en `docs/assets/`, con `<picture>` y `prefers-color-scheme`).
+   - **Capturas** reales (Hoy, sesión activa, progreso, ficha de ejercicio; claro y oscuro) que tú pasas.
+   - **Insignias**: estado de CI (GitHub Actions; solo se ve bien con el repo público), cobertura (Codecov o insignia estática de shields.io actualizada en cada release) y notas de Lighthouse de la Fase 8 (rendimiento, accesibilidad, buenas prácticas; la categoría PWA ya no existe).
+8. **¿Puede usarlo otra persona?** (añadido el 2026-11-06) Dejar la respuesta en el README: sin sync, sí, todo funciona en el dispositivo; con sync, no tal cual, porque el servidor guarda **un solo conjunto de datos** tras una sola `CLAVE_SYNC` (dos personas con la misma clave mezclarían datos), así que cada persona necesita su propio despliegue en Netlify (guía en `docs/deploy-netlify.md`). La semilla es la tuya (rutinas, catálogo y bloque de rehabilitación del tobillo activo en `src/domain/seed/blocks.ts`): decidir si se deja como «plantilla de ejemplo», se desactiva el bloque por defecto, o ambas. Lo que falta para multiusuario está en el backlog v2.
+9. **Antes de hacer público el repo** (añadido el 2026-11-06; haces público cuando quieras y activas la protección de ramas):
+   - **Escaneo de secretos** con `gitleaks` sobre **todo el historial** (`gitleaks git`), no solo el estado actual, por si hubo una `CLAVE_SYNC`, un token o un export real. Buscar también a mano exports reales de gym_app (`"app": "winter-arc"`) y datos personales en los documentos (`context.md`, `docs/history.md`, specs). Si algo apareció, rotar la clave primero y después reescribir el historial; reescribir ramas lo haces tú.
+   - **Cambiar `LICENSE` a MIT** en ese momento (decisión 2.1) y revisar `package.json` (`license`, `private`).
+   - Revisar `.gitignore`, variables de entorno y `netlify.toml` (cabeceras, CSP).
 
 **Prompt**:
 
 ```text
 Lee context.md. FASE 9: preparación de la v1.0.0. Lanza al blind-tester para una regresión completa
 (es/en, claro/oscuro, offline, 390x844). Prepara una checklist de migración real para que la ejecute yo
-(exportar de gym_app, importar, verificar recuentos por tipo de registro). Revisa README y docs para
-dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release a main con versión y tag.
+(exportar de gym_app, importar, verificar recuentos por tipo de registro). Después, quita el rastro de gym_app
+(importador, alias, migración) y deja README en español e inglés con banner, capturas reales que yo te pase e
+insignias (CI, cobertura, Lighthouse), más la evaluación de si otra persona puede usarlo. Prepara el escaneo
+de secretos con gitleaks sobre todo el historial y el cambio de licencia a MIT. Dame el plan de release a main
+con versión y tag.
 ```
 
 ---
@@ -778,6 +792,9 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
   - comparación entre ciclos;
   - superseries.
 - **App nativa**: con Capacitor, si algún día hay Mac y cuenta de desarrollador.
+- **Importar desde otras apps (Hevy, Strong…)** (añadido el 2026-11-06): importar su CSV con un paso para asignar cada ejercicio al catálogo de Certavi (o crearlo como ejercicio propio), porque los ids no coinciden. Un menú selector de «app de origen» sustituiría al importador de gym_app, que sale en la Fase 9. Enlazar las apps por API solo si existe una API oficial.
+- **Uso por otras personas**: una clave de sync por persona con su propio espacio de datos en el servidor (cambia el contrato `sync-v1`, lleva ADR y revisión de seguridad); primera vez guiada (empezar vacío o con plantillas) y bloques personales desactivados por defecto. Ver Fase 9.
+- **Peso levantado por rutina**, si no cabe en la Fase 7.
 
 ---
 
@@ -797,6 +814,9 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
 **Pendiente para fases futuras**:
 - Fase 7: regla del gemelo durante la rehabilitación (60 kg en la semana 1, +5 kg/semana sin dolor al día siguiente hasta 80 kg, y solo si bajar escaleras no duele), con cambios aditivos en el modelo de progresión (ver la Fase 7).
 - Fase 7: revisión del ciclo (`sixWeekReview` de gym_app) en las pantallas de progreso.
+- Fase 7 (añadido el 2026-11-06): racha semanal; peso levantado, ejercicios y series por semana / mes con selector; peso levantado por rutina (`feature/training-stats`); escala 0-10 en una fila en móvil (`feature/optional-blocks`).
+- Fase 8 (añadido el 2026-11-06): arreglar la app en la pantalla de inicio de iOS (barras de Safari, pestañas inaccesibles); icono provisional e ideas de logo; limpieza del proyecto; Lighthouse sin categoría PWA.
+- Fase 9 (añadido el 2026-11-06): quitar el rastro de gym_app tras la migración; README es/en con banner, capturas e insignias; evaluación de uso por otras personas; gitleaks sobre el historial y licencia MIT antes de hacerlo público.
 - ~~Fase 3 (`feature/import-export`): corregir la tabla de la sección 6 y `docs/migration.md` con los nombres reales de gym_app (2.4).~~ Hecho el 2026-11-03.
 - ~~Fase 5: UI para exportar el JSON de una sesión~~ Hecho el 2026-11-06 (`v0.6.0`). Fase 7: UI para exportar el JSON de una semana (`exportWeek`).
 - Sugerencia (no hecha, 2026-11-03) para la Fase 8 (estados de error): mostrar un error visible si la base de datos local no se puede abrir.
