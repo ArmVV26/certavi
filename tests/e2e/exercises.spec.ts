@@ -495,7 +495,9 @@ test.describe('exercises · data', { tag: '@all-engines' }, () => {
     await page.getByRole('link', { name: 'Cancelar', exact: true }).click();
     await expect(page).toHaveURL(sessionUrl);
     await expect(h1(page, 'Sesión')).toBeVisible();
-    expect(await exerciseOrder(page)).toEqual(['Remo en T']);
+    // The cards render after the live query answers (WebKit: seconds later than Chromium).
+    await expect(page.getByRole('heading', { name: 'Remo en T', exact: true })).toBeVisible();
+    await expect.poll(() => exerciseOrder(page)).toEqual(['Remo en T']);
     await expect(page.getByText('Ejercicio creado y añadido a la sesión')).toHaveCount(0);
 
     // Save: the new exercise is the last card, with its toast.
@@ -510,14 +512,14 @@ test.describe('exercises · data', { tag: '@all-engines' }, () => {
     await expect(page).toHaveURL(sessionUrl);
     await expect(toast(page, 'Ejercicio creado y añadido a la sesión')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Curl landmine', exact: true })).toBeVisible();
-    expect(await exerciseOrder(page)).toEqual(['Remo en T', 'Curl landmine']);
+    await expect.poll(() => exerciseOrder(page)).toEqual(['Remo en T', 'Curl landmine']);
     await expect(main.getByText(/^2 ejercicios · \d+ series$/)).toBeVisible();
 
     // It is now a normal exercise of the catalog, marked as mine.
     await page.reload();
     await expect(h1(page, 'Sesión')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Curl landmine', exact: true })).toBeVisible();
-    expect(await exerciseOrder(page)).toEqual(['Remo en T', 'Curl landmine']);
+    await expect.poll(() => exerciseOrder(page)).toEqual(['Remo en T', 'Curl landmine']);
     await openCatalog(page);
     await expect(item(page, 'Curl landmine').getByText('Propio', { exact: true })).toBeVisible();
   });

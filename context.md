@@ -189,6 +189,13 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Hooks | `PostToolUse` Edit\|Write formatea con Prettier; `Stop` avisa al usuario de puertos ocupados (salvo 5173), siempre exit 0 | Menos `format:check` fallidos y procesos olvidados |
 | Memoria | `context-keeper`: ≤10 líneas, sin recuentos ni logs; el log va a `docs/history.md` | Mantener `context.md` pequeño |
 
+### 2.8 Decisiones de la Fase 6 (2026-11-06)
+
+| Tema | Decisión | Motivo |
+|---|---|---|
+| Catálogo (rama 1, `feature/exercise-catalog`) | Dentro de Rutinas (`/exercises`, selector «Rutinas \| Ejercicios»; la barra inferior no cambia). Filtros combinables compartidos con «Añadir ejercicio» (`ExerciseFilters` + `useExerciseFilter`). Propios con id `exe_`: se archivan, nunca se borran; de la semilla solo se edita el incremento; un ejercicio de una rutina no se archiva; nombre repetido se compara sin mayúsculas ni acentos; incremento 0,25–50 kg. Gráfica de evolución → **Fase 7** | Paridad y sin pérdida de datos |
+| Editor de rutinas (rama 2, `feature/routine-editor`) | Solo se editan las seis rutinas semilla; nombre y día no (el plan del día depende de ellos); crear/borrar rutinas → backlog v2. Cambios solo en sesiones nuevas (las sesiones conservan su copia del plan). Nada se guarda hasta «Guardar»: validación (sin ejercicios, duplicados, sin series, repeticiones obligatorias salvo aproximación, RIR válido), aviso al salir con cambios, quitar con «Deshacer», máx. 20 series por ejercicio. «Restaurar original» escribe la semilla con `updatedAt` actual (gana en LWW, se sincroniza, `ensureSeed` no la pisa) | Sin sorpresas en sesiones en curso; la restauración llega a otros dispositivos |
+
 ---
 
 ## 3. Arquitectura
@@ -444,7 +451,7 @@ Se crea vacío un bloque «Estiramientos» para rellenarlo.
   - aviso de cambios de otro dispositivo.
 - **Calendario:** mes con sesiones, actividades y semanas especiales; detalle del día; registrar en ese día; semana cerrada con su plan; JSON de la semana.
 - **Rutinas:** ver sin empezar, editor (añadir, quitar, ordenar y esquema de series) y restaurar original.
-- **Ejercicios:** ficha con 1RM, peso máximo, mejor volumen, evolución con métricas, mejores marcas por repeticiones, historial e incremento propio.
+- **Ejercicios:** ficha con 1RM, peso máximo, mejor volumen, mejores marcas por repeticiones, historial e incremento propio; la evolución con gráfica pasa a la Fase 7.
 - **Progreso:** series por grupo frente al plan (esta semana, la pasada, media de 4), series por semana, por ejercicio, récords, peso corporal, revisión del ciclo y «cómo llegas» por semana.
 - **Ajustes:** clave de sync, registro de intentos, copias del servidor (ver, descargar, restaurar), exportar e importar, descansos, sonido, vibración y tema.
 
@@ -658,15 +665,11 @@ Cada fase sigue el mismo ciclo:
 
 ---
 
-### Fase 6 · Catálogo, ejercicios propios y rutinas → `v0.7.0` ⏳
+### Fase 6 · Catálogo, ejercicios propios y rutinas → `v0.7.0` ✅
 
 **Ramas**: `feature/exercise-catalog` y `feature/routine-editor`
 
-**Estado (2026-11-06) · rama 1 `feature/exercise-catalog`**:
-- Hecho: `docs/spec/exercises.md`; catálogo dentro de Rutinas (`/exercises`, selector «Rutinas | Ejercicios», la pestaña Rutinas sigue activa) con filtros compartidos con la hoja «Añadir ejercicio»; ficha (`/exercises/:id`, sin gráfica: va a la Fase 7); crear/editar/archivar ejercicios propios (`exe_`); incremento editable también en los de la semilla (solo eso); «Crear ejercicio» desde la sesión.
-- Decisiones: un ejercicio que está en una rutina no se puede archivar; el formulario crea series rectas (top set + back-off, desde el editor de rutinas); incremento entre 0,25 y 50 kg; nombre repetido se compara sin mayúsculas ni acentos, también con archivados y semilla.
-- Falta (rama 2 `feature/routine-editor`): lista y vista de rutinas, editor (ejercicios y series), restaurar original, `docs/spec/routines.md`; cierre final con `e2e:all`, revisores y release `v0.7.0`.
-- e2e: `tests/e2e/exercises.spec.ts` en Chromium; WebKit se ejecuta en `e2e:all` al cerrar la fase.
+**Estado (2026-11-06)**: **cerrada** (`v0.7.0`, sin publicar). Ramas `feature/exercise-catalog` (PR #24, mergeada en `dev`) y `feature/routine-editor` verificadas (lint, typecheck, `test:coverage`, build, e2e de la rama, `e2e:all`); code-reviewer y security-reviewer sin bloqueantes. Decisiones en la sección 2.8; detalle en `CHANGELOG.md` 0.7.0; log: [Fase 6](docs/history.md#fase6).
 
 **Entregables**:
 - Lista de ejercicios con **filtros**, **etiqueta de equipo**, straps visibles y **crear ejercicio desde cero** (editar y archivar los propios).
@@ -690,7 +693,7 @@ en docs/spec/, luego implementación y tests; blind-tester al final. /close-phas
 
 **Entregables**:
 - Calendario completo con semanas especiales y cierre de semana.
-- Progreso completo (sección 5.1).
+- Progreso completo (sección 5.1), con la evolución por métricas en la ficha de ejercicio (`/exercises/:id`, aplazada desde la Fase 6).
 - **Bloques opcionales**: configuración de movilidad, estiramientos y rehabilitación (ejercicios, días, métricas), checklist diario, métricas, gráfica con línea de 3/10 y métrica semanal (test de la pared).
 - Peso corporal de cualquier semana.
 - **Revisión del ciclo** (el `sixWeekReview` de gym_app) en las pantallas de progreso. Aplazada desde la Fase 2.
@@ -782,7 +785,7 @@ dejarlos de portfolio (capturas reales que yo te pase). Dame el plan de release 
 
 [Tabla Registro](docs/history.md#seccion12)
 
-**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ⏳ · 7 ⏳ · 8 ⏳ · 9 ⏳
+**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ✅ (`v0.7.0`, sin publicar) · 7 ⏳ · 8 ⏳ · 9 ⏳
 
 **Preguntas abiertas**:
 - Qué estiramientos van en el bloque «Estiramientos» (antes de la Fase 7).
