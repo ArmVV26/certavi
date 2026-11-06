@@ -620,3 +620,35 @@ describe('sync engine', () => {
     expect(listener).toHaveBeenCalledTimes(calls);
   });
 });
+
+describe('changes from other devices', () => {
+  it('reports the records another device changed, but not this device echoes', async () => {
+    const { engine, server, repos } = setup({ now: () => 5000 });
+    const listener = vi.fn();
+    engine.subscribeRemote(listener);
+
+    // This device's own write goes up and comes back as an echo: nothing to report.
+    await repos.session.put(makeSession({ id: 'mine', date: '2026-11-02' }));
+    await engine.syncNow();
+    expect(listener).not.toHaveBeenCalled();
+
+    server.push([makeSession({ id: 'theirs', date: '2026-11-03', updatedAt: 9000 })]);
+    await engine.syncNow();
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith([{ type: 'session', id: 'theirs' }]);
+
+    // Nothing new on the server: nothing to report.
+    await engine.syncNow();
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops reporting after unsubscribing', async () => {
+    const { engine, server } = setup();
+    const listener = vi.fn();
+    const unsubscribe = engine.subscribeRemote(listener);
+    unsubscribe();
+    server.push([makeSession({ id: 'theirs', date: '2026-11-03', updatedAt: 9000 })]);
+    await engine.syncNow();
+    expect(listener).not.toHaveBeenCalled();
+  });
+});

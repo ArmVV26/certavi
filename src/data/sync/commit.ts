@@ -3,6 +3,7 @@ import {
   parseRecord,
   RECORD_TYPES,
   type DomainRecord,
+  type RecordType,
   type SyncResponse,
   type Tombstone,
 } from '../../domain';
@@ -10,11 +11,21 @@ import { advanceClock } from '../clock';
 import { recordTables, TABLES, type CertaviDb, type PendingEntry } from '../db';
 import { advanceSince } from './queue';
 
+/** An incoming record that was written, for the "changes from another device" notice. */
+export interface AppliedChange {
+  type: RecordType;
+  id: string;
+  /** The session it belongs to (sets and notes, also when the record is a deletion). */
+  sessionId?: string;
+}
+
 export interface CommitResult {
   /** Sent records removed from the queue (not edited again during the request). */
   dequeued: number;
   /** Incoming records written because they were newer than this device's copy. */
   applied: number;
+  /** What those records were. */
+  changes: AppliedChange[];
   /** Incoming records that are not valid Certavi records (ignored). */
   invalid: number;
 }
@@ -38,9 +49,15 @@ async function dequeue(db: CertaviDb, sent: readonly PendingEntry[]): Promise<nu
   return done.length;
 }
 
-/** Writes incoming records that are strictly newer; returns how many were written. */
-async function apply(db: CertaviDb, incoming: readonly Incoming[]): Promise<number> {
-  let applied = 0;
+function sessionIdOf(record: object | undefined): string | undefined {
+  return record && 'sessionId' in record && typeof record.sessionId === 'string'
+    ? record.sessionId
+    : undefined;
+}
+
+/** Writes incoming records that are strictly newer; returns what was written. */
+async function apply(db: CertaviDb, incoming: readonly Incoming[]): Promise<AppliedChange[]> {
+  const changes: AppliedChange[] = [];
   for (const type of RECORD_TYPES) {
     // The server holds one version per id, but keep the newest if an answer ever repeats one.
     const newest = new Map<string, Incoming>();
@@ -59,6 +76,9 @@ async function apply(db: CertaviDb, incoming: readonly Incoming[]): Promise<numb
       const current = local[i];
       return current === undefined || record.updatedAt > current.updatedAt;
     });
+    const sessionByRecord = new Map(
+      candidates.map((record, i) => [record.id, sessionIdOf(record) ?? sessionIdOf(local[i])]),
+    );
     if (toWrite.length === 0) continue; // the echo: nothing written, nothing re-renders
 
     await table.bulkPut(toWrite);
@@ -68,9 +88,12 @@ async function apply(db: CertaviDb, incoming: readonly Incoming[]): Promise<numb
       return entry !== undefined && entry.updatedAt <= record.updatedAt;
     });
     await db.pending.bulkDelete(beaten.map((r) => r.id));
-    applied += toWrite.length;
+    for (const record of toWrite) {
+      const sessionId = sessionByRecord.get(record.id);
+      changes.push({ type, id: record.id, ...(sessionId ? { sessionId } : {}) });
+    }
   }
-  return applied;
+  return changes;
 }
 
 /**
@@ -86,9 +109,9 @@ export function commitResponse(
     const dequeued = await dequeue(db, sent);
     const incoming = response.records.map(readIncoming);
     const valid = incoming.filter((record): record is Incoming => record !== null);
-    const applied = await apply(db, valid);
+    const changes = await apply(db, valid);
     await advanceClock(db, Math.max(0, ...valid.map((r) => r.updatedAt)));
     await advanceSince(db, response.serverSeq);
-    return { dequeued, applied, invalid: incoming.length - valid.length };
+    return { dequeued, applied: changes.length, changes, invalid: incoming.length - valid.length };
   });
 }
