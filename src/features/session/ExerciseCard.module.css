@@ -1,0 +1,100 @@
+.card {
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.tools {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.heading {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+}
+
+/* The whole heading is the fold button. */
+.toggle {
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.hint {
+  color: var(--accent);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.summary {
+  color: var(--text-muted);
+  font-family: var(--font-numeric);
+  font-size: var(--fs-sm);
+  font-variant-numeric: var(--numeric-features);
+}
+
+.extras {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Same columns as .grid in SetRow.module.css. */
+.header {
+  display: grid;
+  grid-template-columns: 2.25rem 3.5rem minmax(0, 1fr) minmax(0, 0.8fr) 3.25rem 2.5rem;
+  gap: var(--space-1);
+  padding-inline: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-align: center;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex-basis: 100%;
+}

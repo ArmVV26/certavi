@@ -316,6 +316,14 @@ describe('planned weekly sets (rutina-actual.md)', () => {
     ).toBe(63);
   });
 
+  it('plans 86 sets in a hiking week (Push, Pull, Lower Full, Upper) and 63 with 4 sessions', () => {
+    const hiking = (size: 5 | 4) =>
+      livePlan({ size, deload: false, hiking: true }, SEED_ROUTINES_BY_ID, SEED_EXERCISES_BY_ID)
+        .total;
+    expect(hiking(5)).toBe(86);
+    expect(hiking(4)).toBe(63);
+  });
+
   it('plans 62 sets in a deload week', () => {
     expect(
       livePlan({ size: 5, deload: true }, SEED_ROUTINES_BY_ID, SEED_EXERCISES_BY_ID).total,

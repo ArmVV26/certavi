@@ -23,10 +23,6 @@
   },
   "pages": {
     "comingSoon": "Próximamente",
-    "today": {
-      "title": "La sesión de hoy",
-      "text": "Aquí verás la rutina que toca y podrás empezarla, elegir otra o registrar una sesión libre."
-    },
     "calendar": {
       "title": "Tu calendario",
       "text": "Aquí verás tus sesiones, actividades y semanas especiales de cada mes."
@@ -186,6 +182,14 @@
       "restoreMessage": "Tus datos volverán a como estaban ese día, también en tus otros dispositivos cuando sincronicen. Lo que hayas cambiado después se perderá. Si dudas, exporta antes una copia completa.",
       "restored": "Copia restaurada. Registros cambiados: {{total}}",
       "restoreFailed": "No se pudo restaurar la copia. No se ha cambiado nada."
+    },
+    "rest": {
+      "title": "Descanso",
+      "compound": "Descanso en ejercicios básicos (s)",
+      "isolation": "Descanso en aislamiento (s)",
+      "sound": "Sonido al acabar el descanso",
+      "vibration": "Vibración",
+      "vibrationHint": "No funciona en iPhone."
     }
   },
   "sync": {
@@ -213,6 +217,7 @@
   },
   "sets": {
     "warmupSymbol": "C",
+    "dropsetSymbol": "D",
     "warmup": "Calentamiento",
     "kinds": {
       "warmup": "Calentamiento",
@@ -221,6 +226,7 @@
       "backoff": "Back-off",
       "straight": "Serie de trabajo",
       "bilbo": "Bilbo",
+      "dropset": "Dropset",
       "extra": "Serie extra"
     }
   },
@@ -423,6 +429,298 @@
       "mobility": "Movilidad",
       "cycling": "Bici",
       "other": "Otro"
+    }
+  },
+  "plan": {
+    "exercises_one": "{{count}} ejercicio",
+    "exercises_other": "{{count}} ejercicios",
+    "sets_one": "{{count}} serie",
+    "sets_other": "{{count}} series",
+    "summary": "{{exercises}} · {{sets}}",
+    "exerciseSets": "{{exercise}} · {{sets}}",
+    "optional": "(opcional)"
+  },
+  "today": {
+    "title": "La sesión de hoy",
+    "start": "Empezar {{routine}}",
+    "continue": "Continuar {{routine}}",
+    "done": "Sesión hecha · ver o corregir",
+    "seeExercises": "Ver los ejercicios",
+    "tags": {
+      "hiking": "Senderismo",
+      "deload": "Descarga"
+    },
+    "rest": {
+      "names": {
+        "active-rest": "Descanso activo",
+        "football": "Fútbol",
+        "hiking": "Senderismo",
+        "rest": "Descanso"
+      },
+      "short": {
+        "active-rest": "Activo",
+        "football": "Fútbol",
+        "hiking": "Monte",
+        "rest": "Descanso"
+      },
+      "notes": {
+        "active-rest": "Natación o movilidad. No correr.",
+        "football": "Partido (+ natación si cuadra).",
+        "hiking": "Semana de senderismo. Ojo: las bajadas cargan cuádriceps y gemelo, no es descanso.",
+        "rest": "Hoy no toca rutina."
+      }
+    },
+    "quickActivity": "+ {{activity}}",
+    "alsoToday": "También hoy:",
+    "inProgress": "(en curso)",
+    "finished": "(hecha)",
+    "saveError": "No se pudo guardar. Inténtalo de nuevo.",
+    "notices": {
+      "noKey": "Este dispositivo aún no tiene la clave de sincronización: lo que apuntes se queda solo aquí.",
+      "setKey": "Ponerla en Ajustes",
+      "deload_one": "Llevas {{count}} semana sin descarga. Lo recomendado es una cada 6-8: márcala abajo cuando te venga bien.",
+      "deload_other": "Llevas {{count}} semanas sin descarga. Lo recomendado es una cada 6-8: márcala abajo cuando te venga bien."
+    },
+    "week": {
+      "title": "Esta semana",
+      "number": "Semana {{number}}",
+      "days": "Días de la semana",
+      "day": "{{day}}: {{plan}}",
+      "dayDone": "{{day}}: {{plan}}, hecho",
+      "effectiveSets": "Series efectivas",
+      "sessions": "Sesiones",
+      "sessionsOf": "{{done}} de {{size}}",
+      "size": "Sesiones esta semana",
+      "sizeHint": "Con 4 se cae el Upper; con 3: Push, Pull y Lower Full.",
+      "hiking": "Semana con senderismo",
+      "hikingHint": "Para toda la semana: el miércoles pasa a Lower Full y el domingo es monte.",
+      "deload": "Semana de descarga",
+      "deloadOff": "Mitad de series y RIR 3-4.",
+      "deloadStreak_one": "Llevas {{count}} semana seguida sin descargar.",
+      "deloadStreak_other": "Llevas {{count}} semanas seguidas sin descargar.",
+      "deloadOn": "Activa: las sesiones nuevas salen con la mitad de series y RIR 3-4. No cuentan para récords.",
+      "deloadToastOn": "Semana de descarga: las sesiones nuevas salen reducidas",
+      "deloadToastOff": "Semana normal"
+    },
+    "other": {
+      "title": "Otra sesión u otro día",
+      "date": "Fecha",
+      "hintToday": "Elige qué entrenaste. Sirve para cambiar el orden hoy o para apuntar un día que se te olvidó.",
+      "hintOther": "Se registrará el {{date}}. Sin temporizador; podrás ajustar la hora.",
+      "routines": "Qué entrenaste",
+      "future": "No se puede registrar en el futuro.",
+      "existing": "Ya había una sesión «{{routine}}» ese día: la abro."
+    },
+    "activity": {
+      "title": "Actividad",
+      "kind": "Tipo de actividad",
+      "minutes": "Minutos",
+      "note": "Nota",
+      "notePlaceholder": "Opcional",
+      "save": "Guardar actividad de hoy",
+      "saved": "Actividad guardada: {{activity}}",
+      "today": "Hoy: {{list}}",
+      "withMinutes": "{{activity}} {{minutes}} min"
+    },
+    "weight": {
+      "title": "Peso medio de la semana",
+      "week": "Semana",
+      "thisWeek": "Esta semana · {{range}}",
+      "lastWeek": "Semana pasada · {{range}}",
+      "field": "Peso medio",
+      "save": "Guardar peso",
+      "invalid": "Escribe un peso entre 20 y 300 kg.",
+      "saved": "Peso guardado · {{range}}",
+      "previous": "Último dato anterior ({{range}}): {{kg}} kg"
+    }
+  },
+  "blocksDay": {
+    "reviewToday": "Revisión hoy",
+    "reviewIn_one": "Revisión: {{date}} (mañana)",
+    "reviewIn_other": "Revisión: {{date}} (en {{count}} días)",
+    "checklist": "Ejercicios · {{done}}/{{total}}",
+    "timesPerWeek": "{{dose}} · {{times}} días por semana",
+    "warning": "Por encima de {{threshold}}/10: baja la intensidad de lo que cargue la zona.",
+    "note": "Nota del día",
+    "noteSaved": "Nota guardada"
+  },
+  "session": {
+    "title": "Sesión",
+    "when": "{{date}} · {{time}}",
+    "inProgress": "En curso",
+    "finished": "Terminada",
+    "empty": "Sin ejercicios todavía.",
+    "notFound": "Sesión no encontrada",
+    "backToToday": "Volver a Hoy",
+    "progress": "{{done}} de {{total}} hechas",
+    "deloadNotice": "Semana de descarga. Menos series y RIR 3-4: el peso de siempre o un 10 % menos. No cuenta para récords.",
+    "readiness": "¿Cómo llegas?",
+    "readinessScale": "1 fatal · 5 a tope",
+    "finishedHint": "Sesión terminada. Puedes corregir cualquier dato: se guarda al momento.",
+    "effectiveSets": "Series efectivas",
+    "volume": "Volumen",
+    "exercise": {
+      "basic": "Básico",
+      "isolation": "Aislamiento",
+      "optional": "Opcional",
+      "done": "Completo",
+      "reps": "{{range}} reps",
+      "rir": "RIR {{rir}}",
+      "lastTime": "Última vez ({{date}}): {{sets}}",
+      "noLast": "Sin registros previos",
+      "lastSet": "{{weight}} kg × {{reps}}",
+      "straps": "Con straps",
+      "band": "Banda",
+      "backoff": "Back-off sugerido: {{weight}} kg (−10 % del top)",
+      "addWarmup": "+ Calentamiento",
+      "addExtra": "+ Serie extra",
+      "note": "Nota",
+      "noteFilled": "Nota ✎",
+      "summary": "{{weight}} × {{reps}}",
+      "moveUp": "Subir {{name}}",
+      "moveDown": "Bajar {{name}}",
+      "removeExercise": "Quitar ejercicio",
+      "outside": "Fuera de la rutina"
+    },
+    "hint": {
+      "increase": "Sube a {{weight}} kg",
+      "hold": "Repite {{weight}} kg y busca {{reps}} reps",
+      "deload": "Descarga: peso de siempre o un 10 % menos",
+      "thinnerBand": "Prueba una banda más fina (o ninguna)",
+      "sameBand": "Misma banda: busca {{reps}} reps"
+    },
+    "row": {
+      "set": "Serie",
+      "previous": "Anterior",
+      "weight": "kg",
+      "added": "Lastre",
+      "reps": "Reps",
+      "rir": "RIR",
+      "noCount": "no cuenta",
+      "role": {
+        "approach": "Aprox.",
+        "top": "Top",
+        "backoff": "Back-off",
+        "straight": "Serie",
+        "bilbo": "Bilbo",
+        "extra": "Extra",
+        "dropset": "Dropset"
+      },
+      "markDone": "Marcar serie hecha",
+      "isDone": "Serie hecha (pulsa para quitar)",
+      "weightOf": "Peso de la serie {{name}}",
+      "addedOf": "Lastre de la serie {{name}}",
+      "repsOf": "Repeticiones de la serie {{name}}",
+      "rirOf": "RIR de la serie {{name}}",
+      "typeOf": "Tipo de la serie {{name}}: {{type}}",
+      "typeTitle": "Tipo de serie",
+      "types": {
+        "warmup": "Calentamiento",
+        "effective": "Efectiva",
+        "dropset": "Dropset"
+      },
+      "remove": "Quitar",
+      "removeOf": "Quitar serie {{name}}"
+    },
+    "notes": {
+      "exercise": "Nota del ejercicio",
+      "exclude": "No cuenta para la progresión",
+      "reason": "Motivo",
+      "reasons": {
+        "machine-busy": "Máquina ocupada",
+        "missing-plates": "Faltan discos",
+        "other-band": "Otra banda",
+        "other": "Otro"
+      },
+      "session": "Notas de la sesión"
+    },
+    "actions": {
+      "finish": "Terminar sesión",
+      "reopen": "Marcar como en curso",
+      "delete": "Eliminar sesión",
+      "details": "Datos de la sesión",
+      "json": "Descargar JSON"
+    },
+    "toast": {
+      "saved": "Sesión guardada",
+      "savedRecords_one": "Sesión guardada · {{count}} récord",
+      "savedRecords_other": "Sesión guardada · {{count}} récords",
+      "deleted": "Sesión eliminada",
+      "failed": "No se pudo guardar. Inténtalo de nuevo.",
+      "rowRemoved": "Serie quitada",
+      "rowRestored": "Serie recuperada",
+      "exerciseRemoved": "Ejercicio quitado",
+      "exerciseRestored": "Ejercicio recuperado",
+      "restored": "Sesión recuperada",
+      "undo": "Deshacer",
+      "cannotUndo": "No se puede deshacer: ya hay datos nuevos"
+    },
+    "dialog": {
+      "cancel": "Cancelar",
+      "unsaveTitle": "¿Quitar esta serie del registro?",
+      "unsaveConfirm": "Quitar",
+      "removeTitle": "¿Quitar la serie {{name}}?",
+      "removeMessage": "Se borrará lo registrado ({{set}}). La rutina no cambia.",
+      "removeConfirm": "Quitar",
+      "strapsTitle_one": "¿Corregir también la serie ya guardada?",
+      "strapsTitle_other": "¿Corregir también las {{count}} series ya guardadas?",
+      "strapsFix_one": "Corregir la guardada",
+      "strapsFix_other": "Corregir las {{count}} guardadas",
+      "strapsOnlyNext": "Solo las próximas",
+      "deleteTitle": "¿Eliminar esta sesión?",
+      "deleteMessage": "Se borrarán la sesión y todas sus series y notas.",
+      "deleteConfirm": "Eliminar",
+      "removeExerciseTitle": "¿Quitar {{name}} de esta sesión?",
+      "removeExerciseSets_one": "Se borrará su serie. La rutina no cambia.",
+      "removeExerciseSets_other": "Se borrarán sus {{count}} series. La rutina no cambia.",
+      "removeExerciseNote": "Se borrará su nota. La rutina no cambia.",
+      "removeExerciseSetsAndNote_one": "Se borrarán su serie y su nota. La rutina no cambia.",
+      "removeExerciseSetsAndNote_other": "Se borrarán sus {{count}} series y su nota. La rutina no cambia.",
+      "removeExerciseConfirm": "Quitar",
+      "routineTitle": "¿Cambiar la sesión a {{name}}?",
+      "routineMessage": "La lista de ejercicios pasará a ser la de esa rutina. Las series ya apuntadas se mantienen.",
+      "routineConfirm": "Cambiar"
+    },
+    "add": {
+      "button": "+ Añadir ejercicio",
+      "title": "Añadir ejercicio",
+      "search": "Buscar ejercicio",
+      "group": "Grupo muscular",
+      "equipment": "Equipo",
+      "kind": "Tipo",
+      "others": "Otros",
+      "straps": "Straps",
+      "custom": "Creados por mí",
+      "inRoutine": "En alguna rutina",
+      "results": "Ejercicios",
+      "none": "Ningún ejercicio coincide",
+      "already": "Ya está en la sesión"
+    },
+    "details": {
+      "title": "Datos de la sesión",
+      "date": "Fecha",
+      "start": "Inicio",
+      "end": "Fin",
+      "routine": "Rutina",
+      "save": "Guardar",
+      "errors": {
+        "future": "La fecha no puede ser futura",
+        "endBeforeStart": "El fin no puede ser anterior al inicio",
+        "invalid": "Revisa la fecha y las horas"
+      }
+    },
+    "rest": {
+      "title": "Descanso",
+      "next": "Siguiente: {{name}}",
+      "go": "¡A por la siguiente serie!",
+      "minus": "−15 s",
+      "plus": "+15 s",
+      "close": "Cerrar descanso",
+      "started": "Descanso de {{time}}"
+    },
+    "remote": {
+      "notice": "Hay cambios de otro dispositivo en esta sesión.",
+      "close": "Cerrar"
     }
   }
 }

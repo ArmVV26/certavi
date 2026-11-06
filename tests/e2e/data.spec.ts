@@ -98,7 +98,7 @@ async function storageValue(page: Page, term: string): Promise<string> {
   return (await dd.innerText()).trim();
 }
 
-test.describe('data card', () => {
+test.describe('data card', { tag: '@all-engines' }, () => {
   test('AC-DATA-01 · a new device shows the built-in data, in order, between Apariencia and Desarrollo', async ({
     page,
   }) => {

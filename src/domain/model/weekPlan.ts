@@ -11,7 +11,7 @@ export const groupCountsSchema = z.record(muscleGroupSchema, z.number().int().no
 export const weekPlanSchema = z.object({
   ...envelopeShape('weekPlan'),
   week: mondaySchema,
-  /** Hiking on Sunday: Lower A moves to Thursday (or Friday if there is no football). */
+  /** Hiking on Sunday (as gym_app): Lower A is dropped and Wednesday becomes Lower Full. */
   hiking: z.boolean(),
   deload: z.boolean(),
   /** Sessions planned this week: 5 (normal), 4 or 3 (short week). */

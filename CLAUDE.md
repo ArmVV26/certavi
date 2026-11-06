@@ -4,8 +4,9 @@ Guidance for Claude Code working in this repository.
 
 - **Working rules (mandatory):** @.claude/rules.md
 - **Project status, decisions, roadmap and phase prompts:** `context.md` (Spanish). It is the
-  single source of truth for _what is done and what comes next_. Read it at the start of every
-  phase. This file describes _how the project is built_.
+  single source of truth for _what is done and what comes next_. At the start of a phase read
+  only its index and the phase section (Grep + ranges, never the whole file). Closed phases and
+  the progress log live in `docs/history.md`. This file describes _how the project is built_.
 
 ---
 
@@ -82,7 +83,9 @@ React UI ─► hooks ─► Domain (pure TS) ─► Repositories ─► Dexie (
 - `src/domain` — pure TypeScript: entities, zod schemas, rules, seed catalog and routines.
   **No React, no Dexie, no `fetch`.** Everything here is unit-tested.
 - `src/data` — Dexie database, repositories, `SyncEngine`, `SyncTransport` implementations,
-  legacy importer, exporters. Depends on `domain`, never on `features` or `ui`.
+  legacy importer, exporters. Depends on `domain`, never on `features` or `ui`. Ids of
+  records created on the device come from `newId(prefix)` (`src/data/ids.ts`: `ses_`, `act_`,
+  `set_` + base36 time + 10 random characters).
 - `src/features/*` — screens and their hooks (`today`, `session`, `calendar`, `routines`,
   `exercises`, `progress`, `blocks`, `settings`). May use `domain`, `data`, `ui`, `i18n`.
 - `src/ui` — generic, presentational components (Button, Dialog, Sheet, NumberField…).
@@ -121,9 +124,11 @@ docs/
   design/           palette, typography, tokens (Phase 1)
   deploy-netlify.md Netlify deploy guide (Phase 4)
   migration.md      mapping from gym_app
+  history.md        closed phases, progress log, Claude Code setup of the first phases
 netlify/functions/  sync.ts — thin adapter over server/sync (Phase 4)
 public/             icons, robots.txt, manifest (generated)
-scripts/            ports-check.mjs
+scripts/            ports-check.mjs; lib/ports.mjs (shared port probing); hooks/ (Claude Code
+                    hooks: format-file.mjs after Edit|Write, ports-warn.mjs on Stop)
 server/sync/        sync v1 server: handler, stores (memory, Netlify Blobs), auth, backups,
                     contract test (Phase 4)
 src/
@@ -165,15 +170,17 @@ interface SyncEnvelope {
 ```
 
 Entities: `Exercise`, `MuscleGroup`, `SetScheme`, `Routine`, `WeekPlan`, `WorkoutSession`
-(`routineId: null` = free session), `SetEntry` (`kind`: warmup · approach · top · backoff ·
-straight · bilbo · extra), `ExerciseNote`, `Activity`, `BodyWeight`, `OptionalBlock`,
+(`routineId: null` = free session; its `items` keep one scheme per exercise whose rows are the
+sets the user sees), `SetEntry` (`kind`: warmup · approach · top · backoff · straight · bilbo ·
+dropset · extra; `slot` = position of its row in the exercise), `ExerciseNote`, `Activity`, `BodyWeight`, `OptionalBlock`,
 `BlockLog`, `WeeklyMetric`, `Settings` (device-only fields such as theme and sync key are
 never synced).
 
 Rules (all tested): estimated 1RM (Epley on best set, ignoring warm-up/approach), progression
 (top set, increments +2.5 kg upper / +5 kg lower unless overridden, back-off ≈ −10 %, isolation),
 "does not count" sessions, effective sets per muscle group per week vs plan, records (excluding
-deload weeks), deload, short week.
+deload weeks), deload, short week, hiking week (`weekRoutines`), day plan (`dayPlan.ts`), new
+sessions (`session.ts`), Today helpers (`today.ts`) and blocks of the day (`blocks.ts`).
 
 ---
 
@@ -236,6 +243,10 @@ deload weeks), deload, short week.
   **Node** environment, so any DOM use fails (guarded by `src/domain/environment.test.ts`) —
   **`server`** — `server/**` and `netlify/**` tests, in Node — and **`ui`** — everything else,
   in jsdom with the RTL setup.
+- Timeouts: RTL `asyncUtilTimeout` is **5 s** (`src/test/setup.ts`) and the `ui` project's
+  `testTimeout` is **15 s** (`vite.config.ts`). Under `test:coverage` (v8, all workers busy) a
+  write → live query → re-render can take over 1 s, which made component tests fail at random
+  (2026-11-04).
 - Domain, data and server code need thorough tests: v8 coverage of `src/domain/**`,
   `src/data/**` and `server/**` must each stay **≥ 90 %** (lines, functions, branches,
   statements; per-glob thresholds in `vite.config.ts`; `src/data/**/testing.ts` and
@@ -252,18 +263,32 @@ deload weeks), deload, short week.
   (`reuseExistingServer: false`, `strictPort`, webServer timeout 60 s). A busy port fails the
   run on purpose.
 - **E2E limits** (after the 2026-11-02 resource-starvation incident, see `context.md` §2.2 and
-  §12): `npm run e2e` runs **Chromium only**; `npm run e2e:all` (and CI, on PRs to `main`)
-  runs Chromium + WebKit. Locally **2 workers**, no retries, `maxFailures` 3; CI uses default workers + 2 retries.
-  30 s per test; global timeout 5 min (`npm run e2e`) / 10 min (`npm run e2e:all`). Reporters
-  `list` + `html` (`open: 'never'`, report port 9323). Chromium `deviceScaleFactor` 2; never
-  `channel: 'chrome'`.
-- How to run e2e: only through `npm run e2e` (or `e2e:all`), in the foreground, no extra
-  flags, no background polling, nothing heavy in parallel. If it exceeds 5 min or hangs: stop
+  §12): `npm run e2e` runs **Chromium only** (every test); `npm run e2e:all` (and CI, on PRs to
+  `main`) runs Chromium (every test) + WebKit, where the `webkit` project only runs tests tagged
+  **`@all-engines`** (`grep` in `playwright.config.ts`). Tag (`{ tag: '@all-engines' }`, on a
+  test or a `describe`) what depends on the engine: IndexedDB / local data, sync, import and
+  export, downloads, Today and the session, the 390 px layout. Engine-independent UI logic
+  (theme, language, navigation, components) stays Chromium-only. CI runs the `e2e` job as a
+  matrix with `fail-fast: false` and `max-parallel: 1` (one job after another, in this order):
+  `chromium`, `webkit 1/2`, `webkit 2/2` (`--project` /
+  `--shard` are used in the workflow only, never locally); each job installs and caches its
+  own browser and uploads its own report. Locally **2 workers**, no retries, `maxFailures` 3;
+  CI uses default workers (1 on a 2-vCPU runner) + 2 retries.
+  30 s per test (60 s in WebKit: the project's `timeout` in `playwright.config.ts`; no
+  `test.slow` for WebKit) and 5 s per assertion (15 s in WebKit: the project's `expect.timeout`); global timeout 5 min (`npm run e2e`) / 20 min (`npm run e2e:all`). Reporters:
+  locally `dot` + `html`, in CI `list` + `html` (`open: 'never'`, report port 9323). Chromium
+  `deviceScaleFactor` 2; never `channel: 'chrome'`.
+- Vitest prints the `dot` reporter (`test`, `test:coverage`) and coverage uses `text-summary` +
+  `html`; thresholds are unchanged and still exit with code 1.
+- How to run e2e: only through `npm run e2e` (or `e2e:all`), optionally with spec paths —
+  `npm run e2e -- tests/e2e/today.spec.ts` — and no other flag after `--` (no `--project`,
+  `--workers`, `--retries`, `--headed`, `--ui`, `--reporter`), in the foreground, no background
+  polling, nothing heavy in parallel. If it exceeds 5 min or hangs: stop
   it, `npm run ports:kill`, check ports, report. Never retry in a loop (one run + one after a
   fix); never install browsers. E2E covers user flows and acceptance criteria — exhaustive
   combinations belong in unit tests; axe runs once per screen and theme (light/dark), in
   Chromium only. Target: `npm run e2e` under 2 min.
-- `npm run e2e:all` runs locally only when the user asks, or in `/close-phase` on the last
+- `npm run e2e:all` runs locally only when the user asks, or in `/close-phase final` on the last
   branch of a phase, before the PR `dev → main` (WebKit was never run before the Phase 4 PR and
   CI caught it, 2026-11-04).
 - **No real-time waits in e2e:** no `waitForTimeout`, no waiting for a debounce or backoff to
@@ -276,21 +301,21 @@ deload weeks), deload, short week.
 
 ## 10. Commands
 
-| Command                           | What it does                                                                         |
-| --------------------------------- | ------------------------------------------------------------------------------------ |
-| `npm run dev`                     | Vite dev server on 5173 (strict port)                                                |
-| `npm run build`                   | `tsc -b` + `vite build`                                                              |
-| `npm run preview`                 | Serve the build on 4173                                                              |
-| `npm run lint`                    | ESLint (type-checked)                                                                |
-| `npm run typecheck`               | `tsc -b`                                                                             |
-| `npm run test`                    | Vitest, single run                                                                   |
-| `npm run test:watch`              | Vitest in watch mode (user only — never leave it running)                            |
-| `npm run test:coverage`           | Vitest single run with v8 coverage; fails if `src/domain` or `src/data` < 90 % (CI)  |
-| `npm run e2e`                     | Playwright, **Chromium only** (builds, serves, tests, stops the server)              |
-| `npm run e2e:all`                 | Playwright, Chromium + WebKit (10 min global timeout); also run by CI on PRs to main |
-| `npm run format` / `format:check` | Prettier write / check                                                               |
-| `npm run ports:check`             | Lists which of 5173 / 4173 / 8888 / 8787 / 9323 are busy and by whom; exit 1 if any  |
-| `npm run ports:kill`              | Frees those ports                                                                    |
+| Command                           | What it does                                                                               |
+| --------------------------------- | ------------------------------------------------------------------------------------------ |
+| `npm run dev`                     | Vite dev server on 5173 (strict port)                                                      |
+| `npm run build`                   | `tsc -b` + `vite build`                                                                    |
+| `npm run preview`                 | Serve the build on 4173                                                                    |
+| `npm run lint`                    | ESLint (type-checked)                                                                      |
+| `npm run typecheck`               | `tsc -b`                                                                                   |
+| `npm run test`                    | Vitest, single run                                                                         |
+| `npm run test:watch`              | Vitest in watch mode (user only — never leave it running)                                  |
+| `npm run test:coverage`           | Vitest single run with v8 coverage; fails if `src/domain` or `src/data` < 90 % (CI)        |
+| `npm run e2e`                     | Playwright, **Chromium only** (builds, serves, tests, stops the server)                    |
+| `npm run e2e:all`                 | Playwright, Chromium + WebKit (`@all-engines` only); 20 min cap; CI runs it on PRs to main |
+| `npm run format` / `format:check` | Prettier write / check                                                                     |
+| `npm run ports:check`             | Lists which of 5173 / 4173 / 8888 / 8787 / 9323 are busy and by whom; exit 1 if any        |
+| `npm run ports:kill`              | Frees those ports                                                                          |
 
 Note: `typecheck` is `tsc -b`, not `tsc --noEmit -p .` as first drafted in `context.md` §8.5.
 The root `tsconfig.json` only holds project references (`tsconfig.app.json` for `src`,
@@ -331,16 +356,28 @@ Git write commands and global installs are **denied** in `.claude/settings.json`
 
 ## 13. Using the agents and commands
 
-- **`/start-phase N`** — reads `context.md` and this file, summarizes goals, deliverables and
-  acceptance criteria, lists needed packages and the branch to create, and waits for
-  confirmation before writing code.
-- **`/close-phase`** — runs lint, typecheck, test and build; launches the **blind-tester**
-  (e2e from the spec; on the last branch of a phase also `npm run e2e:all`, before the PR
-  `dev → main`) and the **context-keeper** (updates memory); checks no port is busy; outputs
-  the commit plan.
+- **`/start-phase N`** — reads only the index and phase section of `context.md` and the
+  relevant spec, then presents a plan in Spanish (goals, deliverables, acceptance criteria,
+  packages, branch, split into short sessions); the plan replaces a separate confirmation.
+- **`/close-phase`** (every branch) — lint, typecheck, `test:coverage`, build only if build/PWA/
+  functions changed; **blind-tester** (max 8 new tests, one pass, one fix) running only the
+  branch's specs with `npm run e2e -- <specs>`; **security-reviewer** if the diff touches
+  `server/`, `src/data/sync/`, `package.json` or `netlify.toml`; the main agent writes a status of
+  at most 10 lines in the phase section of `context.md` (no context-keeper); ports check; commit
+  plan.
+- **`/close-phase final`** (last branch of a phase) — everything above plus `npm run e2e:all`
+  once, **code-reviewer**, **security-reviewer**, **context-keeper** and the release plan
+  (PR `dev → main`, `chore(release)`, tag).
+- **code-reviewer / security-reviewer:** read-only (Read, Grep, Glob, Bash), they review
+  `git diff dev...HEAD` (security-reviewer also runs `npm audit --audit-level=high`) and report in
+  at most 30 lines: blocking / should / suggestion, with `file:line`. They fix nothing.
 - **blind-tester:** give it the phase's acceptance criteria. It writes and runs
   `tests/e2e/*.spec.ts` and reports failures with steps, expected vs actual and screenshots.
   It does not fix app code. Write the spec in `docs/spec/` **before** implementing a feature
   so the tester has something to test against.
 - **context-keeper:** give it a factual summary of what changed and the test results. It never
-  marks something done unless tests passed.
+  marks something done unless tests passed. Max 10 lines per update; no test counts, coverage
+  or durations; the log row goes to `docs/history.md`.
+- **Hooks** (`.claude/settings.json`): `PostToolUse` on `Edit|Write` formats the file with
+  Prettier (`scripts/hooks/format-file.mjs`); `Stop` warns the user of busy ports other than
+  5173 (`scripts/hooks/ports-warn.mjs`, exit 0 always).

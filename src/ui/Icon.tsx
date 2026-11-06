@@ -38,6 +38,8 @@ const PATHS = {
   minus: <path d="M5 12h14" />,
   back: <path d="M15 5l-7 7 7 7" />,
   chevronRight: <path d="M9 5l7 7-7 7" />,
+  chevronUp: <path d="M5 15l7-7 7 7" />,
+  chevronDown: <path d="M5 9l7 7 7-7" />,
   trash: (
     <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12.5a1.5 1.5 0 0 0 1.5 1.5h7a1.5 1.5 0 0 0 1.5-1.5L18 7M9 7V4.5h6V7" />
   ),

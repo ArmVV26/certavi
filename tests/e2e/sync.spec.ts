@@ -151,6 +151,8 @@ function button(scope: Page | Locator, name: string): Locator {
 
 async function saveKey(page: Page, key: string, lang: Lang = 'es'): Promise<void> {
   await keyField(page, lang).fill(key);
+  // The field must hold the key before saving; a lost value would otherwise only show up later.
+  await expect(keyField(page, lang)).toHaveValue(key);
   await button(page, lang === 'es' ? ES.saveKey : 'Save key').click();
 }
 
@@ -393,7 +395,7 @@ async function syncedWithSample(page: Page, server: FakeSyncServer): Promise<voi
 // Tests
 // ---------------------------------------------------------------------------------------------
 
-test.describe('sync', () => {
+test.describe('sync', { tag: '@all-engines' }, () => {
   test('AC-SYNC-01 · a new device is "Sin configurar", the card comes first with the key form, no request is made', async ({
     page,
     context,
@@ -760,12 +762,7 @@ test.describe('sync', () => {
     page,
     context,
     browser,
-    browserName,
   }, testInfo) => {
-    // Two devices, three imports, four syncs and two exports: in WebKit every step on local
-    // storage is seconds slower (a fresh device's Datos card alone can take > 7 s), so the
-    // default 30 s does not fit there. Nothing is waited for by time; this is only the budget.
-    test.slow(browserName === 'webkit', 'two devices; WebKit local storage is seconds slower');
     const server = createFakeSyncServer();
     await server.attach(context);
     const ACT = 'act_mg2a3b4c5d6e7f8g9h';
@@ -1172,7 +1169,12 @@ test.describe('sync', () => {
     await expect(h1(page, 'Sync')).toBeVisible();
     await expect(page.getByText('No backups yet.', { exact: true })).toBeVisible();
     const items = attemptItems(page, 'en');
-    await expect(items).toHaveCount(4);
+    // At least the four attempts of this test. When the key is saved, the engine re-queues every
+    // record; if that queue change reaches it while the first attempt is already running (slow
+    // IndexedDB, as in WebKit), it runs one more attempt right after. So the count is not exact,
+    // but the newest two are always the ones the test made last.
+    await expect.poll(() => items.count()).toBeGreaterThanOrEqual(4);
+    await expect(items.filter({ hasText: 'Wrong key. Check it in Settings.' })).toHaveCount(1);
     await expect(items.nth(0)).toContainText('OK');
     await expect(items.nth(1)).toContainText('Wrong key. Check it in Settings.');
     await expect(items.nth(0)).toContainText(/Sent: \d+ · Received: \d+ · [\d.,]+ s/);
