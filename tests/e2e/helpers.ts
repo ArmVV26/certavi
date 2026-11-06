@@ -42,7 +42,7 @@ export const PAGES: readonly PageInfo[] = [
     en: 'Routines',
     contentEs: 'Tus rutinas',
     contentEn: 'Your routines',
-    soon: true,
+    // Real content since Phase 6 (docs/spec/routines.md): no "Próximamente" any more.
   },
   {
     path: '/progress',
