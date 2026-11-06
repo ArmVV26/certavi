@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { StoredWireRecord, SyncResponse } from '../../domain';
-import { makeSession } from '../../domain/testing/builders';
+import { makeSession, makeSet } from '../../domain/testing/builders';
 import { openTestDatabase } from '../../test/render';
 import { createRepositories } from '../repository';
 import { commitResponse } from './commit';
@@ -33,7 +33,7 @@ describe('commitResponse', () => {
 
     const result = await commitResponse(db, sent, answer([stored(local, 1)]));
 
-    expect(result).toEqual({ dequeued: 1, applied: 0, invalid: 0 });
+    expect(result).toEqual({ dequeued: 1, applied: 0, changes: [], invalid: 0 });
     expect(await db.pending.count()).toBe(0);
     expect(writes).toBe(0);
     expect(await db.sessions.get('a')).toEqual(local);
@@ -92,7 +92,12 @@ describe('commitResponse', () => {
 
     const result = await commitResponse(db, [], answer(records));
 
-    expect(result).toEqual({ dequeued: 0, applied: 1, invalid: 2 });
+    expect(result).toEqual({
+      dequeued: 0,
+      applied: 1,
+      changes: [{ type: 'session', id: 'a' }],
+      invalid: 2,
+    });
     expect(await db.sessions.get('a')).toEqual({
       id: 'a',
       type: 'session',
@@ -111,6 +116,40 @@ describe('commitResponse', () => {
     await commitResponse(db, [], answer([stored(v1, 1), stored(v2, 2), stored(v0, 3)]));
 
     expect(await db.sessions.get('a')).toEqual(v2);
+  });
+
+  it('reports what it wrote, with the session of sets and notes (also for deletions)', async () => {
+    const { db, repos } = setup();
+    const set = await repos.set.put(makeSet({ sessionId: 's1', exerciseId: 'e', slot: 0 }));
+    await db.pending.clear();
+    const incoming = [
+      stored(
+        makeSet({ id: 'set-new', sessionId: 's1', exerciseId: 'e', slot: 1, updatedAt: 5000 }),
+        1,
+      ),
+      // A deletion carries no session: it is found through the local copy.
+      stored({ id: set.id, type: 'set', updatedAt: 6000, deleted: true }, 2),
+      stored(makeSession({ id: 's2', date: '2026-11-02', updatedAt: 7000 }), 3),
+    ];
+
+    const result = await commitResponse(db, [], answer(incoming));
+
+    expect(result.applied).toBe(3);
+    expect(result.changes).toEqual(
+      expect.arrayContaining([
+        { type: 'set', id: 'set-new', sessionId: 's1' },
+        { type: 'set', id: set.id, sessionId: 's1' },
+        { type: 'session', id: 's2' },
+      ]),
+    );
+    expect(result.changes).toHaveLength(3);
+  });
+
+  it('does not report records that were not newer', async () => {
+    const { db, repos } = setup();
+    const local = await repos.session.put(makeSession({ id: 'a', date: '2026-11-02' }));
+    const result = await commitResponse(db, [], answer([stored({ ...local, updatedAt: 1 }, 1)]));
+    expect(result.changes).toEqual([]);
   });
 
   it('never moves since back', async () => {
