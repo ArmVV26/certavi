@@ -86,7 +86,10 @@ describe('adding an exercise', () => {
     expect(screen.queryByText('Sin ejercicios todavía.')).not.toBeInTheDocument();
     expect(screen.queryByText('Fuera de la rutina')).not.toBeInTheDocument();
     expect(screen.getByText(/^1 ejercicios? · \d+ series?$/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Remo en T', expanded: true })).toHaveFocus();
+    // The focus is requested once the write is confirmed, a moment after the card appears.
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Remo en T', expanded: true })).toHaveFocus();
+    });
   });
 
   it('tags an exercise added to a routine session as outside the routine', async () => {
