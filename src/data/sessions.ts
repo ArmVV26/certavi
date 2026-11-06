@@ -98,6 +98,8 @@ export interface SessionView {
   references: ReadonlyMap<string, HistoryEntry>;
   /** The session falls in a deload week. */
   deload: boolean;
+  /** Every live routine, for the routine choice of the session details. */
+  routines: Routine[];
   /** Ids of the exercises that are in at least one routine (for the "in a routine" filter). */
   routineExerciseIds: ReadonlySet<string>;
 }
@@ -140,6 +142,7 @@ export function readSession(db: CertaviDb, id: string): Promise<SessionView | nu
         notes: notes.filter((n) => n.sessionId === id),
         references,
         deload: isDeloadDate(row.date, deloadWeeks(weekPlans)),
+        routines,
         routineExerciseIds: new Set(routines.flatMap((r) => r.items.map((i) => i.exerciseId))),
       };
     },

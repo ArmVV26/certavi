@@ -5,12 +5,15 @@ import { Link, useParams } from 'react-router';
 import {
   isInProgress,
   isEffectiveSet,
+  nextOpenRow,
   parseIsoDate,
   planCounts,
   sessionProgress,
   volume,
 } from '../../domain';
 import { useDatabase } from '../../data/DatabaseContext';
+import { getLocalStorage } from '../../data/deviceStorage';
+import { readRestAlerts } from '../../data/restSettings';
 import { readSession, type SessionView } from '../../data/sessions';
 import { formatDate, formatNumber } from '../../i18n/format';
 import { useLocale } from '../../i18n/LocaleContext';
@@ -22,10 +25,17 @@ import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import { EmptyState } from '../../ui/EmptyState';
 import { Notice } from '../../ui/Notice';
 import { ScalePicker } from '../../ui/ScalePicker';
+import { cx } from '../../ui/cx';
 import { Tag } from '../../ui/Tag';
 import { TextArea } from '../../ui/TextField';
 import { AddExerciseSheet } from './AddExerciseSheet';
+import { alertRestEnd } from './restAlerts';
+import { RestTimerBar } from './RestTimerBar';
+import { useRemoteChanges } from './useRemoteChanges';
+import { useRestTimer } from './useRestTimer';
+import { SessionDetailsSheet } from './SessionDetailsSheet';
 import { ExerciseCard } from './ExerciseCard';
+import { useToday } from '../today/useToday';
 import styles from './SessionPage.module.css';
 import { useDebouncedSave } from './useDebouncedSave';
 import { useSessionActions, type DialogState } from './useSessionActions';
@@ -64,8 +74,14 @@ function SessionScreen({ view }: { view: SessionView }) {
   const { locale } = useLocale();
   const { session, routine, exercises, sets, notes, references, deload } = view;
   const store = useSessionDrafts(session.id);
-  const actions = useSessionActions(view, store);
+  const rest = useRestTimer(() => {
+    alertRestEnd(readRestAlerts(getLocalStorage(window)));
+  });
+  const actions = useSessionActions(view, store, rest);
+  const remote = useRemoteChanges(session.id);
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const today = useToday();
 
   const inProgress = isInProgress(session);
   const counts = planCounts(session.items);
@@ -80,9 +96,27 @@ function SessionScreen({ view }: { view: SessionView }) {
       ? null
       : formatDate(new Date(session.startedAt), locale, { timeStyle: 'short' });
   const effective = sets.filter(isEffectiveSet);
+  const next = rest.timer?.from ? nextOpenRow(session.items, sets, rest.timer.from) : null;
+  const nextExercise = next ? exercises.get(next.exerciseId) : undefined;
+  const nextName = next
+    ? nextExercise
+      ? resolveText(t, nextExercise.name)
+      : next.exerciseId
+    : null;
 
   return (
-    <div className={styles.page}>
+    <div className={cx(styles.page, rest.timer && styles.resting)}>
+      {remote.changed && (
+        <Notice tone="info">
+          <div className={styles.remote}>
+            <p>{t('session.remote.notice')}</p>
+            <Button variant="secondary" onClick={remote.dismiss}>
+              {t('session.remote.close')}
+            </Button>
+          </div>
+        </Notice>
+      )}
+
       <Card element="section">
         <h2 className={styles.title}>
           {routine ? resolveText(t, routine.name) : t('routines.free')}
@@ -198,10 +232,47 @@ function SessionScreen({ view }: { view: SessionView }) {
             {t('session.actions.reopen')}
           </Button>
         )}
+        <Button
+          variant="secondary"
+          onClick={() => {
+            setEditing(true);
+          }}
+        >
+          {t('session.actions.details')}
+        </Button>
+        <Button
+          variant="secondary"
+          icon="download"
+          onClick={() => {
+            void actions.downloadJson();
+          }}
+        >
+          {t('session.actions.json')}
+        </Button>
         <Button variant="danger" onClick={actions.requestDelete}>
           {t('session.actions.delete')}
         </Button>
       </div>
+
+      {rest.timer && (
+        <RestTimerBar
+          timer={rest.timer}
+          nextName={nextName}
+          onAdjust={rest.adjust}
+          onClose={rest.close}
+        />
+      )}
+
+      <SessionDetailsSheet
+        open={editing}
+        onClose={() => {
+          setEditing(false);
+        }}
+        session={session}
+        routines={view.routines}
+        today={today}
+        onSave={actions.saveDetails}
+      />
 
       <SessionDialog
         dialog={actions.dialog}

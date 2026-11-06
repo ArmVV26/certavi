@@ -1,8 +1,15 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
-import { resolveRowInput, schemeRows, type DisplayRow, type ExclusionReason } from '../../domain';
+import {
+  resolveRowInput,
+  restSeconds,
+  schemeRows,
+  type DisplayRow,
+  type ExclusionReason,
+} from '../../domain';
 import { useDatabase } from '../../data/DatabaseContext';
+import { readRestTimes } from '../../data/restSettings';
 import type { RowDraft } from '../../data/sessionDrafts';
 import {
   addRow,
@@ -23,14 +30,21 @@ import {
 } from '../../data/sessionLog';
 import {
   addExercise,
+  changeSessionRoutine,
   moveExercise,
   removeExercise,
   restoreExercise,
+  updateSessionTimes,
 } from '../../data/sessionTools';
+import { exportSession } from '../../data/backup';
+import { downloadFile } from '../../ui/download';
+import type { DetailsPatch } from './SessionDetailsSheet';
 import type { SessionView } from '../../data/sessions';
 import { useToast } from '../../ui/ToastContext';
 import { useToday } from '../today/useToday';
 import { fieldId } from './fieldId';
+import { unlockAudio } from './restAlerts';
+import type { RestTimerApi } from './useRestTimer';
 import type { DraftStore } from './useSessionDrafts';
 
 export type DialogState =
@@ -71,7 +85,7 @@ export interface NoteChange {
 }
 
 /** Everything the session screen does to the data, with errors shown as a toast. */
-export function useSessionActions(view: SessionView, store: DraftStore) {
+export function useSessionActions(view: SessionView, store: DraftStore, rest: RestTimerApi) {
   const { t } = useTranslation();
   const db = useDatabase();
   const toast = useToast();
@@ -128,6 +142,8 @@ export function useSessionActions(view: SessionView, store: DraftStore) {
     straps: boolean | undefined,
     band: string | undefined,
   ) => {
+    // Sound can only start after a tap: this is the tap.
+    unlockAudio();
     const resolved = resolveRowInput(
       { weight: draft?.weight ?? null, reps: draft?.reps ?? null },
       row.previous,
@@ -151,7 +167,14 @@ export function useSessionActions(view: SessionView, store: DraftStore) {
         ...(band === undefined ? {} : { band }),
       }),
     );
-    if (saved) store.set(exerciseId, row.slot, null);
+    if (!saved) return;
+    store.set(exerciseId, row.slot, null);
+    // The rest timer only runs for a new set of today's session that is still in progress.
+    if (view.session.date === today && view.session.endedAt === null) {
+      const times = await readRestTimes(db);
+      const kind = view.exercises.get(exerciseId)?.kind ?? 'compound';
+      rest.start(restSeconds(row.kind, kind, times), { exerciseId, slot: row.slot });
+    }
   };
 
   /** Keeps what is typed; with `commit` a saved row is corrected right away. */
@@ -217,6 +240,23 @@ export function useSessionActions(view: SessionView, store: DraftStore) {
     else void removeExerciseNow(exerciseId);
   };
 
+  /** Saves the date, hours and/or routine from the details sheet. False when it failed. */
+  const saveDetails = async ({ times, routineId }: DetailsPatch): Promise<boolean> => {
+    const done = await guard(async () => {
+      if (times) await updateSessionTimes(db, sessionId, times, today);
+      if (routineId !== undefined) await changeSessionRoutine(db, sessionId, routineId);
+    });
+    if (done && times && times.date !== today) rest.close();
+    return done !== null;
+  };
+
+  const downloadJson = async () => {
+    await guard(async () => {
+      const file = await exportSession(db, sessionId);
+      if (file) downloadFile(file);
+    });
+  };
+
   const moveExerciseBy = async (exerciseId: string, direction: -1 | 1) => {
     await guard(() => moveExercise(db, sessionId, exerciseId, direction));
   };
@@ -266,6 +306,7 @@ export function useSessionActions(view: SessionView, store: DraftStore) {
     const done = await guard(() => finishSession(db, sessionId, today));
     if (!done) return;
     store.clear();
+    rest.close();
     const { records } = done.value;
     toast.show({
       message:
@@ -296,6 +337,7 @@ export function useSessionActions(view: SessionView, store: DraftStore) {
       const done = await guard(() => deleteSession(db, sessionId));
       if (!done) return;
       store.clear();
+      rest.close();
       const undo = done.value;
       if (undo) {
         offerUndo(t('session.toast.deleted'), async () => {
@@ -330,6 +372,8 @@ export function useSessionActions(view: SessionView, store: DraftStore) {
     addNewRow,
     requestRemoveExercise,
     moveExercise: moveExerciseBy,
+    saveDetails,
+    downloadJson,
     addExercise: addExerciseToSession,
     changeType,
     requestStrapsBand,
