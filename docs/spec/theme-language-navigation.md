@@ -9,8 +9,9 @@ main navigation with five sections, a light / dark / automatic theme that follow
 the whole interface in Spanish (default) or English. It also covers the base components shown on
 the internal catalog page `/dev/ui` (dialogs, bottom sheet, notifications, number fields…).
 
-Calendar, Routines and Progress are empty for now: each shows a short text and a "Próximamente" /
-"Coming soon" label. Today has its real content since Phase 5 ([today.md](today.md)).
+Calendar and Progress are empty for now: each shows a short text and a "Próximamente" /
+"Coming soon" label. Today has its real content since Phase 5 ([today.md](today.md)), and Routines
+since Phase 6 ([routines.md](routines.md), [exercises.md](exercises.md)).
 
 ## Screens and elements
 
@@ -47,15 +48,16 @@ A navigation landmark named "Principal" / "Main" with five links, in this order:
 
 ### Pages
 
-| Path        | Title (es / en)                       | Content                                                                                                                                               |
-| ----------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`         | Hoy / Today                           | Today's date (e.g. "lunes, 2 de noviembre" / "Monday 2 November"), heading "La sesión de hoy" / "Today's session" (Phase 5: see [today.md](today.md)) |
-| `/calendar` | Calendario / Calendar                 | Heading "Tu calendario" / "Your calendar", "Próximamente"                                                                                             |
-| `/routines` | Rutinas / Routines                    | Heading "Tus rutinas" / "Your routines", "Próximamente"                                                                                               |
-| `/progress` | Progreso / Progress                   | Heading "Tu progreso" / "Your progress", "Próximamente"                                                                                               |
-| `/settings` | Ajustes / Settings                    | See below                                                                                                                                             |
-| `/dev/ui`   | Componentes / Components              | Component catalog (see below). **Not** in the navigation bar                                                                                          |
-| any other   | Página no encontrada / Page not found | Text and a link "Volver a Hoy" / "Back to Today"                                                                                                      |
+| Path         | Title (es / en)                       | Content                                                                                                                                               |
+| ------------ | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`          | Hoy / Today                           | Today's date (e.g. "lunes, 2 de noviembre" / "Monday 2 November"), heading "La sesión de hoy" / "Today's session" (Phase 5: see [today.md](today.md)) |
+| `/calendar`  | Calendario / Calendar                 | Heading "Tu calendario" / "Your calendar", "Próximamente"                                                                                             |
+| `/routines`  | Rutinas / Routines                    | Section links "Rutinas y ejercicios" (Phase 6: see [exercises.md](exercises.md)) and the list of the six routines (see [routines.md](routines.md))    |
+| `/exercises` | Ejercicios / Exercises                | Exercise catalog, inside the Rutinas tab (Phase 6: see [exercises.md](exercises.md)). **Not** a tab of its own                                        |
+| `/progress`  | Progreso / Progress                   | Heading "Tu progreso" / "Your progress", "Próximamente"                                                                                               |
+| `/settings`  | Ajustes / Settings                    | See below                                                                                                                                             |
+| `/dev/ui`    | Componentes / Components              | Component catalog (see below). **Not** in the navigation bar                                                                                          |
+| any other    | Página no encontrada / Page not found | Text and a link "Volver a Hoy" / "Back to Today"                                                                                                      |
 
 The browser tab title is "<page title> · Certavi", e.g. "Hoy · Certavi".
 

@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-06
+
+Exercise catalog, own exercises and routine editor (Phase 6).
+
+### Added
+
+- Exercise catalog inside the Routines tab (`/exercises`, selector "Routines | Exercises"; the
+  Routines tab stays active there): combinable filters (text, muscle group, equipment, type,
+  straps, mine, in a routine) shared with the "Add exercise" sheet, equipment and straps tags,
+  and "Show archived" (`feature/exercise-catalog`; spec `docs/spec/exercises.md`).
+- Exercise detail (`/exercises/:id`): data, estimated 1RM, max weight, best volume, rep records,
+  history with a link to each session, and an editable own increment. Deload weeks give no
+  records.
+- Own exercises: create, edit, archive and unarchive from the catalog and from the session's
+  add sheet, with ids `exe_`. Seed exercises only allow editing the increment. Nothing is
+  deleted, only archived.
+- Routine list (`/routines`): the six seed routines in weekday order, with exercise and set
+  counts and an "Edited" tag (`feature/routine-editor`; spec `docs/spec/routines.md`,
+  AC-ROUTINES-01..21).
+- Routine viewer (`/routines/:id`, read-only; it never starts a session): scheme text, note,
+  optional tag, link to each exercise, and "Restore original" (with a confirmation dialog, only
+  when the routine was edited).
+- Routine editor (`/routines/:id/edit`): add exercises, remove them with Undo, move up and down,
+  add and remove sets per exercise (up to 20), change kind, reps, RIR, note and the optional
+  flag. Nothing is saved until "Save"; validation with focus on the first invalid field; a
+  warning and a discard dialog when leaving with unsaved changes.
+- Domain rule `src/domain/rules/routineEdit.ts`; repository helpers `saveRoutine` and
+  `restoreSeedRoutine` (`src/data/routines.ts`).
+- End-to-end specs `tests/e2e/exercises.spec.ts` and `tests/e2e/routines.spec.ts`.
+
+### Changed
+
+- Only the six seed routines are editable; their name and weekday are not (the day plan depends
+  on them). Creating and deleting routines moves to the v2 backlog.
+- Routine edits apply to new sessions only; sessions keep their own copy of the plan.
+- The exercise evolution chart moves from Phase 6 to Phase 7.
+- Route `/routines` no longer shows "coming soon"; the `pages.routines.*` i18n keys are removed.
+
 ## [0.6.0] - 2026-11-06
 
 Today screen and active session (Phase 5).
@@ -357,7 +395,9 @@ Project foundation (Phase 0).
   guide from gym_app, functional spec index and design docs index.
 - License: all rights reserved (MIT planned when the repository becomes public).
 
-[Unreleased]: https://github.com/ArmVV26/certavi/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/ArmVV26/certavi/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.7.0
+[0.6.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.6.0
 [0.5.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.5.0
 [0.4.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.4.0
 [0.3.0]: https://github.com/ArmVV26/certavi/releases/tag/v0.3.0

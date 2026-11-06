@@ -300,6 +300,7 @@ test.describe('active session', { tag: '@all-engines' }, () => {
     await banca.getByRole('button', { name: '+ Serie extra', exact: true }).click();
     await expect.poll(() => r.count()).toBe(n + 2);
     await expect(banca.getByText(/^Extra\b/)).toBeVisible();
+    await expect(r.kg(n + 1)).toBeFocused(); // typed values are only safe once the row is focused
     await logSet(banca, n + 1, '50', '10');
     await expect(progress(page, 1, 19)).toBeVisible();
 
@@ -554,6 +555,10 @@ test.describe('active session', { tag: '@all-engines' }, () => {
     await r.reps(1).fill('8');
     await banca.getByRole('button', { name: '+ Serie extra', exact: true }).click();
     await expect.poll(() => r.count()).toBe(n + 1);
+    // The row is drawn as soon as it is saved, but the app moves the typed values to follow the
+    // new row a moment later and then focuses it: typing before that loses the value (WebKit on
+    // CI, 2026-11-06).
+    await expect(r.kg(n)).toBeFocused();
     await r.reps(n).fill('10');
 
     // Something redraws the screen: fold another card.

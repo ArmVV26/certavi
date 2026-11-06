@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import {
   isInProgress,
   isEffectiveSet,
@@ -79,6 +79,7 @@ function SessionScreen({ view }: { view: SessionView }) {
   });
   const actions = useSessionActions(view, store, rest);
   const remote = useRemoteChanges(session.id);
+  const navigate = useNavigate();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(false);
   const today = useToday();
@@ -208,6 +209,9 @@ function SessionScreen({ view }: { view: SessionView }) {
         onChoose={(exerciseId) => {
           setAdding(false);
           void actions.addExercise(exerciseId);
+        }}
+        onCreate={() => {
+          void navigate(`/exercises/new?addTo=${session.id}`);
         }}
       />
 
