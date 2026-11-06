@@ -8,6 +8,7 @@ export * from './history';
 export * from './progression';
 export * from './records';
 export * from './rest';
+export * from './routineEdit';
 export * from './rows';
 export * from './scheme';
 export * from './session';
