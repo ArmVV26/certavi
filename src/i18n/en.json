@@ -27,10 +27,6 @@
       "title": "Your calendar",
       "text": "Here you will see your sessions, activities and special weeks for each month."
     },
-    "routines": {
-      "title": "Your routines",
-      "text": "Here you will view and edit your routines, their exercises and their sets."
-    },
     "progress": {
       "title": "Your progress",
       "text": "Here you will see sets per muscle group, your records and how your exercises evolve."
@@ -503,7 +499,78 @@
       "crunch": "Add load until you finish at RIR 1-2.",
       "legPress": "Always load the plates the same way and write it in the note."
     },
-    "free": "Free session"
+    "free": "Free session",
+    "yourRoutines": "Your routines",
+    "anyDay": "Any day",
+    "edited": "Edited",
+    "optional": "Optional",
+    "summary": {
+      "exercises_one": "{{count}} exercise",
+      "exercises_other": "{{count}} exercises",
+      "sets_one": "{{count}} set",
+      "sets_other": "{{count}} sets"
+    },
+    "scheme": {
+      "approach": "{{count}} appr.",
+      "top": "{{count}} top",
+      "backoff": "{{count}} back-off",
+      "bilbo": "{{count}} bilbo",
+      "straight": "{{count}} × {{reps}}",
+      "plain_one": "{{count}} set",
+      "plain_other": "{{count}} sets",
+      "rir": "RIR {{rir}}"
+    },
+    "view": {
+      "title": "Routine",
+      "back": "Back to Routines",
+      "edit": "Edit",
+      "restore": "Restore original",
+      "exercises": "Exercises",
+      "list": "Routine exercises",
+      "empty": "This routine has no exercises",
+      "notFound": "We couldn't find this routine",
+      "restoreTitle": "Restore the original routine?",
+      "restoreText": "The changes you made to {{name}} will be lost. Sessions already started don't change.",
+      "restoreConfirm": "Restore",
+      "restoreCancel": "Cancel",
+      "restored": "Routine restored",
+      "failed": "Couldn't restore. Try again."
+    },
+    "edit": {
+      "title": "Edit routine",
+      "save": "Save",
+      "discard": "Discard",
+      "saved": "Routine saved",
+      "failed": "Couldn't save. Try again.",
+      "list": "Routine exercises",
+      "moveUp": "Move {{name}} up",
+      "moveDown": "Move {{name}} down",
+      "remove": "Remove {{name}}",
+      "removed": "{{name}} removed",
+      "undo": "Undo",
+      "optional": "Optional",
+      "sets": "Sets",
+      "setKind": "Type of set {{n}}",
+      "setReps": "Reps of set {{n}}",
+      "removeSet": "Remove set {{n}}",
+      "addSet": "Add set",
+      "rir": "Target RIR",
+      "rirHint": "For example 2 or 1-2",
+      "note": "Note",
+      "addExercise": "Add exercise",
+      "alreadyIn": "Already in the routine",
+      "errorsTitle": "Check the routine: some fields have errors",
+      "errors": {
+        "repsRequired": "Enter the reps",
+        "repsInvalid": "Write the reps as 8, ~10 or 6-8",
+        "rirInvalid": "Write the RIR as 2 or 1-2",
+        "noExercises": "The routine needs at least one exercise"
+      },
+      "discardTitle": "Discard changes?",
+      "discardText": "You have unsaved changes in this routine.",
+      "discardConfirm": "Discard changes",
+      "keepEditing": "Keep editing"
+    }
   },
   "blocks": {
     "names": {

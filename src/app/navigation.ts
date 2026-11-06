@@ -37,7 +37,9 @@ export type TitleKey =
   | 'exercises.title'
   | 'exercises.detail.title'
   | 'exercises.form.createTitle'
-  | 'exercises.form.editTitle';
+  | 'exercises.form.editTitle'
+  | 'routines.view.title'
+  | 'routines.edit.title';
 
 export interface RouteHandle {
   titleKey: TitleKey;
