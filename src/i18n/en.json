@@ -23,13 +23,65 @@
   },
   "pages": {
     "comingSoon": "Coming soon",
-    "calendar": {
-      "title": "Your calendar",
-      "text": "Here you will see your sessions, activities and special weeks for each month."
-    },
     "progress": {
       "title": "Your progress",
       "text": "Here you will see sets per muscle group, your records and how your exercises evolve."
+    }
+  },
+  "calendar": {
+    "title": "Calendar",
+    "grid": "Month calendar",
+    "close": "Close",
+    "month": {
+      "previous": "Previous month",
+      "next": "Next month",
+      "today": "Go to today"
+    },
+    "summary": {
+      "none": "Nothing logged this month",
+      "sessions_one": "{{count}} session",
+      "sessions_other": "{{count}} sessions",
+      "activities_one": "{{count}} activity",
+      "activities_other": "{{count}} activities"
+    },
+    "cell": {
+      "name": "{{date}}, {{content}}",
+      "none": "nothing logged",
+      "sessions_one": "{{count}} session",
+      "sessions_other": "{{count}} sessions",
+      "activities_one": "{{count}} activity",
+      "activities_other": "{{count}} activities"
+    },
+    "week": {
+      "name": "Week {{range}}",
+      "title": "Week {{range}}",
+      "markers": {
+        "deload": "D",
+        "hiking": "H"
+      },
+      "tags": {
+        "deload": "Deload",
+        "hiking": "Hiking",
+        "short_one": "{{count}} session",
+        "short_other": "{{count}} sessions",
+        "closed": "Closed"
+      },
+      "closedNote": "Week closed: its plan was saved on {{date}}.",
+      "future": "You can't change this week yet.",
+      "download": "Download the week as JSON"
+    },
+    "day": {
+      "plan": "Plan: {{plan}}",
+      "sessions": "Sessions of the day",
+      "activities": "Activities of the day",
+      "noSessions": "No sessions",
+      "noActivities": "No activities",
+      "inProgress": "In progress",
+      "finished": "Finished",
+      "sets_one": "{{count}} set",
+      "sets_other": "{{count}} sets",
+      "log": "Log on this day",
+      "saveActivity": "Save activity"
     }
   },
   "notFound": {
