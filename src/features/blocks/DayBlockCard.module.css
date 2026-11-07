@@ -8,6 +8,16 @@
   font-size: var(--fs-sm);
 }
 
+.link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  color: var(--accent);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
 .group {
   display: flex;
   flex-direction: column;

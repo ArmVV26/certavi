@@ -110,13 +110,20 @@ describe('DataCard', () => {
 });
 
 describe('Settings page', () => {
-  it('shows the sync card first, then Appearance, Rest, Data and Developer', async () => {
+  it('shows the sync card first, then Appearance, Rest, Blocks, Data and Developer', async () => {
     renderApp('/settings', { db: await seededDb() });
     await screen.findByLabelText('Datos guardados en este dispositivo');
     // Some cards appear after reading the database: wait for the whole list.
     await waitFor(() => {
       const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
-      expect(headings).toEqual(['Sincronización', 'Apariencia', 'Descanso', 'Datos', 'Desarrollo']);
+      expect(headings).toEqual([
+        'Sincronización',
+        'Apariencia',
+        'Descanso',
+        'Bloques opcionales',
+        'Datos',
+        'Desarrollo',
+      ]);
     });
   });
 });

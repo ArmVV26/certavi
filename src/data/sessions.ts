@@ -6,11 +6,14 @@ import {
   lastReference,
   mondayOf,
   newSession,
+  REHAB_CALF_EXERCISE_ID,
+  rehabContext,
   routineExerciseIds,
   weekPlanId,
   type Exercise,
   type ExerciseNote,
   type HistoryEntry,
+  type RehabContext,
   type Routine,
   type SetEntry,
   type WorkoutSession,
@@ -99,6 +102,8 @@ export interface SessionView {
   references: ReadonlyMap<string, HistoryEntry>;
   /** The session falls in a deload week. */
   deload: boolean;
+  /** The pain context of the rehab calf rule; undefined without an active rehab block. */
+  rehab: RehabContext | undefined;
   /** Every live routine, for the routine choice of the session details. */
   routines: Routine[];
   /** Ids of the exercises that are in at least one routine (for the "in a routine" filter). */
@@ -112,7 +117,16 @@ export interface SessionView {
 export function readSession(db: CertaviDb, id: string): Promise<SessionView | null> {
   return db.transaction(
     'r',
-    [db.sessions, db.routines, db.exercises, db.sets, db.notes, db.weekPlans],
+    [
+      db.sessions,
+      db.routines,
+      db.exercises,
+      db.sets,
+      db.notes,
+      db.weekPlans,
+      db.blocks,
+      db.blockLogs,
+    ],
     async () => {
       const row = await db.sessions.get(id);
       if (!row || !isLive(row)) return null;
@@ -135,6 +149,15 @@ export function readSession(db: CertaviDb, id: string): Promise<SessionView | nu
         const reference = lastReference(exerciseId, log, row);
         if (reference) references.set(exerciseId, reference);
       }
+      // The rehab calf rule looks at the pain logged after the last time the calf was done.
+      const calfReference = references.get(REHAB_CALF_EXERCISE_ID);
+      const rehab = calfReference
+        ? rehabContext(
+            (await db.blocks.toArray()).filter((b) => isLive(b)),
+            (await db.blockLogs.toArray()).filter((l) => isLive(l)),
+            calfReference.session.date,
+          )
+        : undefined;
       return {
         session: row,
         routine: routineRow,
@@ -143,6 +166,7 @@ export function readSession(db: CertaviDb, id: string): Promise<SessionView | nu
         notes: notes.filter((n) => n.sessionId === id),
         references,
         deload: isDeloadDate(row.date, deloadWeeks(weekPlans)),
+        rehab,
         routines,
         routineExerciseIds: routineExerciseIds(routines),
       };

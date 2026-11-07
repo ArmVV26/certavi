@@ -151,6 +151,83 @@ describe('progression: straight sets (double progression)', () => {
   });
 });
 
+describe('progression: calf rule during rehab', () => {
+  const calfScheme: SetScheme = {
+    blocks: [{ kind: 'straight', reps: '10-12', count: 4 }],
+    rir: '2-3',
+  };
+  const calfSets = (weight: number) =>
+    [12, 12, 12, 12].map((reps) => s({ exerciseId: 'gemelo-hack', weight, reps }));
+  const calf = (weight: number, rehab: ProgressionInput['rehab'], exerciseId = 'gemelo-hack') =>
+    progressionAdvice({
+      scheme: calfScheme,
+      exercise: legMachine,
+      exerciseId,
+      referenceSets: calfSets(weight),
+      rehab,
+    });
+
+  it('goes up when the pain after the last session is at or under the limit', () => {
+    for (const stairsPain of [0, 3]) {
+      expect(calf(60, { stairsPain, limit: 3 })).toEqual({
+        action: 'increase',
+        from: 60,
+        to: 65,
+        reason: 'all-sets-at-top',
+      });
+    }
+  });
+
+  it('holds the weight when the pain is above the limit or was not logged', () => {
+    for (const stairsPain of [4, 10, undefined]) {
+      expect(calf(60, { stairsPain, limit: 3 })).toEqual({
+        action: 'hold',
+        weight: 60,
+        targetReps: 12,
+        reason: 'rehab-gate',
+      });
+    }
+  });
+
+  it('never goes above 80 kg and stops applying from 80 kg', () => {
+    expect(calf(77.5, { stairsPain: 0, limit: 3 })).toMatchObject({ action: 'increase', to: 80 });
+    expect(calf(80, { stairsPain: undefined, limit: 3 })).toMatchObject({
+      action: 'increase',
+      from: 80,
+      to: 85,
+    });
+  });
+
+  it('leaves alone other exercises, no rehab block and deload weeks', () => {
+    const none = { stairsPain: undefined, limit: 3 };
+    expect(calf(60, none, 'hack-banda')).toMatchObject({ action: 'increase' });
+    expect(calf(60, undefined)).toMatchObject({ action: 'increase' });
+    expect(
+      progressionAdvice({
+        scheme: calfScheme,
+        exercise: legMachine,
+        exerciseId: 'gemelo-hack',
+        referenceSets: calfSets(60),
+        deload: true,
+        rehab: none,
+      }),
+    ).toEqual({ action: 'deload' });
+  });
+
+  it('does not turn a hold into anything else', () => {
+    const sets = [12, 11, 12, 12].map((reps) => s({ exerciseId: 'gemelo-hack', weight: 60, reps }));
+    expect(
+      progressionAdvice({
+        scheme: calfScheme,
+        exercise: legMachine,
+        exerciseId: 'gemelo-hack',
+        referenceSets: sets,
+        rehab: { stairsPain: 9, limit: 3 },
+      }),
+    ).toMatchObject({ action: 'hold', reason: 'not-all-sets-at-top' });
+  });
+});
+
 describe('progression: special cases', () => {
   it('does not progress in a deload week', () => {
     expect(advise({ deload: true, referenceSets: [s({ kind: 'top', reps: 10 })] })).toEqual({

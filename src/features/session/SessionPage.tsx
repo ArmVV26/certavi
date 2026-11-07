@@ -72,7 +72,7 @@ export function SessionPage() {
 function SessionScreen({ view }: { view: SessionView }) {
   const { t } = useTranslation();
   const { locale } = useLocale();
-  const { session, routine, exercises, sets, notes, references, deload } = view;
+  const { session, routine, exercises, sets, notes, references, deload, rehab } = view;
   const store = useSessionDrafts(session.id);
   const rest = useRestTimer(() => {
     alertRestEnd(readRestAlerts(getLocalStorage(window)));
@@ -185,6 +185,7 @@ function SessionScreen({ view }: { view: SessionView }) {
           note={notes.find((n) => n.exerciseId === item.exerciseId)}
           reference={references.get(item.exerciseId)}
           deload={deload}
+          rehab={rehab}
           drafts={store.drafts[item.exerciseId]}
           actions={actions}
         />
