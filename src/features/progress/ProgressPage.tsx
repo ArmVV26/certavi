@@ -11,6 +11,7 @@ import { ExerciseCard } from './ExerciseCard';
 import styles from './ProgressPage.module.css';
 import { buildProgressModel, type ProgressModel } from './progressModel';
 import { GroupSetsCard, WeeklySetsCard } from './SetsCards';
+import { StatsCard } from './StatsCard';
 import { BodyWeightChartCard, ReadinessCard, RecordsCard, ReviewCard } from './TrendCards';
 
 /** Progress: sets against the plan, weekly sets, exercise evolution, records and body weight. */
@@ -33,6 +34,7 @@ export function ProgressPage() {
   return (
     <div className={styles.page}>
       <Summary model={model} />
+      <StatsCard model={model} />
       <GroupSetsCard model={model} />
       <WeeklySetsCard model={model} />
       <ExerciseCard model={model} />

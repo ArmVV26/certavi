@@ -5,6 +5,7 @@ import {
   type Activity,
   type BodyWeight,
   type Exercise,
+  type ExerciseNote,
   type Routine,
   type SetEntry,
   type SyncedSettings,
@@ -19,9 +20,29 @@ export interface ProgressData {
   weekPlans: WeekPlan[];
   sessions: WorkoutSession[];
   sets: SetEntry[];
+  /** Notes of exercises, for the ones marked "does not count". */
+  notes: ExerciseNote[];
   activities: Activity[];
   bodyWeights: BodyWeight[];
   settings: SyncedSettings | undefined;
+}
+
+/** The live sessions and their sets: all the weekly streak needs. */
+export interface StreakLog {
+  sessions: WorkoutSession[];
+  sets: SetEntry[];
+}
+
+/** Live sessions and sets, to count the weekly streak (Today reads this and nothing more). */
+export function readStreakLog(db: CertaviDb): Promise<StreakLog> {
+  return db.transaction('r', [db.sessions, db.sets], async () => {
+    const sessions = (await db.sessions.toArray()).filter((row) => isLive(row));
+    const live = new Set(sessions.map((s) => s.id));
+    const sets = (await db.sets.toArray())
+      .filter((row) => isLive(row))
+      .filter((row) => live.has(row.sessionId));
+    return { sessions, sets };
+  });
 }
 
 /** Every live record the Progress screen needs, in one transaction. */
@@ -34,6 +55,7 @@ export function readProgress(db: CertaviDb): Promise<ProgressData> {
       db.weekPlans,
       db.sessions,
       db.sets,
+      db.notes,
       db.activities,
       db.bodyWeights,
       db.settings,
@@ -48,6 +70,9 @@ export function readProgress(db: CertaviDb): Promise<ProgressData> {
         weekPlans: (await db.weekPlans.toArray()).filter((row) => isLive(row)),
         sessions,
         sets: (await db.sets.toArray())
+          .filter((row) => isLive(row))
+          .filter((row) => live.has(row.sessionId)),
+        notes: (await db.notes.toArray())
           .filter((row) => isLive(row))
           .filter((row) => live.has(row.sessionId)),
         activities: (await db.activities.toArray()).filter((row) => isLive(row)),
