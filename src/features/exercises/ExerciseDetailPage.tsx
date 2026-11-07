@@ -30,6 +30,7 @@ import { Icon } from '../../ui/Icon';
 import { NumberField } from '../../ui/NumberField';
 import { Tag } from '../../ui/Tag';
 import { useToast } from '../../ui/ToastContext';
+import { EvolutionCard } from './EvolutionCard';
 import styles from './ExerciseDetailPage.module.css';
 
 /** One exercise: its data, records, history and weight step; the ones the user made can be edited. */
@@ -227,6 +228,8 @@ function DetailScreen({ detail }: { detail: ExerciseDetailView }) {
               </>
             )}
           </Card>
+
+          <EvolutionCard exercise={exercise} history={history} />
 
           <Card element="section">
             <h3 className={styles.heading}>{t('exercises.detail.history')}</h3>
