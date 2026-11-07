@@ -679,6 +679,12 @@ Cada fase sigue el mismo ciclo:
 
 **Ramas**: `feature/calendar`, `feature/progress`, `feature/training-stats` y `feature/optional-blocks`
 
+**Estado (2026-11-07)**: en curso. Orden de ramas: calendar → progress → optional-blocks → training-stats (última, `/close-phase final`).
+- `feature/calendar` ✅ mergeada en `dev` (PR #29): `/calendar` con mes, panel del día (registrar en un día pasado) y de la semana (peso de cualquier semana, JSON de la semana) y cierre automático de semanas (`closeFinishedWeeks`, efecto en `Layout`). Las semanas cerradas son de solo lectura en sus opciones (editarlas = v2).
+- `feature/progress` ✅ implementada y verificada, **sin commits**: spec `docs/spec/progress.md` (AC-PRO-01..15); gráficas SVG propias en `src/ui` (`LineChart`, `ColumnChart`, `BarRows`, `ChartFrame` con tabla «Ver datos»); `src/domain/rules/progress.ts`, `src/data/progress.ts`; pantalla `/progress` completa (series por grupo, por semana, por ejercicio, cómo llegas, revisión del ciclo, récords, peso) y tarjeta «Evolución» en `/exercises/:id`.
+- Decisiones: inicio del ciclo = `planStart` o, si no hay, el lunes de la primera sesión (no hay UI para `planStart`); revisión del ciclo desde la cuarta semana; las gráficas por ejercicio no dibujan descargas ni sesiones con valor 0.
+- Pendiente de la fase: `feature/optional-blocks` y `feature/training-stats` (racha, volumen semana/mes; `volume` ya existe en `sets.ts`).
+
 **Entregables**:
 - Calendario completo con semanas especiales y cierre de semana.
 - Progreso completo (sección 5.1), con la evolución por métricas en la ficha de ejercicio (`/exercises/:id`, aplazada desde la Fase 6).
