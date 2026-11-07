@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - Unreleased
+
+Calendar, progress, optional blocks and training statistics (Phase 7).
+
+### Added
+
+- Calendar (`/calendar`): month view, a day panel to log past days, and a week panel (body
+  weight of any week, week JSON). Finished weeks close automatically on startup; closed weeks are
+  read-only (`feature/calendar`).
+- Progress (`/progress`): per-group, per-week, per-exercise and cycle-review charts (own SVG
+  charts with an accessible "View data" table), records and body weight. The exercise detail
+  (`/exercises/:id`) gets an evolution chart (`feature/progress`; spec `docs/spec/progress.md`).
+- Optional blocks: configurable mobility, stretching and rehab blocks, a daily checklist, 0-10
+  metrics with a 3/10 reference line, and a weekly wall test. Blocks are deactivated, never
+  deleted (`feature/optional-blocks`; spec `docs/spec/blocks.md`).
+- Rehab rule for the calf: the progression keeps the weight while stairs hurt (`rehab-gate`).
+- Training statistics (`feature/training-stats`; spec `docs/spec/training-stats.md`): weekly
+  streak, and weight lifted, exercises and sets per week or month, with a "Training" card in
+  Progress and the streak in Today's week card.
+
+### Changed
+
+- The 0-10 scale picker fits in one row at 390 px.
+
 ## [0.7.0] - 2026-11-06
 
 Exercise catalog, own exercises and routine editor (Phase 6).
