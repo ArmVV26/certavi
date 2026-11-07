@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Outlet, useLocation, useMatches } from 'react-router';
+import { useCloseFinishedWeeks } from '../data/useCloseFinishedWeeks';
+import { useToday } from '../features/today/useToday';
 import { SyncIndicator } from '../features/settings/SyncIndicator';
 import { ThemeToggle } from '../theme/ThemeToggle';
 import { Icon } from '../ui/Icon';
@@ -18,6 +20,7 @@ export function Layout() {
   const title = t(titleKeyOf(matches));
   const headingRef = useRef<HTMLHeadingElement>(null);
   const isFirstPage = useRef(true);
+  useCloseFinishedWeeks(useToday());
 
   useEffect(() => {
     document.title = t('app.documentTitle', { page: title });

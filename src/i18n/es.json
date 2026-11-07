@@ -23,13 +23,65 @@
   },
   "pages": {
     "comingSoon": "Próximamente",
-    "calendar": {
-      "title": "Tu calendario",
-      "text": "Aquí verás tus sesiones, actividades y semanas especiales de cada mes."
-    },
     "progress": {
       "title": "Tu progreso",
       "text": "Aquí verás las series por grupo muscular, tus récords y cómo evolucionan tus ejercicios."
+    }
+  },
+  "calendar": {
+    "title": "Calendario",
+    "grid": "Calendario del mes",
+    "close": "Cerrar",
+    "month": {
+      "previous": "Mes anterior",
+      "next": "Mes siguiente",
+      "today": "Ir a hoy"
+    },
+    "summary": {
+      "none": "Nada registrado este mes",
+      "sessions_one": "{{count}} sesión",
+      "sessions_other": "{{count}} sesiones",
+      "activities_one": "{{count}} actividad",
+      "activities_other": "{{count}} actividades"
+    },
+    "cell": {
+      "name": "{{date}}, {{content}}",
+      "none": "sin registros",
+      "sessions_one": "{{count}} sesión",
+      "sessions_other": "{{count}} sesiones",
+      "activities_one": "{{count}} actividad",
+      "activities_other": "{{count}} actividades"
+    },
+    "week": {
+      "name": "Semana {{range}}",
+      "title": "Semana {{range}}",
+      "markers": {
+        "deload": "D",
+        "hiking": "S"
+      },
+      "tags": {
+        "deload": "Descarga",
+        "hiking": "Senderismo",
+        "short_one": "{{count}} sesión",
+        "short_other": "{{count}} sesiones",
+        "closed": "Cerrada"
+      },
+      "closedNote": "Semana cerrada: el plan quedó guardado el {{date}}.",
+      "future": "Todavía no puedes cambiar esta semana.",
+      "download": "Descargar JSON de la semana"
+    },
+    "day": {
+      "plan": "Plan: {{plan}}",
+      "sessions": "Sesiones del día",
+      "activities": "Actividades del día",
+      "noSessions": "Sin sesiones",
+      "noActivities": "Sin actividades",
+      "inProgress": "En curso",
+      "finished": "Terminada",
+      "sets_one": "{{count}} serie",
+      "sets_other": "{{count}} series",
+      "log": "Registrar en este día",
+      "saveActivity": "Guardar actividad"
     }
   },
   "notFound": {

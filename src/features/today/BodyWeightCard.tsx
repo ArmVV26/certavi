@@ -50,13 +50,14 @@ export function BodyWeightCard({ monday, records, onSave }: BodyWeightCardProps)
   );
 }
 
-interface WeekWeightFormProps {
+export interface WeekWeightFormProps {
   week: string;
   records: readonly BodyWeight[];
   onSave: BodyWeightCardProps['onSave'];
 }
 
-function WeekWeightForm({ week, records, onSave }: WeekWeightFormProps) {
+/** The weight field and save button of one week (also used by the calendar's week panel). */
+export function WeekWeightForm({ week, records, onSave }: WeekWeightFormProps) {
   const { t } = useTranslation();
   const { locale } = useLocale();
   const saved = records.find((r) => r.week === week);

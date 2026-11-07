@@ -1,5 +1,6 @@
 export * from './backoff';
 export * from './blocks';
+export * from './calendar';
 export * from './dayPlan';
 export * from './deload';
 export * from './exerciseEdit';

@@ -32,9 +32,9 @@ export const PAGES: readonly PageInfo[] = [
     path: '/calendar',
     es: 'Calendario',
     en: 'Calendar',
-    contentEs: 'Tu calendario',
-    contentEn: 'Your calendar',
-    soon: true,
+    contentEs: 'Nada registrado este mes',
+    contentEn: 'Nothing logged this month',
+    // Real content since Phase 7 (docs/spec/calendar.md): no "Próximamente" any more.
   },
   {
     path: '/routines',
@@ -159,7 +159,7 @@ export const SPANISH_UI_WORDS = [
   'Próximamente',
   'Saltar al contenido',
   'La sesión de hoy',
-  'Tu calendario',
+  'Nada registrado este mes',
   'Tus rutinas',
   'Tu progreso',
   'Página no encontrada',
