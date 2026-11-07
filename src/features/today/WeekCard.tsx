@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { parseIsoDate } from '../../domain';
+import { parseIsoDate, type WeeklyStreak } from '../../domain';
 import type { WeekPatch } from '../../data/today';
 import { formatDate, formatNumber } from '../../i18n/format';
 import { useLocale } from '../../i18n/LocaleContext';
@@ -16,11 +16,13 @@ import { weekRange } from './weekRange';
 
 interface WeekCardProps {
   model: TodayModel;
+  /** The weekly streak; absent while it loads. */
+  streak?: WeeklyStreak;
   onChange: (patch: WeekPatch) => void;
 }
 
-/** "Esta semana": the seven days, sets and sessions against the plan, and the week switches. */
-export function WeekCard({ model, onChange }: WeekCardProps) {
+/** "Esta semana": the seven days, sets and sessions against the plan, the streak and the switches. */
+export function WeekCard({ model, streak, onChange }: WeekCardProps) {
   const { t } = useTranslation();
   const { locale } = useLocale();
   const range = weekRange(model.monday, locale);
@@ -66,6 +68,14 @@ export function WeekCard({ model, onChange }: WeekCardProps) {
             })}
           </dd>
         </div>
+        {streak && (
+          <div className={cx(styles.figure, styles.figureWide)}>
+            <dt>{t('today.week.streak')}</dt>
+            <dd className={styles.figureValue}>
+              {t('today.week.streakValue', { count: streak.current })}
+            </dd>
+          </div>
+        )}
       </dl>
 
       <WeekOptions week={model.week} deloadHint={deloadHint} onChange={onChange} />

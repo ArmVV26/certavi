@@ -19,5 +19,6 @@ export * from './session';
 export * from './sessionEdit';
 export * from './sets';
 export * from './today';
+export * from './trainingStats';
 export * from './weekPlan';
 export * from './weeklySets';

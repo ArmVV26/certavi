@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { emptyGroupCounts } from '../../domain';
+import { emptyGroupCounts, exerciseNoteId } from '../../domain';
 import type { SetEntry } from '../../domain';
 import { makeSession, makeSet, makeWeekPlan } from '../../domain/testing/builders';
 import { createRepositories } from '../../data/repository';
@@ -117,8 +117,9 @@ describe('Progress · empty', () => {
 describe('Progress · summary', () => {
   it('shows the week of the cycle, the sets, the sessions and the records of the month', async () => {
     await openProgress();
+    // The summary comes first: the training card has its own "Series".
     const stat = (label: string) =>
-      (screen.getByText(label, { selector: 'dt' }).parentElement as HTMLElement).textContent;
+      (screen.getAllByText(label, { selector: 'dt' })[0]?.parentElement as HTMLElement).textContent;
     expect(stat('Semana')).toMatch(/^Semana5/); // week 5 of the cycle (it starts on 26 Oct)
     expect(stat('Series')).toMatch(/^Series8 \/ \d+esta semana$/);
     expect(stat('Sesiones')).toBe('Sesiones5en total');
@@ -442,6 +443,139 @@ describe('Progress · body weight', () => {
     await createRepositories(db).session.put(makeSession({ id: 's1', date: '2026-11-24' }));
     await openProgress({ db });
     expect(within(card('Peso corporal')).getByText(/Aún no hay peso guardado/)).toBeInTheDocument();
+  });
+});
+
+/** The value of a figure ("Peso levantado" → "2.850 kg") inside a card. */
+function figure(section: HTMLElement, label: string) {
+  return within(section).getByText(label, { selector: 'dt' }).nextElementSibling?.textContent;
+}
+
+describe('Progress · training statistics', () => {
+  it('shows the streak and the weight lifted, exercises and sets of the week', async () => {
+    await openProgress();
+    const stats = card('Entrenamiento');
+    // Weeks of 16 and 23 Nov have sessions; the week of 9 Nov has none.
+    expect(figure(stats, 'Racha')).toBe('2 semanas');
+    expect(within(stats).getByText('Mejor racha: 2 semanas')).toBeInTheDocument();
+    expect(within(stats).getByText(/^Semana 23.{1,5}29 nov$/)).toBeInTheDocument();
+    // 30 × 8 × 5 incline press + 110 × 5 × 3 rows.
+    expect(figure(stats, 'Peso levantado')).toBe('2.850 kg');
+    expect(figure(stats, 'Ejercicios')).toBe('2');
+    expect(figure(stats, 'Series')).toBe('8');
+  });
+
+  it('draws twelve weeks and lists them in a table behind "Ver datos"', async () => {
+    const { user } = await openProgress();
+    const stats = card('Entrenamiento');
+    expect(
+      within(stats).getByRole('img', {
+        name: 'Peso levantado: gráfica de columnas, 12 semanas, de 0 a 2.850 kg',
+      }),
+    ).toBeInTheDocument();
+    await user.click(within(stats).getByText('Ver datos'));
+    const table = within(stats).getByRole('table', { name: 'Peso levantado por semana' });
+    expect(within(table).getAllByRole('row')).toHaveLength(13);
+    const last = within(table).getByRole('row', { name: /^23.{1,5}29 nov/ });
+    expect(
+      within(last)
+        .getAllByRole('cell')
+        .map((c) => c.textContent),
+    ).toEqual(['2.850', '2', '8', '2']);
+  });
+
+  it('adds the whole month with "Mes" and draws months', async () => {
+    const { user } = await openProgress();
+    const stats = card('Entrenamiento');
+    await user.click(within(stats).getByRole('radio', { name: 'Mes' }));
+    expect(within(stats).getByText('noviembre de 2026')).toBeInTheDocument();
+    // 200×5 + 105×5×5 + 30×8×5 + 110×5×3; one exercise per session; 1 + 5 + 5 + 3 sets.
+    expect(figure(stats, 'Peso levantado')).toBe('6.475 kg');
+    expect(figure(stats, 'Ejercicios')).toBe('4');
+    expect(figure(stats, 'Series')).toBe('14');
+    expect(
+      within(stats).getByRole('img', {
+        name: 'Peso levantado: gráfica de columnas, 6 meses, de 0 a 6.475 kg',
+      }),
+    ).toBeInTheDocument();
+    await user.click(within(stats).getByText('Ver datos'));
+    const table = within(stats).getByRole('table', { name: 'Peso levantado por mes' });
+    expect(within(table).getAllByRole('row')).toHaveLength(7);
+    const october = within(table).getByRole('row', { name: /^oct 2026/ });
+    expect(
+      within(october)
+        .getAllByRole('cell')
+        .map((c) => c.textContent),
+    ).toEqual(['500', '1', '1', '1']);
+  });
+
+  it('leaves out warm-ups, bodyweight and the weight of an exercise marked "no cuenta"', async () => {
+    const db = await trainedDb();
+    const repos = createRepositories(db);
+    await repos.set.putMany([
+      makeSet({ sessionId: 'r3', exerciseId: 'remo-t', slot: 9, kind: 'warmup', weight: 40 }),
+      makeSet({ sessionId: 'r3', exerciseId: 'dominadas', slot: 10, weight: 0, reps: 8 }),
+    ]);
+    await repos.note.put({
+      id: exerciseNoteId('r3', 'remo-t'),
+      sessionId: 'r3',
+      exerciseId: 'remo-t',
+      text: '',
+      excludeFromProgression: true,
+    });
+    await openProgress({ db });
+    const stats = card('Entrenamiento');
+    // Only the incline press weighs: the rows are marked, the pull-ups are 0 kg.
+    expect(figure(stats, 'Peso levantado')).toBe('1.200 kg');
+    // The marked rows and the pull-ups are still exercises and sets done.
+    expect(figure(stats, 'Ejercicios')).toBe('3');
+    expect(figure(stats, 'Series')).toBe('9');
+  });
+
+  it('keeps the streak while the current week has no session yet', async () => {
+    vi.setSystemTime(new Date(2026, 10, 30, 9, 30)); // Monday
+    await openProgress();
+    const stats = card('Entrenamiento');
+    expect(figure(stats, 'Racha')).toBe('2 semanas');
+    expect(within(stats).getByText('Entrena esta semana para mantenerla')).toBeInTheDocument();
+    expect(figure(stats, 'Series')).toBe('0');
+  });
+
+  it('breaks the streak after a whole week without training and says how to start one', async () => {
+    vi.setSystemTime(new Date(2026, 11, 8, 9, 30));
+    await openProgress();
+    const stats = card('Entrenamiento');
+    expect(figure(stats, 'Racha')).toBe('0 semanas');
+    expect(within(stats).getByText('Entrena esta semana para empezar una')).toBeInTheDocument();
+  });
+
+  it('says "1 semana" for a streak of one', async () => {
+    const db = await seededDb();
+    const repos = createRepositories(db);
+    await repos.session.put(makeSession({ id: 's1', date: '2026-11-24' }));
+    await repos.set.put(makeSet({ sessionId: 's1', exerciseId: 'remo-t' }));
+    await openProgress({ db });
+    const stats = card('Entrenamiento');
+    expect(figure(stats, 'Racha')).toBe('1 semana');
+    expect(within(stats).getByText('Mejor racha: 1 semana')).toBeInTheDocument();
+  });
+
+  it('does not count a session without sets', async () => {
+    const db = await seededDb();
+    await createRepositories(db).session.put(makeSession({ id: 's1', date: '2026-11-24' }));
+    await openProgress({ db });
+    expect(figure(card('Entrenamiento'), 'Racha')).toBe('0 semanas');
+  });
+
+  it('is in English, with its own number format', async () => {
+    const { user } = await openProgress({ locale: 'en' });
+    const stats = card('Training');
+    expect(figure(stats, 'Streak')).toBe('2 weeks');
+    expect(figure(stats, 'Weight lifted')).toBe('2,850 kg');
+    expect(within(stats).getByText('Best streak: 2 weeks')).toBeInTheDocument();
+    await user.click(within(stats).getByRole('radio', { name: 'Month' }));
+    expect(within(stats).getByText('November 2026')).toBeInTheDocument();
+    expect(figure(stats, 'Exercises')).toBe('4');
   });
 });
 

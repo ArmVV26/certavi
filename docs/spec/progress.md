@@ -309,8 +309,9 @@ Then every text is in English, charts keep readable colours and nothing scrolls 
 ## 6. Out of scope
 
 - Editing data from Progreso (it is read-only).
-- Weight lifted per week or month, workout streak and weight per routine: they come with the
-  training statistics (a later screen).
+- Weight lifted per week or month and the workout streak: see
+  [training-stats.md](training-stats.md) (the "Entrenamiento" card of this screen). Weight per
+  routine is not done yet (backlog).
 - Comparing cycles, exporting a cycle summary and weekly measures of optional blocks
   (see [blocks.md](blocks.md) when it exists).
 - Charts of muscle measures or photos.
