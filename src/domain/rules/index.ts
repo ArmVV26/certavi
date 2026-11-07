@@ -6,6 +6,7 @@ export * from './deload';
 export * from './exerciseEdit';
 export * from './exerciseFilter';
 export * from './history';
+export * from './progress';
 export * from './progression';
 export * from './records';
 export * from './rest';
