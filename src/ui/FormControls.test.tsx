@@ -37,6 +37,15 @@ describe('ScalePicker', () => {
     await user.click(screen.getByRole('button', { name: '5' }));
     expect(onChange).toHaveBeenCalledWith(5);
   });
+
+  it('keeps every value on one row: one column per value, whatever the scale', () => {
+    const { rerender } = render(<Pain />);
+    const column = () =>
+      screen.getByRole('group', { name: 'Dolor' }).style.getPropertyValue('--scale-count');
+    expect(column()).toBe('11');
+    rerender(<ScalePicker label="Dolor" min={1} max={5} value={null} onChange={() => undefined} />);
+    expect(column()).toBe('5');
+  });
 });
 
 describe('Checkbox', () => {
