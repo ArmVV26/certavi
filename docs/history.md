@@ -673,6 +673,52 @@ dime cuáles crear. Tests de componentes y de lógica; luego lanza al blind-test
 
 ---
 
+### <a id="fase7"></a> Fase 7 · Calendario, progreso y bloques → `v0.8.0` ✅
+
+**Ramas**: `feature/calendar`, `feature/progress`, `feature/training-stats` y `feature/optional-blocks`
+
+**Estado (2026-11-07)**: fase implementada en sus 4 ramas; falta `npm run e2e:all` en verde y la release (`chore(release): v0.8.0`, PR `dev → main`, tag), que hace el usuario. Orden de ramas: calendar → progress → optional-blocks → training-stats (última, `/close-phase final`).
+- `feature/calendar` ✅ mergeada en `dev` (PR #29): `/calendar` con mes, panel del día (registrar en un día pasado) y de la semana (peso de cualquier semana, JSON de la semana) y cierre automático de semanas (`closeFinishedWeeks`, efecto en `Layout`). Las semanas cerradas son de solo lectura en sus opciones (editarlas = v2).
+- `feature/progress` ✅ implementada y verificada, **sin commits**: spec `docs/spec/progress.md` (AC-PRO-01..15); gráficas SVG propias en `src/ui` (`LineChart`, `ColumnChart`, `BarRows`, `ChartFrame` con tabla «Ver datos»); `src/domain/rules/progress.ts`, `src/data/progress.ts`; pantalla `/progress` completa (series por grupo, por semana, por ejercicio, cómo llegas, revisión del ciclo, récords, peso) y tarjeta «Evolución» en `/exercises/:id`.
+- Decisiones: inicio del ciclo = `planStart` o, si no hay, el lunes de la primera sesión (no hay UI para `planStart`); revisión del ciclo desde la cuarta semana; las gráficas por ejercicio no dibujan descargas ni sesiones con valor 0.
+- `feature/progress` ✅ mergeada en `dev` (PR #30).
+- `feature/optional-blocks` ✅ implementada y verificada, **sin commits**: spec `docs/spec/blocks.md` (AC-BLK-01..12); `ScalePicker` con una columna por valor (las 11 casillas caben en una fila a 390 px); `/settings/blocks` (lista), `/settings/blocks/new|:id/edit` (editor: nombre, tipo, activo, días, fechas, ejercicios, métricas 0-10 con límite) y `/settings/blocks/:id` (seguimiento: gráfica por métrica con línea de 3/10 y selector 30/90/todo; test de la pared semanal con una gráfica por lado); reglas `blockEdit.ts`/`blockTrack.ts`, `src/data/blocks.ts`; regla del gemelo (`rehab-gate` en `progression.ts`, contexto `rehabContext` leído en `readSession`).
+- Decisiones de `blocks`: los bloques no se borran, se desactivan; los valores semanales no se editan desde el editor; «sin dolor» = pain ≤ límite (3/10) del último registro de «Dolor al bajar escaleras» posterior a la sesión de referencia, y sin registro el peso se mantiene; el gemelo no pasa de 80 kg; el tope de «+5 kg por semana» queda fuera.
+- `feature/training-stats` ✅ implementada y verificada, **sin commits**: spec `docs/spec/training-stats.md` (AC-STA-01..08); regla `src/domain/rules/trainingStats.ts` (racha semanal; peso levantado, ejercicios y series por semana o mes); `readStreakLog` en `src/data/progress.ts`; tarjeta «Entrenamiento» en Progreso (`StatsCard.tsx`) y racha en «Esta semana» de Hoy. Decisiones: peso levantado por rutina pasa al backlog v2; racha 0 muestra «0 semanas».
+- **Pendiente antes del PR `dev → main`**: `npm run e2e:all` (Chromium + WebKit) **no está en verde** (se paró en maxFailures). Hallazgos: `import-export` AC-IMPORT-05 (corregida y en verde) y `sync` AC-SYNC-07 (ajustada, sin verificar) por el cierre automático de semanas al arrancar; el resto de specs sin repetir desde `feature/calendar`; `language` AC-LANG-04/05 y `navigation` AC-NAV-01 con timeout puntual sin explicar; axe `label-content-name-mismatch` en los días de Hoy (regla desactivada en la spec nueva).
+- Backlog (v2 o arreglos): peso levantado por rutina; nombres accesibles de los enlaces de día en Hoy («Monday 2: …» frente a «Mon»); specs que recargan tras importar, con la fecha fijada con `page.clock`.
+
+**Entregables**:
+- Calendario completo con semanas especiales y cierre de semana.
+- Progreso completo (sección 5.1), con la evolución por métricas en la ficha de ejercicio (`/exercises/:id`, aplazada desde la Fase 6).
+- **Bloques opcionales**: configuración de movilidad, estiramientos y rehabilitación (ejercicios, días, métricas), checklist diario, métricas, gráfica con línea de 3/10 y métrica semanal (test de la pared).
+- Peso corporal de cualquier semana.
+- **Escala 0-10 en una sola fila** (añadido el 2026-11-06, `feature/optional-blocks`): en móvil (390 px) el «10» salta de línea porque `ScalePicker` (`src/ui/ScalePicker.module.css`) pide 30 px por casilla y dentro de la tarjeta no caben 11. Se **mantiene la escala 0-10** (cambiarla a 0-5 tocaría el umbral 3/10, las gráficas, el importador y los datos guardados). Decidir en la spec: 11 casillas que se encogen para caber siempre en una fila, o un deslizador 0-10 con marcas. Afecta también a «¿cómo llegas?» (1-5) de la sesión, que usa el mismo componente.
+- **Estadísticas de entrenamiento** (añadido el 2026-11-06, `feature/training-stats`):
+  - **Racha semanal**: marcador (en Hoy y/o Progreso) con las semanas seguidas con ejercicio. Definir en la spec qué cuenta como semana activa (al menos una sesión que cuenta; ¿vale una actividad?), si una semana de descarga o de senderismo mantiene la racha y cuándo se rompe (semana en curso aún sin sesión no rompe).
+  - **Peso levantado, ejercicios y series hechas** por **semana** y por **mes**, con un selector simple semana / mes. Regla de dominio nueva y con tests (`src/domain/rules`): volumen = peso × repeticiones, sin calentamientos ni series de sesiones que «no cuentan»; 0 kg y peso corporal suman 0.
+  - **Peso levantado por rutina**, sesión a sesión, con la variación entre sesiones (misma idea que la ficha de ejercicio, pero agrupando por `routineId`) y una gráfica pequeña en la vista de la rutina. Es poco lío porque reutiliza la regla de volumen anterior. Avisos para la spec: si se edita la rutina, las sesiones dejan de ser comparables; una semana de descarga baja el volumen (marcarla); las sesiones libres (`routineId: null`) no entran. **Si la fase se alarga, esto pasa al backlog v2**; lo demás se queda.
+- **Revisión del ciclo** (el `sixWeekReview` de gym_app) en las pantallas de progreso. Aplazada desde la Fase 2.
+- **Regla del gemelo durante la rehabilitación** (aplazada desde la Fase 2, 2026-11-03). `rutina-actual.md` §5, «Lower A», nota «Gemelo»: 60 kg en la semana 1; desde la semana 2, +5 kg por semana si no hay dolor al día siguiente, siempre con pausa abajo y sin rebote, hasta volver a 80 kg; y la regla de gym_app: solo se sube si bajar escaleras no duele. Depende del bloque de rehabilitación del tobillo y de sus métricas, por eso va en esta fase. El modelo de progresión actual lo permite sin reescribirlo, con cambios aditivos:
+  - un `context` opcional en `ProgressionInput` (bloques activos + últimas métricas de los bloques);
+  - el id del ejercicio en la entrada;
+  - un motivo nuevo para mantener el peso (p. ej. `'rehab-gate'`);
+  - una guarda antes de la regla general.
+  - Si aparecen más reglas especiales, convertir la cascada de `if` en una lista ordenada de reglas (aplica / aconseja).
+
+**Prompt**:
+
+```text
+Lee context.md y CLAUDE.md. FASE 7: calendario, progreso (gráficas SVG propias, accesibles, claro/oscuro),
+bloques opcionales configurables (movilidad, estiramientos, rehabilitación) con checklist diario, métricas
+0-10 con línea de referencia (escala 0-10 que cabe en una fila a 390 px) y métrica semanal, y peso corporal
+editable en cualquier semana. Estadísticas: racha semanal, peso levantado / ejercicios / series por semana o
+mes (selector) y peso levantado por rutina entre sesiones. Paridad con gym_app según 5.1. Especificación,
+implementación, tests y blind-tester. /close-phase.
+```
+
+---
+
 ## <a id="seccion12"></a> 12. Registro de progreso
 
 > Lo mantiene el agente **context-keeper**. Una línea por cambio relevante, la más reciente arriba.
