@@ -180,7 +180,8 @@ Rules (all tested): estimated 1RM (Epley on best set, ignoring warm-up/approach)
 (top set, increments +2.5 kg upper / +5 kg lower unless overridden, back-off ≈ −10 %, isolation),
 "does not count" sessions, effective sets per muscle group per week vs plan, records (excluding
 deload weeks), deload, short week, hiking week (`weekRoutines`), day plan (`dayPlan.ts`), new
-sessions (`session.ts`), Today helpers (`today.ts`) and blocks of the day (`blocks.ts`).
+sessions (`session.ts`), Today helpers (`today.ts`), blocks of the day (`blocks.ts`), weekly
+streak and training volume per week or month (`trainingStats.ts`).
 
 ---
 
