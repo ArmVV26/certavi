@@ -51,7 +51,7 @@ example when sync brings changes) but not a reload: the page always opens on the
 - A day cell shows the day number and, below it, one mark per kind of content: a filled mark when
   there is **at least one session** that day (a second one, when there is more than one) and a
   different mark when there is **at least one activity**. Today has a ring.
-- The accessible name of a cell is the long date plus its content: "miércoles 4 de noviembre,
+- The accessible name of a cell is the long date plus its content: "miércoles, 4 de noviembre,
   1 sesión, 1 actividad" / "Wednesday 4 November, 1 session, 1 activity"; with nothing logged:
   "…, sin registros" / "…, nothing logged". Today's cell has `aria-current="date"`, the selected
   one `aria-pressed="true"`.
@@ -68,7 +68,7 @@ month".
 
 ### 2.4 Day panel
 
-A card whose heading is the long date ("miércoles 4 de noviembre" / "Wednesday 4 November") and a
+A card whose heading is the long date ("miércoles, 4 de noviembre" / "Wednesday 4 November") and a
 button **"Cerrar" / "Close"** that unselects the day. It contains:
 
 - **Plan**: "Plan: <routine>" / "Plan: <routine>" (e.g. "Plan: Push") or the kind of rest day
@@ -80,32 +80,32 @@ button **"Cerrar" / "Close"** that unselects the day. It contains:
   **"Terminada" / "Finished"** — and "<n> series" / "<n> sets" (effective sets logged: warm-ups and sets without reps are not
   counted). Without
   sessions: "Sin sesiones" / "No sessions".
-- **Activities** of the day: "Fútbol · 60 min" / "Football · 60 min", plus the note if there is
+- **Activities** of the day: "Fútbol 60 min" / "Football 60 min", plus the note if there is
   one. Without activities: "Sin actividades" / "No activities".
 - **"Registrar en este día" / "Log on this day"**, only for today and past days (never for a
-  future day, which shows "No se puede registrar en el futuro" / "You can't log in the future"
+  future day, which shows "No se puede registrar en el futuro." / "You can't log in the future."
   instead):
   - **Session**: a group of buttons, one per routine plus **"Sesión libre" / "Free session"**.
     Pressing one opens (or creates, as in Today "Otra sesión u otro día") that session dated that
     day and navigates to `/session/<id>`. If one already exists for that routine and day, it is
-    opened and the toast "Ya había una sesión de <routine> ese día: la abro." /
-    "There was already a <routine> session that day: opening it." appears — the same behaviour
+    opened and the toast "Ya había una sesión «<routine>» ese día: la abro." /
+    "There was already a session «<routine>» that day: opening it." appears — the same behaviour
     and texts as Today.
   - **Activity**: the same form as Today's "Actividad" (kind chips, "Minutos" / "Minutes", "Nota" /
     "Note", **"Guardar actividad" / "Save activity"**) saving on the selected day. After saving, the
-    toast "<activity> guardada" / "<activity> saved" appears, the form clears, and the cell and the
+    toast "Actividad guardada: <activity>" / "Activity saved: <activity>" appears, the form clears, and the cell and the
     list show the new activity.
 
 ### 2.5 Week panel
 
-A card with the heading **"Semana <range>" / "Week <range>"** (and "· semana <n> del plan" /
-"· plan week <n>" when a plan start date exists) and a **"Cerrar" / "Close"** button. It contains:
+A card with the heading **"Semana <range>" / "Week <range>"** (followed by "· Semana <n>" /
+"· Week <n>" when a plan start date exists) and a **"Cerrar" / "Close"** button. It contains:
 
 - **Figures**: "Series efectivas" / "Effective sets" as "<done> / <planned>" and "Sesiones" /
   "Sessions" as "<done> de <size>" / "<done> of <size>" — same meaning as in Today's "Esta semana".
   For a closed week the planned number is the frozen one.
 - **Options of the week**, the same three controls as Today — "Sesiones" (3/4/5 selector),
-  "Semana de senderismo" and "Semana de descarga" (and their hints) — for the **current week and
+  "Semana con senderismo" and "Semana de descarga" (and their hints) — for the **current week and
   past weeks that are not closed**. They behave as in Today (including the deload toast).
   - In a **closed** week they are shown read-only (disabled) with the note **"Semana cerrada: el
     plan quedó guardado el <date>." / "Week closed: the plan was saved on <date>."**
@@ -114,13 +114,11 @@ A card with the heading **"Semana <range>" / "Week <range>"** (and "· semana <n
 - **"Peso medio de la semana" / "Average weekly weight"**: the same field and **"Guardar peso" /
   "Save weight"** button as in Today, for this week, with the previous week's value as
   placeholder and the "Antes: …" line. Works for the current and any past week (closed or
-  not); disabled with the same future message for a future week.
+  not). For a future week the form is replaced by the same message as the options.
 - **"Descargar JSON de la semana" / "Download the week as JSON"**: downloads
   `certavi-week-<monday>.json` with that week's plan, weight, sessions with their sets and notes,
   activities, block logs and weekly metrics (same file as `exportWeek`; no sync key or secret
   inside).
-- A list of the **days** of the week as links to select each day (their accessible names are the
-  same as the cells), so the week can be browsed without the grid.
 
 #### Closing a week
 
@@ -128,9 +126,9 @@ A week is **closed** when it is over (its Sunday is before today). Closing store
 per muscle group of that week, computed with the week's options and the routines **at the moment
 of closing**, and the closing time. Weeks are closed:
 
-- when the app starts and when the date changes, for every week that is already over, is not
-  closed yet and has data (a session, an activity or a week record);
-- also when the calendar is opened (so a week that ended while the app stayed open is closed).
+- when the app starts and whenever the date changes (also when the app comes back to the
+  foreground on a new day), for every week that is already over, is not closed yet and has data
+  (a session, an activity or a week record).
 
 A closed week's planned sets never change afterwards, even if a routine is edited or restored. A
 week with no record gets the default options (5 sessions, no hiking, no deload) when closed. The
@@ -144,7 +142,7 @@ Given today is Wednesday 4 November 2026
 When I open `/calendar`
 Then the heading of the month bar reads "noviembre de 2026"
 And no "Ir a hoy" button is shown
-And the cell "miércoles 4 de noviembre…" has `aria-current="date"`
+And the cell "miércoles, 4 de noviembre…" has `aria-current="date"`
 And no day or week panel is shown.
 
 **AC-CAL-02 · Navigate months**
@@ -156,8 +154,8 @@ Then the heading reads "noviembre de 2026" again and today's day panel is shown 
 **AC-CAL-03 · Marks per day**
 Given a finished Push session on 2 Nov and a football activity on 4 Nov
 When I look at November
-Then the cell of 2 Nov is named "lunes 2 de noviembre, 1 sesión" and the cell of 4 Nov
-"miércoles 4 de noviembre, 1 actividad" (only the kinds that exist are named, §2.2)
+Then the cell of 2 Nov is named "lunes, 2 de noviembre, 1 sesión" and the cell of 4 Nov
+"miércoles, 4 de noviembre, 1 actividad" (only the kinds that exist are named, §2.2)
 And a day without anything is named "…, sin registros".
 
 **AC-CAL-04 · Month summary**
@@ -174,7 +172,7 @@ And a normal week's button is just "Semana 2–8 nov".
 **AC-CAL-06 · Day detail**
 When I press the cell of a day with a finished Push session and a 60-minute football activity
 Then a panel with the long date shows "Plan: Push", the session link "Push · Terminada · 12 series"
-and "Fútbol · 60 min"
+and "Fútbol 60 min"
 When I press the session link
 Then the session screen of that session opens.
 
@@ -190,17 +188,17 @@ When I select 2 Nov and press "Pull" under "Registrar en este día"
 Then the session screen of a Pull session dated 2 Nov opens
 When I go back to the calendar and select 2 Nov
 Then the panel lists a "Pull" session of that day
-And pressing "Pull" again opens that same session and shows the toast "Ya había una sesión de Pull
+And pressing "Pull" again opens that same session and shows the toast "Ya había una sesión «Pull»
 ese día: la abro.".
 
 **AC-CAL-09 · Log an activity on a past day**
 When I select 3 Nov, choose "Natación", enter 45 minutes and press "Guardar actividad"
-Then the toast "Natación guardada" appears, the minutes field is empty
-And the day panel lists "Natación · 45 min" and the cell of 3 Nov counts 1 activity.
+Then the toast "Actividad guardada: Natación" appears, the minutes field is empty
+And the day panel lists "Natación 45 min" and the cell of 3 Nov counts 1 activity.
 
 **AC-CAL-10 · No logging in the future**
 When I select a day after today
-Then the panel shows the plan and "No se puede registrar en el futuro" and no session buttons or
+Then the panel shows the plan and "No se puede registrar en el futuro." and no session buttons or
 activity form.
 
 **AC-CAL-11 · Week panel and options**
@@ -208,7 +206,7 @@ When I press the button of the current week
 Then the panel "Semana 2–8 nov" shows "Series efectivas", "Sesiones" and the three option controls,
 enabled
 When I turn on "Semana de descarga"
-Then the toast "Semana de descarga activada…" (same as Today) appears, the week button gets
+Then the toast "Semana de descarga: las sesiones nuevas salen reducidas" (same as Today) appears, the week button gets
 "· Descarga" in its name and Today's week card shows the switch on.
 
 **AC-CAL-12 · Closing weeks**
@@ -224,7 +222,7 @@ show "Todavía no puedes cambiar esta semana."
 
 **AC-CAL-14 · Body weight of any week**
 When I open the panel of a past week, enter "76,4" and press "Guardar peso"
-Then the toast "Peso de la semana 26 oct – 1 nov guardado" (same text as Today, with that range)
+Then the toast "Peso guardado · 26 oct – 1 nov" (same text as Today, with that range)
 appears and the field keeps 76,4 after reloading
 And Today's card "Peso medio de la semana" shows the value when it is the current or the last
 week.
