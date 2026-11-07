@@ -20,4 +20,5 @@ export const ID_PREFIX = {
   activity: 'act',
   set: 'set',
   exercise: 'exe',
+  block: 'blk',
 } as const;
