@@ -48,9 +48,9 @@ export const PAGES: readonly PageInfo[] = [
     path: '/progress',
     es: 'Progreso',
     en: 'Progress',
-    contentEs: 'Tu progreso',
-    contentEn: 'Your progress',
-    soon: true,
+    contentEs: 'Todavía no hay datos',
+    contentEn: 'No data yet',
+    // Real content since Phase 7 (docs/spec/progress.md): no "Próximamente" any more.
   },
   {
     path: '/settings',
@@ -162,6 +162,7 @@ export const SPANISH_UI_WORDS = [
   'Nada registrado este mes',
   'Tus rutinas',
   'Tu progreso',
+  'Todavía no hay datos',
   'Página no encontrada',
   'Volver a Hoy',
   'Componentes',
