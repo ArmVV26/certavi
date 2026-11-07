@@ -23,7 +23,9 @@ export type HoldReason =
   /** Below the top of the range: same weight, one more rep. */
   | 'below-range'
   /** Not every straight set reached the top of the range yet. */
-  | 'not-all-sets-at-top';
+  | 'not-all-sets-at-top'
+  /** Rehab: the calf only goes up when going down stairs did not hurt (blocks.md §2.5). */
+  | 'rehab-gate';
 
 export type ProgressionAdvice =
   | { action: 'no-reference' }
@@ -34,18 +36,57 @@ export type ProgressionAdvice =
   | { action: 'thinner-band'; targetReps: number }
   | { action: 'same-band'; targetReps: number };
 
+/** The exercise the rehab rule applies to ("Elevaciones de gemelo en hack"). */
+export const REHAB_CALF_EXERCISE_ID = 'gemelo-hack';
+/** The calf goes back to this weight after the rehab and then follows the general rule. */
+export const REHAB_CALF_CAP = 80;
+
+/** What an active rehab block says about the pain after the reference session. */
+export interface RehabContext {
+  /** Going down stairs on the latest day logged after the reference session (0–10). */
+  stairsPain: number | undefined;
+  /** Above this the pain is a warning (3/10). */
+  limit: number;
+}
+
 export interface ProgressionInput {
   scheme: SetScheme;
   exercise: Pick<Exercise, 'increment' | 'equipment'>;
+  /** Id of the exercise, for the rules that apply to one of them. */
+  exerciseId?: string;
   /** Effective sets of the reference session (see `lastReference`); null if none. */
   referenceSets: readonly SetEntry[] | null;
   /** The upcoming session is in a deload week: no progression. */
   deload?: boolean;
+  /** Present only while a rehab block is active. */
+  rehab?: RehabContext | undefined;
 }
 
 const up = (from: number, step: number) => roundToStep(from + step, 0.01);
 
 export function progressionAdvice(input: ProgressionInput): ProgressionAdvice {
+  return rehabGate(generalAdvice(input), input);
+}
+
+/** Rehab calf: an increase needs a pain value after the last session of at most the limit. */
+function rehabGate(advice: ProgressionAdvice, input: ProgressionInput): ProgressionAdvice {
+  const { rehab, exerciseId } = input;
+  if (!rehab || exerciseId !== REHAB_CALF_EXERCISE_ID) return advice;
+  if (advice.action !== 'increase' || advice.from >= REHAB_CALF_CAP) return advice;
+  if (rehab.stairsPain === undefined || rehab.stairsPain > rehab.limit) {
+    const range = findBlock(input.scheme, 'straight') ?? findBlock(input.scheme, 'top');
+    const reps = range ? parseRepRange(range.reps) : null;
+    return {
+      action: 'hold',
+      weight: advice.from,
+      targetReps: reps?.max ?? 0,
+      reason: 'rehab-gate',
+    };
+  }
+  return { ...advice, to: Math.min(advice.to, REHAB_CALF_CAP) };
+}
+
+function generalAdvice(input: ProgressionInput): ProgressionAdvice {
   const { scheme, exercise, referenceSets } = input;
   if (input.deload) return { action: 'deload' };
   if (!referenceSets || referenceSets.length === 0) return { action: 'no-reference' };
