@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next';
 import styles from './Chart.module.css';
 import { cx } from './cx';
 
-export type LegendKind = 'bar' | 'met' | 'mark' | 'line';
+export type LegendKind = 'bar' | 'met' | 'mark' | 'line' | 'limit';
 
 const SWATCH: Readonly<Record<LegendKind, string>> = {
   bar: styles.legendBar ?? '',
   met: styles.legendMet ?? '',
   mark: styles.legendMark ?? '',
   line: styles.legendLine ?? '',
+  limit: styles.legendLimit ?? '',
 };
 
 export interface LegendItem {
