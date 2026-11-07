@@ -112,6 +112,72 @@ describe('ExerciseDetailPage', () => {
     expect(within(items[2] as HTMLElement).getByText('Descarga')).toBeInTheDocument();
   });
 
+  it('charts the evolution of the exercise by metric, leaving out deload sessions', async () => {
+    const { repos, user } = await open('remo-t');
+    await screen.findByRole('heading', { level: 2, name: 'Remo en T' });
+    await repos.session.putMany([
+      makeSession({ id: 'old', date: '2026-10-26' }),
+      makeSession({ id: 'new', date: '2026-11-02' }),
+      makeSession({ id: 'deload', date: '2026-10-19' }),
+    ]);
+    await repos.weekPlan.put(makeWeekPlan({ week: '2026-10-19', deload: true }));
+    await repos.set.putMany([
+      makeSet({ id: 'a', sessionId: 'old', exerciseId: 'remo-t', weight: 60, reps: 8, slot: 0 }),
+      makeSet({ id: 'b', sessionId: 'old', exerciseId: 'remo-t', weight: 55, reps: 10, slot: 1 }),
+      makeSet({ id: 'c', sessionId: 'new', exerciseId: 'remo-t', weight: 70, reps: 6 }),
+      makeSet({ id: 'd', sessionId: 'deload', exerciseId: 'remo-t', weight: 100, reps: 6 }),
+    ]);
+
+    const evolution = (await screen.findByRole('heading', { name: 'Evolución' })).closest(
+      'section',
+    ) as HTMLElement;
+    const card = within(evolution);
+    expect(card.getByRole('radio', { name: '1RM estimado' })).toBeChecked();
+    expect(card.getByText('Las semanas de descarga no se dibujan.')).toBeInTheDocument();
+    expect(
+      card.getByRole('img', {
+        name: /Remo en T · 1RM estimado: gráfica de líneas, 2 puntos, de 76 kg a 84 kg/,
+      }),
+    ).toBeInTheDocument();
+
+    const column = () =>
+      within(card.getByRole('table'))
+        .getAllByRole('row')
+        .slice(1)
+        .map((row) => within(row).getByRole('cell').textContent);
+    await user.click(card.getByText('Ver datos'));
+    expect(column()).toEqual(['76 kg', '84 kg']);
+
+    await user.click(card.getByRole('radio', { name: 'Peso máximo' }));
+    expect(column()).toEqual(['60 kg', '70 kg']);
+
+    await user.click(card.getByRole('radio', { name: 'Volumen' }));
+    expect(column()).toEqual(['1030 kg', '420 kg']);
+  });
+
+  it('offers repetitions and volume for a bodyweight exercise', async () => {
+    const { repos, user } = await open('dominadas');
+    await screen.findByRole('heading', { level: 2, name: /Dominadas/ });
+    await repos.session.put(makeSession({ id: 's1', date: '2026-11-02' }));
+    await repos.set.putMany([
+      makeSet({ id: 'a', sessionId: 's1', exerciseId: 'dominadas', weight: 0, reps: 8, slot: 0 }),
+      makeSet({ id: 'b', sessionId: 's1', exerciseId: 'dominadas', weight: 0, reps: 7, slot: 1 }),
+    ]);
+
+    const evolution = (await screen.findByRole('heading', { name: 'Evolución' })).closest(
+      'section',
+    ) as HTMLElement;
+    const card = within(evolution);
+    expect(card.queryByRole('radio', { name: '1RM estimado' })).not.toBeInTheDocument();
+    expect(card.getByRole('radio', { name: 'Repeticiones' })).toBeChecked();
+    await user.click(card.getByText('Ver datos'));
+    expect(within(card.getByRole('table')).getByRole('cell')).toHaveTextContent('15 reps');
+
+    // Bodyweight sets weigh 0 kg: nothing to draw for volume.
+    await user.click(card.getByRole('radio', { name: 'Volumen' }));
+    expect(card.getByText('Aún no hay sesiones que dibujar con esta métrica.')).toBeInTheDocument();
+  });
+
   it('saves the weight step and keeps it after reloading the page', async () => {
     const { user, repos } = await open('remo-t');
     const field = await screen.findByLabelText(/Incremento/);
