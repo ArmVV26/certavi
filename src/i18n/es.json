@@ -207,6 +207,10 @@
       "es": "Español",
       "en": "English"
     },
+    "blocks": {
+      "title": "Bloques opcionales",
+      "manage": "Gestionar bloques"
+    },
     "developer": "Desarrollo",
     "uiCatalog": "Catálogo de componentes",
     "data": {
@@ -903,7 +907,95 @@
     "timesPerWeek": "{{dose}} · {{times}} días por semana",
     "warning": "Por encima de {{threshold}}/10: baja la intensidad de lo que cargue la zona.",
     "note": "Nota del día",
-    "noteSaved": "Nota guardada"
+    "noteSaved": "Nota guardada",
+    "tracking": "Ver seguimiento"
+  },
+  "blocksPage": {
+    "title": "Bloques opcionales",
+    "trackingTitle": "Bloque",
+    "newTitle": "Nuevo bloque",
+    "editTitle": "Editar bloque",
+    "back": "Volver a bloques",
+    "new": "Nuevo bloque",
+    "active": "Activos",
+    "inactive": "Inactivos",
+    "types": {
+      "mobility": "Movilidad",
+      "stretching": "Estiramientos",
+      "rehab": "Rehabilitación"
+    },
+    "exercises_one": "{{count}} ejercicio",
+    "exercises_other": "{{count}} ejercicios",
+    "noExercises": "Sin ejercicios",
+    "daysAll": "todos los días",
+    "daysNone": "ningún día",
+    "summary": "{{exercises}} · {{days}}",
+    "notFound": "Bloque no encontrado",
+    "track": {
+      "edit": "Editar bloque",
+      "period": "Periodo",
+      "periods": {
+        "30": "30 días",
+        "90": "90 días",
+        "all": "Todo"
+      },
+      "noMetrics": "Este bloque no tiene métricas.",
+      "empty": "Aún no hay registros de esta métrica.",
+      "limit": "Límite {{value}}/10",
+      "chartTitle": "{{name}} (límite {{value}}/10)",
+      "point": "{{date}}: {{value}}",
+      "pointAbove": "{{date}}: {{value}} (por encima del límite)",
+      "valueAbove": "{{value}} (por encima del límite)",
+      "caption": "{{name}}: valores por día",
+      "valueHead": "Valor",
+      "weeklyEmpty": "Aún no hay registros.",
+      "week": "Semana {{range}}",
+      "save": "Guardar",
+      "saved": "{{name}} guardado · {{range}}",
+      "needValue": "Escribe al menos un valor.",
+      "weeklyPoint": "{{range}}: {{value}} {{unit}}",
+      "weeklyCaption": "{{name}} · {{part}}",
+      "weeklyValue": "Valor ({{unit}})"
+    },
+    "form": {
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "saved": "Bloque guardado",
+      "failed": "No se pudo guardar el bloque.",
+      "name": "Nombre",
+      "type": "Tipo",
+      "active": "Activo",
+      "days": "Días",
+      "start": "Inicio",
+      "review": "Próxima revisión",
+      "items": "Ejercicios",
+      "item": "Ejercicio {{n}}",
+      "itemName": "Nombre",
+      "dose": "Dosis",
+      "times": "Veces por semana",
+      "timesHint": "Por ejemplo 3 o 3-5",
+      "up": "Subir {{name}}",
+      "down": "Bajar {{name}}",
+      "remove": "Quitar {{name}}",
+      "addItem": "Añadir ejercicio",
+      "metrics": "Métricas diarias (0–10)",
+      "metric": "Métrica {{n}}",
+      "metricName": "Nombre",
+      "limit": "Límite",
+      "limitHint": "Por encima es un aviso",
+      "addMetric": "Añadir métrica",
+      "weekly": "Valores semanales: {{list}}",
+      "errors": {
+        "name": "Escribe un nombre.",
+        "nameLong": "Usa como máximo {{max}} caracteres.",
+        "itemName": "Escribe el nombre de cada ejercicio.",
+        "itemLong": "Un ejercicio o su dosis es demasiado largo.",
+        "times": "Usa un número o un rango, como 3 o 3-5.",
+        "metricName": "Escribe el nombre de cada métrica.",
+        "metricLong": "El nombre de una métrica es demasiado largo.",
+        "limit": "El límite va de {{min}} a {{max}}."
+      }
+    }
   },
   "session": {
     "title": "Sesión",
@@ -948,7 +1040,8 @@
       "hold": "Repite {{weight}} kg y busca {{reps}} reps",
       "deload": "Descarga: peso de siempre o un 10 % menos",
       "thinnerBand": "Prueba una banda más fina (o ninguna)",
-      "sameBand": "Misma banda: busca {{reps}} reps"
+      "sameBand": "Misma banda: busca {{reps}} reps",
+      "rehabGate": "Mantén {{weight}} kg: solo se sube si al bajar escaleras el dolor es 3/10 o menos."
     },
     "row": {
       "set": "Serie",
