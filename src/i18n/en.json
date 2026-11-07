@@ -21,15 +21,210 @@
       "dark": "Dark theme. Switch to automatic"
     }
   },
-  "pages": {
-    "comingSoon": "Coming soon",
-    "calendar": {
-      "title": "Your calendar",
-      "text": "Here you will see your sessions, activities and special weeks for each month."
+  "calendar": {
+    "title": "Calendar",
+    "grid": "Month calendar",
+    "close": "Close",
+    "month": {
+      "previous": "Previous month",
+      "next": "Next month",
+      "today": "Go to today"
     },
-    "progress": {
-      "title": "Your progress",
-      "text": "Here you will see sets per muscle group, your records and how your exercises evolve."
+    "summary": {
+      "none": "Nothing logged this month",
+      "sessions_one": "{{count}} session",
+      "sessions_other": "{{count}} sessions",
+      "activities_one": "{{count}} activity",
+      "activities_other": "{{count}} activities"
+    },
+    "cell": {
+      "name": "{{date}}, {{content}}",
+      "none": "nothing logged",
+      "sessions_one": "{{count}} session",
+      "sessions_other": "{{count}} sessions",
+      "activities_one": "{{count}} activity",
+      "activities_other": "{{count}} activities"
+    },
+    "week": {
+      "name": "Week {{range}}",
+      "title": "Week {{range}}",
+      "markers": {
+        "deload": "D",
+        "hiking": "H"
+      },
+      "tags": {
+        "deload": "Deload",
+        "hiking": "Hiking",
+        "short_one": "{{count}} session",
+        "short_other": "{{count}} sessions",
+        "closed": "Closed"
+      },
+      "closedNote": "Week closed: its plan was saved on {{date}}.",
+      "future": "You can't change this week yet.",
+      "download": "Download the week as JSON"
+    },
+    "day": {
+      "plan": "Plan: {{plan}}",
+      "sessions": "Sessions of the day",
+      "activities": "Activities of the day",
+      "noSessions": "No sessions",
+      "noActivities": "No activities",
+      "inProgress": "In progress",
+      "finished": "Finished",
+      "sets_one": "{{count}} set",
+      "sets_other": "{{count}} sets",
+      "log": "Log on this day",
+      "saveActivity": "Save activity"
+    }
+  },
+  "progress": {
+    "empty": {
+      "title": "No data yet",
+      "text": "Once you log your first session, your progress will show up here."
+    },
+    "summary": {
+      "week": "Week",
+      "sets": "Sets",
+      "setsNote": "this week",
+      "sessions": "Sessions",
+      "sessionsNote": "in total",
+      "records": "Records",
+      "recordsNote": "this month"
+    },
+    "stats": {
+      "title": "Training",
+      "streak": "Streak",
+      "streakValue_one": "{{count}} week",
+      "streakValue_other": "{{count}} weeks",
+      "streakBest_one": "Best streak: {{count}} week",
+      "streakBest_other": "Best streak: {{count}} weeks",
+      "streakKeep": "Train this week to keep it",
+      "streakStart": "Train this week to start one",
+      "summaryBy": "Summary by",
+      "week": "Week",
+      "month": "Month",
+      "weekSubtitle": "Week {{range}}",
+      "volume": "Weight lifted",
+      "exercises": "Exercises",
+      "sets": "Sets",
+      "kg": "{{value}} kg",
+      "exercisesCount_one": "{{count}} exercise",
+      "exercisesCount_other": "{{count}} exercises",
+      "setsCount_one": "{{count}} set",
+      "setsCount_other": "{{count}} sets",
+      "chartWeeks_one": "{{title}}: column chart, {{count}} week, from 0 to {{max}} kg",
+      "chartWeeks_other": "{{title}}: column chart, {{count}} weeks, from 0 to {{max}} kg",
+      "chartMonths_one": "{{title}}: column chart, {{count}} month, from 0 to {{max}} kg",
+      "chartMonths_other": "{{title}}: column chart, {{count}} months, from 0 to {{max}} kg",
+      "captionWeek": "Weight lifted per week",
+      "captionMonth": "Weight lifted per month",
+      "periodHead": "Period",
+      "volumeHead": "Weight lifted (kg)",
+      "exercisesHead": "Exercises",
+      "setsHead": "Sets",
+      "sessionsHead": "Sessions"
+    },
+    "chart": {
+      "line_one": "{{title}}: line chart, {{count}} point, from {{min}} to {{max}}",
+      "line_other": "{{title}}: line chart, {{count}} points, from {{min}} to {{max}}",
+      "columns": "{{title}}: column chart, {{count}} weeks, from 0 to {{max}} sets",
+      "week": "Week",
+      "date": "Date"
+    },
+    "groups": {
+      "title": "Sets per muscle group",
+      "period": "Period",
+      "week": "This week",
+      "previous": "Last week",
+      "average": "4-week average",
+      "weekSubtitle": "Week {{range}}",
+      "averageSubtitle": "4 weeks: {{range}}",
+      "withHiking": "with hiking",
+      "withDeload": "deload",
+      "row_one": "{{group}}: {{done}} of {{count}} set",
+      "row_other": "{{group}}: {{done}} of {{count}} sets",
+      "met": "plan met",
+      "value": "{{done}} / {{planned}}",
+      "legendDone": "Sets done",
+      "legendMet": "Plan met",
+      "legendPlan": "Plan"
+    },
+    "weeks": {
+      "title": "Sets per week",
+      "legendDone": "Sets done",
+      "legendPlan": "Plan of that week",
+      "setsOfPlan": "{{done}} of {{planned}} sets",
+      "sets_one": "{{count}} set",
+      "sets_other": "{{count}} sets",
+      "sessions_one": "{{count}} session",
+      "sessions_other": "{{count}} sessions",
+      "activity": "{{minutes}} min of activity",
+      "caption": "Sets per week",
+      "setsHead": "Sets",
+      "planHead": "Plan",
+      "sessionsHead": "Sessions",
+      "activityHead": "Activity (min)"
+    },
+    "exercise": {
+      "title": "By exercise",
+      "select": "Exercise",
+      "open": "Open details",
+      "none": "No exercise has sets yet.",
+      "subtitle": "Best estimated 1RM of each session (Epley).",
+      "subtitleReps": "Total repetitions per session.",
+      "deloadNote": "Deload weeks are not drawn.",
+      "empty": "This exercise has no sets yet.",
+      "e1rmHead": "Estimated 1RM",
+      "repsHead": "Reps"
+    },
+    "readiness": {
+      "title": "How you arrive",
+      "note": "Weekly average of the 1 (awful) – 5 (great) score you give when a session starts.",
+      "empty": "It will show up once you answer “How do you arrive?” in your sessions.",
+      "point_one": "{{range}}: {{avg}} of 5, {{count}} session",
+      "point_other": "{{range}}: {{avg}} of 5, {{count}} sessions",
+      "caption": "How you arrive per week",
+      "avgHead": "Average",
+      "sessionsHead": "Sessions"
+    },
+    "review": {
+      "title": "Cycle review",
+      "date": "· {{date}}",
+      "soon_one": "{{count}} day to go. Meanwhile, this compares your first 2 weeks with the last one:",
+      "soon_other": "{{count}} days to go. Meanwhile, this compares your first 2 weeks with the last one:",
+      "done": "Comparison of your first 2 weeks and the last one (best estimated 1RM in each basic lift):",
+      "empty": "It will appear from the fourth week, when there is data from the start and from the last week.",
+      "noLifts": "No basic lift has sets in both periods yet.",
+      "lift": "Lift",
+      "start": "Start",
+      "now": "Now",
+      "change": "Change",
+      "caption": "Best estimated 1RM of each basic lift, in kg",
+      "up_one": "{{count}} lift going up",
+      "up_other": "{{count}} lifts going up",
+      "flat_one": "{{count}} flat or going down",
+      "flat_other": "{{count}} flat or going down",
+      "readiness": "How you arrive: {{early}} in the first 2 weeks → {{late}} in the last one",
+      "better": " · better than at the start",
+      "worse": " · going down: you may be piling up fatigue",
+      "steady": " · steady",
+      "rule": "Weights going up and you arrive keen → keep going. Stalled and feeling flat → cut volume. Stalled but fresh → you need more stimulus."
+    },
+    "records": {
+      "title": "Latest records",
+      "empty": "Records show up from the second session of each exercise.",
+      "weight": "max weight",
+      "e1rm": "estimated 1RM ({{weight}}×{{reps}})",
+      "item": "{{date}} · {{kind}}",
+      "value": "{{value}} kg",
+      "before": "before {{value}} kg"
+    },
+    "bodyWeight": {
+      "title": "Body weight",
+      "empty": "No weight saved yet. You can add it in Today or in the Calendar.",
+      "point": "{{range}}: {{kg}} kg",
+      "caption": "Body weight per week",
+      "weightHead": "Weight (kg)"
     }
   },
   "notFound": {
@@ -44,6 +239,10 @@
     "languageNames": {
       "es": "Español",
       "en": "English"
+    },
+    "blocks": {
+      "title": "Optional blocks",
+      "manage": "Manage blocks"
     },
     "developer": "Developer",
     "uiCatalog": "Component catalog",
@@ -230,7 +429,10 @@
     "close": "Close",
     "increase": "Increase {{label}}",
     "decrease": "Decrease {{label}}",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "chart": {
+      "showData": "Show data"
+    }
   },
   "devUi": {
     "title": "Components",
@@ -456,7 +658,19 @@
       "gotIt": "Got it",
       "archived": "Exercise archived",
       "restored": "Exercise restored",
-      "failed": "Could not save. Try again."
+      "failed": "Could not save. Try again.",
+      "evolution": {
+        "title": "Evolution",
+        "metric": "Metric",
+        "e1rm": "Estimated 1RM",
+        "maxWeight": "Max weight",
+        "volume": "Volume",
+        "reps": "Reps",
+        "repsValue": "{{value}} reps",
+        "note": "Deload weeks are not drawn.",
+        "empty": "There are no sessions to draw with this metric yet.",
+        "caption": "{{name}}: {{metric}} per session"
+      }
     },
     "form": {
       "createTitle": "Create exercise",
@@ -674,6 +888,9 @@
       "effectiveSets": "Effective sets",
       "sessions": "Sessions",
       "sessionsOf": "{{done}} of {{size}}",
+      "streak": "Streak",
+      "streakValue_one": "{{count}} week",
+      "streakValue_other": "{{count}} weeks",
       "size": "Sessions this week",
       "sizeHint": "With 4, Upper is dropped; with 3: Push, Pull and Lower Full.",
       "hiking": "Hiking week",
@@ -726,7 +943,95 @@
     "timesPerWeek": "{{dose}} · {{times}} days a week",
     "warning": "Above {{threshold}}/10: go easier on whatever loads that area.",
     "note": "Note for the day",
-    "noteSaved": "Note saved"
+    "noteSaved": "Note saved",
+    "tracking": "See tracking"
+  },
+  "blocksPage": {
+    "title": "Optional blocks",
+    "trackingTitle": "Block",
+    "newTitle": "New block",
+    "editTitle": "Edit block",
+    "back": "Back to blocks",
+    "new": "New block",
+    "active": "Active",
+    "inactive": "Inactive",
+    "types": {
+      "mobility": "Mobility",
+      "stretching": "Stretching",
+      "rehab": "Rehab"
+    },
+    "exercises_one": "{{count}} exercise",
+    "exercises_other": "{{count}} exercises",
+    "noExercises": "No exercises",
+    "daysAll": "every day",
+    "daysNone": "no days",
+    "summary": "{{exercises}} · {{days}}",
+    "notFound": "Block not found",
+    "track": {
+      "edit": "Edit block",
+      "period": "Period",
+      "periods": {
+        "30": "30 days",
+        "90": "90 days",
+        "all": "All"
+      },
+      "noMetrics": "This block has no metrics.",
+      "empty": "No entries for this metric yet.",
+      "limit": "Limit {{value}}/10",
+      "chartTitle": "{{name}} (limit {{value}}/10)",
+      "point": "{{date}}: {{value}}",
+      "pointAbove": "{{date}}: {{value}} (above the limit)",
+      "valueAbove": "{{value}} (above the limit)",
+      "caption": "{{name}}: values by day",
+      "valueHead": "Value",
+      "weeklyEmpty": "No entries yet.",
+      "week": "Week {{range}}",
+      "save": "Save",
+      "saved": "{{name}} saved · {{range}}",
+      "needValue": "Enter at least one value.",
+      "weeklyPoint": "{{range}}: {{value}} {{unit}}",
+      "weeklyCaption": "{{name}} · {{part}}",
+      "weeklyValue": "Value ({{unit}})"
+    },
+    "form": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "saved": "Block saved",
+      "failed": "The block could not be saved.",
+      "name": "Name",
+      "type": "Type",
+      "active": "Active",
+      "days": "Days",
+      "start": "Start",
+      "review": "Next review",
+      "items": "Exercises",
+      "item": "Exercise {{n}}",
+      "itemName": "Name",
+      "dose": "Dose",
+      "times": "Times per week",
+      "timesHint": "For example 3 or 3-5",
+      "up": "Move {{name}} up",
+      "down": "Move {{name}} down",
+      "remove": "Remove {{name}}",
+      "addItem": "Add exercise",
+      "metrics": "Daily values (0–10)",
+      "metric": "Value {{n}}",
+      "metricName": "Name",
+      "limit": "Limit",
+      "limitHint": "Above it is a warning",
+      "addMetric": "Add value",
+      "weekly": "Weekly values: {{list}}",
+      "errors": {
+        "name": "Enter a name.",
+        "nameLong": "Use {{max}} characters at most.",
+        "itemName": "Enter the name of every exercise.",
+        "itemLong": "An exercise or its dose is too long.",
+        "times": "Use a number or a range, like 3 or 3-5.",
+        "metricName": "Enter the name of every value.",
+        "metricLong": "The name of a value is too long.",
+        "limit": "The limit is between {{min}} and {{max}}."
+      }
+    }
   },
   "session": {
     "title": "Session",
@@ -771,7 +1076,8 @@
       "hold": "Repeat {{weight}} kg and aim for {{reps}} reps",
       "deload": "Deload: usual weight or 10 % less",
       "thinnerBand": "Try a thinner band (or none)",
-      "sameBand": "Same band: aim for {{reps}} reps"
+      "sameBand": "Same band: aim for {{reps}} reps",
+      "rehabGate": "Stay at {{weight}} kg: go up only if the pain going down stairs is 3/10 or less."
     },
     "row": {
       "set": "Set",

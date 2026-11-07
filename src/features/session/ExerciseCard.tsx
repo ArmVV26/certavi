@@ -19,6 +19,7 @@ import {
   type HistoryEntry,
   type PlanItem,
   type ProgressionAdvice,
+  type RehabContext,
   type SetEntry,
 } from '../../domain';
 import type { RowDraft } from '../../data/sessionDrafts';
@@ -46,6 +47,8 @@ interface ExerciseCardProps {
   note: ExerciseNote | undefined;
   reference: HistoryEntry | undefined;
   deload: boolean;
+  /** The pain context of the rehab calf rule, when a rehab block is active. */
+  rehab?: RehabContext | undefined;
   drafts: Record<string, RowDraft> | undefined;
   /** Where the card is in the session, to enable "up" and "down". */
   isFirst: boolean;
@@ -62,6 +65,7 @@ export function ExerciseCard({
   note,
   reference,
   deload,
+  rehab,
   drafts,
   isFirst,
   isLast,
@@ -152,8 +156,10 @@ export function ExerciseCard({
     ? progressionAdvice({
         scheme: item.scheme,
         exercise,
+        exerciseId,
         referenceSets: reference?.sets ?? null,
         deload,
+        rehab,
       })
     : null;
   const hint = advice ? hintText(advice, kg, t) : null;
@@ -384,6 +390,9 @@ function hintText(
     case 'increase':
       return t('session.hint.increase', { weight: kg(advice.to) });
     case 'hold':
+      if (advice.reason === 'rehab-gate') {
+        return t('session.hint.rehabGate', { weight: kg(advice.weight) });
+      }
       return t('session.hint.hold', { weight: kg(advice.weight), reps: advice.targetReps });
     case 'deload':
       return t('session.hint.deload');

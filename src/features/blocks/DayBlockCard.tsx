@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import {
   daysBetween,
   doneCount,
@@ -36,6 +37,9 @@ export function DayBlockCard({ block, log, today, onChange }: DayBlockCardProps)
   return (
     <Card element="section">
       <h2 className={styles.heading}>{resolveText(t, block.name)}</h2>
+      <Link to={`/settings/blocks/${block.id}`} className={styles.link}>
+        {t('blocksDay.tracking')}
+      </Link>
       {block.reviewDate !== undefined && block.reviewDate >= today && (
         <p className={styles.muted}>
           {block.reviewDate === today

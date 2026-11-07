@@ -32,6 +32,10 @@ export type TitleKey =
   | `nav.${NavKey}`
   | 'session.title'
   | 'settings.sync.title'
+  | 'blocksPage.title'
+  | 'blocksPage.trackingTitle'
+  | 'blocksPage.newTitle'
+  | 'blocksPage.editTitle'
   | 'devUi.title'
   | 'notFound.title'
   | 'exercises.title'

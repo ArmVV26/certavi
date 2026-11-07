@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { WEEK_SIZES, parseIsoDate, type WeekSize } from '../../domain';
+import { parseIsoDate, type WeeklyStreak } from '../../domain';
 import type { WeekPatch } from '../../data/today';
 import { formatDate, formatNumber } from '../../i18n/format';
 import { useLocale } from '../../i18n/LocaleContext';
@@ -8,22 +8,21 @@ import { resolveText } from '../../i18n/text';
 import { Card } from '../../ui/Card';
 import { cx } from '../../ui/cx';
 import { Icon } from '../../ui/Icon';
-import { Segmented } from '../../ui/Segmented';
-import { Switch } from '../../ui/Switch';
 import styles from './TodayPage.module.css';
 import type { TodayDay, TodayModel } from './todayModel';
 import { useRoutineName } from './useRoutineName';
+import { WeekOptions } from './WeekOptions';
 import { weekRange } from './weekRange';
 
 interface WeekCardProps {
   model: TodayModel;
+  /** The weekly streak; absent while it loads. */
+  streak?: WeeklyStreak;
   onChange: (patch: WeekPatch) => void;
 }
 
-const SIZE_VALUES = WEEK_SIZES.map((size) => String(size) as `${WeekSize}`);
-
-/** "Esta semana": the seven days, sets and sessions against the plan, and the week switches. */
-export function WeekCard({ model, onChange }: WeekCardProps) {
+/** "Esta semana": the seven days, sets and sessions against the plan, the streak and the switches. */
+export function WeekCard({ model, streak, onChange }: WeekCardProps) {
   const { t } = useTranslation();
   const { locale } = useLocale();
   const range = weekRange(model.monday, locale);
@@ -69,35 +68,17 @@ export function WeekCard({ model, onChange }: WeekCardProps) {
             })}
           </dd>
         </div>
+        {streak && (
+          <div className={cx(styles.figure, styles.figureWide)}>
+            <dt>{t('today.week.streak')}</dt>
+            <dd className={styles.figureValue}>
+              {t('today.week.streakValue', { count: streak.current })}
+            </dd>
+          </div>
+        )}
       </dl>
 
-      <div className={styles.stack}>
-        <Segmented
-          legend={t('today.week.size')}
-          value={String(model.week.size) as `${WeekSize}`}
-          options={SIZE_VALUES.map((value) => ({ value, label: value }))}
-          onChange={(value) => {
-            onChange({ size: Number(value) as WeekSize });
-          }}
-        />
-        <p className={styles.hint}>{t('today.week.sizeHint')}</p>
-      </div>
-      <Switch
-        label={t('today.week.hiking')}
-        description={t('today.week.hikingHint')}
-        checked={model.week.hiking}
-        onChange={(hiking) => {
-          onChange({ hiking });
-        }}
-      />
-      <Switch
-        label={t('today.week.deload')}
-        description={deloadHint}
-        checked={model.week.deload}
-        onChange={(deload) => {
-          onChange({ deload });
-        }}
-      />
+      <WeekOptions week={model.week} deloadHint={deloadHint} onChange={onChange} />
     </Card>
   );
 }

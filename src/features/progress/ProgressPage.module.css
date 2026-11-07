@@ -1,0 +1,174 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.stat dd {
+  margin: 0;
+}
+
+.statWide {
+  grid-column: 1 / -1;
+}
+
+.statLabel {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statValue {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-black);
+  line-height: var(--lh-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.statNote {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.heading {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
+
+.headingNote {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.sub {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.muted {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.pick {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.pick > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.table th,
+.table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-width) solid var(--border);
+  text-align: left;
+  font-weight: var(--fw-regular);
+}
+
+.table thead th {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-weight: var(--fw-semibold);
+}
+
+.table tbody th {
+  font-weight: var(--fw-semibold);
+}
+
+.table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.up {
+  color: var(--success);
+  font-weight: var(--fw-semibold);
+}
+
+.down {
+  color: var(--danger);
+  font-weight: var(--fw-semibold);
+}
+
+.records {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.records li + li {
+  border-top: var(--border-width) solid var(--border);
+}
+
+.record {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--touch-target);
+  padding: var(--space-2) 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.recordText,
+.recordValue {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.recordValue {
+  flex: none;
+  text-align: right;
+}

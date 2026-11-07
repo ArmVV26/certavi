@@ -1,10 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router';
-import { needsDeloadReminder, parseIsoDate, type ActivityKind } from '../../domain';
+import { Link } from 'react-router';
+import { needsDeloadReminder, parseIsoDate, weeklyStreak, type ActivityKind } from '../../domain';
 import { useDatabase } from '../../data/DatabaseContext';
-import { startSession } from '../../data/sessions';
+import { readStreakLog } from '../../data/progress';
 import { useSyncState } from '../../data/sync/SyncContext';
 import {
   readToday,
@@ -17,7 +17,6 @@ import {
 import { formatDate } from '../../i18n/format';
 import { useLocale } from '../../i18n/LocaleContext';
 import { Notice } from '../../ui/Notice';
-import { useToast } from '../../ui/ToastContext';
 import { DayBlockCard } from '../blocks/DayBlockCard';
 import { ActivityCard } from './ActivityCard';
 import { BodyWeightCard } from './BodyWeightCard';
@@ -25,7 +24,8 @@ import { OtherSessionCard } from './OtherSessionCard';
 import { TodayHero } from './TodayHero';
 import styles from './TodayPage.module.css';
 import { buildTodayModel, type TodayModel } from './todayModel';
-import { useRoutineName } from './useRoutineName';
+import { useSave } from './useSave';
+import { useStartSession } from './useStartSession';
 import { useToday } from './useToday';
 import { WeekCard } from './WeekCard';
 
@@ -50,49 +50,20 @@ export function TodayPage() {
   );
 }
 
-/** Runs a write; on failure shows a toast and resolves to false. */
-function useSave() {
-  const { t } = useTranslation();
-  const toast = useToast();
-  return async (write: () => Promise<unknown>, success?: string): Promise<boolean> => {
-    try {
-      await write();
-      if (success) toast.show({ message: success, tone: 'success' });
-      return true;
-    } catch (error: unknown) {
-      console.error('Could not save', error);
-      toast.show({ message: t('today.saveError'), tone: 'danger' });
-      return false;
-    }
-  };
-}
-
 function TodayContent({ model }: { model: TodayModel }) {
   const { t } = useTranslation();
   const db = useDatabase();
   const sync = useSyncState();
-  const navigate = useNavigate();
-  const toast = useToast();
   const save = useSave();
-  const routineName = useRoutineName(model.routinesById);
   const minutesId = useId();
   const firstQuick = model.plan.kind === 'rest' ? model.plan.activities[0] : undefined;
   const [activityKind, setActivityKind] = useState<ActivityKind>(firstQuick ?? 'football');
-  const [starting, setStarting] = useState(false);
-
-  async function start(routineId: string | null, date: string) {
-    setStarting(true);
-    let opened: string | undefined;
-    await save(async () => {
-      const { session, existed } = await startSession(db, { routineId, date, today: model.today });
-      if (existed) {
-        toast.show({ message: t('today.other.existing', { routine: routineName(routineId) }) });
-      }
-      opened = session.id;
-    });
-    setStarting(false);
-    if (opened) void navigate(`/session/${opened}`);
-  }
+  const { starting, start } = useStartSession(model.today, model.routinesById);
+  const streakLog = useLiveQuery(() => readStreakLog(db), [db]);
+  const streak = useMemo(
+    () => (streakLog ? weeklyStreak(streakLog, model.today) : undefined),
+    [streakLog, model.today],
+  );
 
   function changeWeek(patch: WeekPatch) {
     let message: string | undefined;
@@ -145,7 +116,7 @@ function TodayContent({ model }: { model: TodayModel }) {
         />
       ))}
 
-      <WeekCard model={model} onChange={changeWeek} />
+      <WeekCard model={model} streak={streak} onChange={changeWeek} />
 
       <OtherSessionCard
         model={model}

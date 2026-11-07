@@ -47,6 +47,14 @@ export function SettingsPage() {
 
       <RestCard />
 
+      <Card element="section">
+        <h2 className={styles.heading}>{t('settings.blocks.title')}</h2>
+        <Link to="/settings/blocks" className={styles.row}>
+          <span>{t('settings.blocks.manage')}</span>
+          <Icon name="chevronRight" size={20} />
+        </Link>
+      </Card>
+
       <DataCard />
 
       <Card element="section">
