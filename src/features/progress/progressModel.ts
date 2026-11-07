@@ -8,11 +8,14 @@ import {
   latestRecords,
   mondayOf,
   planWeekNumber,
+  periodStats,
   readinessBetween,
   recentMondays,
+  recentPeriods,
   addDays,
   totalSets,
   weekPlanSummary,
+  weeklyStreak,
   weeklyTotals,
   type BodyWeight,
   type CycleReview,
@@ -20,14 +23,19 @@ import {
   type GroupPeriod,
   type GroupPeriodData,
   type HistoryEntry,
+  type PeriodStats,
   type RecordEvent,
+  type StatsPeriod,
   type TrainingLog,
   type WeekTotals,
+  type WeeklyStreak,
 } from '../../domain';
 import type { ProgressData } from '../../data/progress';
 
 /** Weeks the weekly charts look at. */
 export const CHART_WEEKS = 12;
+/** Periods the training statistics chart shows: the last 12 weeks or the last 6 months. */
+export const STATS_PERIODS: Record<StatsPeriod, number> = { week: CHART_WEEKS, month: 6 };
 /** Records listed. */
 export const RECORDS_SHOWN = 12;
 
@@ -60,6 +68,9 @@ export interface ProgressModel {
   histories: ReadonlyMap<string, readonly HistoryEntry[]>;
   bodyWeights: BodyWeight[];
   groups: (period: GroupPeriod) => GroupPeriodData;
+  streak: WeeklyStreak;
+  /** Weight lifted, exercises and sets of the last periods, oldest first (the current one last). */
+  stats: (period: StatsPeriod) => PeriodStats[];
 }
 
 export function buildProgressModel(data: ProgressData, today: string): ProgressModel {
@@ -126,5 +137,12 @@ export function buildProgressModel(data: ProgressData, today: string): ProgressM
     histories,
     bodyWeights: [...data.bodyWeights].sort((a, b) => a.week.localeCompare(b.week)),
     groups,
+    streak: weeklyStreak(log, today),
+    stats: (period) =>
+      periodStats(period, recentPeriods(period, today, STATS_PERIODS[period]), {
+        sessions: data.sessions,
+        sets: data.sets,
+        notes: data.notes,
+      }),
   };
 }
