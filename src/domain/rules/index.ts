@@ -1,4 +1,6 @@
 export * from './backoff';
+export * from './blockEdit';
+export * from './blockTrack';
 export * from './blocks';
 export * from './calendar';
 export * from './dayPlan';

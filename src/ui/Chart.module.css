@@ -104,6 +104,14 @@
   background: var(--accent);
 }
 
+/* The dashed reference line of a chart (a limit). */
+.legendLimit {
+  width: 16px;
+  height: 0;
+  border-top: 2px dashed var(--warning);
+  border-radius: 0;
+}
+
 .data {
   font-size: var(--fs-sm);
 }

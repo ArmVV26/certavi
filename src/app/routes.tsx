@@ -1,4 +1,7 @@
 import type { RouteObject } from 'react-router';
+import { BlockFormPage } from '../features/blocks/BlockFormPage';
+import { BlocksPage } from '../features/blocks/BlocksPage';
+import { BlockTrackingPage } from '../features/blocks/BlockTrackingPage';
 import { CalendarPage } from '../features/calendar/CalendarPage';
 import { DevUiPage } from '../features/dev-ui/DevUiPage';
 import { ExerciseDetailPage } from '../features/exercises/ExerciseDetailPage';
@@ -57,6 +60,22 @@ export const routes: RouteObject[] = [
       { path: 'progress', element: <ProgressPage />, handle: handle('nav.progress') },
       { path: 'settings', element: <SettingsPage />, handle: handle('nav.settings') },
       { path: 'settings/sync', element: <SyncPage />, handle: handle('settings.sync.title') },
+      { path: 'settings/blocks', element: <BlocksPage />, handle: handle('blocksPage.title') },
+      {
+        path: 'settings/blocks/new',
+        element: <BlockFormPage />,
+        handle: handle('blocksPage.newTitle'),
+      },
+      {
+        path: 'settings/blocks/:blockId',
+        element: <BlockTrackingPage />,
+        handle: handle('blocksPage.trackingTitle'),
+      },
+      {
+        path: 'settings/blocks/:blockId/edit',
+        element: <BlockFormPage />,
+        handle: handle('blocksPage.editTitle'),
+      },
       { path: 'dev/ui', element: <DevUiPage />, handle: handle('devUi.title') },
       { path: '*', element: <NotFoundPage />, handle: handle('notFound.title') },
     ],

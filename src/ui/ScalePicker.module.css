@@ -9,14 +9,18 @@
   font-weight: var(--fw-semibold);
 }
 
-/* Eleven values fit a 390 px screen in one row; narrower screens wrap. */
+/*
+ * One column per value, always on a single row: the boxes shrink to fit the card (eleven on a
+ * 390 px screen are about 27 px wide) instead of wrapping the last ones to a second line.
+ */
 .scale {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(1.875rem, 1fr));
+  grid-template-columns: repeat(var(--scale-count), minmax(0, 1fr));
   gap: 0.125rem;
 }
 
 .value {
+  min-width: 0;
   min-height: var(--touch-target);
   padding: 0;
   border: 0;

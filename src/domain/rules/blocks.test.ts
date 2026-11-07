@@ -6,7 +6,52 @@ import {
   doneCount,
   emptyBlockLog,
   isAboveThreshold,
+  rehabContext,
 } from './blocks';
+
+describe('rehabContext', () => {
+  const log = (date: string, stairs?: number, blockId = ANKLE_REHAB_BLOCK.id) => ({
+    blockId,
+    date,
+    metrics: stairs === undefined ? ({} as Record<string, number>) : { stairs },
+  });
+
+  it('is undefined without an active rehab block', () => {
+    expect(rehabContext([STRETCHING_BLOCK], [], '2026-11-02')).toBeUndefined();
+    const off = { ...ANKLE_REHAB_BLOCK, active: false };
+    expect(rehabContext([off], [log('2026-11-04', 1)], '2026-11-02')).toBeUndefined();
+  });
+
+  it('takes the latest stairs value logged after the reference session', () => {
+    const logs = [
+      log('2026-11-02', 8),
+      log('2026-11-03', 5),
+      log('2026-11-05', 2),
+      log('2026-11-04', undefined),
+      log('2026-11-06', 9, 'another-block'),
+    ];
+    expect(rehabContext([ANKLE_REHAB_BLOCK], logs, '2026-11-02')).toEqual({
+      stairsPain: 2,
+      limit: 3,
+    });
+  });
+
+  it('has no pain value when nothing was logged after the session, and uses the default limit', () => {
+    const noLimit = {
+      ...ANKLE_REHAB_BLOCK,
+      metrics: ANKLE_REHAB_BLOCK.metrics.map((metric) => ({
+        id: metric.id,
+        name: metric.name,
+        min: metric.min,
+        max: metric.max,
+      })),
+    };
+    expect(rehabContext([noLimit], [log('2026-11-02', 4)], '2026-11-02')).toEqual({
+      stairsPain: undefined,
+      limit: 3,
+    });
+  });
+});
 
 describe('blocksForDay', () => {
   it('returns the active ankle block every day and never the empty stretching block', () => {

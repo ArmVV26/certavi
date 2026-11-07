@@ -1,6 +1,7 @@
 // Optional blocks on a given day: which ones apply and how their daily log changes.
 import { isoWeekday } from '../dates';
 import { blockLogId, type BlockLog, type BlockMetric, type OptionalBlock } from '../model/block';
+import type { RehabContext } from './progression';
 
 /** Active blocks planned for the weekday of `date` that have something to do or measure. */
 export function blocksForDay<T extends OptionalBlock>(blocks: readonly T[], date: string): T[] {
@@ -52,6 +53,39 @@ export function doneCount(
   log: Pick<BlockLog, 'done'> | undefined,
 ) {
   return block.items.filter((item) => log?.done[item.id] === true).length;
+}
+
+/** The metric of the rehab block that rates the pain going down stairs. */
+export const STAIRS_METRIC_ID = 'stairs';
+
+/** Limit used when the stairs metric has none (pain must never go above 3/10). */
+const DEFAULT_PAIN_LIMIT = 3;
+
+/**
+ * What the active rehab block says about the pain after `sinceDate` (the reference session), or
+ * undefined when there is no active rehab block. `stairsPain` is the value of the latest day after
+ * `sinceDate` on which it was logged.
+ */
+export function rehabContext(
+  blocks: readonly Pick<OptionalBlock, 'id' | 'blockType' | 'active' | 'metrics'>[],
+  logs: readonly Pick<BlockLog, 'blockId' | 'date' | 'metrics'>[],
+  sinceDate: string,
+): RehabContext | undefined {
+  const block = blocks.find((b) => b.active && b.blockType === 'rehab');
+  if (!block) return undefined;
+  const metric = block.metrics.find((m) => m.id === STAIRS_METRIC_ID);
+  const latest = logs
+    .filter(
+      (log) =>
+        log.blockId === block.id &&
+        log.date > sinceDate &&
+        log.metrics[STAIRS_METRIC_ID] !== undefined,
+    )
+    .sort((a, b) => b.date.localeCompare(a.date))[0];
+  return {
+    stairsPain: latest?.metrics[STAIRS_METRIC_ID],
+    limit: metric?.threshold ?? DEFAULT_PAIN_LIMIT,
+  };
 }
 
 /** True when the value is above the metric's warning threshold (pain > 3/10). */
