@@ -25,6 +25,10 @@
   margin: 0;
 }
 
+.statWide {
+  grid-column: 1 / -1;
+}
+
 .statLabel {
   color: var(--text-muted);
   font-size: var(--fs-xs);
