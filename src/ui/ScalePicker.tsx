@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, type CSSProperties } from 'react';
 import { cx } from './cx';
 import styles from './ScalePicker.module.css';
 
@@ -26,7 +26,12 @@ export function ScalePicker({ label, value, onChange, min, max, warnAbove }: Sca
       <span id={labelId} className={styles.label}>
         {label}
       </span>
-      <div role="group" aria-labelledby={labelId} className={styles.scale}>
+      <div
+        role="group"
+        aria-labelledby={labelId}
+        className={styles.scale}
+        style={{ '--scale-count': values.length } as CSSProperties}
+      >
         {values.map((n) => {
           const pressed = n === value;
           const warn = warnAbove !== undefined && n > warnAbove;

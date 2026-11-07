@@ -256,6 +256,58 @@ describe('Today · this week', () => {
     await openToday({ db });
     expect(await within(card(/^Esta semana/)).findByText('Semana 3')).toBeInTheDocument();
   });
+
+  describe('streak', () => {
+    /** One session with one set on each date. */
+    async function trainedOn(...dates: string[]) {
+      const db = await seededDb();
+      const repos = createRepositories(db);
+      for (const date of dates) {
+        await repos.session.put(makeSession({ id: `s-${date}`, date }));
+        await repos.set.put(makeSet({ sessionId: `s-${date}`, exerciseId: 'remo-t' }));
+      }
+      return db;
+    }
+    const streak = (week: HTMLElement) =>
+      within(week).getByText('Racha', { selector: 'dt' }).nextElementSibling?.textContent;
+
+    it('counts the weeks in a row, the current one included', async () => {
+      const db = await trainedOn('2026-10-20', '2026-10-27', '2026-11-02');
+      await openToday({ db });
+      const week = card(/^Esta semana/);
+      await waitFor(() => {
+        expect(streak(week)).toBe('3 semanas');
+      });
+    });
+
+    it('is kept while the week has no session yet, and is zero without any', async () => {
+      const db = await trainedOn('2026-10-20', '2026-10-27');
+      const { unmount } = await openToday({ db });
+      await waitFor(() => {
+        expect(streak(card(/^Esta semana/))).toBe('2 semanas');
+      });
+      unmount();
+
+      await openToday();
+      await waitFor(() => {
+        expect(streak(card(/^Esta semana/))).toBe('0 semanas');
+      });
+    });
+
+    it('updates when a session is logged', async () => {
+      const db = await trainedOn('2026-10-27');
+      await openToday({ db });
+      await waitFor(() => {
+        expect(streak(card(/^Esta semana/))).toBe('1 semana');
+      });
+      const repos = createRepositories(db);
+      await repos.session.put(makeSession({ id: 'now', date: '2026-11-02' }));
+      await repos.set.put(makeSet({ sessionId: 'now', exerciseId: 'remo-t' }));
+      await waitFor(() => {
+        expect(streak(card(/^Esta semana/))).toBe('2 semanas');
+      });
+    });
+  });
 });
 
 describe('Today · notices', () => {

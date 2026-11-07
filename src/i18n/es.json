@@ -21,15 +21,210 @@
       "dark": "Tema oscuro. Cambiar a automático"
     }
   },
-  "pages": {
-    "comingSoon": "Próximamente",
-    "calendar": {
-      "title": "Tu calendario",
-      "text": "Aquí verás tus sesiones, actividades y semanas especiales de cada mes."
+  "calendar": {
+    "title": "Calendario",
+    "grid": "Calendario del mes",
+    "close": "Cerrar",
+    "month": {
+      "previous": "Mes anterior",
+      "next": "Mes siguiente",
+      "today": "Ir a hoy"
     },
-    "progress": {
-      "title": "Tu progreso",
-      "text": "Aquí verás las series por grupo muscular, tus récords y cómo evolucionan tus ejercicios."
+    "summary": {
+      "none": "Nada registrado este mes",
+      "sessions_one": "{{count}} sesión",
+      "sessions_other": "{{count}} sesiones",
+      "activities_one": "{{count}} actividad",
+      "activities_other": "{{count}} actividades"
+    },
+    "cell": {
+      "name": "{{date}}, {{content}}",
+      "none": "sin registros",
+      "sessions_one": "{{count}} sesión",
+      "sessions_other": "{{count}} sesiones",
+      "activities_one": "{{count}} actividad",
+      "activities_other": "{{count}} actividades"
+    },
+    "week": {
+      "name": "Semana {{range}}",
+      "title": "Semana {{range}}",
+      "markers": {
+        "deload": "D",
+        "hiking": "S"
+      },
+      "tags": {
+        "deload": "Descarga",
+        "hiking": "Senderismo",
+        "short_one": "{{count}} sesión",
+        "short_other": "{{count}} sesiones",
+        "closed": "Cerrada"
+      },
+      "closedNote": "Semana cerrada: el plan quedó guardado el {{date}}.",
+      "future": "Todavía no puedes cambiar esta semana.",
+      "download": "Descargar JSON de la semana"
+    },
+    "day": {
+      "plan": "Plan: {{plan}}",
+      "sessions": "Sesiones del día",
+      "activities": "Actividades del día",
+      "noSessions": "Sin sesiones",
+      "noActivities": "Sin actividades",
+      "inProgress": "En curso",
+      "finished": "Terminada",
+      "sets_one": "{{count}} serie",
+      "sets_other": "{{count}} series",
+      "log": "Registrar en este día",
+      "saveActivity": "Guardar actividad"
+    }
+  },
+  "progress": {
+    "empty": {
+      "title": "Todavía no hay datos",
+      "text": "Cuando registres tu primera sesión, aquí verás tu progreso."
+    },
+    "summary": {
+      "week": "Semana",
+      "sets": "Series",
+      "setsNote": "esta semana",
+      "sessions": "Sesiones",
+      "sessionsNote": "en total",
+      "records": "Récords",
+      "recordsNote": "este mes"
+    },
+    "stats": {
+      "title": "Entrenamiento",
+      "streak": "Racha",
+      "streakValue_one": "{{count}} semana",
+      "streakValue_other": "{{count}} semanas",
+      "streakBest_one": "Mejor racha: {{count}} semana",
+      "streakBest_other": "Mejor racha: {{count}} semanas",
+      "streakKeep": "Entrena esta semana para mantenerla",
+      "streakStart": "Entrena esta semana para empezar una",
+      "summaryBy": "Resumen por",
+      "week": "Semana",
+      "month": "Mes",
+      "weekSubtitle": "Semana {{range}}",
+      "volume": "Peso levantado",
+      "exercises": "Ejercicios",
+      "sets": "Series",
+      "kg": "{{value}} kg",
+      "exercisesCount_one": "{{count}} ejercicio",
+      "exercisesCount_other": "{{count}} ejercicios",
+      "setsCount_one": "{{count}} serie",
+      "setsCount_other": "{{count}} series",
+      "chartWeeks_one": "{{title}}: gráfica de columnas, {{count}} semana, de 0 a {{max}} kg",
+      "chartWeeks_other": "{{title}}: gráfica de columnas, {{count}} semanas, de 0 a {{max}} kg",
+      "chartMonths_one": "{{title}}: gráfica de columnas, {{count}} mes, de 0 a {{max}} kg",
+      "chartMonths_other": "{{title}}: gráfica de columnas, {{count}} meses, de 0 a {{max}} kg",
+      "captionWeek": "Peso levantado por semana",
+      "captionMonth": "Peso levantado por mes",
+      "periodHead": "Periodo",
+      "volumeHead": "Peso levantado (kg)",
+      "exercisesHead": "Ejercicios",
+      "setsHead": "Series",
+      "sessionsHead": "Sesiones"
+    },
+    "chart": {
+      "line_one": "{{title}}: gráfica de líneas, {{count}} punto, de {{min}} a {{max}}",
+      "line_other": "{{title}}: gráfica de líneas, {{count}} puntos, de {{min}} a {{max}}",
+      "columns": "{{title}}: gráfica de columnas, {{count}} semanas, de 0 a {{max}} series",
+      "week": "Semana",
+      "date": "Fecha"
+    },
+    "groups": {
+      "title": "Series por grupo muscular",
+      "period": "Periodo",
+      "week": "Esta semana",
+      "previous": "Semana pasada",
+      "average": "Media de 4 semanas",
+      "weekSubtitle": "Semana {{range}}",
+      "averageSubtitle": "4 semanas: {{range}}",
+      "withHiking": "con senderismo",
+      "withDeload": "descarga",
+      "row_one": "{{group}}: {{done}} de {{count}} serie",
+      "row_other": "{{group}}: {{done}} de {{count}} series",
+      "met": "plan cumplido",
+      "value": "{{done}} / {{planned}}",
+      "legendDone": "Series hechas",
+      "legendMet": "Plan cumplido",
+      "legendPlan": "Plan"
+    },
+    "weeks": {
+      "title": "Series por semana",
+      "legendDone": "Series hechas",
+      "legendPlan": "Plan de esa semana",
+      "setsOfPlan": "{{done}} de {{planned}} series",
+      "sets_one": "{{count}} serie",
+      "sets_other": "{{count}} series",
+      "sessions_one": "{{count}} sesión",
+      "sessions_other": "{{count}} sesiones",
+      "activity": "{{minutes}} min de actividad",
+      "caption": "Series por semana",
+      "setsHead": "Series",
+      "planHead": "Plan",
+      "sessionsHead": "Sesiones",
+      "activityHead": "Actividad (min)"
+    },
+    "exercise": {
+      "title": "Por ejercicio",
+      "select": "Ejercicio",
+      "open": "Ver ficha",
+      "none": "Aún no hay ejercicios con series.",
+      "subtitle": "Mejor 1RM estimado de cada sesión (Epley).",
+      "subtitleReps": "Repeticiones totales por sesión.",
+      "deloadNote": "Las semanas de descarga no se dibujan.",
+      "empty": "Este ejercicio aún no tiene series.",
+      "e1rmHead": "1RM estimado",
+      "repsHead": "Repeticiones"
+    },
+    "readiness": {
+      "title": "Cómo llegas a entrenar",
+      "note": "Media semanal de la nota (1 fatal · 5 a tope) que pones al empezar cada sesión.",
+      "empty": "Aparecerá cuando marques «¿Cómo llegas?» en tus sesiones.",
+      "point_one": "{{range}}: {{avg}} de 5, {{count}} sesión",
+      "point_other": "{{range}}: {{avg}} de 5, {{count}} sesiones",
+      "caption": "Cómo llegas por semana",
+      "avgHead": "Media",
+      "sessionsHead": "Sesiones"
+    },
+    "review": {
+      "title": "Revisión del ciclo",
+      "date": "· {{date}}",
+      "soon_one": "Falta {{count}} día. Mientras tanto, esto compara tus 2 primeras semanas con la última:",
+      "soon_other": "Faltan {{count}} días. Mientras tanto, esto compara tus 2 primeras semanas con la última:",
+      "done": "Comparación entre tus 2 primeras semanas y la última (mejor 1RM estimado en cada básico):",
+      "empty": "Aparecerá a partir de la cuarta semana, cuando haya datos del principio y de la última semana.",
+      "noLifts": "Todavía no hay básicos con series en las dos épocas.",
+      "lift": "Básico",
+      "start": "Inicio",
+      "now": "Ahora",
+      "change": "Cambio",
+      "caption": "Mejor 1RM estimado de cada básico, en kg",
+      "up_one": "{{count}} básico sube",
+      "up_other": "{{count}} básicos suben",
+      "flat_one": "{{count}} plano o bajando",
+      "flat_other": "{{count}} planos o bajando",
+      "readiness": "Cómo llegas: {{early}} las 2 primeras semanas → {{late}} la última",
+      "better": " · mejor que al principio",
+      "worse": " · bajando: puede que estés acumulando fatiga",
+      "steady": " · estable",
+      "rule": "Pesos que suben y llegas con ganas → sigue igual. Estancado y te notas plano → recorta volumen. Estancado pero fresco → falta estímulo."
+    },
+    "records": {
+      "title": "Últimos récords",
+      "empty": "Los récords aparecen a partir de la segunda sesión de cada ejercicio.",
+      "weight": "peso máximo",
+      "e1rm": "1RM estimado ({{weight}}×{{reps}})",
+      "item": "{{date}} · {{kind}}",
+      "value": "{{value}} kg",
+      "before": "antes {{value}} kg"
+    },
+    "bodyWeight": {
+      "title": "Peso corporal",
+      "empty": "Aún no hay peso guardado. Puedes añadirlo en Hoy o en el Calendario.",
+      "point": "{{range}}: {{kg}} kg",
+      "caption": "Peso corporal por semana",
+      "weightHead": "Peso (kg)"
     }
   },
   "notFound": {
@@ -44,6 +239,10 @@
     "languageNames": {
       "es": "Español",
       "en": "English"
+    },
+    "blocks": {
+      "title": "Bloques opcionales",
+      "manage": "Gestionar bloques"
     },
     "developer": "Desarrollo",
     "uiCatalog": "Catálogo de componentes",
@@ -230,7 +429,10 @@
     "close": "Cerrar",
     "increase": "Aumentar {{label}}",
     "decrease": "Disminuir {{label}}",
-    "notifications": "Avisos"
+    "notifications": "Avisos",
+    "chart": {
+      "showData": "Ver datos"
+    }
   },
   "devUi": {
     "title": "Componentes",
@@ -456,7 +658,19 @@
       "gotIt": "Entendido",
       "archived": "Ejercicio archivado",
       "restored": "Ejercicio restaurado",
-      "failed": "No se pudo guardar. Inténtalo de nuevo."
+      "failed": "No se pudo guardar. Inténtalo de nuevo.",
+      "evolution": {
+        "title": "Evolución",
+        "metric": "Métrica",
+        "e1rm": "1RM estimado",
+        "maxWeight": "Peso máximo",
+        "volume": "Volumen",
+        "reps": "Repeticiones",
+        "repsValue": "{{value}} reps",
+        "note": "Las semanas de descarga no se dibujan.",
+        "empty": "Aún no hay sesiones que dibujar con esta métrica.",
+        "caption": "{{name}}: {{metric}} por sesión"
+      }
     },
     "form": {
       "createTitle": "Crear ejercicio",
@@ -674,6 +888,9 @@
       "effectiveSets": "Series efectivas",
       "sessions": "Sesiones",
       "sessionsOf": "{{done}} de {{size}}",
+      "streak": "Racha",
+      "streakValue_one": "{{count}} semana",
+      "streakValue_other": "{{count}} semanas",
       "size": "Sesiones esta semana",
       "sizeHint": "Con 4 se cae el Upper; con 3: Push, Pull y Lower Full.",
       "hiking": "Semana con senderismo",
@@ -726,7 +943,95 @@
     "timesPerWeek": "{{dose}} · {{times}} días por semana",
     "warning": "Por encima de {{threshold}}/10: baja la intensidad de lo que cargue la zona.",
     "note": "Nota del día",
-    "noteSaved": "Nota guardada"
+    "noteSaved": "Nota guardada",
+    "tracking": "Ver seguimiento"
+  },
+  "blocksPage": {
+    "title": "Bloques opcionales",
+    "trackingTitle": "Bloque",
+    "newTitle": "Nuevo bloque",
+    "editTitle": "Editar bloque",
+    "back": "Volver a bloques",
+    "new": "Nuevo bloque",
+    "active": "Activos",
+    "inactive": "Inactivos",
+    "types": {
+      "mobility": "Movilidad",
+      "stretching": "Estiramientos",
+      "rehab": "Rehabilitación"
+    },
+    "exercises_one": "{{count}} ejercicio",
+    "exercises_other": "{{count}} ejercicios",
+    "noExercises": "Sin ejercicios",
+    "daysAll": "todos los días",
+    "daysNone": "ningún día",
+    "summary": "{{exercises}} · {{days}}",
+    "notFound": "Bloque no encontrado",
+    "track": {
+      "edit": "Editar bloque",
+      "period": "Periodo",
+      "periods": {
+        "30": "30 días",
+        "90": "90 días",
+        "all": "Todo"
+      },
+      "noMetrics": "Este bloque no tiene métricas.",
+      "empty": "Aún no hay registros de esta métrica.",
+      "limit": "Límite {{value}}/10",
+      "chartTitle": "{{name}} (límite {{value}}/10)",
+      "point": "{{date}}: {{value}}",
+      "pointAbove": "{{date}}: {{value}} (por encima del límite)",
+      "valueAbove": "{{value}} (por encima del límite)",
+      "caption": "{{name}}: valores por día",
+      "valueHead": "Valor",
+      "weeklyEmpty": "Aún no hay registros.",
+      "week": "Semana {{range}}",
+      "save": "Guardar",
+      "saved": "{{name}} guardado · {{range}}",
+      "needValue": "Escribe al menos un valor.",
+      "weeklyPoint": "{{range}}: {{value}} {{unit}}",
+      "weeklyCaption": "{{name}} · {{part}}",
+      "weeklyValue": "Valor ({{unit}})"
+    },
+    "form": {
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "saved": "Bloque guardado",
+      "failed": "No se pudo guardar el bloque.",
+      "name": "Nombre",
+      "type": "Tipo",
+      "active": "Activo",
+      "days": "Días",
+      "start": "Inicio",
+      "review": "Próxima revisión",
+      "items": "Ejercicios",
+      "item": "Ejercicio {{n}}",
+      "itemName": "Nombre",
+      "dose": "Dosis",
+      "times": "Veces por semana",
+      "timesHint": "Por ejemplo 3 o 3-5",
+      "up": "Subir {{name}}",
+      "down": "Bajar {{name}}",
+      "remove": "Quitar {{name}}",
+      "addItem": "Añadir ejercicio",
+      "metrics": "Métricas diarias (0–10)",
+      "metric": "Métrica {{n}}",
+      "metricName": "Nombre",
+      "limit": "Límite",
+      "limitHint": "Por encima es un aviso",
+      "addMetric": "Añadir métrica",
+      "weekly": "Valores semanales: {{list}}",
+      "errors": {
+        "name": "Escribe un nombre.",
+        "nameLong": "Usa como máximo {{max}} caracteres.",
+        "itemName": "Escribe el nombre de cada ejercicio.",
+        "itemLong": "Un ejercicio o su dosis es demasiado largo.",
+        "times": "Usa un número o un rango, como 3 o 3-5.",
+        "metricName": "Escribe el nombre de cada métrica.",
+        "metricLong": "El nombre de una métrica es demasiado largo.",
+        "limit": "El límite va de {{min}} a {{max}}."
+      }
+    }
   },
   "session": {
     "title": "Sesión",
@@ -771,7 +1076,8 @@
       "hold": "Repite {{weight}} kg y busca {{reps}} reps",
       "deload": "Descarga: peso de siempre o un 10 % menos",
       "thinnerBand": "Prueba una banda más fina (o ninguna)",
-      "sameBand": "Misma banda: busca {{reps}} reps"
+      "sameBand": "Misma banda: busca {{reps}} reps",
+      "rehabGate": "Mantén {{weight}} kg: solo se sube si al bajar escaleras el dolor es 3/10 o menos."
     },
     "row": {
       "set": "Serie",

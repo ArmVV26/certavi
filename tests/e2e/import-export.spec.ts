@@ -410,7 +410,19 @@ test.describe('import and export', { tag: '@all-engines' }, () => {
 
     await page.reload();
     await expect(h1(page, 'Ajustes')).toBeVisible();
-    await expectCounts(page, 'es', countsFor('es', 'after'));
+    // Starting the app closes the finished weeks that have data and no frozen plan yet
+    // (calendar.md): one more week, which is also one more change waiting to sync.
+    await expectCounts(
+      page,
+      'es',
+      countsFor('es', 'after').map(([label, n]) =>
+        label === 'Semanas'
+          ? [label, '3']
+          : label === 'Pendientes de sincronizar'
+            ? [label, '30']
+            : [label, n],
+      ),
+    );
   });
 
   test('AC-EXPORT-01 · full backup downloads as certavi-backup-<today>.json and restores on a new device', async ({

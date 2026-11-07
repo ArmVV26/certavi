@@ -15,6 +15,7 @@ interface SegmentedProps<T extends string> {
   /** Name of the group, read by screen readers. */
   legend: string;
   hideLegend?: boolean;
+  disabled?: boolean;
   value: T;
   options: readonly SegmentedOption<T>[];
   onChange: (value: T) => void;
@@ -27,6 +28,7 @@ interface SegmentedProps<T extends string> {
 export function Segmented<T extends string>({
   legend,
   hideLegend = false,
+  disabled = false,
   value,
   options,
   onChange,
@@ -39,13 +41,17 @@ export function Segmented<T extends string>({
         {options.map((option) => {
           const checked = option.value === value;
           return (
-            <label key={option.value} className={cx(styles.option, checked && styles.checked)}>
+            <label
+              key={option.value}
+              className={cx(styles.option, checked && styles.checked, disabled && styles.disabled)}
+            >
               <input
                 className={styles.input}
                 type="radio"
                 name={name}
                 value={option.value}
                 checked={checked}
+                disabled={disabled}
                 onChange={() => {
                   onChange(option.value);
                 }}

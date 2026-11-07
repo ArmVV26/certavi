@@ -57,3 +57,12 @@
   color: var(--text);
   box-shadow: var(--shadow-1);
 }
+
+.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.disabled .input {
+  cursor: not-allowed;
+}
