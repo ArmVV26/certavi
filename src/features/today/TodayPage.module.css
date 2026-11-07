@@ -170,6 +170,10 @@ a.dayInner:focus-visible {
   background: var(--surface-2);
 }
 
+.figureWide {
+  grid-column: 1 / -1;
+}
+
 .figure dt {
   color: var(--text-muted);
   font-size: var(--fs-xs);

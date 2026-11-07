@@ -2,8 +2,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { needsDeloadReminder, parseIsoDate, type ActivityKind } from '../../domain';
+import { needsDeloadReminder, parseIsoDate, weeklyStreak, type ActivityKind } from '../../domain';
 import { useDatabase } from '../../data/DatabaseContext';
+import { readStreakLog } from '../../data/progress';
 import { useSyncState } from '../../data/sync/SyncContext';
 import {
   readToday,
@@ -58,6 +59,11 @@ function TodayContent({ model }: { model: TodayModel }) {
   const firstQuick = model.plan.kind === 'rest' ? model.plan.activities[0] : undefined;
   const [activityKind, setActivityKind] = useState<ActivityKind>(firstQuick ?? 'football');
   const { starting, start } = useStartSession(model.today, model.routinesById);
+  const streakLog = useLiveQuery(() => readStreakLog(db), [db]);
+  const streak = useMemo(
+    () => (streakLog ? weeklyStreak(streakLog, model.today) : undefined),
+    [streakLog, model.today],
+  );
 
   function changeWeek(patch: WeekPatch) {
     let message: string | undefined;
@@ -110,7 +116,7 @@ function TodayContent({ model }: { model: TodayModel }) {
         />
       ))}
 
-      <WeekCard model={model} onChange={changeWeek} />
+      <WeekCard model={model} streak={streak} onChange={changeWeek} />
 
       <OtherSessionCard
         model={model}
