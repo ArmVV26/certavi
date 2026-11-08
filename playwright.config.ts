@@ -49,6 +49,9 @@ export default defineConfig({
     baseURL: BASE_URL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    // The service worker would cache the app between tests and hide failures; only
+    // tests/e2e/pwa.spec.ts turns it on with `test.use({ serviceWorkers: 'allow' })`.
+    serviceWorkers: 'block',
   },
   projects: [
     {
