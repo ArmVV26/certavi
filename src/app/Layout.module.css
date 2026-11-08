@@ -26,10 +26,15 @@
   transform: none;
 }
 
-.header {
+/* Header plus, when there is one, the "new version" prompt: both stay on screen while scrolling. */
+.top {
   position: sticky;
   top: 0;
   z-index: 10;
+  background: var(--bg);
+}
+
+.header {
   display: flex;
   align-items: center;
   gap: var(--space-3);

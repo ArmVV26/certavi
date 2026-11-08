@@ -11,6 +11,11 @@
     "progress": "Progreso",
     "settings": "Ajustes"
   },
+  "pwa": {
+    "updateAvailable": "Hay una versión nueva",
+    "update": "Actualizar",
+    "later": "Más tarde"
+  },
   "theme": {
     "system": "Automático",
     "light": "Claro",

@@ -23,6 +23,7 @@ What Certavi does, described from the **user's point of view**.
 | [progress.md](progress.md) — progress screens and charts, cycle review, exercise evolution                                                                                                                  | ✅ written; e2e in `tests/e2e/progress.spec.ts`                                             | 7                |
 | [blocks.md](blocks.md) — optional blocks: 0–10 scale on one row, list and editor, tracking charts with the 3/10 limit, weekly wall test, calf rule during rehab                                             | ✅ written; e2e in `tests/e2e/blocks.spec.ts`                                               | 7                |
 | [training-stats.md](training-stats.md) — weekly streak, weight lifted, exercises and sets per week or month                                                                                                 | ✅ written; e2e in `tests/e2e/training-stats.spec.ts`                                       | 7                |
+| [pwa.md](pwa.md) — installable app, manifest and icons, offline start, "new version" prompt                                                                                                                 | ✅ written; e2e in `tests/e2e/pwa.spec.ts` (AC-PWA-01…05; the prompt by component tests)    | 8                |
 
 ## Smoke acceptance criteria (Phase 0, updated in Phase 1)
 
