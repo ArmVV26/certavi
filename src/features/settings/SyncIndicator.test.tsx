@@ -33,6 +33,21 @@ describe('Sync indicator', () => {
     engine.stop();
   });
 
+  it('uses the singular for one change waiting', async () => {
+    const db = openTestDatabase();
+    await createRepositories(db).session.putMany([makeSession({ id: 'a', date: '2026-11-02' })]);
+    const { engine } = createTestEngine(db, { isOnline: () => false });
+    renderApp('/', { db, sync: engine });
+    engine.start();
+
+    expect(
+      await within(banner()).findByRole('link', {
+        name: 'Sincronización: Sin conexión · 1 pendiente',
+      }),
+    ).toBeInTheDocument();
+    engine.stop();
+  });
+
   it('shows synced after a sync, and an error when it fails', async () => {
     const db = openTestDatabase();
     const { engine, server } = createTestEngine(db);

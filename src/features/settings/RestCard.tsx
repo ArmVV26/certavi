@@ -13,6 +13,7 @@ import {
 import { Card } from '../../ui/Card';
 import { NumberField } from '../../ui/NumberField';
 import { Switch } from '../../ui/Switch';
+import { useToast } from '../../ui/ToastContext';
 import styles from './SettingsPage.module.css';
 
 const MIN_REST = 15;
@@ -36,6 +37,7 @@ export function RestCard() {
 
 function Times({ stored }: { stored: RestTimes }) {
   const { t } = useTranslation();
+  const toast = useToast();
   const db = useDatabase();
   const [compound, setCompound] = useState<number | null>(stored.compound);
   const [isolation, setIsolation] = useState<number | null>(stored.isolation);
@@ -77,7 +79,10 @@ function Times({ stored }: { stored: RestTimes }) {
     };
     if (sameTimes(times, saved)) return;
     setUnread([...unread, times]);
-    void saveRestTimes(db, times);
+    saveRestTimes(db, times).catch((error: unknown) => {
+      console.error('Could not save the rest times', error);
+      toast.show({ message: t('settings.rest.failed'), tone: 'danger' });
+    });
   };
 
   return (
