@@ -301,8 +301,8 @@ The field asks for the decimal keyboard (`inputmode="decimal"`).
 
 ## Edge cases
 
-- **Offline:** not in scope yet (the service worker arrives in Phase 8); the shell itself makes no
-  network requests after loading.
+- **Offline:** the shell itself makes no network requests after loading; starting the app without
+  a network is described in [pwa.md](pwa.md).
 - **Storage blocked** (private mode, cleared site data): the app still works with the defaults
   (automatic theme, Spanish); the choice is simply not remembered.
 - **Reduced motion:** with "reduce motion" on, dialogs, sheets and notifications appear without
@@ -315,4 +315,4 @@ The field asks for the decimal keyboard (`inputmode="decimal"`).
 
 - Real content of Today, Calendar, Routines and Progress (Phases 5–7).
 - Sync status in the header (Phase 4).
-- Installing as an app, offline mode and the "new version" prompt (Phase 8).
+- Installing as an app, offline start and the "new version" prompt: see [pwa.md](pwa.md).
