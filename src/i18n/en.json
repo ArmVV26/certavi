@@ -11,6 +11,11 @@
     "progress": "Progress",
     "settings": "Settings"
   },
+  "pwa": {
+    "updateAvailable": "A new version is available",
+    "update": "Update",
+    "later": "Later"
+  },
   "theme": {
     "system": "Automatic",
     "light": "Light",
@@ -22,7 +27,6 @@
     }
   },
   "calendar": {
-    "title": "Calendar",
     "grid": "Month calendar",
     "close": "Close",
     "month": {
@@ -178,12 +182,12 @@
       "repsHead": "Reps"
     },
     "readiness": {
-      "title": "How you arrive",
+      "title": "How you feel",
       "note": "Weekly average of the 1 (awful) – 5 (great) score you give when a session starts.",
-      "empty": "It will show up once you answer “How do you arrive?” in your sessions.",
+      "empty": "It will show up once you answer “How do you feel?” in your sessions.",
       "point_one": "{{range}}: {{avg}} of 5, {{count}} session",
       "point_other": "{{range}}: {{avg}} of 5, {{count}} sessions",
-      "caption": "How you arrive per week",
+      "caption": "How you feel per week",
       "avgHead": "Average",
       "sessionsHead": "Sessions"
     },
@@ -204,7 +208,7 @@
       "up_other": "{{count}} lifts going up",
       "flat_one": "{{count}} flat or going down",
       "flat_other": "{{count}} flat or going down",
-      "readiness": "How you arrive: {{early}} in the first 2 weeks → {{late}} in the last one",
+      "readiness": "How you feel: {{early}} in the first 2 weeks → {{late}} in the last one",
       "better": " · better than at the start",
       "worse": " · going down: you may be piling up fatigue",
       "steady": " · steady",
@@ -231,6 +235,13 @@
     "title": "Page not found",
     "text": "This address does not exist in Certavi.",
     "back": "Back to Today"
+  },
+  "errors": {
+    "routeTitle": "This screen could not be shown",
+    "routeText": "You may be offline, or there may be a new version of the app. Your data is safe on this device.",
+    "retry": "Try again",
+    "databaseTitle": "The data on this device cannot be opened",
+    "databaseText": "Certavi keeps your data in the browser and could not reach it. Close other Certavi tabs, make sure you are not in private mode and try again."
   },
   "settings": {
     "appearance": "Appearance",
@@ -296,7 +307,7 @@
         "notLegacy": "This file is not a full backup of the previous app.",
         "notBackup": "This file is not a Certavi backup.",
         "importFailed": "The import failed. Nothing was saved.",
-        "exportFailed": "The export failed."
+        "exportFailed": "The export failed. Try again."
       },
       "csv": {
         "yes": "yes",
@@ -367,7 +378,8 @@
       "backupsLoading": "Loading backups…",
       "backupsEmpty": "No backups yet.",
       "refresh": "Refresh",
-      "records": "{{total}} records",
+      "records_one": "{{total}} record",
+      "records_other": "{{total}} records",
       "recordsUnknown": "Records: unknown",
       "download": "Download",
       "downloadLabel": "Download the backup of {{date}}",
@@ -384,7 +396,8 @@
       "isolation": "Rest after isolation exercises (s)",
       "sound": "Sound when the rest ends",
       "vibration": "Vibration",
-      "vibrationHint": "Does not work on iPhone."
+      "vibrationHint": "Does not work on iPhone.",
+      "failed": "The rest time could not be saved. Try again."
     }
   },
   "sync": {
@@ -397,14 +410,15 @@
       "synced": "Synced"
     },
     "indicator": "Sync: {{status}}",
-    "indicatorPending": "Sync: {{status}} · {{pending}} pending",
+    "indicatorPending_one": "Sync: {{status}} · {{pending}} pending",
+    "indicatorPending_other": "Sync: {{status}} · {{pending}} pending",
     "errors": {
       "wrongKey": "Wrong key. Check it in Settings.",
       "serverKey": "The server has no key configured.",
       "network": "Could not reach the server.",
       "timeout": "The server took too long to answer.",
-      "busy": "The server was busy. It will retry.",
-      "server": "Server error. It will retry.",
+      "busy": "The server was busy. It will try again.",
+      "server": "Server error. It will try again.",
       "unexpected": "Unexpected answer from the server.",
       "notFound": "Backup not found.",
       "internal": "Internal app error. Try again later."
@@ -443,7 +457,6 @@
     "ghost": "Cancel",
     "danger": "Remove set",
     "disabled": "Disabled",
-    "large": "Large button",
     "iconButtons": "Icon buttons",
     "add": "Add set",
     "remove": "Remove",
@@ -640,7 +653,7 @@
       "e1rm": "Estimated 1RM",
       "maxWeight": "Max weight",
       "bestVolume": "Best volume",
-      "repRecords": "Best marks by reps",
+      "repRecords": "Personal bests by reps",
       "repRecord": "{{reps}} reps · {{weight}} kg",
       "kg": "{{value}} kg",
       "weightReps": "{{weight}} kg × {{reps}}",
@@ -997,7 +1010,7 @@
       "cancel": "Cancel",
       "save": "Save",
       "saved": "Block saved",
-      "failed": "The block could not be saved.",
+      "failed": "The block could not be saved. Try again.",
       "name": "Name",
       "type": "Type",
       "active": "Active",
@@ -1031,7 +1044,9 @@
         "metricLong": "The name of a value is too long.",
         "limit": "The limit is between {{min}} and {{max}}."
       }
-    }
+    },
+    "empty": "You have no blocks yet",
+    "emptyText": "Create one with “New block”."
   },
   "session": {
     "title": "Session",

@@ -11,6 +11,11 @@
     "progress": "Progreso",
     "settings": "Ajustes"
   },
+  "pwa": {
+    "updateAvailable": "Hay una versión nueva",
+    "update": "Actualizar",
+    "later": "Más tarde"
+  },
   "theme": {
     "system": "Automático",
     "light": "Claro",
@@ -22,7 +27,6 @@
     }
   },
   "calendar": {
-    "title": "Calendario",
     "grid": "Calendario del mes",
     "close": "Cerrar",
     "month": {
@@ -194,7 +198,7 @@
       "soon_other": "Faltan {{count}} días. Mientras tanto, esto compara tus 2 primeras semanas con la última:",
       "done": "Comparación entre tus 2 primeras semanas y la última (mejor 1RM estimado en cada básico):",
       "empty": "Aparecerá a partir de la cuarta semana, cuando haya datos del principio y de la última semana.",
-      "noLifts": "Todavía no hay básicos con series en las dos épocas.",
+      "noLifts": "Todavía no hay básicos con series en los dos periodos.",
       "lift": "Básico",
       "start": "Inicio",
       "now": "Ahora",
@@ -231,6 +235,13 @@
     "title": "Página no encontrada",
     "text": "Esta dirección no existe en Certavi.",
     "back": "Volver a Hoy"
+  },
+  "errors": {
+    "routeTitle": "No se pudo mostrar esta pantalla",
+    "routeText": "Puede que no tengas conexión o que haya una versión nueva de la app. Tus datos están a salvo en este dispositivo.",
+    "retry": "Reintentar",
+    "databaseTitle": "No se pueden abrir los datos de este dispositivo",
+    "databaseText": "Certavi guarda tus datos en el navegador y no ha podido acceder a ellos. Cierra otras pestañas de Certavi, comprueba que no estés en modo privado y vuelve a intentarlo."
   },
   "settings": {
     "appearance": "Apariencia",
@@ -296,7 +307,7 @@
         "notLegacy": "Este archivo no es una copia completa de la app anterior.",
         "notBackup": "Este archivo no es una copia de Certavi.",
         "importFailed": "No se pudo importar. No se ha guardado nada.",
-        "exportFailed": "No se pudo exportar."
+        "exportFailed": "No se pudo exportar. Inténtalo de nuevo."
       },
       "csv": {
         "yes": "sí",
@@ -367,7 +378,8 @@
       "backupsLoading": "Cargando copias…",
       "backupsEmpty": "Todavía no hay copias.",
       "refresh": "Actualizar",
-      "records": "{{total}} registros",
+      "records_one": "{{total}} registro",
+      "records_other": "{{total}} registros",
       "recordsUnknown": "Registros: sin datos",
       "download": "Descargar",
       "downloadLabel": "Descargar la copia del {{date}}",
@@ -384,7 +396,8 @@
       "isolation": "Descanso en aislamiento (s)",
       "sound": "Sonido al acabar el descanso",
       "vibration": "Vibración",
-      "vibrationHint": "No funciona en iPhone."
+      "vibrationHint": "No funciona en iPhone.",
+      "failed": "No se pudo guardar el descanso. Inténtalo de nuevo."
     }
   },
   "sync": {
@@ -397,7 +410,8 @@
       "synced": "Sincronizado"
     },
     "indicator": "Sincronización: {{status}}",
-    "indicatorPending": "Sincronización: {{status}} · {{pending}} pendientes",
+    "indicatorPending_one": "Sincronización: {{status}} · {{pending}} pendiente",
+    "indicatorPending_other": "Sincronización: {{status}} · {{pending}} pendientes",
     "errors": {
       "wrongKey": "Clave incorrecta. Revísala en Ajustes.",
       "serverKey": "El servidor no tiene la clave configurada.",
@@ -443,7 +457,6 @@
     "ghost": "Cancelar",
     "danger": "Quitar serie",
     "disabled": "Desactivado",
-    "large": "Botón grande",
     "iconButtons": "Botones de icono",
     "add": "Añadir serie",
     "remove": "Quitar",
@@ -997,7 +1010,7 @@
       "cancel": "Cancelar",
       "save": "Guardar",
       "saved": "Bloque guardado",
-      "failed": "No se pudo guardar el bloque.",
+      "failed": "No se pudo guardar el bloque. Inténtalo de nuevo.",
       "name": "Nombre",
       "type": "Tipo",
       "active": "Activo",
@@ -1031,7 +1044,9 @@
         "metricLong": "El nombre de una métrica es demasiado largo.",
         "limit": "El límite va de {{min}} a {{max}}."
       }
-    }
+    },
+    "empty": "Todavía no tienes bloques",
+    "emptyText": "Crea uno con «Nuevo bloque»."
   },
   "session": {
     "title": "Sesión",

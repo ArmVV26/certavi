@@ -83,15 +83,15 @@ time, it is the exercise with the most recent session.
   case the select is replaced by the text "Aún no hay ejercicios con series." / "No exercise has
   sets yet.").
 
-### 2.5 How you arrive
+### 2.5 How you feel
 
-Heading **"Cómo llegas a entrenar" / "How you arrive"**. A line chart: for each of the last 12
+Heading **"Cómo llegas a entrenar" / "How you feel"**. A line chart: for each of the last 12
 weeks with at least one answered "¿Cómo llegas?" (1 awful – 5 great, asked when a session
 starts), the **average** of the week. Text: "Media semanal de la nota (1 fatal · 5 a tope) que
 pones al empezar cada sesión." / "Weekly average of the 1 (awful) – 5 (great) score you give when a
 session starts." Tooltip of a point: "2–8 nov: 3,5 de 5, 2 sesiones" / "2 – 8 Nov: 3.5
 of 5, 2 sessions". Without any answer: "Aparecerá cuando marques «¿Cómo llegas?» en tus
-sesiones." / "It will show up once you answer "How do you arrive?" in your sessions."
+sesiones." / "It will show up once you answer "How do you feel?" in your sessions."
 
 ### 2.6 Cycle review
 
@@ -112,7 +112,7 @@ the **last week** (from the Monday of the previous week up to today).
 - Under the table: "<n> básicos suben · <m> planos o bajando" / "<n> lifts going up · <m> flat or
   going down" ("1 básico sube", "1 lift going up"; up = change above +1 %).
 - When both windows have answers to "¿Cómo llegas?": "Cómo llegas: 3,2 las 2 primeras semanas →
-  3,9 la última" / "How you arrive: 3.2 in the first 2 weeks → 3.9 in the last one", followed by
+  3,9 la última" / "How you feel: 3.2 in the first 2 weeks → 3.9 in the last one", followed by
   " · mejor que al principio" / " · better than at the start" (difference ≥ +0.5), " · bajando:
   puede que estés acumulando fatiga" / " · going down: you may be piling up fatigue" (≤ −0.7) or
   " · estable" / " · steady".
@@ -232,7 +232,7 @@ And the pick is still there after reloading
 ```
 
 ```
-AC-PRO-08 · How you arrive
+AC-PRO-08 · How you feel
 Given sessions answered 3 and 4 in the same week
 When I open Progreso
 Then the chart has one point for that week reading "<range>: 3,5 de 5, 2 sesiones"

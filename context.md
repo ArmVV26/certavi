@@ -196,6 +196,18 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Catálogo (rama 1, `feature/exercise-catalog`) | Dentro de Rutinas (`/exercises`, selector «Rutinas \| Ejercicios»; la barra inferior no cambia). Filtros combinables compartidos con «Añadir ejercicio» (`ExerciseFilters` + `useExerciseFilter`). Propios con id `exe_`: se archivan, nunca se borran; de la semilla solo se edita el incremento; un ejercicio de una rutina no se archiva; nombre repetido se compara sin mayúsculas ni acentos; incremento 0,25–50 kg. Gráfica de evolución → **Fase 7** | Paridad y sin pérdida de datos |
 | Editor de rutinas (rama 2, `feature/routine-editor`) | Solo se editan las seis rutinas semilla; nombre y día no (el plan del día depende de ellos); crear/borrar rutinas → backlog v2. Cambios solo en sesiones nuevas (las sesiones conservan su copia del plan). Nada se guarda hasta «Guardar»: validación (sin ejercicios, duplicados, sin series, repeticiones obligatorias salvo aproximación, RIR válido), aviso al salir con cambios, quitar con «Deshacer», máx. 20 series por ejercicio. «Restaurar original» escribe la semilla con `updatedAt` actual (gana en LWW, se sincroniza, `ensureSeed` no la pisa) | Sin sorpresas en sesiones en curso; la restauración llega a otros dispositivos |
 
+### 2.9 Decisiones de la Fase 8 (2026-11-08)
+
+| Tema | Decisión | Motivo |
+|---|---|---|
+| Ramas | Dos: `feature/pwa` (PR #35) y `chore/polish`, en lugar de una sola `chore/pwa-polish` | Revisar la PWA aparte de la limpieza |
+| Carga | Todas las pantallas salvo Hoy y la sesión son `lazy`; los tests de pantallas precargan las rutas | Principal de 890 a 372 kB; Hoy y la sesión son la ruta diaria |
+| Service worker | `registerType: 'prompt'`, solo precache; `/api/**` y `/.netlify/**` nunca en caché (ADR-0005) | Datos siempre del servidor; el usuario elige cuándo actualizar |
+| Herramientas | `/dev/ui` solo en desarrollo, Vitest y build e2e; knip en CI | Galería fuera de producción; sin código muerto |
+| Lighthouse | Escritorio en `dev`: 100 / 100 / 96 / 54 (SEO bajo a propósito: `noindex`); móvil pendiente | Insignias de la Fase 9; la categoría PWA ya no existe |
+| Instalabilidad | Comprobada a mano en el iPhone (standalone, cinco pestañas) y en el panel Aplicación | Lighthouse ya no la mide |
+| Paquetes | vite-plugin-pwa 2.0.0, workbox-window 7.4.1, @vite-pwa/assets-generator 2.0.0, knip 6.44.2 | Versiones fijadas en `package.json` |
+
 ---
 
 ## 3. Arquitectura
@@ -679,81 +691,19 @@ Cada fase sigue el mismo ciclo:
 
 **Ramas**: `feature/calendar`, `feature/progress`, `feature/training-stats` y `feature/optional-blocks`
 
-**Estado (2026-11-07)**: fase implementada en sus 4 ramas; falta `npm run e2e:all` en verde y la release (`chore(release): v0.8.0`, PR `dev → main`, tag), que hace el usuario. Orden de ramas: calendar → progress → optional-blocks → training-stats (última, `/close-phase final`).
-- `feature/calendar` ✅ mergeada en `dev` (PR #29): `/calendar` con mes, panel del día (registrar en un día pasado) y de la semana (peso de cualquier semana, JSON de la semana) y cierre automático de semanas (`closeFinishedWeeks`, efecto en `Layout`). Las semanas cerradas son de solo lectura en sus opciones (editarlas = v2).
-- `feature/progress` ✅ implementada y verificada, **sin commits**: spec `docs/spec/progress.md` (AC-PRO-01..15); gráficas SVG propias en `src/ui` (`LineChart`, `ColumnChart`, `BarRows`, `ChartFrame` con tabla «Ver datos»); `src/domain/rules/progress.ts`, `src/data/progress.ts`; pantalla `/progress` completa (series por grupo, por semana, por ejercicio, cómo llegas, revisión del ciclo, récords, peso) y tarjeta «Evolución» en `/exercises/:id`.
-- Decisiones: inicio del ciclo = `planStart` o, si no hay, el lunes de la primera sesión (no hay UI para `planStart`); revisión del ciclo desde la cuarta semana; las gráficas por ejercicio no dibujan descargas ni sesiones con valor 0.
-- `feature/progress` ✅ mergeada en `dev` (PR #30).
-- `feature/optional-blocks` ✅ implementada y verificada, **sin commits**: spec `docs/spec/blocks.md` (AC-BLK-01..12); `ScalePicker` con una columna por valor (las 11 casillas caben en una fila a 390 px); `/settings/blocks` (lista), `/settings/blocks/new|:id/edit` (editor: nombre, tipo, activo, días, fechas, ejercicios, métricas 0-10 con límite) y `/settings/blocks/:id` (seguimiento: gráfica por métrica con línea de 3/10 y selector 30/90/todo; test de la pared semanal con una gráfica por lado); reglas `blockEdit.ts`/`blockTrack.ts`, `src/data/blocks.ts`; regla del gemelo (`rehab-gate` en `progression.ts`, contexto `rehabContext` leído en `readSession`).
-- Decisiones de `blocks`: los bloques no se borran, se desactivan; los valores semanales no se editan desde el editor; «sin dolor» = pain ≤ límite (3/10) del último registro de «Dolor al bajar escaleras» posterior a la sesión de referencia, y sin registro el peso se mantiene; el gemelo no pasa de 80 kg; el tope de «+5 kg por semana» queda fuera.
-- `feature/training-stats` ✅ implementada y verificada, **sin commits**: spec `docs/spec/training-stats.md` (AC-STA-01..08); regla `src/domain/rules/trainingStats.ts` (racha semanal; peso levantado, ejercicios y series por semana o mes); `readStreakLog` en `src/data/progress.ts`; tarjeta «Entrenamiento» en Progreso (`StatsCard.tsx`) y racha en «Esta semana» de Hoy. Decisiones: peso levantado por rutina pasa al backlog v2; racha 0 muestra «0 semanas».
-- **Pendiente antes del PR `dev → main`**: `npm run e2e:all` (Chromium + WebKit) **no está en verde** (se paró en maxFailures). Hallazgos: `import-export` AC-IMPORT-05 (corregida y en verde) y `sync` AC-SYNC-07 (ajustada, sin verificar) por el cierre automático de semanas al arrancar; el resto de specs sin repetir desde `feature/calendar`; `language` AC-LANG-04/05 y `navigation` AC-NAV-01 con timeout puntual sin explicar; axe `label-content-name-mismatch` en los días de Hoy (regla desactivada en la spec nueva).
-- Backlog (v2 o arreglos): peso levantado por rutina; nombres accesibles de los enlaces de día en Hoy («Monday 2: …» frente a «Mon»); specs que recargan tras importar, con la fecha fijada con `page.clock`.
+**Estado (2026-11-07)**: **cerrada** 
 
-**Entregables**:
-- Calendario completo con semanas especiales y cierre de semana.
-- Progreso completo (sección 5.1), con la evolución por métricas en la ficha de ejercicio (`/exercises/:id`, aplazada desde la Fase 6).
-- **Bloques opcionales**: configuración de movilidad, estiramientos y rehabilitación (ejercicios, días, métricas), checklist diario, métricas, gráfica con línea de 3/10 y métrica semanal (test de la pared).
-- Peso corporal de cualquier semana.
-- **Escala 0-10 en una sola fila** (añadido el 2026-11-06, `feature/optional-blocks`): en móvil (390 px) el «10» salta de línea porque `ScalePicker` (`src/ui/ScalePicker.module.css`) pide 30 px por casilla y dentro de la tarjeta no caben 11. Se **mantiene la escala 0-10** (cambiarla a 0-5 tocaría el umbral 3/10, las gráficas, el importador y los datos guardados). Decidir en la spec: 11 casillas que se encogen para caber siempre en una fila, o un deslizador 0-10 con marcas. Afecta también a «¿cómo llegas?» (1-5) de la sesión, que usa el mismo componente.
-- **Estadísticas de entrenamiento** (añadido el 2026-11-06, `feature/training-stats`):
-  - **Racha semanal**: marcador (en Hoy y/o Progreso) con las semanas seguidas con ejercicio. Definir en la spec qué cuenta como semana activa (al menos una sesión que cuenta; ¿vale una actividad?), si una semana de descarga o de senderismo mantiene la racha y cuándo se rompe (semana en curso aún sin sesión no rompe).
-  - **Peso levantado, ejercicios y series hechas** por **semana** y por **mes**, con un selector simple semana / mes. Regla de dominio nueva y con tests (`src/domain/rules`): volumen = peso × repeticiones, sin calentamientos ni series de sesiones que «no cuentan»; 0 kg y peso corporal suman 0.
-  - **Peso levantado por rutina**, sesión a sesión, con la variación entre sesiones (misma idea que la ficha de ejercicio, pero agrupando por `routineId`) y una gráfica pequeña en la vista de la rutina. Es poco lío porque reutiliza la regla de volumen anterior. Avisos para la spec: si se edita la rutina, las sesiones dejan de ser comparables; una semana de descarga baja el volumen (marcarla); las sesiones libres (`routineId: null`) no entran. **Si la fase se alarga, esto pasa al backlog v2**; lo demás se queda.
-- **Revisión del ciclo** (el `sixWeekReview` de gym_app) en las pantallas de progreso. Aplazada desde la Fase 2.
-- **Regla del gemelo durante la rehabilitación** (aplazada desde la Fase 2, 2026-11-03). `rutina-actual.md` §5, «Lower A», nota «Gemelo»: 60 kg en la semana 1; desde la semana 2, +5 kg por semana si no hay dolor al día siguiente, siempre con pausa abajo y sin rebote, hasta volver a 80 kg; y la regla de gym_app: solo se sube si bajar escaleras no duele. Depende del bloque de rehabilitación del tobillo y de sus métricas, por eso va en esta fase. El modelo de progresión actual lo permite sin reescribirlo, con cambios aditivos:
-  - un `context` opcional en `ProgressionInput` (bloques activos + últimas métricas de los bloques);
-  - el id del ejercicio en la entrada;
-  - un motivo nuevo para mantener el peso (p. ej. `'rehab-gate'`);
-  - una guarda antes de la regla general.
-  - Si aparecen más reglas especiales, convertir la cascada de `if` en una lista ordenada de reglas (aplica / aconseja).
-
-**Prompt**:
-
-```text
-Lee context.md y CLAUDE.md. FASE 7: calendario, progreso (gráficas SVG propias, accesibles, claro/oscuro),
-bloques opcionales configurables (movilidad, estiramientos, rehabilitación) con checklist diario, métricas
-0-10 con línea de referencia (escala 0-10 que cabe en una fila a 390 px) y métrica semanal, y peso corporal
-editable en cualquier semana. Estadísticas: racha semanal, peso levantado / ejercicios / series por semana o
-mes (selector) y peso levantado por rutina entre sesiones. Paridad con gym_app según 5.1. Especificación,
-implementación, tests y blind-tester. /close-phase.
-```
+**Log (History)**: [Fase 6](docs/history.md#fase7)
 
 ---
 
-### Fase 8 · Pulido PWA, accesibilidad y rendimiento → `v0.9.0` ⏳
+### Fase 8 · Pulido PWA, accesibilidad y rendimiento → `v0.9.0` ✅
 
-**Rama**: `chore/pwa-polish`
+**Ramas**: `feature/pwa` y `chore/polish`.
 
-**Entregables**:
-- Manifest e iconos definitivos y pantalla de inicio en iOS (ver «Fallo conocido en iOS» abajo).
-- **Icono de la app** (añadido el 2026-11-06): Claude genera un icono provisional en SVG y propone ideas de logo; el definitivo lo diseñas tú. Para iOS: fondo sólido (iOS no respeta transparencias), forma sencilla legible a 60 px y sin texto. Ideas: disco olímpico con una «C» en el agujero; barra con discos que dibuja un ✓; tres barras crecientes (la última, un disco); nube tachada con mancuerna («sin cobertura»); monograma «C» geométrico con un corte; escalones de series (aproximación → top → back-off) en forma de «C» o de flecha.
-- Aviso de nueva versión.
-- Auditoría Lighthouse: rendimiento, accesibilidad y buenas prácticas ≥ 90. Lighthouse retiró la categoría «PWA» en la v12, así que la **instalabilidad** (manifest, service worker, funciona sin conexión) se comprueba aparte, a mano en el iPhone y con el panel de Aplicación de Chrome. Las notas alimentan las insignias del README (Fase 9).
-- **Limpieza del proyecto** (añadido el 2026-11-06): repaso general para quitar lo sobrante: código muerto y exports sin uso, dependencias sin uso, claves i18n huérfanas, la ruta `/dev/ui` (¿se queda como galería de componentes o sale de producción?), `.gitkeep` que ya no hacen falta, archivos sueltos. Posible herramienta: `knip` (paquete de desarrollo: Claude pide permiso antes de proponerlo). Lista de candidatos antes de borrar nada.
-- Revisión de i18n en inglés.
-- Estados vacíos y de error.
-- Mensajes revisados (tono, claridad).
-- Animaciones con `prefers-reduced-motion`.
+**Estado (2026-11-08)**: **cerrada** 
 
-**Fallo conocido en iOS** (detectado el 2026-11-06 en el iPhone con la app añadida a la pantalla de inicio): al abrirla y tocar «Hoy» aparece arriba la barra con la URL y abajo los botones de Safari, y desde ahí se llega a todas las pestañas; en la vista sin barras solo se alcanzan «Progreso» y «Hoy». Causa probable: `index.html` no tiene `<link rel="manifest">` ni las metas de app web de iOS (`apple-mobile-web-app-capable`, `apple-touch-icon`) y no hay manifest generado todavía (`vite-plugin-pwa` llega en esta fase), así que iOS la abre como una pestaña de Safari y sus barras tapan la barra de pestañas fija (`.nav` en `src/app/Layout.module.css`). Pasos: manifest con `display: standalone`, `start_url` y `scope`, metas de iOS e icono; comprobar en el iPhone real que arranca sin barras y que se llega a las cinco pestañas (si en standalone siguen tapadas, revisar `--app-bottom-inset` y las áreas seguras). Falta la captura que ibas a adjuntar.
-
-**Revisar al empezar** (sugerencias de fases anteriores):
-- **Code-splitting**: el chunk principal pesa **702 kB** tras `feature/today` (618 kB tras `feature/local-db`, 638 kB tras `feature/import-export`, 666 kB tras la Fase 4); Vite avisa por encima de 500 kB. Candidatos: cargar `/dev/ui`, `/settings/sync` y las pantallas con `lazy()` de las rutas.
-- **E2E de recarga totalmente sin conexión** cuando exista el service worker: en la Fase 4 el blind-tester no pudo probar AC-SYNC-07 con la página recargada sin red (sin service worker la página no carga) y cortó solo `/api/v1/**`. Añadir un test que recargue con `context.setOffline(true)` y compruebe que los pendientes siguen ahí y se envían al volver la red.
-- **Esperas fijas que quedan en e2e** (sugerencia del 2026-11-04, no hecha): `waitForTimeout` de 300–500 ms por animaciones en `tests/e2e/components.spec.ts:71, 95, 201, 205` y `tests/e2e/theme.spec.ts:117, 167`; sustituirlas por aserciones web-first (regla de 2.5). Encaja con el trabajo de `prefers-reduced-motion`.
-- **E2E en WebKit del envío final con `keepalive`** al ocultar o cerrar la app (sugerencia del 2026-11-04, no hecha).
-
-**Prompt**:
-
-```text
-Lee context.md y CLAUDE.md. FASE 8: pulido. Manifest/iconos/iOS (incluido el fallo de la app en la pantalla de
-inicio del iPhone), icono provisional con ideas de logo, aviso de versión nueva, auditoría Lighthouse
-(dame el informe y corrige hasta ≥ 90 en rendimiento, accesibilidad y buenas prácticas; comprueba aparte la
-instalabilidad), limpieza del proyecto (lista de sobrantes antes de borrar), revisión completa de textos en
-es y en (lista de cambios propuestos antes de aplicarlos), estados vacíos y de error, reduced motion.
-blind-tester con una pasada completa de toda la app. /close-phase.
-```
+**Log (History)**: [Fase 6](docs/history.md#fase8)
 
 ---
 
@@ -813,7 +763,7 @@ con versión y tag.
 
 [Tabla Registro](docs/history.md#seccion12)
 
-**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ✅ (`v0.7.0`, sin publicar) · 7 ⏳ · 8 ⏳ · 9 ⏳
+**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ✅ (`v0.7.0`, sin publicar) · 7 ✅ (`v0.8.0`, sin publicar) · 8 ✅ (`v0.9.0`, sin publicar) · 9 ⏳
 
 **Preguntas abiertas**:
 - Qué estiramientos van en el bloque «Estiramientos» (antes de la Fase 7).
@@ -826,11 +776,9 @@ con versión y tag.
 - Fase 7: regla del gemelo durante la rehabilitación (60 kg en la semana 1, +5 kg/semana sin dolor al día siguiente hasta 80 kg, y solo si bajar escaleras no duele), con cambios aditivos en el modelo de progresión (ver la Fase 7).
 - Fase 7: revisión del ciclo (`sixWeekReview` de gym_app) en las pantallas de progreso.
 - Fase 7 (añadido el 2026-11-06): racha semanal; peso levantado, ejercicios y series por semana / mes con selector; peso levantado por rutina (`feature/training-stats`); escala 0-10 en una fila en móvil (`feature/optional-blocks`).
-- Fase 8 (añadido el 2026-11-06): arreglar la app en la pantalla de inicio de iOS (barras de Safari, pestañas inaccesibles); icono provisional e ideas de logo; limpieza del proyecto; Lighthouse sin categoría PWA.
 - Fase 9 (añadido el 2026-11-06): quitar el rastro de gym_app tras la migración; README es/en con banner, capturas e insignias; evaluación de uso por otras personas; gitleaks sobre el historial y licencia MIT antes de hacerlo público.
 - ~~Fase 3 (`feature/import-export`): corregir la tabla de la sección 6 y `docs/migration.md` con los nombres reales de gym_app (2.4).~~ Hecho el 2026-11-03.
 - ~~Fase 5: UI para exportar el JSON de una sesión~~ Hecho el 2026-11-06 (`v0.6.0`). Fase 7: UI para exportar el JSON de una semana (`exportWeek`).
-- Sugerencia (no hecha, 2026-11-03) para la Fase 8 (estados de error): mostrar un error visible si la base de datos local no se puede abrir.
 - Sugerencia (no hecha, 2026-11-03) para la Fase 8: con un `Dialog` abierto, la página de fondo sigue en el árbol de accesibilidad (solo `aria-modal`); valorar `inert` en el fondo (afecta al `Dialog` compartido).
 - Sugerencia (no hecha, 2026-11-03) para las Fases 5 y 7: resúmenes legibles dentro de los JSON de sesión y de semana.
 - Sugerencia (no hecha, 2026-11-03) para la Fase 7: el CSV de recuperación de gym_app.
@@ -839,11 +787,8 @@ con versión y tag.
 - **`chore/ci-e2e-shards`** (2026-11-04, después de mergear `feature/today` en `dev`, antes de `feature/active-session`): el e2e de CI no cabe (≥ 14 min estimados con 1 worker frente a 10 min de `--global-timeout` y 12 de `timeout-minutes`). Etiqueta `@all-engines` + `grep` en el proyecto `webkit`, job e2e en matriz (chromium, webkit) con `fail-fast: false`, `--shard` si WebKit pasa de ~8 min, y documentación. Detalle en la Fase 5 («Pendiente: e2e de CI»).
 - ~~Fase 5 (`feature/session-tools`): UI para exportar el JSON de la sesión y aviso de cambios remotos (2.6).~~ Hecho el 2026-11-06.
 - Sugerencia (no hecha, 2026-11-04): añadir `TextField`/`TextArea`, `Checkbox`, `ScalePicker` y `Notice` a `/dev/ui`.
-- Sugerencia (no hecha, 2026-11-03) para la Fase 8: code-splitting; el chunk principal pesa ya **702 kB** tras `feature/today` (618 kB tras `feature/local-db`, 638 kB tras `feature/import-export`, 666 kB tras la Fase 4). Detalle en «Revisar al empezar» de la Fase 8.
 - ~~Sugerencia (2026-11-03) para la Fase 5: el «aviso de cambios remotos» de la sesión activa puede apoyarse en el motor de sync.~~ Decidido el 2026-11-04 (2.6); se implementa en `feature/session-tools`.
-- Sugerencia (no hecha, 2026-11-03) para la Fase 8: un e2e de recarga totalmente sin conexión cuando exista el service worker. Detalle en «Revisar al empezar» de la Fase 8.
 - Sugerencia (no hecha, 2026-11-04) para la Fase 5: medir IndexedDB en el iPhone y, si es lento, contar con índices/`getAll` en lugar de cursores con `filter()` (`countLiveRecords`, `queueEverything`). Detalle en «Revisar al empezar» de la Fase 5.
 - Sugerencia (no hecha, 2026-11-04) para CI: usar el contenedor `mcr.microsoft.com/playwright:v1.64.1-noble` en el job e2e (sin instalar navegadores ni dependencias). Valorado el 2026-11-05: no acelera WebKit (no arregla los timeouts); solo recorta el tiempo de instalación y obliga a subir la etiqueta con cada versión de `@playwright/test`.
-- Sugerencia (no hecha, 2026-11-04) para la Fase 8: e2e en WebKit del envío final con `keepalive`, y quitar los `waitForTimeout` de animaciones que quedan (`components.spec.ts:71, 95, 201, 205`, `theme.spec.ts:117, 167`). Detalle en «Revisar al empezar» de la Fase 8.
 - Sugerencia (no hecha, 2026-11-04): AC-SYNC-03 en `tests/e2e/sync.spec.ts` depende de que sus comprobaciones terminen dentro de los 2 s que el servidor falso retiene la respuesta (`setDelay(2000)`); puede volverse frágil en una máquina lenta.
 - Sugerencia (no hecha, 2026-11-03): si vuelve a aparecer una ejecución de `test:coverage` con 57/58 archivos y sin fallo visible, investigar qué archivo no termina (solo pasó una vez en la Fase 4; no reproducido). Detalle en «Revisar al empezar» de la Fase 5.

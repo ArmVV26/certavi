@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   REST_SOUND_STORAGE_KEY,
   REST_VIBRATION_STORAGE_KEY,
@@ -60,6 +60,19 @@ describe('RestCard', () => {
     await waitFor(async () => {
       expect(await readRestTimes(db)).toEqual({ compound: 200, isolation: 75 });
     });
+  });
+
+  it('tells the user when a time could not be saved', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { db, user } = await setup();
+    vi.spyOn(db, 'transaction').mockRejectedValue(new Error('disk full'));
+    await type(user, COMPOUND, '200');
+    expect(
+      await screen.findByText('No se pudo guardar el descanso. Inténtalo de nuevo.'),
+    ).toBeVisible();
+    // The field goes back to the time that is really saved.
+    expect(screen.getByLabelText(COMPOUND)).toHaveValue('180');
+    expect(await readRestTimes(db)).toEqual({ compound: 180, isolation: 120 });
   });
 
   it('keeps the first time when the second one is saved before the screen reads it back', async () => {

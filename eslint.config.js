@@ -11,6 +11,7 @@ import tseslint from 'typescript-eslint';
 export default defineConfig([
   globalIgnores([
     'dist',
+    'dist-e2e',
     'coverage',
     'playwright-report',
     'test-results',
@@ -58,6 +59,21 @@ export default defineConfig([
     files: ['*.config.ts', 'tests/**/*.ts', 'server/**/*.ts', 'netlify/**/*.ts'],
     languageOptions: {
       globals: globals.node,
+    },
+  },
+
+  // No fixed waits in e2e tests (.claude/rules.md): use web-first assertions, `expect.poll`,
+  // `page.clock` for app timers and `settle()` from tests/e2e/helpers.ts for "nothing happens".
+  {
+    files: ['tests/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.property.name='waitForTimeout']",
+          message: 'No real-time waits in e2e tests: see .claude/rules.md.',
+        },
+      ],
     },
   },
 

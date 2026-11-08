@@ -1,13 +1,16 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { createTestEngine } from '../data/sync/testing';
 import { formatDate } from '../i18n/format';
 import { setSystemDark } from '../test/matchMedia';
-import { openTestDatabase } from '../test/render';
+import { openTestDatabase, renderWithProviders } from '../test/render';
 import { renderApp } from '../test/renderApp';
+import { createMemoryRouter } from 'react-router';
+import { RouterProvider } from 'react-router/dom';
 import { App } from './App';
 import { Providers } from './Providers';
+import { routes } from './routes';
 
 const heading = () => screen.getByRole('heading', { level: 1 });
 const nav = () => screen.getByRole('navigation', { name: 'Principal' });
@@ -56,10 +59,24 @@ describe('app shell', () => {
     ['/routines', 'Rutinas'],
     ['/progress', 'Progreso'],
     ['/settings', 'Ajustes'],
-    ['/dev/ui', 'Componentes'],
   ])('%s shows the title "%s"', (path, title) => {
     renderApp(path);
     expect(heading()).toHaveTextContent(title);
+    expect(document.title).toBe(`${title} · Certavi`);
+  });
+
+  // Every screen but Today and the session is a lazy route: its file is downloaded when it is
+  // opened. renderApp loads them beforehand, so this test uses the real route table, untouched.
+  it.each([
+    ['/calendar', 'Calendario'],
+    ['/settings/sync', 'Sincronización'],
+    ['/dev/ui', 'Componentes'],
+  ])('%s loads its screen on demand', async (path, title) => {
+    const router = createMemoryRouter(routes, { initialEntries: [path] });
+    renderWithProviders(<RouterProvider router={router} />);
+    await waitFor(() => {
+      expect(heading()).toHaveTextContent(title);
+    });
     expect(document.title).toBe(`${title} · Certavi`);
   });
 

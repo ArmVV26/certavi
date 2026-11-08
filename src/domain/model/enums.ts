@@ -57,11 +57,9 @@ export const setKindSchema = z.enum(SET_KINDS);
 /**
  * Kinds a scheme block can have. A routine only uses the planned kinds; a session also adds
  * warm-up, dropset and extra rows to its copy of the scheme, so every row of an exercise
- * (and not only the planned ones) has a position.
+ * (and not only the planned ones) has a position. It is the same set as `SetKind`.
  */
-export const SCHEME_BLOCK_KINDS = SET_KINDS;
 export type SchemeBlockKind = SetKind;
-export const schemeBlockKindSchema = setKindSchema;
 
 /** A planned working set (counts for the plan and for the session progress). */
 export function isPlannedKind(kind: SetKind): kind is PlannedKind {
