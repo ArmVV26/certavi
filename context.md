@@ -196,6 +196,18 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Catálogo (rama 1, `feature/exercise-catalog`) | Dentro de Rutinas (`/exercises`, selector «Rutinas \| Ejercicios»; la barra inferior no cambia). Filtros combinables compartidos con «Añadir ejercicio» (`ExerciseFilters` + `useExerciseFilter`). Propios con id `exe_`: se archivan, nunca se borran; de la semilla solo se edita el incremento; un ejercicio de una rutina no se archiva; nombre repetido se compara sin mayúsculas ni acentos; incremento 0,25–50 kg. Gráfica de evolución → **Fase 7** | Paridad y sin pérdida de datos |
 | Editor de rutinas (rama 2, `feature/routine-editor`) | Solo se editan las seis rutinas semilla; nombre y día no (el plan del día depende de ellos); crear/borrar rutinas → backlog v2. Cambios solo en sesiones nuevas (las sesiones conservan su copia del plan). Nada se guarda hasta «Guardar»: validación (sin ejercicios, duplicados, sin series, repeticiones obligatorias salvo aproximación, RIR válido), aviso al salir con cambios, quitar con «Deshacer», máx. 20 series por ejercicio. «Restaurar original» escribe la semilla con `updatedAt` actual (gana en LWW, se sincroniza, `ensureSeed` no la pisa) | Sin sorpresas en sesiones en curso; la restauración llega a otros dispositivos |
 
+### 2.9 Decisiones de la Fase 8 (2026-11-08)
+
+| Tema | Decisión | Motivo |
+|---|---|---|
+| Ramas | Dos: `feature/pwa` (PR #35) y `chore/polish`, en lugar de una sola `chore/pwa-polish` | Revisar la PWA aparte de la limpieza |
+| Carga | Todas las pantallas salvo Hoy y la sesión son `lazy`; los tests de pantallas precargan las rutas | Principal de 890 a 372 kB; Hoy y la sesión son la ruta diaria |
+| Service worker | `registerType: 'prompt'`, solo precache; `/api/**` y `/.netlify/**` nunca en caché (ADR-0005) | Datos siempre del servidor; el usuario elige cuándo actualizar |
+| Herramientas | `/dev/ui` solo en desarrollo, Vitest y build e2e; knip en CI | Galería fuera de producción; sin código muerto |
+| Lighthouse | Escritorio en `dev`: 100 / 100 / 96 / 54 (SEO bajo a propósito: `noindex`); móvil pendiente | Insignias de la Fase 9; la categoría PWA ya no existe |
+| Instalabilidad | Comprobada a mano en el iPhone (standalone, cinco pestañas) y en el panel Aplicación | Lighthouse ya no la mide |
+| Paquetes | vite-plugin-pwa 2.0.0, workbox-window 7.4.1, @vite-pwa/assets-generator 2.0.0, knip 6.44.2 | Versiones fijadas en `package.json` |
+
 ---
 
 ## 3. Arquitectura
@@ -685,40 +697,12 @@ Cada fase sigue el mismo ciclo:
 
 ---
 
-### Fase 8 · Pulido PWA, accesibilidad y rendimiento → `v0.9.0` ⏳
+### Fase 8 · Pulido PWA, accesibilidad y rendimiento → `v0.9.0` ✅
 
-**Ramas** (decidido el 2026-11-08, sustituye a la rama única `chore/pwa-polish`): `feature/pwa` y `chore/polish`.
+**Ramas**: `feature/pwa` (PR #35, mergeada en `dev`) y `chore/polish`.
 
-**Estado `feature/pwa` (2026-11-08)**:
-- Hecho: spec `docs/spec/pwa.md` (AC-PWA-01…10), ADR-0005 (`registerType: 'prompt'`, solo precache, nada de `/api/**` ni `/.netlify/**` en caché), icono `public/icon.svg` (disco con forma de «C») y PNG con `npm run icons`, `VitePWA` con manifest y Workbox en `vite.config.ts`, metas de iOS en `index.html`, cabeceras `no-cache` de `/sw.js` y el manifest en `netlify.toml`, Playwright con `serviceWorkers: 'block'` por defecto.
-- Hecho: aviso persistente de versión nueva (`src/app/pwa/`, banner bajo la cabecera en `Layout`, claves `pwa.*` en es y en) con tests; `tests/e2e/pwa.spec.ts` (AC-PWA-01…05, solo Chromium); security-reviewer sin bloqueantes.
-- Falta: comprobar a mano el panel Aplicación de Chrome y el iPhone (AC-PWA-10: sin barras de Safari y cinco pestañas; si siguen tapadas, revisar `--app-bottom-inset`); probar el aviso con un segundo deploy real.
-- Siguiente: PR a `dev`, luego `chore/polish` (limpieza, rendimiento y Lighthouse, textos y estados, motion y e2e, cierre final `v0.9.0`).
-
-**Estado `chore/polish` (2026-11-08)**:
-- Hecho: `/dev/ui` solo en desarrollo (`src/app/devUi.ts`; e2e construye con `--mode e2e --outDir dist-e2e`); knip (`knip.json`, `npm run knip`, paso en CI) sin hallazgos; borrados los `.gitkeep` sobrantes, 2 claves i18n huérfanas y los alias de `SchemeBlockKind`; test de claves sin uso (`src/i18n/orphans.test.ts`).
-- Hecho: todas las pantallas salvo Hoy y la sesión son rutas `lazy` (chunk principal de 890 a 370 kB, sin aviso de Vite); textos revisados (plurales «1 pendiente» / «1 registro», coherencia en inglés); estados de error y vacíos (`RouteError`, `DatabaseGate`, bloques vacíos, fallo al guardar el descanso; spec `docs/spec/states.md`); sin `waitForTimeout` en e2e (regla ESLint) y AC-SYNC-15 (envío al ocultar la página, con `keepalive`).
-- Falta: Lighthouse (móvil, deploy de Netlify; ≥ 90 en rendimiento, accesibilidad y buenas prácticas) y sus correcciones; `/close-phase final` (`e2e:all` con WebKit, reviewers, context-keeper, release `v0.9.0`).
-- Siguiente: merge en `dev`, preview en Netlify, informe de Lighthouse.
-
-**Entregables**:
-- Manifest e iconos definitivos y pantalla de inicio en iOS (ver «Fallo conocido en iOS» abajo).
-- **Icono de la app** (añadido el 2026-11-06): Claude genera un icono provisional en SVG y propone ideas de logo; el definitivo lo diseñas tú. Para iOS: fondo sólido (iOS no respeta transparencias), forma sencilla legible a 60 px y sin texto. Ideas: disco olímpico con una «C» en el agujero; barra con discos que dibuja un ✓; tres barras crecientes (la última, un disco); nube tachada con mancuerna («sin cobertura»); monograma «C» geométrico con un corte; escalones de series (aproximación → top → back-off) en forma de «C» o de flecha.
-- Aviso de nueva versión.
-- Auditoría Lighthouse: rendimiento, accesibilidad y buenas prácticas ≥ 90. Lighthouse retiró la categoría «PWA» en la v12, así que la **instalabilidad** (manifest, service worker, funciona sin conexión) se comprueba aparte, a mano en el iPhone y con el panel de Aplicación de Chrome. Las notas alimentan las insignias del README (Fase 9).
-- **Limpieza del proyecto** (añadido el 2026-11-06): repaso general para quitar lo sobrante: código muerto y exports sin uso, dependencias sin uso, claves i18n huérfanas, la ruta `/dev/ui` (¿se queda como galería de componentes o sale de producción?), `.gitkeep` que ya no hacen falta, archivos sueltos. Posible herramienta: `knip` (paquete de desarrollo: Claude pide permiso antes de proponerlo). Lista de candidatos antes de borrar nada.
-- Revisión de i18n en inglés.
-- Estados vacíos y de error.
-- Mensajes revisados (tono, claridad).
-- Animaciones con `prefers-reduced-motion`.
-
-**Fallo conocido en iOS** (detectado el 2026-11-06 en el iPhone con la app añadida a la pantalla de inicio): al abrirla y tocar «Hoy» aparece arriba la barra con la URL y abajo los botones de Safari, y desde ahí se llega a todas las pestañas; en la vista sin barras solo se alcanzan «Progreso» y «Hoy». Causa probable: `index.html` no tiene `<link rel="manifest">` ni las metas de app web de iOS (`apple-mobile-web-app-capable`, `apple-touch-icon`) y no hay manifest generado todavía (`vite-plugin-pwa` llega en esta fase), así que iOS la abre como una pestaña de Safari y sus barras tapan la barra de pestañas fija (`.nav` en `src/app/Layout.module.css`). Pasos: manifest con `display: standalone`, `start_url` y `scope`, metas de iOS e icono; comprobar en el iPhone real que arranca sin barras y que se llega a las cinco pestañas (si en standalone siguen tapadas, revisar `--app-bottom-inset` y las áreas seguras). Falta la captura que ibas a adjuntar.
-
-**Revisar al empezar** (sugerencias de fases anteriores):
-- **Code-splitting**: el chunk principal pesa **702 kB** tras `feature/today` (618 kB tras `feature/local-db`, 638 kB tras `feature/import-export`, 666 kB tras la Fase 4); Vite avisa por encima de 500 kB. Candidatos: cargar `/dev/ui`, `/settings/sync` y las pantallas con `lazy()` de las rutas.
-- **E2E de recarga totalmente sin conexión** cuando exista el service worker: en la Fase 4 el blind-tester no pudo probar AC-SYNC-07 con la página recargada sin red (sin service worker la página no carga) y cortó solo `/api/v1/**`. Añadir un test que recargue con `context.setOffline(true)` y compruebe que los pendientes siguen ahí y se envían al volver la red.
-- **Esperas fijas que quedan en e2e** (sugerencia del 2026-11-04, no hecha): `waitForTimeout` de 300–500 ms por animaciones en `tests/e2e/components.spec.ts:71, 95, 201, 205` y `tests/e2e/theme.spec.ts:117, 167`; sustituirlas por aserciones web-first (regla de 2.5). Encaja con el trabajo de `prefers-reduced-motion`.
-- **E2E en WebKit del envío final con `keepalive`** al ocultar o cerrar la app (sugerencia del 2026-11-04, no hecha).
+**Estado (2026-11-08)**: **cerrada** (release pendiente). Log en [Fase 8](docs/history.md#fase8).
+- Pendiente (no bloquea): Lighthouse móvil y notas para las insignias (Fase 9); 404 para `/assets/*` inexistentes en `netlify.toml` (comprobar con `curl -I` en el deploy `dev`); feedback al navegar y fallback visible de la primera pantalla lazy; documentar la convención de knip (`ignoreExportsUsedInFile`, `@public`).
 
 **Prompt**:
 
@@ -789,7 +773,7 @@ con versión y tag.
 
 [Tabla Registro](docs/history.md#seccion12)
 
-**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ✅ (`v0.7.0`, sin publicar) · 7 ⏳ · 8 ⏳ · 9 ⏳
+**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ✅ (`v0.7.0`, sin publicar) · 7 ✅ (`v0.8.0`, sin publicar) · 8 ✅ (`v0.9.0`, sin publicar) · 9 ⏳
 
 **Preguntas abiertas**:
 - Qué estiramientos van en el bloque «Estiramientos» (antes de la Fase 7).
@@ -802,11 +786,9 @@ con versión y tag.
 - Fase 7: regla del gemelo durante la rehabilitación (60 kg en la semana 1, +5 kg/semana sin dolor al día siguiente hasta 80 kg, y solo si bajar escaleras no duele), con cambios aditivos en el modelo de progresión (ver la Fase 7).
 - Fase 7: revisión del ciclo (`sixWeekReview` de gym_app) en las pantallas de progreso.
 - Fase 7 (añadido el 2026-11-06): racha semanal; peso levantado, ejercicios y series por semana / mes con selector; peso levantado por rutina (`feature/training-stats`); escala 0-10 en una fila en móvil (`feature/optional-blocks`).
-- Fase 8 (añadido el 2026-11-06): arreglar la app en la pantalla de inicio de iOS (barras de Safari, pestañas inaccesibles); icono provisional e ideas de logo; limpieza del proyecto; Lighthouse sin categoría PWA.
 - Fase 9 (añadido el 2026-11-06): quitar el rastro de gym_app tras la migración; README es/en con banner, capturas e insignias; evaluación de uso por otras personas; gitleaks sobre el historial y licencia MIT antes de hacerlo público.
 - ~~Fase 3 (`feature/import-export`): corregir la tabla de la sección 6 y `docs/migration.md` con los nombres reales de gym_app (2.4).~~ Hecho el 2026-11-03.
 - ~~Fase 5: UI para exportar el JSON de una sesión~~ Hecho el 2026-11-06 (`v0.6.0`). Fase 7: UI para exportar el JSON de una semana (`exportWeek`).
-- Sugerencia (no hecha, 2026-11-03) para la Fase 8 (estados de error): mostrar un error visible si la base de datos local no se puede abrir.
 - Sugerencia (no hecha, 2026-11-03) para la Fase 8: con un `Dialog` abierto, la página de fondo sigue en el árbol de accesibilidad (solo `aria-modal`); valorar `inert` en el fondo (afecta al `Dialog` compartido).
 - Sugerencia (no hecha, 2026-11-03) para las Fases 5 y 7: resúmenes legibles dentro de los JSON de sesión y de semana.
 - Sugerencia (no hecha, 2026-11-03) para la Fase 7: el CSV de recuperación de gym_app.
@@ -815,11 +797,8 @@ con versión y tag.
 - **`chore/ci-e2e-shards`** (2026-11-04, después de mergear `feature/today` en `dev`, antes de `feature/active-session`): el e2e de CI no cabe (≥ 14 min estimados con 1 worker frente a 10 min de `--global-timeout` y 12 de `timeout-minutes`). Etiqueta `@all-engines` + `grep` en el proyecto `webkit`, job e2e en matriz (chromium, webkit) con `fail-fast: false`, `--shard` si WebKit pasa de ~8 min, y documentación. Detalle en la Fase 5 («Pendiente: e2e de CI»).
 - ~~Fase 5 (`feature/session-tools`): UI para exportar el JSON de la sesión y aviso de cambios remotos (2.6).~~ Hecho el 2026-11-06.
 - Sugerencia (no hecha, 2026-11-04): añadir `TextField`/`TextArea`, `Checkbox`, `ScalePicker` y `Notice` a `/dev/ui`.
-- Sugerencia (no hecha, 2026-11-03) para la Fase 8: code-splitting; el chunk principal pesa ya **702 kB** tras `feature/today` (618 kB tras `feature/local-db`, 638 kB tras `feature/import-export`, 666 kB tras la Fase 4). Detalle en «Revisar al empezar» de la Fase 8.
 - ~~Sugerencia (2026-11-03) para la Fase 5: el «aviso de cambios remotos» de la sesión activa puede apoyarse en el motor de sync.~~ Decidido el 2026-11-04 (2.6); se implementa en `feature/session-tools`.
-- Sugerencia (no hecha, 2026-11-03) para la Fase 8: un e2e de recarga totalmente sin conexión cuando exista el service worker. Detalle en «Revisar al empezar» de la Fase 8.
 - Sugerencia (no hecha, 2026-11-04) para la Fase 5: medir IndexedDB en el iPhone y, si es lento, contar con índices/`getAll` en lugar de cursores con `filter()` (`countLiveRecords`, `queueEverything`). Detalle en «Revisar al empezar» de la Fase 5.
 - Sugerencia (no hecha, 2026-11-04) para CI: usar el contenedor `mcr.microsoft.com/playwright:v1.64.1-noble` en el job e2e (sin instalar navegadores ni dependencias). Valorado el 2026-11-05: no acelera WebKit (no arregla los timeouts); solo recorta el tiempo de instalación y obliga a subir la etiqueta con cada versión de `@playwright/test`.
-- Sugerencia (no hecha, 2026-11-04) para la Fase 8: e2e en WebKit del envío final con `keepalive`, y quitar los `waitForTimeout` de animaciones que quedan (`components.spec.ts:71, 95, 201, 205`, `theme.spec.ts:117, 167`). Detalle en «Revisar al empezar» de la Fase 8.
 - Sugerencia (no hecha, 2026-11-04): AC-SYNC-03 en `tests/e2e/sync.spec.ts` depende de que sus comprobaciones terminen dentro de los 2 s que el servidor falso retiene la respuesta (`setDelay(2000)`); puede volverse frágil en una máquina lenta.
 - Sugerencia (no hecha, 2026-11-03): si vuelve a aparecer una ejecución de `test:coverage` con 57/58 archivos y sin fallo visible, investigar qué archivo no termina (solo pasó una vez en la Fase 4; no reproducido). Detalle en «Revisar al empezar» de la Fase 5.
