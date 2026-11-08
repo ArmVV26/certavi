@@ -77,7 +77,10 @@ export default defineConfig({
   // Playwright builds the app, starts `vite preview` and stops it when the run ends.
   // reuseExistingServer is false on purpose: a busy port must fail the run, not be reused.
   webServer: {
-    command: `npx vite build && npx vite preview --port ${String(PORT)} --strictPort`,
+    // `--mode e2e` keeps the component catalog (/dev/ui, src/app/devUi.ts) that some specs use;
+    // the production build (`npm run build`) does not have it. It goes to its own folder so a
+    // later `npm run preview` never serves the catalog.
+    command: `npx vite build --mode e2e --outDir dist-e2e && npx vite preview --outDir dist-e2e --port ${String(PORT)} --strictPort`,
     url: BASE_URL,
     reuseExistingServer: false,
     timeout: 60_000,
