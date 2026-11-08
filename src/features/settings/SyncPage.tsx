@@ -183,6 +183,7 @@ function ServerBackups({ download }: { download: (file: ExportFile) => void }) {
                         {backup.count === null
                           ? t('settings.sync.recordsUnknown')
                           : t('settings.sync.records', {
+                              count: backup.count,
                               total: formatNumber(backup.count, locale),
                             })}
                       </span>
