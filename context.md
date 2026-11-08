@@ -699,21 +699,11 @@ Cada fase sigue el mismo ciclo:
 
 ### Fase 8 · Pulido PWA, accesibilidad y rendimiento → `v0.9.0` ✅
 
-**Ramas**: `feature/pwa` (PR #35, mergeada en `dev`) y `chore/polish`.
+**Ramas**: `feature/pwa` y `chore/polish`.
 
-**Estado (2026-11-08)**: **cerrada** (release pendiente). Log en [Fase 8](docs/history.md#fase8).
-- Pendiente (no bloquea): Lighthouse móvil y notas para las insignias (Fase 9); 404 para `/assets/*` inexistentes en `netlify.toml` (comprobar con `curl -I` en el deploy `dev`); feedback al navegar y fallback visible de la primera pantalla lazy; documentar la convención de knip (`ignoreExportsUsedInFile`, `@public`).
+**Estado (2026-11-08)**: **cerrada** 
 
-**Prompt**:
-
-```text
-Lee context.md y CLAUDE.md. FASE 8: pulido. Manifest/iconos/iOS (incluido el fallo de la app en la pantalla de
-inicio del iPhone), icono provisional con ideas de logo, aviso de versión nueva, auditoría Lighthouse
-(dame el informe y corrige hasta ≥ 90 en rendimiento, accesibilidad y buenas prácticas; comprueba aparte la
-instalabilidad), limpieza del proyecto (lista de sobrantes antes de borrar), revisión completa de textos en
-es y en (lista de cambios propuestos antes de aplicarlos), estados vacíos y de error, reduced motion.
-blind-tester con una pasada completa de toda la app. /close-phase.
-```
+**Log (History)**: [Fase 6](docs/history.md#fase8)
 
 ---
 
