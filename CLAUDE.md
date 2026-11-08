@@ -54,8 +54,8 @@ Native App Store app, multi-user, social features.
 Installed so far: Phase 0 tooling, Phase 1 (`react-router`, `i18next`, `react-i18next`,
 `@fontsource-variable/archivo`, `@axe-core/playwright`), Phase 2 (`zod`,
 `@vitest/coverage-v8`), Phase 3 (`dexie`, `dexie-react-hooks`, `fake-indexeddb`) and Phase 4
-(`@netlify/blobs` runtime, `@netlify/functions` dev); the rest arrives in the phase that needs
-it.
+(`@netlify/blobs` runtime, `@netlify/functions` dev), Phase 8 (`vite-plugin-pwa`, `workbox-window`,
+`@vite-pwa/assets-generator`, `knip`); the rest arrives in the phase that needs it.
 
 **Version constraints (pinned exact in `package.json`):** TypeScript stays on **6.0.x**
 (typescript-eslint supports `<6.1`) and ESLint on **9.x** (eslint-plugin-react and jsx-a11y do
@@ -118,21 +118,25 @@ flush runs when the app is hidden.
 .claude/            rules.md, settings.json (permissions), agents/, commands/
 .github/workflows/  ci.yml
 docs/
-  spec/             functional spec — the ONLY thing the blind-tester reads
+  spec/             functional spec (incl. pwa.md and states.md, Phase 8) — the ONLY thing
+                    the blind-tester reads
   api/sync-v1.md    backend contract
-  adr/              architecture decision records (0001, 0002, …)
+  adr/              architecture decision records (0001, 0002, …; 0005 service worker updates)
   design/           palette, typography, tokens (Phase 1)
   deploy-netlify.md Netlify deploy guide (Phase 4)
   migration.md      mapping from gym_app
   history.md        closed phases, progress log, Claude Code setup of the first phases
 netlify/functions/  sync.ts — thin adapter over server/sync (Phase 4)
-public/             icons, robots.txt, manifest (generated)
+public/             icons, robots.txt, manifest (generated; icon.svg is the source, `npm run icons`
+                    builds the PNGs from pwa-assets.config.ts)
+knip.json           knip config (unused files, exports and dependencies; `npm run knip`)
 scripts/            ports-check.mjs; lib/ports.mjs (shared port probing); hooks/ (Claude Code
                     hooks: format-file.mjs after Edit|Write, ports-warn.mjs on Stop)
 server/sync/        sync v1 server: handler, stores (memory, Netlify Blobs), auth, backups,
                     contract test (Phase 4)
 src/
-  app/              App shell (routes, layout, providers)
+  app/              App shell (routes, layout, providers); pwa/ (update adapter and the
+                    "new version" banner, Phase 8)
   domain/           model/ (zod schemas + types), rules/, seed/ (catalog, routines, blocks,
                     legacy aliases), sync/ (contract schemas, merge rule), testing/ (test
                     data builders), dates.ts
@@ -302,21 +306,23 @@ streak and training volume per week or month (`trainingStats.ts`).
 
 ## 10. Commands
 
-| Command                           | What it does                                                                               |
-| --------------------------------- | ------------------------------------------------------------------------------------------ |
-| `npm run dev`                     | Vite dev server on 5173 (strict port)                                                      |
-| `npm run build`                   | `tsc -b` + `vite build`                                                                    |
-| `npm run preview`                 | Serve the build on 4173                                                                    |
-| `npm run lint`                    | ESLint (type-checked)                                                                      |
-| `npm run typecheck`               | `tsc -b`                                                                                   |
-| `npm run test`                    | Vitest, single run                                                                         |
-| `npm run test:watch`              | Vitest in watch mode (user only — never leave it running)                                  |
-| `npm run test:coverage`           | Vitest single run with v8 coverage; fails if `src/domain` or `src/data` < 90 % (CI)        |
-| `npm run e2e`                     | Playwright, **Chromium only** (builds, serves, tests, stops the server)                    |
-| `npm run e2e:all`                 | Playwright, Chromium + WebKit (`@all-engines` only); 20 min cap; CI runs it on PRs to main |
-| `npm run format` / `format:check` | Prettier write / check                                                                     |
-| `npm run ports:check`             | Lists which of 5173 / 4173 / 8888 / 8787 / 9323 are busy and by whom; exit 1 if any        |
-| `npm run ports:kill`              | Frees those ports                                                                          |
+| Command                           | What it does                                                                                                |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                     | Vite dev server on 5173 (strict port)                                                                       |
+| `npm run build`                   | `tsc -b` + `vite build`                                                                                     |
+| `npm run preview`                 | Serve the build on 4173                                                                                     |
+| `npm run lint`                    | ESLint (type-checked)                                                                                       |
+| `npm run typecheck`               | `tsc -b`                                                                                                    |
+| `npm run test`                    | Vitest, single run                                                                                          |
+| `npm run test:watch`              | Vitest in watch mode (user only — never leave it running)                                                   |
+| `npm run test:coverage`           | Vitest single run with v8 coverage; fails if `src/domain` or `src/data` < 90 % (CI)                         |
+| `npm run e2e`                     | Playwright, **Chromium only** (builds with `--mode e2e --outDir dist-e2e`, serves, tests, stops the server) |
+| `npm run knip`                    | knip: unused files, exports, dependencies and i18n keys; CI step                                            |
+| `npm run icons`                   | Regenerates the PWA PNG icons from `public/icon.svg` (`pwa-assets.config.ts`)                               |
+| `npm run e2e:all`                 | Playwright, Chromium + WebKit (`@all-engines` only); 20 min cap; CI runs it on PRs to main                  |
+| `npm run format` / `format:check` | Prettier write / check                                                                                      |
+| `npm run ports:check`             | Lists which of 5173 / 4173 / 8888 / 8787 / 9323 are busy and by whom; exit 1 if any                         |
+| `npm run ports:kill`              | Frees those ports                                                                                           |
 
 Note: `typecheck` is `tsc -b`, not `tsc --noEmit -p .` as first drafted in `context.md` §8.5.
 The root `tsconfig.json` only holds project references (`tsconfig.app.json` for `src`,
