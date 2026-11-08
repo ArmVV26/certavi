@@ -82,6 +82,10 @@ session (see [session.md](session.md) §2.6):
 Card **"Desarrollo" / "Developer"** with a link **"Catálogo de componentes" / "Component
 catalog"** to `/dev/ui`.
 
+> The catalog and this card exist only in development builds (and in the build the e2e suite
+> serves). In the production build (what users get) there is no card and `/dev/ui` shows
+> "Página no encontrada" / "Page not found".
+
 ### Component catalog (`/dev/ui`)
 
 Sections, each with a level-2 heading (Spanish / English):
@@ -303,8 +307,10 @@ The field asks for the decimal keyboard (`inputmode="decimal"`).
 
 - **Offline:** the shell itself makes no network requests after loading; starting the app without
   a network is described in [pwa.md](pwa.md).
-- **Storage blocked** (private mode, cleared site data): the app still works with the defaults
-  (automatic theme, Spanish); the choice is simply not remembered.
+- **Site storage blocked** (`localStorage` / `sessionStorage`: private mode, cleared site data):
+  the app still works with the defaults (automatic theme, Spanish); the choice is simply not
+  remembered. If the browser blocks the local **database** instead, the app shows a message (see
+  [states.md](states.md), AC-STATE-02).
 - **Reduced motion:** with "reduce motion" on, dialogs, sheets and notifications appear without
   animation.
 - **Small screens:** at 390×844 the five navigation labels fit without overlapping and nothing
