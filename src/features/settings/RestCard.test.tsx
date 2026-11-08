@@ -70,6 +70,9 @@ describe('RestCard', () => {
     expect(
       await screen.findByText('No se pudo guardar el descanso. Inténtalo de nuevo.'),
     ).toBeVisible();
+    // The field goes back to the time that is really saved.
+    expect(screen.getByLabelText(COMPOUND)).toHaveValue('180');
+    expect(await readRestTimes(db)).toEqual({ compound: 180, isolation: 120 });
   });
 
   it('keeps the first time when the second one is saved before the screen reads it back', async () => {
