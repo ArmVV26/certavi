@@ -253,6 +253,17 @@ test.describe('navigation', () => {
     context,
   }) => {
     await gotoReady(page, '/', 'Hoy');
+    // Every screen but Today is a lazy route (its code is a separate file, downloaded when it is
+    // opened; the service worker, blocked in this spec, would have it stored). Open them once
+    // while online so the offline part below only exercises navigation that is already loaded.
+    for (const name of ['Calendario', 'Rutinas', 'Progreso', 'Ajustes']) {
+      await mainNav(page).getByRole('link', { name, exact: true }).click();
+      await expect(h1(page, name)).toBeVisible();
+    }
+    await page.getByRole('link', { name: 'Catálogo de componentes', exact: true }).click();
+    await expect(h1(page, 'Componentes')).toBeVisible();
+    await mainNav(page).getByRole('link', { name: 'Hoy', exact: true }).click();
+    await expect(h1(page, 'Hoy')).toBeVisible();
     await page.waitForLoadState('networkidle');
 
     const requests: string[] = [];

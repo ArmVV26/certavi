@@ -626,6 +626,17 @@ test.describe('optional blocks', { tag: '@all-engines' }, () => {
     await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sincronizado', {
       timeout: WAIT,
     });
+    // The block screens are lazy routes (separate files, downloaded when opened; the service
+    // worker would have them stored, but it is blocked in this spec): open the ones used below
+    // while online, so the offline part only navigates inside what is already loaded.
+    await page.getByRole('link', { name: 'Gestionar bloques', exact: true }).click();
+    await action(page, 'Nuevo bloque').click();
+    await expect(title(page, 'Nuevo bloque')).toBeVisible();
+    await goToday(page);
+    await openTracking(page, REHAB);
+    await mainNav(page).getByRole('link', { name: 'Ajustes', exact: true }).click();
+    await expect(title(page, 'Ajustes')).toBeVisible();
+
     const before = server.requestCount();
     await context.setOffline(true);
     await expect(indicator(page)).toHaveAccessibleName(/^Sincronización: Sin conexión/, {
@@ -654,7 +665,7 @@ test.describe('optional blocks', { tag: '@all-engines' }, () => {
     await expect(toast(page, /^Test de la pared guardado · /)).toBeVisible();
 
     await expect(indicator(page)).toHaveAccessibleName(
-      /^Sincronización: Sin conexión · \d+ pendientes$/,
+      /^Sincronización: Sin conexión · \d+ pendientes?$/,
       { timeout: WAIT },
     );
     expect(server.requestCount(), 'no request while offline').toBe(before);
@@ -669,7 +680,7 @@ test.describe('optional blocks', { tag: '@all-engines' }, () => {
     const wallAgain = await card(page, 'Test de la pared');
     await expect(field(wallAgain, 'Izquierda (cm)')).toHaveValue('8');
     await expect(field(wallAgain, 'Derecha (cm)')).toHaveValue('10,5');
-    await expect(indicator(page)).toHaveAccessibleName(/ · \d+ pendientes$/, { timeout: WAIT });
+    await expect(indicator(page)).toHaveAccessibleName(/ · \d+ pendientes?$/, { timeout: WAIT });
 
     await goToday(page);
     const rehab = await card(page, REHAB);

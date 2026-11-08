@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { boxOf, gotoReady, h1, mainNav, viewportOf } from './helpers';
+import { boxOf, gotoReady, h1, mainNav, settle, viewportOf } from './helpers';
 
 const OPEN_DIALOG = /^Quitar serie(…|\.\.\.)$/;
 
@@ -40,6 +40,9 @@ async function focusedName(page: Page, container: Locator): Promise<string | nul
 }
 
 test.describe('dialog', () => {
+  // Nothing animates, so there is nothing to wait for (the animations are checked below).
+  test.use({ reducedMotion: 'reduce' });
+
   test('AC-DIALOG-01 / 02 · confirmation opens on Cancelar, keeps focus inside, blocks the page', async ({
     page,
   }) => {
@@ -68,7 +71,7 @@ test.describe('dialog', () => {
 
     // Tapping the navigation bar behind the dialog does nothing.
     await page.mouse.click(behind.x + behind.width / 2, behind.y + behind.height / 2);
-    await page.waitForTimeout(300);
+    await settle(page);
     await expect(page).toHaveURL(/\/dev\/ui$/);
     await expect(h1(page, 'Componentes')).toBeVisible();
     await expect(page.getByText('Serie quitada', { exact: true })).toHaveCount(0);
@@ -92,7 +95,7 @@ test.describe('dialog', () => {
     await expect(dialog).toBeHidden();
     await expect(opener).toBeFocused();
 
-    await page.waitForTimeout(300);
+    await settle(page);
     await expect(page.getByText('Serie quitada', { exact: true })).toHaveCount(0);
   });
 
@@ -165,6 +168,8 @@ test.describe('dialog', () => {
 });
 
 test.describe('bottom sheet', () => {
+  test.use({ reducedMotion: 'reduce' });
+
   async function openSheet(page: Page): Promise<{ opener: Locator; sheet: Locator }> {
     const opener = page.getByRole('button', { name: 'Añadir ejercicio', exact: true });
     await activate(opener);
@@ -198,11 +203,10 @@ test.describe('bottom sheet', () => {
   test('AC-SHEET-01 · a tap inside keeps it open; a tap outside closes it', async ({ page }) => {
     await openCatalog(page);
     const { opener, sheet } = await openSheet(page);
-    await page.waitForTimeout(500); // let it finish sliding up
     const box = await boxOf(sheet);
 
     await page.touchscreen.tap(box.x + box.width / 2, box.y + Math.min(40, box.height / 2));
-    await page.waitForTimeout(300);
+    await settle(page);
     await expect(sheet).toBeVisible();
 
     expect(box.y).toBeGreaterThan(20);
@@ -313,5 +317,18 @@ test.describe('edge · reduced motion', () => {
     await page.getByRole('button', { name: 'Mostrar aviso', exact: true }).click();
     await expect(page.getByText('Guardado en el móvil', { exact: true })).toBeVisible();
     expect(await longRunningAnimations(page)).toBe(0);
+  });
+
+  test('the app screens run no animation either', async ({ page }) => {
+    for (const [path, title] of [
+      ['/', 'Hoy'],
+      ['/calendar', 'Calendario'],
+      ['/routines', 'Rutinas'],
+      ['/progress', 'Progreso'],
+      ['/settings', 'Ajustes'],
+    ] as const) {
+      await gotoReady(page, path, title);
+      expect(await longRunningAnimations(page), path).toBe(0);
+    }
   });
 });
