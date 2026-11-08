@@ -30,16 +30,18 @@ const sync = createSyncEngine({
 });
 connectBrowserTriggers(sync, window);
 
-// Resolves to false when the database could not be started: <DatabaseGate> then shows a message.
-const started = startDatabase(db, navigator.storage)
-  .then(() => true)
-  .catch((error: unknown) => {
+// Resolves to false when the database could not be started: <DatabaseGate> then shows a message
+// and sync stays stopped (there is nothing to sync from a database that does not open).
+const started = startDatabase(db, navigator.storage).then(
+  () => {
+    sync.start();
+    return true;
+  },
+  (error: unknown) => {
     console.error('Could not start the local database', error);
     return false;
-  })
-  .finally(() => {
-    sync.start();
-  });
+  },
+);
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

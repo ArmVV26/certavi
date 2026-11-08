@@ -26,6 +26,8 @@ export const routes: RouteObject[] = [
   {
     path: '/',
     element: <Layout />,
+    // A failure in the layout itself (the screens have their own, below): same message, no layout.
+    errorElement: <RouteError />,
     // Shown while the first screen's file downloads when the app opens on a lazy route; the page
     // is blank for that moment (the service worker makes it instant once installed).
     HydrateFallback: () => null,
