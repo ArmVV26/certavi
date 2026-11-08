@@ -37,6 +37,12 @@ const stairs = (db: Awaited<ReturnType<typeof open>>['db'], date: string, value:
   updateBlockLog(db, ANKLE_REHAB_BLOCK_ID, date, { metric: { metricId: 'stairs', value } });
 
 describe('block list', () => {
+  it('says so when there are no blocks at all', async () => {
+    renderApp('/settings/blocks', { db: openTestDatabase() });
+    expect(await screen.findByRole('heading', { name: 'Todavía no tienes bloques' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Nuevo bloque' })).toBeVisible();
+  });
+
   it('shows the active and the inactive blocks with their summary', async () => {
     await open('/settings/blocks');
     expect(await screen.findByRole('heading', { name: 'Activos' })).toBeInTheDocument();

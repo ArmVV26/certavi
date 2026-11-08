@@ -1,10 +1,52 @@
+import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
 
 // Fixed ports with strictPort: if a port is busy, fail loudly instead of silently picking another.
 // See .claude/rules.md → "Processes and ports".
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    // Service worker + manifest (ADR-0005). Only the build output is precached; `/api/**` is never
+    // cached. The app registers the worker itself (src/app/pwa/useAppUpdate.ts) and asks the user
+    // before updating, so a workout in progress is never reloaded.
+    VitePWA({
+      registerType: 'prompt',
+      injectRegister: null,
+      manifest: {
+        id: '/',
+        name: 'Certavi',
+        short_name: 'Certavi',
+        description: 'Offline-first strength training log',
+        lang: 'es',
+        display: 'standalone',
+        start_url: '/',
+        scope: '/',
+        orientation: 'portrait',
+        // Same as --bg (light) in src/theme/tokens.css.
+        theme_color: '#f4f5f7',
+        background_color: '#f4f5f7',
+        icons: [
+          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+          {
+            src: 'maskable-icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,woff2,svg,png,ico}'],
+        navigateFallback: 'index.html',
+        // Sync talks to the network, never to the cache (ADR-0005).
+        navigateFallbackDenylist: [/^\/api\//, /^\/\.netlify\//],
+        cleanupOutdatedCaches: true,
+      },
+    }),
+  ],
   server: {
     port: 5173,
     strictPort: true,
@@ -15,6 +57,12 @@ export default defineConfig({
   },
   test: {
     restoreMocks: true,
+    // The service worker registration is a virtual module of vite-plugin-pwa; Vitest cannot load it.
+    alias: {
+      'virtual:pwa-register/react': fileURLToPath(
+        new URL('./src/test/pwaRegisterStub.ts', import.meta.url),
+      ),
+    },
     // CSS is stubbed in tests by default; tokens.test.ts reads tokens.css with ?raw.
     css: { include: [/tokens\.css/] },
     // Two projects: the pure domain runs in Node, so any use of the DOM there fails;

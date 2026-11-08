@@ -247,3 +247,22 @@ export function viewportOf(page: Page): { width: number; height: number } {
   if (!vp) throw new Error('No viewport');
   return vp;
 }
+
+/**
+ * Resolves after two animation frames: whatever the page reacts to has been rendered. For checks
+ * that "nothing happens" after an action. It only covers what the page does synchronously or in
+ * the next frames; if the thing that must not happen would come from an app timer, move that
+ * timer with `page.clock` instead. Never a real-time wait (see .claude/rules.md).
+ */
+export async function settle(page: Page): Promise<void> {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            resolve();
+          });
+        });
+      }),
+  );
+}

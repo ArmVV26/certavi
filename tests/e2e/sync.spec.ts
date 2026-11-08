@@ -609,7 +609,7 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     const before = server.requestCount();
     await importGym(page, extra, 1);
     await expect(indicator(page)).toHaveAccessibleName(
-      'Sincronización: Sin conexión · 1 pendientes',
+      'Sincronización: Sin conexión · 1 pendiente',
     );
     await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.offline);
     await expect(rowValue(page, ES.pending)).toHaveText('1');
@@ -707,7 +707,7 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     await context.setOffline(true);
     await importGym(page, sampleWithExtraActivity(testInfo, 'act_e2e_reload_0001'), 1);
     await expect(indicator(page)).toHaveAccessibleName(
-      'Sincronización: Sin conexión · 1 pendientes',
+      'Sincronización: Sin conexión · 1 pendiente',
     );
 
     // Reload while the server is still unreachable. The page itself needs the network to load
@@ -1058,6 +1058,110 @@ test.describe('sync', { tag: '@all-engines' }, () => {
       await other.context.close();
     }
   });
+
+  // AC-SYNC-15: leaving the app sends what is waiting, without the usual few seconds, with
+  // keepalive. The page clock is paused right after the first sync, so the ~2 s wait after a
+  // change can only run if the test moves it, and the test never does before the assertion.
+  const LEAVE_WAYS = [
+    [
+      'the page becomes hidden (visibilitychange)',
+      () => {
+        Object.defineProperty(document, 'visibilityState', {
+          configurable: true,
+          get: () => 'hidden',
+        });
+        Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+        document.dispatchEvent(new Event('visibilitychange'));
+      },
+    ],
+    [
+      'the page is closed (pagehide)',
+      () => {
+        window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: false }));
+      },
+    ],
+  ] as const;
+
+  for (const [way, leave] of LEAVE_WAYS) {
+    test(
+      `AC-SYNC-15 · with a change waiting, ${way} sends it right away, with keepalive`,
+      {
+        tag: '@all-engines',
+      },
+      async ({ page, context }, testInfo) => {
+        const server = createFakeSyncServer();
+        await server.attach(context);
+        // Records how the page calls fetch, to see whether the request is marked keepalive.
+        await page.addInitScript(() => {
+          const log: { url: string; keepalive: boolean }[] = [];
+          (window as unknown as { __fetchLog: typeof log }).__fetchLog = log;
+          const original = window.fetch.bind(window);
+          window.fetch = (input, init) => {
+            const keepalive =
+              init?.keepalive ?? (input instanceof Request ? input.keepalive : false);
+            log.push({
+              url: input instanceof Request ? input.url : input.toString(),
+              keepalive,
+            });
+            return original(input, init);
+          };
+        });
+        const fetchLog = () =>
+          page.evaluate(
+            (syncPath) =>
+              (
+                window as unknown as { __fetchLog: { url: string; keepalive: boolean }[] }
+              ).__fetchLog
+                .filter((entry) => entry.url.includes(syncPath))
+                .map((entry) => entry.keepalive),
+            SYNC_PATH,
+          );
+
+        await page.clock.install();
+        await syncedWithSample(page, server);
+
+        // The clock stops: from here no timer runs unless the test moves it.
+        const still = paused(page);
+        await pauseClock(page);
+        const before = syncCount(server);
+        const sentBefore = (await fetchLog()).length;
+        await importGym(page, sampleWithExtraActivity(testInfo, 'act_e2e_leave_0001'), 1, still);
+        await still(async (timeout) => {
+          await expect(indicator(page)).toHaveAccessibleName(
+            /^Sincronización: Pendiente de enviar( · 1 pendiente)?$/,
+            { timeout },
+          );
+          await expect(rowValue(page, ES.pending)).toHaveText('1', { timeout });
+        });
+        expect(syncCount(server), 'nothing sent yet: the few seconds have not passed').toBe(before);
+        const onServerBefore = (await server.records()).length;
+
+        // The app goes to the background / is closed. The clock stays paused.
+        await page.evaluate(leave);
+        await expect
+          .poll(() => syncCount(server), {
+            timeout: WAIT,
+            message: 'the change reached the server without moving the clock',
+          })
+          .toBeGreaterThan(before);
+        await expect
+          .poll(async () => (await server.records()).length, { timeout: WAIT })
+          .toBe(onServerBefore + 1);
+
+        // That request was marked keepalive.
+        const sent = (await fetchLog()).slice(sentBefore);
+        expect(sent, 'sync requests made after the change').not.toHaveLength(0);
+        expect(sent.at(-1), 'the request made on leaving has keepalive').toBe(true);
+
+        // The server answered: the indicator ends "Sincronizado" with nothing pending.
+        await page.clock.resume();
+        await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sincronizado', {
+          timeout: WAIT,
+        });
+        await expect(rowValue(page, ES.pending)).toHaveText('0', { timeout: WAIT });
+      },
+    );
+  }
 
   for (const scheme of ['light', 'dark'] as const) {
     test(`AC-SYNC-14 · the card, the indicator and /settings/sync have no serious axe issues (${scheme})`, async ({

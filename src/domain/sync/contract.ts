@@ -100,4 +100,5 @@ export type ErrorCode = keyof typeof ERROR_STATUS;
 export const ERROR_CODES = Object.keys(ERROR_STATUS) as [ErrorCode, ...ErrorCode[]];
 
 export const errorBodySchema = z.object({ error: z.enum(ERROR_CODES) });
+/** @public Error body of docs/api/sync-v1.md; kept next to its schema for other backends. */
 export type ErrorBody = z.infer<typeof errorBodySchema>;

@@ -82,6 +82,10 @@ session (see [session.md](session.md) §2.6):
 Card **"Desarrollo" / "Developer"** with a link **"Catálogo de componentes" / "Component
 catalog"** to `/dev/ui`.
 
+> The catalog and this card exist only in development builds (and in the build the e2e suite
+> serves). In the production build (what users get) there is no card and `/dev/ui` shows
+> "Página no encontrada" / "Page not found".
+
 ### Component catalog (`/dev/ui`)
 
 Sections, each with a level-2 heading (Spanish / English):
@@ -301,10 +305,12 @@ The field asks for the decimal keyboard (`inputmode="decimal"`).
 
 ## Edge cases
 
-- **Offline:** not in scope yet (the service worker arrives in Phase 8); the shell itself makes no
-  network requests after loading.
-- **Storage blocked** (private mode, cleared site data): the app still works with the defaults
-  (automatic theme, Spanish); the choice is simply not remembered.
+- **Offline:** the shell itself makes no network requests after loading; starting the app without
+  a network is described in [pwa.md](pwa.md).
+- **Site storage blocked** (`localStorage` / `sessionStorage`: private mode, cleared site data):
+  the app still works with the defaults (automatic theme, Spanish); the choice is simply not
+  remembered. If the browser blocks the local **database** instead, the app shows a message (see
+  [states.md](states.md), AC-STATE-02).
 - **Reduced motion:** with "reduce motion" on, dialogs, sheets and notifications appear without
   animation.
 - **Small screens:** at 390×844 the five navigation labels fit without overlapping and nothing
@@ -315,4 +321,4 @@ The field asks for the decimal keyboard (`inputmode="decimal"`).
 
 - Real content of Today, Calendar, Routines and Progress (Phases 5–7).
 - Sync status in the header (Phase 4).
-- Installing as an app, offline mode and the "new version" prompt (Phase 8).
+- Installing as an app, offline start and the "new version" prompt: see [pwa.md](pwa.md).

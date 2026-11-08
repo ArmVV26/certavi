@@ -8,6 +8,7 @@ import { ThemeToggle } from '../theme/ThemeToggle';
 import { Icon } from '../ui/Icon';
 import styles from './Layout.module.css';
 import { NAV_ITEMS, isNavItemActive, titleKeyOf } from './navigation';
+import { UpdatePrompt } from './pwa/UpdatePrompt';
 
 /**
  * App shell: header with the page title, the sync indicator and the theme button, the main navigation (bottom tab
@@ -42,29 +43,32 @@ export function Layout() {
       <a className={styles.skipLink} href="#main">
         {t('app.skipToContent')}
       </a>
-      <header className={styles.header}>
-        <h1 ref={headingRef} tabIndex={-1} className={styles.title}>
-          {title}
-        </h1>
-        <nav className={styles.nav} aria-label={t('nav.label')}>
-          <ul className={styles.navList}>
-            {NAV_ITEMS.map((item) => (
-              <li key={item.to} className={styles.navItem}>
-                <Link
-                  to={item.to}
-                  className={styles.navLink}
-                  aria-current={isNavItemActive(item, pathname) ? 'page' : undefined}
-                >
-                  <Icon name={item.icon} size={24} />
-                  <span>{t(`nav.${item.key}`)}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        <SyncIndicator />
-        <ThemeToggle />
-      </header>
+      <div className={styles.top}>
+        <header className={styles.header}>
+          <h1 ref={headingRef} tabIndex={-1} className={styles.title}>
+            {title}
+          </h1>
+          <nav className={styles.nav} aria-label={t('nav.label')}>
+            <ul className={styles.navList}>
+              {NAV_ITEMS.map((item) => (
+                <li key={item.to} className={styles.navItem}>
+                  <Link
+                    to={item.to}
+                    className={styles.navLink}
+                    aria-current={isNavItemActive(item, pathname) ? 'page' : undefined}
+                  >
+                    <Icon name={item.icon} size={24} />
+                    <span>{t(`nav.${item.key}`)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <SyncIndicator />
+          <ThemeToggle />
+        </header>
+        <UpdatePrompt />
+      </div>
       <main id="main" tabIndex={-1} className={styles.main}>
         <Outlet />
       </main>

@@ -250,7 +250,7 @@ describe('exports', () => {
 
     await user.click(screen.getByRole('button', { name: 'Exportar copia completa (.json)' }));
 
-    expect(await screen.findByText('No se pudo exportar.')).toBeInTheDocument();
+    expect(await screen.findByText('No se pudo exportar. Inténtalo de nuevo.')).toBeInTheDocument();
     expect(download).not.toHaveBeenCalled();
   });
 });

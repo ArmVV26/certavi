@@ -30,6 +30,7 @@ export const deviceSettingsSchema = z.object({
   /** The sync key (CLAVE_SYNC) typed on this device; never logged or synced. */
   syncKey: z.string().optional(),
 });
+/** @public Device-only settings; the type is part of the domain API. */
 export type DeviceSettings = z.infer<typeof deviceSettingsSchema>;
 
 export const DEFAULT_REST = { compound: 180, isolation: 120 } as const;

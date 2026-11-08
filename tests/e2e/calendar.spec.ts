@@ -566,7 +566,7 @@ test.describe('calendar (data and layout)', { tag: '@all-engines' }, () => {
     await button(page, 'Guardar peso').click();
     await expect(toast(page, /^Peso guardado · 26 oct\.?\s*–\s*1 nov$/)).toBeVisible();
     await expect(indicator(page)).toHaveAccessibleName(
-      /^Sincronización: Sin conexión · \d+ pendientes$/,
+      /^Sincronización: Sin conexión · \d+ pendientes?$/,
       { timeout: WAIT },
     );
     expect(server.requestCount(), 'no request while offline').toBe(before);
@@ -583,7 +583,7 @@ test.describe('calendar (data and layout)', { tag: '@all-engines' }, () => {
     );
     await weekButton(page, '26 oct – 1 nov').click();
     await expect(field(page, /^Peso medio/)).toHaveValue('77');
-    await expect(indicator(page)).toHaveAccessibleName(/ · \d+ pendientes$/, { timeout: WAIT });
+    await expect(indicator(page)).toHaveAccessibleName(/ · \d+ pendientes?$/, { timeout: WAIT });
     expect((await server.records()).length, 'nothing reached the server').toBe(onServer);
 
     // The network comes back: everything is sent.

@@ -164,7 +164,7 @@ const OTHER_HEADINGS = {
     'Sets per muscle group',
     'Sets per week',
     'By exercise',
-    'How you arrive',
+    'How you feel',
     'Cycle review',
     'Latest records',
     'Body weight',

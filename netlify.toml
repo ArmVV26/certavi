@@ -40,6 +40,18 @@
   [headers.values]
     Cache-Control = "no-cache"
 
+# The service worker and the manifest are revalidated on every request so a new version is found
+# (ADR-0005). Browsers already bypass the HTTP cache for sw.js, but not for the manifest.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "no-cache"
+
 # Built assets have a content hash in their name and never change.
 [[headers]]
   for = "/assets/*"
