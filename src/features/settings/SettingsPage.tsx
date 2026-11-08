@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { DEV_UI_ENABLED } from '../../app/devUi';
 import { useLocale } from '../../i18n/LocaleContext';
 import { LOCALES } from '../../i18n/locale';
 import { THEME_PREFERENCES } from '../../theme/theme';
@@ -57,13 +58,15 @@ export function SettingsPage() {
 
       <DataCard />
 
-      <Card element="section">
-        <h2 className={styles.heading}>{t('settings.developer')}</h2>
-        <Link to="/dev/ui" className={styles.row}>
-          <span>{t('settings.uiCatalog')}</span>
-          <Icon name="chevronRight" size={20} />
-        </Link>
-      </Card>
+      {DEV_UI_ENABLED && (
+        <Card element="section">
+          <h2 className={styles.heading}>{t('settings.developer')}</h2>
+          <Link to="/dev/ui" className={styles.row}>
+            <span>{t('settings.uiCatalog')}</span>
+            <Icon name="chevronRight" size={20} />
+          </Link>
+        </Card>
+      )}
     </div>
   );
 }
