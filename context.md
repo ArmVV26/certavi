@@ -687,7 +687,13 @@ Cada fase sigue el mismo ciclo:
 
 ### Fase 8 · Pulido PWA, accesibilidad y rendimiento → `v0.9.0` ⏳
 
-**Rama**: `chore/pwa-polish`
+**Ramas** (decidido el 2026-11-08, sustituye a la rama única `chore/pwa-polish`): `feature/pwa` y `chore/polish`.
+
+**Estado `feature/pwa` (2026-11-08)**:
+- Hecho: spec `docs/spec/pwa.md` (AC-PWA-01…10), ADR-0005 (`registerType: 'prompt'`, solo precache, nada de `/api/**` ni `/.netlify/**` en caché), icono `public/icon.svg` (disco con forma de «C») y PNG con `npm run icons`, `VitePWA` con manifest y Workbox en `vite.config.ts`, metas de iOS en `index.html`, cabeceras `no-cache` de `/sw.js` y el manifest en `netlify.toml`, Playwright con `serviceWorkers: 'block'` por defecto.
+- Hecho: aviso persistente de versión nueva (`src/app/pwa/`, banner bajo la cabecera en `Layout`, claves `pwa.*` en es y en) con tests; `tests/e2e/pwa.spec.ts` (AC-PWA-01…05, solo Chromium); security-reviewer sin bloqueantes.
+- Falta: comprobar a mano el panel Aplicación de Chrome y el iPhone (AC-PWA-10: sin barras de Safari y cinco pestañas; si siguen tapadas, revisar `--app-bottom-inset`); probar el aviso con un segundo deploy real.
+- Siguiente: PR a `dev`, luego `chore/polish` (limpieza, rendimiento y Lighthouse, textos y estados, motion y e2e, cierre final `v0.9.0`).
 
 **Entregables**:
 - Manifest e iconos definitivos y pantalla de inicio en iOS (ver «Fallo conocido en iOS» abajo).
