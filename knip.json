@@ -1,0 +1,18 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "scripts/hooks/*.mjs",
+    "scripts/build-selector.mjs",
+    "netlify/functions/*.ts",
+    "tests/e2e/*.spec.ts"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "server/**/*.ts",
+    "netlify/**/*.ts",
+    "tests/**/*.ts",
+    "scripts/**/*.mjs"
+  ],
+  "ignoreBinaries": ["netstat", "tasklist"],
+  "ignoreExportsUsedInFile": true
+}
