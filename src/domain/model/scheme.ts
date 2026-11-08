@@ -1,6 +1,6 @@
 // SetScheme: the planned sets of one exercise, e.g. "1 aprox + 1 + 2" = three blocks.
 import { z } from 'zod';
-import { schemeBlockKindSchema } from './enums';
+import { setKindSchema } from './enums';
 
 /**
  * Rep range as written in the routine: '6-8', '12' (fixed), '~10' (about ten) or '' (no target,
@@ -14,7 +14,7 @@ export const rirRangeSchema = z.string().regex(/^(|\d|\d-\d)$/);
 export type RirRange = z.infer<typeof rirRangeSchema>;
 
 export const schemeBlockSchema = z.object({
-  kind: schemeBlockKindSchema,
+  kind: setKindSchema,
   reps: repRangeSchema,
   /** Rows in the block (keep `MAX_BLOCK_COUNT` in rules/scheme.ts equal to the maximum). */
   count: z.number().int().min(1).max(20),

@@ -7,6 +7,7 @@ import {
   expectTheme,
   gotoReady,
   h1,
+  settle,
   themeButton,
 } from './helpers';
 
@@ -114,7 +115,7 @@ test.describe('theme', () => {
 
     await page.emulateMedia({ colorScheme: 'dark' });
     // Give a live listener a chance to (wrongly) react.
-    await page.waitForTimeout(300);
+    await settle(page);
     await expectTheme(page, 'light');
     await expect(themeButton(page)).toHaveAccessibleName(NAME.light);
 
@@ -152,7 +153,8 @@ test.describe('theme', () => {
       browserName,
     }) => {
       test.skip(browserName !== 'chromium', 'axe runs once, in Chromium');
-      await page.emulateMedia({ colorScheme: scheme });
+      // Reduced motion: the dialog below is already still when axe looks at it.
+      await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
 
       for (const p of PAGES) {
         await gotoReady(page, p.path, p.es);
@@ -164,12 +166,11 @@ test.describe('theme', () => {
       await gotoReady(page, '/dev/ui', 'Componentes');
       await page.getByRole('button', { name: /^Quitar serie(…|\.\.\.)$/ }).click();
       await expect(page.getByRole('alertdialog')).toBeVisible();
-      await page.waitForTimeout(300); // let the opening animation finish
       await expectNoSeriousViolations(page, '/dev/ui with the dialog open');
     });
   }
 
-  test('edge · storage blocked: the app works with the defaults and does not remember', async ({
+  test('edge · site storage blocked: the app works with the defaults and does not remember', async ({
     page,
   }) => {
     const errors: string[] = [];
@@ -179,7 +180,9 @@ test.describe('theme', () => {
       const blocked = (): never => {
         throw new DOMException('The operation is insecure.', 'SecurityError');
       };
-      for (const key of ['localStorage', 'sessionStorage', 'indexedDB']) {
+      // Only what holds the theme and the language: the local database has its own message
+      // (docs/spec/states.md, AC-STATE-02), tested below.
+      for (const key of ['localStorage', 'sessionStorage']) {
         Object.defineProperty(window, key, { get: blocked, configurable: true });
       }
     });
@@ -204,6 +207,24 @@ test.describe('theme', () => {
     await expectTheme(page, 'dark');
     await expect(themeButton(page)).toHaveAccessibleName(NAME.auto);
     expect(errors).toEqual([]);
+  });
+
+  test('AC-STATE-02 · local database blocked: a message instead of an empty-looking app', async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(window, 'indexedDB', {
+        get: (): never => {
+          throw new DOMException('The operation is insecure.', 'SecurityError');
+        },
+        configurable: true,
+      });
+    });
+    await page.goto('/');
+    await expect(
+      page.getByRole('heading', { name: 'No se pueden abrir los datos de este dispositivo' }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Reintentar', exact: true })).toBeVisible();
   });
 });
 

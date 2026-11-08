@@ -695,6 +695,12 @@ Cada fase sigue el mismo ciclo:
 - Falta: comprobar a mano el panel Aplicación de Chrome y el iPhone (AC-PWA-10: sin barras de Safari y cinco pestañas; si siguen tapadas, revisar `--app-bottom-inset`); probar el aviso con un segundo deploy real.
 - Siguiente: PR a `dev`, luego `chore/polish` (limpieza, rendimiento y Lighthouse, textos y estados, motion y e2e, cierre final `v0.9.0`).
 
+**Estado `chore/polish` (2026-11-08)**:
+- Hecho: `/dev/ui` solo en desarrollo (`src/app/devUi.ts`; e2e construye con `--mode e2e --outDir dist-e2e`); knip (`knip.json`, `npm run knip`, paso en CI) sin hallazgos; borrados los `.gitkeep` sobrantes, 2 claves i18n huérfanas y los alias de `SchemeBlockKind`; test de claves sin uso (`src/i18n/orphans.test.ts`).
+- Hecho: todas las pantallas salvo Hoy y la sesión son rutas `lazy` (chunk principal de 890 a 370 kB, sin aviso de Vite); textos revisados (plurales «1 pendiente» / «1 registro», coherencia en inglés); estados de error y vacíos (`RouteError`, `DatabaseGate`, bloques vacíos, fallo al guardar el descanso; spec `docs/spec/states.md`); sin `waitForTimeout` en e2e (regla ESLint) y AC-SYNC-15 (envío al ocultar la página, con `keepalive`).
+- Falta: Lighthouse (móvil, deploy de Netlify; ≥ 90 en rendimiento, accesibilidad y buenas prácticas) y sus correcciones; `/close-phase final` (`e2e:all` con WebKit, reviewers, context-keeper, release `v0.9.0`).
+- Siguiente: merge en `dev`, preview en Netlify, informe de Lighthouse.
+
 **Entregables**:
 - Manifest e iconos definitivos y pantalla de inicio en iOS (ver «Fallo conocido en iOS» abajo).
 - **Icono de la app** (añadido el 2026-11-06): Claude genera un icono provisional en SVG y propone ideas de logo; el definitivo lo diseñas tú. Para iOS: fondo sólido (iOS no respeta transparencias), forma sencilla legible a 60 px y sin texto. Ideas: disco olímpico con una «C» en el agujero; barra con discos que dibuja un ✓; tres barras crecientes (la última, un disco); nube tachada con mancuerna («sin cobertura»); monograma «C» geométrico con un corte; escalones de series (aproximación → top → back-off) en forma de «C» o de flecha.

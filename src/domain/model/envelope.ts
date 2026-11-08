@@ -48,6 +48,7 @@ export const syncEnvelopeSchema = z.object({
   deleted: z.literal(true).optional(),
   serverSeq: z.number().int().nonnegative().optional(),
 });
+/** @public Part of the domain API (CLAUDE.md §5) even though no module imports it yet. */
 export type SyncEnvelope = z.infer<typeof syncEnvelopeSchema>;
 
 /** A soft-deleted record: only the envelope travels, the payload may be gone. */

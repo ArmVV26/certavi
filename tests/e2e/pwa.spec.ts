@@ -355,7 +355,7 @@ test.describe('pwa', () => {
     const offlineCount = syncCount(server);
     await importGym(page, oneActivityFile(testInfo, 'act_e2e_pwa_0001', note), 1);
     await expect(indicator(page)).toHaveAccessibleName(
-      'Sincronización: Sin conexión · 1 pendientes',
+      'Sincronización: Sin conexión · 1 pendiente',
     );
     await expect(rowValue(page, 'Pendientes')).toHaveText('1');
 
@@ -363,7 +363,7 @@ test.describe('pwa', () => {
     await page.reload();
     await expect(h1(page, 'Ajustes')).toBeVisible();
     await expect(indicator(page)).toHaveAccessibleName(
-      /^Sincronización: Sin conexión · \d+ pendientes$/,
+      /^Sincronización: Sin conexión · \d+ pendientes?$/,
     );
     await expect(rowValue(page, 'Estado')).toHaveText('Sin conexión');
     await expect(rowValue(page, 'Pendientes')).not.toHaveText('0');

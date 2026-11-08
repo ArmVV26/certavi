@@ -22,7 +22,7 @@ Every screen shows a **sync indicator** in the header, between the page title an
 button. It is a link to **Ajustes / Settings** with an icon and, when there are changes
 waiting, their number as a badge. Its accessible name is
 "Sincronización: <state>" / "Sync: <state>", followed by
-" · <n> pendientes" / " · <n> pending" when there are changes waiting.
+" · <n> pendientes" (" · 1 pendiente" when there is one) / " · <n> pending" when there are changes waiting.
 
 | State (es)          | State (en)      | When                                                      |
 | ------------------- | --------------- | --------------------------------------------------------- |
@@ -282,6 +282,14 @@ And after syncing, another device with the same key shows the same counts
 AC-SYNC-14 · Accessibility and languages
 Then the card, the indicator and /settings/sync have no axe violations in light and dark
 And every text of this spec appears in English when the language is English
+```
+
+```
+AC-SYNC-15 · Leaving the app sends what is waiting
+Given a key saved, everything synced, and a change just made (still "Pendiente de enviar")
+When the app is sent to the background or closed (the page becomes hidden)
+Then the change is sent to the server right away, without waiting for the usual few seconds
+And the request is marked to survive the page closing (keepalive)
 ```
 
 ## 5. Edge cases

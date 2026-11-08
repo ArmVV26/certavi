@@ -19,7 +19,7 @@ export function SyncIndicator() {
   const pending = formatNumber(state.pending, locale);
   const name =
     state.pending > 0
-      ? t('sync.indicatorPending', { status, pending })
+      ? t('sync.indicatorPending', { status, count: state.pending, pending })
       : t('sync.indicator', { status });
   // Announced once when it starts failing; silent while syncing normally.
   const announcement = label === 'offline' || label === 'error' ? name : '';
