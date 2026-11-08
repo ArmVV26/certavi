@@ -81,6 +81,10 @@ function Times({ stored }: { stored: RestTimes }) {
     setUnread([...unread, times]);
     saveRestTimes(db, times).catch((error: unknown) => {
       console.error('Could not save the rest times', error);
+      // Back to what is really saved: the fields must not show a time the database does not have.
+      setUnread((list) => list.filter((entry) => entry !== times));
+      setCompound(saved.compound);
+      setIsolation(saved.isolation);
       toast.show({ message: t('settings.rest.failed'), tone: 'danger' });
     });
   };

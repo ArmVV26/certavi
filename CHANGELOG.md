@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - Unreleased
+
+PWA polish, accessibility and performance (Phase 8).
+
+### Added
+
+- Installable PWA: manifest, icons (`public/icon.svg`, generated PNGs with `npm run icons`), iOS
+  metadata, and a service worker that only precaches; API and Netlify paths are never cached
+  (ADR-0005; spec `docs/spec/pwa.md`).
+- "New version" banner under the header; the update is applied only when the user accepts it.
+- Error and empty states: route errors, a message when the local database cannot open, an empty
+  blocks list and a notice when the rest time cannot be saved (spec `docs/spec/states.md`).
+- Sync sends pending changes when the page is hidden or closed, with `keepalive` (AC-SYNC-15).
+- `npm run knip` (unused files, exports and dependencies) as a CI step.
+
+### Changed
+
+- Every screen except Today and the active session loads on demand; the main bundle drops from
+  890 kB to 372 kB.
+- Texts reviewed in Spanish and English (plurals, clearer error messages).
+- Animations respect `prefers-reduced-motion`.
+- `/dev/ui` (component catalog) is only available in development and in the e2e build.
+
+### Removed
+
+- Unused files, exports, dependencies and i18n keys found by knip.
+
 ## [0.8.0] - Unreleased
 
 Calendar, progress, optional blocks and training statistics (Phase 7).
