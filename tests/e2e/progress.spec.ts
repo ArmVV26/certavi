@@ -290,7 +290,7 @@ const HEADINGS = {
     'Sets per muscle group',
     'Sets per week',
     'By exercise',
-    'How you arrive',
+    'How you feel',
     'Cycle review',
     'Latest records',
     'Body weight',
@@ -555,7 +555,7 @@ test.describe('progress', () => {
     },
   );
 
-  test('AC-PRO-08 / 12 / 13 · "How you arrive" (3 and 4 in one week), body weight in 3 weeks, and the text equivalent of both', async ({
+  test('AC-PRO-08 / 12 / 13 · "How you feel" (3 and 4 in one week), body weight in 3 weeks, and the text equivalent of both', async ({
     page,
   }) => {
     await seedAndOpen(page, SESSIONS);
@@ -755,7 +755,7 @@ test.describe('progress', () => {
       await expect(
         chart(card(page, 'Sets per week', 'en'), /^Sets per week: .*12 weeks/),
       ).toBeVisible();
-      await expect(chart(card(page, 'How you arrive', 'en'), /^How you arrive: /)).toBeVisible();
+      await expect(chart(card(page, 'How you feel', 'en'), /^How you feel: /)).toBeVisible();
       await expect(
         chart(card(page, 'Body weight', 'en'), /^Body weight: .*3 points/),
       ).toBeVisible();
@@ -777,7 +777,7 @@ test.describe('progress', () => {
       for (const toggle of toggles) await toggle.click();
       await expect(page.getByRole('table').first()).toBeVisible();
       await expect(card(page, 'Body weight', 'en').getByRole('table')).toContainText(/80\.5/);
-      await expect(card(page, 'How you arrive', 'en').getByRole('table')).toContainText(/3\.5/);
+      await expect(card(page, 'How you feel', 'en').getByRole('table')).toContainText(/3\.5/);
       expect(await hasHorizontalScroll(page), 'horizontal scroll (open tables)').toBe(false);
 
       // No Spanish left on screen.
