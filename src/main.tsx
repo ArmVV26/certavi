@@ -4,6 +4,7 @@ import './theme/fonts';
 import './theme/tokens.css';
 import './theme/global.css';
 import { App } from './app/App';
+import { DatabaseGate } from './app/DatabaseGate';
 import { Providers } from './app/Providers';
 import { openDatabase } from './data/db';
 import { getLocalStorage } from './data/deviceStorage';
@@ -29,9 +30,12 @@ const sync = createSyncEngine({
 });
 connectBrowserTriggers(sync, window);
 
-startDatabase(db, navigator.storage)
+// Resolves to false when the database could not be started: <DatabaseGate> then shows a message.
+const started = startDatabase(db, navigator.storage)
+  .then(() => true)
   .catch((error: unknown) => {
     console.error('Could not start the local database', error);
+    return false;
   })
   .finally(() => {
     sync.start();
@@ -45,7 +49,9 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <Providers db={db} sync={sync}>
-      <App />
+      <DatabaseGate started={started}>
+        <App />
+      </DatabaseGate>
     </Providers>
   </StrictMode>,
 );

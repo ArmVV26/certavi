@@ -8,6 +8,7 @@ import { useLocale } from '../../i18n/LocaleContext';
 import { resolveText } from '../../i18n/text';
 import { buttonClasses } from '../../ui/buttonClasses';
 import { Card } from '../../ui/Card';
+import { EmptyState } from '../../ui/EmptyState';
 import { Icon } from '../../ui/Icon';
 import styles from './Blocks.module.css';
 import { blockSummary } from './blockText';
@@ -28,6 +29,13 @@ export function BlocksPage() {
       <Link to="/settings/blocks/new" className={buttonClasses({ variant: 'primary' })}>
         {t('blocksPage.new')}
       </Link>
+      {blocks.length === 0 && (
+        <EmptyState
+          icon="info"
+          title={t('blocksPage.empty')}
+          description={t('blocksPage.emptyText')}
+        />
+      )}
       <BlockSection title={t('blocksPage.active')} blocks={blocks.filter((b) => b.active)} />
       <BlockSection title={t('blocksPage.inactive')} blocks={blocks.filter((b) => !b.active)} />
     </div>

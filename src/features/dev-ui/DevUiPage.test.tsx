@@ -1,11 +1,15 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { renderApp } from '../../test/renderApp';
+import { renderWithProviders } from '../../test/render';
+import { DevUiPage } from './DevUiPage';
+
+// The page itself; the lazy route is checked in src/app/App.test.tsx.
+const renderPage = () => renderWithProviders(<DevUiPage />);
 
 describe('DevUiPage', () => {
   it('shows every component section', () => {
-    renderApp('/dev/ui');
+    renderPage();
     for (const name of [
       'Botones',
       'Botones de icono',
@@ -25,13 +29,13 @@ describe('DevUiPage', () => {
   });
 
   it('shows the localized warm-up symbol', () => {
-    renderApp('/dev/ui');
+    renderPage();
     expect(screen.getByTitle('Calentamiento')).toHaveTextContent('C');
   });
 
   it('remove → confirm → toast with Undo → restored', async () => {
     const user = userEvent.setup();
-    renderApp('/dev/ui');
+    renderPage();
 
     await user.click(screen.getByRole('button', { name: 'Quitar serie…' }));
     const dialog = screen.getByRole('alertdialog', { name: '¿Quitar esta serie?' });
@@ -45,7 +49,7 @@ describe('DevUiPage', () => {
 
   it('number field shows its value in the active language', async () => {
     const user = userEvent.setup();
-    renderApp('/dev/ui');
+    renderPage();
 
     await user.type(screen.getByRole('textbox', { name: 'Peso (kg)' }), '0');
     expect(screen.getByText('Valor: 0')).toBeInTheDocument();
