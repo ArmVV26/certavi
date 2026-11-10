@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
 
 // Fixed ports with strictPort: if a port is busy, fail loudly instead of silently picking another.
-// See .claude/rules.md → "Processes and ports".
+// See .claude/rules/processes-windows.md.
 export default defineConfig({
   plugins: [
     react(),

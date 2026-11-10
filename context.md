@@ -259,13 +259,14 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 certavi/
 ├─ .claude/
 │  ├─ settings.json          # permisos: qué puede y no puede ejecutar Claude Code
-│  ├─ rules.md               # restricciones de trabajo (importado desde CLAUDE.md)
+│  ├─ BASE_VERSION           # versión de la base de configuración de la que parte
+│  ├─ rules/                 # restricciones de trabajo (git, dependencies, e2e, i18n, sync…; unas con `paths:`)
 │  ├─ agents/
 │  │  ├─ context-keeper.md
 │  │  └─ blind-tester.md
-│  └─ commands/
-│     ├─ start-phase.md      # /start-phase N
-│     └─ close-phase.md      # /close-phase: propone ramas, commits, versión y tag
+│  └─ skills/
+│     ├─ start-phase/SKILL.md   # /start-phase N
+│     └─ close-phase/SKILL.md   # /close-phase: propone ramas, commits, versión y tag
 ├─ .github/workflows/ci.yml
 ├─ docs/
 │  ├─ spec/                  # especificación funcional (la única que lee el tester)
