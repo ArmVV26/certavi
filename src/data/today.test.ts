@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { ANKLE_REHAB_BLOCK_ID } from '../domain';
-import { makeSession, makeSet } from '../domain/testing/builders';
+import { ANKLE_REHAB_BLOCK_ID, emptyGroupCounts, livePlan, weeksSinceDeload } from '../domain';
+import { makeSession, makeSet, makeWeekPlan } from '../domain/testing/builders';
 import { openTestDatabase } from '../test/render';
+import { isLive } from './db';
 import { createRepositories } from './repository';
 import { ensureSeed } from './seed';
 import { readToday, saveActivity, saveBodyWeight, updateBlockLog, updateWeek } from './today';
@@ -73,6 +74,62 @@ describe('updateWeek', () => {
     const changed = await updateWeek(db, MONDAY, { size: 4, deload: true }, { now });
     expect(changed).toMatchObject({ hiking: true, deload: true, size: 4 });
     expect(await db.pending.get('week_2026-11-02')).toBeDefined();
+  });
+
+  describe('in a closed week', () => {
+    const PAST = '2026-10-26';
+
+    async function closedWeek() {
+      const { db, repos } = await setup();
+      const frozen = { ...emptyGroupCounts(), chest: 99 };
+      await repos.weekPlan.put(
+        makeWeekPlan({ week: PAST, plannedSetsByGroup: frozen, closedAt: 5, size: 5 }),
+      );
+      const routines = new Map(
+        (await db.routines.toArray()).filter((r) => isLive(r)).map((r) => [r.id, r]),
+      );
+      const exercises = new Map(
+        (await db.exercises.toArray()).filter((e) => isLive(e)).map((e) => [e.id, e]),
+      );
+      return { db, routines, exercises };
+    }
+
+    it('recomputes the planned sets when the deload changes and keeps the closing time', async () => {
+      const { db, routines, exercises } = await closedWeek();
+      const week = await updateWeek(db, PAST, { deload: true }, { now });
+      const expected = livePlan({ size: 5, deload: true, hiking: false }, routines, exercises);
+      expect(week.plannedSetsByGroup).toEqual(expected.groups);
+      expect(week).toMatchObject({ deload: true, closedAt: 5 });
+      expect(week.updatedAt).toBeGreaterThanOrEqual(NOW);
+      expect(await db.pending.get(`week_${PAST}`)).toBeDefined();
+    });
+
+    it('recomputes the planned sets when the hiking option changes', async () => {
+      const { db, routines, exercises } = await closedWeek();
+      const week = await updateWeek(db, PAST, { hiking: true }, { now });
+      const expected = livePlan({ size: 5, deload: false, hiking: true }, routines, exercises);
+      expect(week.plannedSetsByGroup).toEqual(expected.groups);
+      expect(week.hiking).toBe(true);
+    });
+
+    it('ignores a change of size', async () => {
+      const { db } = await closedWeek();
+      const week = await updateWeek(db, PAST, { size: 3 }, { now });
+      expect(week.size).toBe(5);
+    });
+
+    it('lets the deload reminder see the week as a deload', async () => {
+      const { db } = await closedWeek();
+      await updateWeek(db, PAST, { deload: true }, { now });
+      const sessions = [
+        makeSession({ id: 'a', date: '2026-10-20' }),
+        makeSession({ id: 'b', date: '2026-10-27' }),
+        makeSession({ id: 'c', date: '2026-11-03' }),
+      ];
+      const plans = (await db.weekPlans.toArray()).filter((w) => isLive(w));
+      expect(weeksSinceDeload('2026-11-11', sessions, plans)).toBe(1);
+      expect(weeksSinceDeload('2026-11-11', sessions, [])).toBe(3);
+    });
   });
 });
 

@@ -11,19 +11,27 @@ interface WeekOptionsProps {
   week: Pick<WeekPlan, 'size' | 'hiking' | 'deload'>;
   /** Text under the deload switch. */
   deloadHint: string;
-  /** Read-only (closed or future week). */
+  /** Everything read-only (future week). */
   disabled?: boolean;
+  /** Only the number of sessions is read-only (closed week). */
+  sizeLocked?: boolean;
   onChange: (patch: WeekPatch) => void;
 }
 
 /** The three switches of a week: sessions (5/4/3), hiking and deload. */
-export function WeekOptions({ week, deloadHint, disabled = false, onChange }: WeekOptionsProps) {
+export function WeekOptions({
+  week,
+  deloadHint,
+  disabled = false,
+  sizeLocked = false,
+  onChange,
+}: WeekOptionsProps) {
   const { t } = useTranslation();
   return (
     <>
       <div className={styles.stack}>
         <Segmented
-          disabled={disabled}
+          disabled={disabled || sizeLocked}
           legend={t('today.week.size')}
           value={String(week.size) as `${WeekSize}`}
           options={SIZE_VALUES.map((value) => ({ value, label: value }))}

@@ -63,7 +63,7 @@
         "short_other": "{{count}} sesiones",
         "closed": "Cerrada"
       },
-      "closedNote": "Semana cerrada: el plan quedó guardado el {{date}}.",
+      "closedNote": "Semana cerrada: el plan quedó guardado el {{date}}. Solo puedes cambiar la descarga y el senderismo.",
       "future": "Todavía no puedes cambiar esta semana.",
       "download": "Descargar JSON de la semana"
     },
@@ -759,6 +759,8 @@
       "restore": "Restaurar original",
       "exercises": "Ejercicios",
       "list": "Ejercicios de la rutina",
+      "sheet": "Ver ficha",
+      "sheetOf": "Ver ficha de {{name}}",
       "empty": "Esta rutina no tiene ejercicios",
       "notFound": "No encontramos esta rutina",
       "restoreTitle": "¿Restaurar la rutina original?",
@@ -790,6 +792,7 @@
       "rirHint": "Por ejemplo 2 o 1-2",
       "note": "Nota",
       "addExercise": "Añadir ejercicio",
+      "jump": "Ir a un ejercicio",
       "alreadyIn": "Ya está en la rutina",
       "errorsTitle": "Revisa la rutina: hay campos con errores",
       "errors": {

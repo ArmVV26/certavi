@@ -63,7 +63,7 @@
         "short_other": "{{count}} sessions",
         "closed": "Closed"
       },
-      "closedNote": "Week closed: its plan was saved on {{date}}.",
+      "closedNote": "Week closed: the plan was saved on {{date}}. You can only change the deload and hiking options.",
       "future": "You can't change this week yet.",
       "download": "Download the week as JSON"
     },
@@ -759,6 +759,8 @@
       "restore": "Restore original",
       "exercises": "Exercises",
       "list": "Routine exercises",
+      "sheet": "View sheet",
+      "sheetOf": "View {{name}} sheet",
       "empty": "This routine has no exercises",
       "notFound": "We couldn't find this routine",
       "restoreTitle": "Restore the original routine?",
@@ -790,6 +792,7 @@
       "rirHint": "For example 2 or 1-2",
       "note": "Note",
       "addExercise": "Add exercise",
+      "jump": "Jump to an exercise",
       "alreadyIn": "Already in the routine",
       "errorsTitle": "Check the routine: some fields have errors",
       "errors": {
