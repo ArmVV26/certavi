@@ -1,0 +1,761 @@
+{
+  "app": "certavi",
+  "format": 1,
+  "kind": "full",
+  "exportedAt": "2026-10-22T18:00:00.000Z",
+  "records": [
+    {
+      "id": "ses_mg8x1k2a3b4c5d6e7f",
+      "type": "session",
+      "updatedAt": 1792400000100,
+      "date": "2026-10-19",
+      "routineId": "push",
+      "startedAt": 1792400000000,
+      "endedAt": 1792404000000,
+      "items": [
+        {
+          "exerciseId": "press-inclinado-mancuernas",
+          "scheme": {
+            "blocks": [
+              {
+                "kind": "approach",
+                "reps": "",
+                "count": 1
+              },
+              {
+                "kind": "top",
+                "reps": "6-8",
+                "count": 1
+              },
+              {
+                "kind": "backoff",
+                "reps": "8-10",
+                "count": 2
+              }
+            ],
+            "rir": "1-2"
+          },
+          "note": {
+            "text": "Bajar lento"
+          },
+          "optional": false
+        },
+        {
+          "exerciseId": "crunch-maquina",
+          "scheme": {
+            "blocks": [
+              {
+                "kind": "straight",
+                "reps": "12-15",
+                "count": 1
+              }
+            ],
+            "rir": "1-2"
+          },
+          "optional": true
+        }
+      ],
+      "note": "Buena sesión; con energía",
+      "readiness": 4
+    },
+    {
+      "id": "ses_mg9a0b1c2d3e4f5g6h",
+      "type": "session",
+      "updatedAt": 1792570000100,
+      "date": "2026-10-21",
+      "routineId": null,
+      "startedAt": 1792570000000,
+      "endedAt": 1792573600000,
+      "items": [
+        {
+          "exerciseId": "remo-t",
+          "scheme": {
+            "blocks": [
+              {
+                "kind": "straight",
+                "reps": "8-10",
+                "count": 2
+              }
+            ],
+            "rir": "2"
+          },
+          "optional": false
+        }
+      ],
+      "note": "",
+      "readiness": null
+    },
+    {
+      "id": "ses_mg1z2y3x4w5v6u7t8s",
+      "type": "session",
+      "updatedAt": 1791300000100,
+      "date": "2026-10-07",
+      "routineId": "lowerB",
+      "startedAt": 1791300000000,
+      "endedAt": null,
+      "items": [
+        {
+          "exerciseId": "gemelo-hack",
+          "scheme": {
+            "blocks": [
+              {
+                "kind": "straight",
+                "reps": "10-12",
+                "count": 4
+              }
+            ],
+            "rir": "2-3"
+          },
+          "note": {
+            "key": "routines.notes.calf"
+          },
+          "optional": false
+        },
+        {
+          "exerciseId": "abduccion",
+          "scheme": {
+            "blocks": [
+              {
+                "kind": "straight",
+                "reps": "12-15",
+                "count": 2
+              }
+            ],
+            "rir": "1-2"
+          },
+          "optional": false
+        },
+        {
+          "exerciseId": "rdl-maquina",
+          "scheme": {
+            "blocks": [
+              {
+                "kind": "top",
+                "reps": "6-8",
+                "count": 1
+              },
+              {
+                "kind": "backoff",
+                "reps": "8-10",
+                "count": 2
+              }
+            ],
+            "rir": "1-2"
+          },
+          "optional": false
+        },
+        {
+          "exerciseId": "hip-thrust",
+          "scheme": {
+            "blocks": [
+              {
+                "kind": "top",
+                "reps": "6-8",
+                "count": 1
+              },
+              {
+                "kind": "backoff",
+                "reps": "8-10",
+                "count": 2
+              }
+            ],
+            "rir": "1-2"
+          },
+          "optional": false
+        },
+        {
+          "exerciseId": "prensa-pendular-uni",
+          "scheme": {
+            "blocks": [
+              {
+                "kind": "straight",
+                "reps": "10-12",
+                "count": 3
+              }
+            ],
+            "rir": "1-2"
+          },
+          "optional": false
+        },
+        {
+          "exerciseId": "curl-femoral-pie",
+          "scheme": {
+            "blocks": [
+              {
+                "kind": "straight",
+                "reps": "10-15",
+                "count": 3
+              }
+            ],
+            "rir": "1-2"
+          },
+          "optional": false
+        },
+        {
+          "exerciseId": "extension-pierna",
+          "scheme": {
+            "blocks": [
+              {
+                "kind": "straight",
+                "reps": "12-20",
+                "count": 3
+              }
+            ],
+            "rir": "1-2"
+          },
+          "optional": false
+        }
+      ],
+      "note": "",
+      "readiness": null
+    },
+    {
+      "id": "st_ses_mg8x1k2a3b4c5d6e7f_press-inclinado-mancuernas_w1",
+      "type": "set",
+      "updatedAt": 1792400100000,
+      "sessionId": "ses_mg8x1k2a3b4c5d6e7f",
+      "exerciseId": "press-inclinado-mancuernas",
+      "kind": "warmup",
+      "slot": 1,
+      "weight": 10,
+      "reps": 10,
+      "rir": null,
+      "completedAt": 1792400100000
+    },
+    {
+      "id": "st_ses_mg8x1k2a3b4c5d6e7f_press-inclinado-mancuernas_p0",
+      "type": "set",
+      "updatedAt": 1792400200000,
+      "sessionId": "ses_mg8x1k2a3b4c5d6e7f",
+      "exerciseId": "press-inclinado-mancuernas",
+      "kind": "approach",
+      "slot": 0,
+      "weight": 20,
+      "reps": 6,
+      "rir": null,
+      "completedAt": 1792400200000
+    },
+    {
+      "id": "st_ses_mg8x1k2a3b4c5d6e7f_press-inclinado-mancuernas_p1",
+      "type": "set",
+      "updatedAt": 1792400300000,
+      "sessionId": "ses_mg8x1k2a3b4c5d6e7f",
+      "exerciseId": "press-inclinado-mancuernas",
+      "kind": "top",
+      "slot": 1,
+      "weight": 30,
+      "reps": 8,
+      "rir": 1,
+      "completedAt": 1792400300000
+    },
+    {
+      "id": "st_ses_mg8x1k2a3b4c5d6e7f_press-inclinado-mancuernas_p2",
+      "type": "set",
+      "updatedAt": 1792400400000,
+      "sessionId": "ses_mg8x1k2a3b4c5d6e7f",
+      "exerciseId": "press-inclinado-mancuernas",
+      "kind": "backoff",
+      "slot": 2,
+      "weight": 27.5,
+      "reps": 10,
+      "rir": 2,
+      "completedAt": 1792400400000
+    },
+    {
+      "id": "st_ses_mg8x1k2a3b4c5d6e7f_press-inclinado-mancuernas_p3",
+      "type": "set",
+      "updatedAt": 1792400500000,
+      "sessionId": "ses_mg8x1k2a3b4c5d6e7f",
+      "exerciseId": "press-inclinado-mancuernas",
+      "kind": "backoff",
+      "slot": 3,
+      "weight": 27.5,
+      "reps": 9,
+      "rir": null,
+      "completedAt": 1792400500000
+    },
+    {
+      "id": "st_ses_mg8x1k2a3b4c5d6e7f_abdomen_p0",
+      "type": "set",
+      "updatedAt": 1792400600000,
+      "sessionId": "ses_mg8x1k2a3b4c5d6e7f",
+      "exerciseId": "crunch-maquina",
+      "kind": "straight",
+      "slot": 0,
+      "weight": 40,
+      "reps": 15,
+      "rir": 2,
+      "completedAt": 1792400600000
+    },
+    {
+      "id": "st_ses_mg8x1k2a3b4c5d6e7f_abdomen_x1",
+      "type": "set",
+      "updatedAt": 1792400700000,
+      "sessionId": "ses_mg8x1k2a3b4c5d6e7f",
+      "exerciseId": "crunch-maquina",
+      "kind": "extra",
+      "slot": 1,
+      "weight": 40,
+      "reps": 12,
+      "rir": 1,
+      "completedAt": 1792400700000
+    },
+    {
+      "id": "st_ses_mg9a0b1c2d3e4f5g6h_remo-t_p0",
+      "type": "set",
+      "updatedAt": 1792570100000,
+      "sessionId": "ses_mg9a0b1c2d3e4f5g6h",
+      "exerciseId": "remo-t",
+      "kind": "straight",
+      "slot": 0,
+      "weight": 60,
+      "reps": 10,
+      "rir": 2,
+      "straps": true,
+      "completedAt": 1792570100000
+    },
+    {
+      "id": "st_ses_mg9a0b1c2d3e4f5g6h_remo-t_p1",
+      "type": "set",
+      "updatedAt": 1792570200000,
+      "sessionId": "ses_mg9a0b1c2d3e4f5g6h",
+      "exerciseId": "remo-t",
+      "kind": "straight",
+      "slot": 1,
+      "weight": 60,
+      "reps": 9,
+      "rir": 1,
+      "straps": false,
+      "completedAt": 1792570200000
+    },
+    {
+      "id": "st_ses_mg9a0b1c2d3e4f5g6h_dominadas_x1",
+      "type": "set",
+      "updatedAt": 1792570300000,
+      "sessionId": "ses_mg9a0b1c2d3e4f5g6h",
+      "exerciseId": "dominadas",
+      "kind": "extra",
+      "slot": 1,
+      "weight": 0,
+      "reps": 8,
+      "rir": 2,
+      "band": "morada",
+      "completedAt": 1792570300000
+    },
+    {
+      "id": "st_ses_mg1z2y3x4w5v6u7t8s_rdl-maquina_p1",
+      "type": "set",
+      "updatedAt": 1791300100000,
+      "sessionId": "ses_mg1z2y3x4w5v6u7t8s",
+      "exerciseId": "rdl-maquina",
+      "kind": "top",
+      "slot": 1,
+      "weight": 80,
+      "reps": 8,
+      "rir": 2,
+      "completedAt": 1791300100000
+    },
+    {
+      "id": "note_ses_mg8x1k2a3b4c5d6e7f_press-inclinado-mancuernas",
+      "type": "note",
+      "updatedAt": 1792400350000,
+      "sessionId": "ses_mg8x1k2a3b4c5d6e7f",
+      "exerciseId": "press-inclinado-mancuernas",
+      "text": "Hombro bien"
+    },
+    {
+      "id": "note_ses_mg8x1k2a3b4c5d6e7f_crunch-maquina",
+      "type": "note",
+      "updatedAt": 1792400650000,
+      "sessionId": "ses_mg8x1k2a3b4c5d6e7f",
+      "exerciseId": "crunch-maquina",
+      "text": "Lento, \"sin tirones\""
+    },
+    {
+      "id": "act_mg2a3b4c5d6e7f8g9h",
+      "type": "activity",
+      "updatedAt": 1792480000000,
+      "date": "2026-10-20",
+      "kind": "football",
+      "minutes": 60,
+      "note": "Pachanga"
+    },
+    {
+      "id": "act_mg3b4c5d6e7f8g9h0i",
+      "type": "activity",
+      "updatedAt": 1792740000000,
+      "date": "2026-10-25",
+      "kind": "hiking",
+      "minutes": 0,
+      "note": ""
+    },
+    {
+      "id": "bw_2026-10-12",
+      "type": "bodyWeight",
+      "updatedAt": 1791900000000,
+      "week": "2026-10-12",
+      "kg": 81
+    },
+    {
+      "id": "bw_2026-10-19",
+      "type": "bodyWeight",
+      "updatedAt": 1792480000000,
+      "week": "2026-10-19",
+      "kg": 80.5
+    },
+    {
+      "id": "week_2026-10-12",
+      "type": "weekPlan",
+      "updatedAt": 1792400000000,
+      "week": "2026-10-12",
+      "hiking": false,
+      "deload": false,
+      "size": 5,
+      "plannedSetsByGroup": {
+        "chest": 13,
+        "back": 14,
+        "shoulders": 13,
+        "quads": 16,
+        "hamstrings-glutes": 15,
+        "triceps": 8,
+        "biceps": 8,
+        "calves": 8,
+        "core": 6,
+        "forearms": 3
+      },
+      "closedAt": 1792400000000
+    },
+    {
+      "id": "week_2026-10-19",
+      "type": "weekPlan",
+      "updatedAt": 1792300000000,
+      "week": "2026-10-19",
+      "hiking": true,
+      "deload": false,
+      "size": 5
+    },
+    {
+      "id": "push",
+      "type": "routine",
+      "updatedAt": 1791000000000,
+      "name": {
+        "key": "routines.names.push"
+      },
+      "items": [
+        {
+          "exerciseId": "press-inclinado-mancuernas",
+          "scheme": {
+            "blocks": [
+              {
+                "kind": "approach",
+                "reps": "",
+                "count": 1
+              },
+              {
+                "kind": "top",
+                "reps": "6-8",
+                "count": 1
+              },
+              {
+                "kind": "backoff",
+                "reps": "8-10",
+                "count": 2
+              }
+            ],
+            "rir": "1-2"
+          },
+          "optional": false
+        },
+        {
+          "exerciseId": "aperturas-maquina",
+          "scheme": {
+            "blocks": [
+              {
+                "kind": "straight",
+                "reps": "10-12",
+                "count": 3
+              }
+            ],
+            "rir": "1-2"
+          },
+          "optional": false
+        },
+        {
+          "exerciseId": "crunch-maquina",
+          "scheme": {
+            "blocks": [
+              {
+                "kind": "straight",
+                "reps": "12-15",
+                "count": 3
+              }
+            ],
+            "rir": "1-2"
+          },
+          "optional": true
+        }
+      ],
+      "weekday": 1,
+      "custom": false
+    },
+    {
+      "id": "remo-t",
+      "type": "exercise",
+      "updatedAt": 1791100000000,
+      "name": {
+        "key": "exercises.names.remo-t"
+      },
+      "primaryGroup": "back",
+      "secondaryMuscles": ["biceps", "shoulders", "forearms"],
+      "equipment": "plate-loaded",
+      "kind": "compound",
+      "unilateral": false,
+      "supportsStraps": true,
+      "supportsBand": false,
+      "defaultScheme": {
+        "blocks": [
+          {
+            "kind": "top",
+            "reps": "6-8",
+            "count": 1
+          },
+          {
+            "kind": "backoff",
+            "reps": "8-10",
+            "count": 2
+          }
+        ],
+        "rir": "1-2"
+      },
+      "increment": 5,
+      "custom": false,
+      "archived": false
+    },
+    {
+      "id": "crunch-maquina",
+      "type": "exercise",
+      "updatedAt": 1791100000001,
+      "name": {
+        "key": "exercises.names.crunch-maquina"
+      },
+      "primaryGroup": "core",
+      "secondaryMuscles": [],
+      "equipment": "selectorized",
+      "kind": "isolation",
+      "unilateral": false,
+      "supportsStraps": false,
+      "supportsBand": false,
+      "defaultScheme": {
+        "blocks": [
+          {
+            "kind": "straight",
+            "reps": "10-15",
+            "count": 3
+          }
+        ],
+        "rir": "1-2"
+      },
+      "increment": 1.25,
+      "custom": false,
+      "archived": false
+    },
+    {
+      "id": "blocklog_block-ankle-rehab_2026-10-20",
+      "type": "blockLog",
+      "updatedAt": 1792480000001,
+      "date": "2026-10-20",
+      "blockId": "block-ankle-rehab",
+      "done": {
+        "foam-roll": true,
+        "wall-ankle": true,
+        "ankle-sit": true,
+        "band-mobilization": true,
+        "box-drop": true,
+        "heel-raise": true,
+        "split-heel-raise": false,
+        "pogos": true
+      },
+      "metrics": {
+        "stairs": 2,
+        "max-pain": 3
+      },
+      "note": "Algo de rigidez por la mañana"
+    },
+    {
+      "id": "blocklog_block-ankle-rehab_2026-10-21",
+      "type": "blockLog",
+      "updatedAt": 1792570000001,
+      "date": "2026-10-21",
+      "blockId": "block-ankle-rehab",
+      "done": {
+        "foam-roll": true,
+        "wall-ankle": false,
+        "ankle-sit": false,
+        "band-mobilization": true,
+        "box-drop": false,
+        "heel-raise": false,
+        "split-heel-raise": false,
+        "pogos": false
+      },
+      "metrics": {
+        "stairs": 1
+      },
+      "note": ""
+    },
+    {
+      "id": "wmetric_block-ankle-rehab_wall-test_2026-10-19",
+      "type": "weeklyMetric",
+      "updatedAt": 1792480000002,
+      "week": "2026-10-19",
+      "blockId": "block-ankle-rehab",
+      "metricId": "wall-test",
+      "values": {
+        "left": 10.5,
+        "right": 9
+      }
+    },
+    {
+      "id": "block-ankle-rehab",
+      "type": "block",
+      "updatedAt": 1790000000000,
+      "name": {
+        "key": "blocks.names.ankleRehab"
+      },
+      "blockType": "rehab",
+      "items": [
+        {
+          "id": "foam-roll",
+          "name": {
+            "key": "blocks.items.foamRoll"
+          },
+          "dose": {
+            "key": "blocks.doses.twoBy30sPerLeg"
+          }
+        },
+        {
+          "id": "wall-ankle",
+          "name": {
+            "key": "blocks.items.wallAnkle"
+          },
+          "dose": {
+            "key": "blocks.doses.twoBy30sPerLeg"
+          }
+        },
+        {
+          "id": "ankle-sit",
+          "name": {
+            "key": "blocks.items.ankleSit"
+          },
+          "dose": {
+            "key": "blocks.doses.twoBy30sPerLeg"
+          }
+        },
+        {
+          "id": "band-mobilization",
+          "name": {
+            "key": "blocks.items.bandMobilization"
+          },
+          "dose": {
+            "key": "blocks.doses.twoBy30sPerLeg"
+          }
+        },
+        {
+          "id": "box-drop",
+          "name": {
+            "key": "blocks.items.boxDrop"
+          },
+          "dose": {
+            "key": "blocks.doses.twoBy30sPerLeg"
+          }
+        },
+        {
+          "id": "heel-raise",
+          "name": {
+            "key": "blocks.items.heelRaise"
+          },
+          "dose": {
+            "key": "blocks.doses.threeBy10PerLeg"
+          },
+          "timesPerWeek": "3-5"
+        },
+        {
+          "id": "split-heel-raise",
+          "name": {
+            "key": "blocks.items.splitHeelRaise"
+          },
+          "dose": {
+            "key": "blocks.doses.threeBy10PerLeg"
+          },
+          "timesPerWeek": "3-5"
+        },
+        {
+          "id": "pogos",
+          "name": {
+            "key": "blocks.items.pogos"
+          },
+          "dose": {
+            "key": "blocks.doses.threeBy20"
+          },
+          "timesPerWeek": "3-5"
+        }
+      ],
+      "days": [1, 2, 3, 4, 5, 6, 7],
+      "metrics": [
+        {
+          "id": "stairs",
+          "name": {
+            "key": "blocks.metrics.stairs"
+          },
+          "min": 0,
+          "max": 10,
+          "threshold": 3
+        },
+        {
+          "id": "max-pain",
+          "name": {
+            "key": "blocks.metrics.maxPain"
+          },
+          "min": 0,
+          "max": 10,
+          "threshold": 3
+        },
+        {
+          "id": "pogos",
+          "name": {
+            "key": "blocks.metrics.pogos"
+          },
+          "min": 0,
+          "max": 10,
+          "threshold": 3
+        }
+      ],
+      "weeklyMetrics": [
+        {
+          "id": "wall-test",
+          "name": {
+            "key": "blocks.weeklyMetrics.wallTest"
+          },
+          "unit": "cm",
+          "parts": [
+            {
+              "id": "left",
+              "name": {
+                "key": "blocks.sides.left"
+              }
+            },
+            {
+              "id": "right",
+              "name": {
+                "key": "blocks.sides.right"
+              }
+            }
+          ]
+        }
+      ],
+      "active": true,
+      "custom": false,
+      "startDate": "2026-10-01",
+      "reviewDate": "2026-10-20"
+    }
+  ]
+}

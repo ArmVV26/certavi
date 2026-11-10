@@ -22,11 +22,11 @@ import { allUiText, boxOf, expectTheme, gotoReady, h1, setLanguage, themeButton 
 // Spec: docs/spec/sync.md (Phase 4 — sync key, header indicator, attempt log, server backups).
 
 const FIXTURES = path.join(process.cwd(), 'tests', 'fixtures');
-const GYM_SAMPLE = path.join(FIXTURES, 'gym-app-sample.json');
+const SAMPLE = path.join(FIXTURES, 'certavi-backup-sample.json');
 
 type Lang = 'es' | 'en';
 type Rows = [string, string][];
-type GymRecord = Record<string, unknown>;
+type BackupRecord = Record<string, unknown>;
 
 const ES = {
   card: 'Sincronización',
@@ -56,7 +56,6 @@ const ES = {
   wrongKey: 'Clave incorrecta. Revísala en Ajustes.',
   unreachable: 'No se pudo conectar con el servidor.',
   serverError: 'Error del servidor. Se reintentará.',
-  importGym: 'Importar desde la app anterior',
   importCertavi: 'Importar copia de Certavi',
   exportJson: 'Exportar copia completa (.json)',
   confirmImport: 'Importar',
@@ -266,12 +265,12 @@ async function chooseFile(page: Page, buttonName: string, file: string): Promise
 }
 
 /**
- * Imports a gym_app file from Settings and checks "Registros importados: n". With a paused
+ * Imports a Certavi backup from Settings and checks "Registros importados: n". With a paused
  * clock pass `paused(page)` as `settle`.
  */
-async function importGym(page: Page, file: string, n: number, settle = live): Promise<void> {
-  await chooseFile(page, ES.importGym, file);
-  const dialog = dialogOf(page, ES.importGym);
+async function importBackup(page: Page, file: string, n: number, settle = live): Promise<void> {
+  await chooseFile(page, ES.importCertavi, file);
+  const dialog = dialogOf(page, ES.importCertavi);
   await settle((timeout) => expect(dialog).toBeVisible({ timeout }));
   await button(dialog, ES.confirmImport).click();
   await settle(async (timeout) => {
@@ -295,9 +294,13 @@ async function download(
   return { name, file };
 }
 
-/** A synthetic gym_app full copy: the sample file, changed by `mutate`. */
-function gymVariant(testInfo: TestInfo, name: string, mutate: (records: GymRecord[]) => void) {
-  const sample = JSON.parse(readFileSync(GYM_SAMPLE, 'utf8')) as { records: GymRecord[] };
+/** A synthetic Certavi full copy: the sample file, changed by `mutate`. */
+function backupVariant(
+  testInfo: TestInfo,
+  name: string,
+  mutate: (records: BackupRecord[]) => void,
+) {
+  const sample = JSON.parse(readFileSync(SAMPLE, 'utf8')) as { records: BackupRecord[] };
   mutate(sample.records);
   const file = testInfo.outputPath(name);
   writeFileSync(file, JSON.stringify(sample, null, 2));
@@ -306,14 +309,14 @@ function gymVariant(testInfo: TestInfo, name: string, mutate: (records: GymRecor
 
 /** The sample plus one new activity (one more record to import). */
 function sampleWithExtraActivity(testInfo: TestInfo, id: string): string {
-  return gymVariant(testInfo, `${id}.json`, (records) => {
+  return backupVariant(testInfo, `${id}.json`, (records) => {
     records.push({
       id,
-      t: 'act',
-      u: 1792800000000,
+      type: 'activity',
+      updatedAt: 1792800000000,
       date: '2026-10-27',
-      kind: 'futbol',
-      min: 45,
+      kind: 'football',
+      minutes: 45,
       note: `E2E ${id}`,
     });
   });
@@ -384,7 +387,7 @@ async function axe(page: Page, label: string): Promise<void> {
 /** Opens Ajustes, imports the sample (29 records) and saves the right key: synced. */
 async function syncedWithSample(page: Page, server: FakeSyncServer): Promise<void> {
   await gotoReady(page, '/settings', 'Ajustes');
-  await importGym(page, GYM_SAMPLE, 29);
+  await importBackup(page, SAMPLE, 29);
   const before = syncCount(server);
   await saveKey(page, E2E_SYNC_KEY);
   await expect(toast(page, ES.keySaved)).toBeVisible();
@@ -499,7 +502,7 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     const server = createFakeSyncServer();
     await server.attach(context);
     await gotoReady(page, '/settings', 'Ajustes');
-    await importGym(page, GYM_SAMPLE, 29);
+    await importBackup(page, SAMPLE, 29);
     await expect(rowValue(page, ES.pending)).toHaveText('29');
     await expect(indicator(page)).toHaveAccessibleName(
       /^Sincronización: Sin configurar( · 29 pendientes)?$/,
@@ -560,7 +563,7 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     await server.attach(context);
     await page.clock.install();
     await gotoReady(page, '/settings', 'Ajustes');
-    await importGym(page, GYM_SAMPLE, 29);
+    await importBackup(page, SAMPLE, 29);
 
     await saveKey(page, E2E_WRONG_KEY);
     await expect
@@ -607,7 +610,7 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     await context.setOffline(true);
     await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sin conexión');
     const before = server.requestCount();
-    await importGym(page, extra, 1);
+    await importBackup(page, extra, 1);
     await expect(indicator(page)).toHaveAccessibleName(
       'Sincronización: Sin conexión · 1 pendiente',
     );
@@ -649,7 +652,7 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     // The connection is cut on the next attempt.
     let before = syncCount(server);
     server.failNext('abort');
-    await importGym(page, GYM_SAMPLE, 29, still);
+    await importBackup(page, SAMPLE, 29, still);
     await page.clock.runFor(2_500); // past the ~2 s wait after a change
     await serverGotSync(page, server, before);
     await still(async (timeout) => {
@@ -674,7 +677,7 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     await pauseClock(page);
     before = syncCount(server);
     server.failNext(500);
-    await importGym(page, sampleWithExtraActivity(testInfo, 'act_e2e_retry_0001'), 1, still);
+    await importBackup(page, sampleWithExtraActivity(testInfo, 'act_e2e_retry_0001'), 1, still);
     await page.clock.runFor(2_500); // past the ~2 s wait after a change
     await serverGotSync(page, server, before);
     await still(async (timeout) => {
@@ -705,7 +708,7 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     await syncedWithSample(page, server);
 
     await context.setOffline(true);
-    await importGym(page, sampleWithExtraActivity(testInfo, 'act_e2e_reload_0001'), 1);
+    await importBackup(page, sampleWithExtraActivity(testInfo, 'act_e2e_reload_0001'), 1);
     await expect(indicator(page)).toHaveAccessibleName(
       'Sincronización: Sin conexión · 1 pendiente',
     );
@@ -778,10 +781,10 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     await server.attach(context);
     const ACT = 'act_mg2a3b4c5d6e7f8g9h';
     const version = (who: 'A' | 'B', plus: number) =>
-      gymVariant(testInfo, `version-${who}.json`, (records) => {
+      backupVariant(testInfo, `version-${who}.json`, (records) => {
         const act = records.find((r) => r.id === ACT);
         if (!act) throw new Error('activity not in the sample');
-        act.u = (act.u as number) + plus;
+        act.updatedAt = (act.updatedAt as number) + plus;
         act.note = `E2E versión ${who}`;
       });
 
@@ -799,10 +802,10 @@ test.describe('sync', { tag: '@all-engines' }, () => {
       // A changes the activity while offline; later B changes it too and syncs first.
       await context.setOffline(true);
       await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sin conexión');
-      await importGym(page, version('A', 1000), 1);
+      await importBackup(page, version('A', 1000), 1);
       await expect(rowValue(page, ES.pending)).toHaveText('1');
       before = syncCount(server); // A is offline: only B can reach the server now
-      await importGym(b.page, version('B', 2000), 1);
+      await importBackup(b.page, version('B', 2000), 1);
       await b.page.clock.runFor(2_500); // past B's ~2 s wait after a change
       await expectSynced(b.page, server, before);
       await expect
@@ -892,34 +895,25 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.notSetUp);
   });
 
-  test('AC-SYNC-11 · after more than 40 attempts the log lists exactly 40, newest first', async ({
+  test('AC-SYNC-11 · the attempt log lists every attempt newest first, with the failed one on top', async ({
     page,
     context,
   }) => {
-    // 42 attempts, one after another. Nothing waits for time: each click waits for the button
-    // to be enabled again (it is disabled while a sync runs) and each attempt for the server.
-    test.setTimeout(60_000);
+    // Three attempts. That the log keeps only the last 40 is covered by the unit tests of the
+    // attempt log (src/data/sync/attemptLog.test.ts): 42 clicks here cost a minute in WebKit.
     const server = createFakeSyncServer();
     await server.attach(context);
     await syncedWithSample(page, server); // attempt 1: "Enviados: 29"
 
     const syncNow = button(page, ES.syncNow);
-    for (let i = 0; i < 40; i++) {
-      const before = syncCount(server);
-      await syncNow.click();
-      await expect
-        .poll(() => syncCount(server), {
-          intervals: [50],
-          timeout: WAIT,
-          message: `attempt ${String(i + 2)}`,
-        })
-        .toBeGreaterThan(before);
-    }
-    // Attempt 41 has been answered before the failure is queued.
+    // Attempt 2 is answered before the failure is queued.
+    let before = syncCount(server);
+    await syncNow.click();
+    await expect.poll(() => syncCount(server), { timeout: WAIT }).toBeGreaterThan(before);
     await expect(syncNow).toBeEnabled({ timeout: WAIT });
     await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.synced, { timeout: WAIT });
-    // Attempt 42, the newest, fails with a wrong key (no retries afterwards).
-    const before = syncCount(server);
+    // Attempt 3, the newest, fails with a wrong key (no retries afterwards).
+    before = syncCount(server);
     server.failNext(401);
     await syncNow.click();
     await expect.poll(() => syncCount(server), { timeout: WAIT }).toBeGreaterThan(before);
@@ -930,11 +924,11 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     await expect(page.getByRole('heading', { level: 2, name: ES.log, exact: true })).toBeVisible();
     await expect(page.getByText(ES.logText, { exact: true })).toBeVisible();
     const items = attemptItems(page);
-    await expect(items).toHaveCount(40);
+    await expect(items).toHaveCount(3);
     await expect(items.nth(0)).toContainText(ES.wrongKey);
     await expect(items.nth(1)).toContainText(ES.ok);
-    // The oldest attempts (the first one sent 29) are gone.
-    await expect(items.filter({ hasText: 'Enviados: 29' })).toHaveCount(0);
+    // The first attempt, the oldest, sent the 29 records of the sample.
+    await expect(items.nth(2)).toContainText('Enviados: 29');
   });
 
   test('AC-SYNC-12 · two server backups are listed newest first; "Descargar" gives a file Certavi imports', async ({
@@ -1125,7 +1119,7 @@ test.describe('sync', { tag: '@all-engines' }, () => {
         await pauseClock(page);
         const before = syncCount(server);
         const sentBefore = (await fetchLog()).length;
-        await importGym(page, sampleWithExtraActivity(testInfo, 'act_e2e_leave_0001'), 1, still);
+        await importBackup(page, sampleWithExtraActivity(testInfo, 'act_e2e_leave_0001'), 1, still);
         await still(async (timeout) => {
           await expect(indicator(page)).toHaveAccessibleName(
             /^Sincronización: Pendiente de enviar( · 1 pendiente)?$/,

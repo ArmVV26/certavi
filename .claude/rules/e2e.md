@@ -24,12 +24,15 @@ These rules keep it from happening again.
   **`@all-engines`** (`grep` in `playwright.config.ts`). Tag (`{ tag: '@all-engines' }`, on a
   test or a `describe`) what depends on the engine: IndexedDB / local data, sync, import and
   export, downloads, Today and the session, the 390 px layout. Engine-independent UI logic
-  (theme, language, navigation, components) stays Chromium-only. CI runs the `e2e` job as a
-  matrix with `fail-fast: false` and `max-parallel: 1` (one job after another, in this order):
-  `chromium`, `webkit 1/2`, `webkit 2/2` (`--project` /
-  `--shard` are used in the workflow only, never locally); each job installs and caches its
-  own browser and uploads its own report. Locally **2 workers**, no retries, `maxFailures` 3;
-  CI uses default workers (1 on a 2-vCPU runner) + 2 retries.
+  (theme, language, navigation, components) stays Chromium-only. In CI a `build-e2e` job builds `dist-e2e` once and shares it as an artifact; then
+  the `e2e` job runs as a matrix of four jobs **in parallel** (`fail-fast: false`): `chromium 1/2`,
+  `chromium 2/2`, `webkit 1/2`, `webkit 2/2` (`--project` / `--shard` are used in the workflow
+  only, never locally). They set `E2E_PREBUILT=1`, so `playwright.config.ts` only serves the
+  downloaded bundle (never set it locally: a stale `dist-e2e` would hide changes). Each job
+  installs and caches its own browser and uploads its own report; `timeout-minutes` is 10 for
+  `build-e2e` and 15 for each e2e job (they only catch a hang). Locally **2 workers**, no retries,
+  `maxFailures` 3; CI uses default workers (1 on a 2-vCPU runner, the size of private repos) +
+  **1 retry**: a test that needs two is flaky, fix it.
   30 s per test (60 s in WebKit: the project's `timeout` in `playwright.config.ts`; no
   `test.slow` for WebKit) and 5 s per assertion (15 s in WebKit: the project's `expect.timeout`); global timeout 5 min (`npm run e2e`) / 20 min (`npm run e2e:all`). Reporters:
   locally `dot` + `html`, in CI `list` + `html` (`open: 'never'`, report port 9323). Chromium
@@ -40,7 +43,12 @@ These rules keep it from happening again.
 - When a browser genuinely behaves differently (e.g. WebKit does not Tab to links), skip that
   check in that browser with `test.skip(condition, 'reason')` and keep it in the others.
 - Do not add `test.slow` because WebKit is slow; if a test gets close to 60 s in WebKit, split it
-  or cut steps.
+  or cut steps. `reportSlowTests` (`playwright.config.ts`) flags the slowest files of a run
+  (over 20 s).
+- **Test data comes from a Certavi backup, never from a gym_app file**: load it with
+  `tests/fixtures/certavi-backup-sample.json` through "Importar copia de Certavi" (29 records,
+  synthetic). Only `import-export.spec.ts` still touches the gym_app importer, because it is the
+  feature under test.
 - Give every wait in one helper the same timeout; do not leave one step on the 5 s default
   while the next one waits 10 s.
 - `tests/mocks/sync-server.ts` is the fake `/api/v1/**` for e2e: the real `server/sync` handler
