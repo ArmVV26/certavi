@@ -3,6 +3,7 @@ import sample from '../../tests/fixtures/gym-app-sample.json?raw';
 import { makeSession, makeSet } from '../domain/testing/builders';
 import { openTestDatabase } from '../test/render';
 import { exportAll, exportSession, exportWeek, readBackup } from './backup';
+import { setExerciseSetup } from './exercises';
 import { applyImport } from './importRecords';
 import { readGymAppExport } from './legacy/gymApp';
 import { countLiveRecords } from './queries';
@@ -39,6 +40,19 @@ describe('full backup', () => {
 
     expect(await countLiveRecords(other)).toEqual(await countLiveRecords(db));
     expect(result.toWrite).toHaveLength(29); // seed records are already there, unchanged
+  });
+
+  it('carries the machine settings of an exercise to a new device', async () => {
+    const db = openTestDatabase();
+    await ensureSeed(db);
+    const setup = [{ label: 'Respaldo', value: '3' }];
+    await setExerciseSetup(db, 'remo-t', setup);
+    const file = await exportAll(db, NOW);
+
+    const other = openTestDatabase();
+    await ensureSeed(other);
+    await applyImport(other, read(file.content).records);
+    expect((await createRepositories(other).exercise.get('remo-t'))?.setup).toEqual(setup);
   });
 
   it('describes itself and leaves out deleted records and server sequences', async () => {
