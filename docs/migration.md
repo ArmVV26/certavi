@@ -1,7 +1,7 @@
 # Migration from gym_app
 
 How data moves from `gym_app` (v1.5.1, "Winter Arc · registro") to Certavi.
-The importer is built in **Phase 3**; the real migration happens in **Phase 9**.
+The importer is built in **Phase 3**; the real migration happens in **Phase 10**.
 
 ## 1. Back up first — outside the repository
 
@@ -108,7 +108,7 @@ above: deleted records, `abdomen`, `libre`, a session without items, routine ove
 (`src/data/legacy/gymApp.test.ts`, `src/data/importRecords.test.ts`) check the counts per
 type (29 records written, 5 ignored) and each mapping; the e2e tests import it from Settings.
 
-## 6. Switch-over (Phase 9)
+## 6. Switch-over (Phase 10)
 
 1. Use Certavi in parallel with gym_app for one week.
 2. Make a final export from gym_app and import it into Certavi.

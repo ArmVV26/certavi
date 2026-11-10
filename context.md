@@ -3,7 +3,7 @@
 > Documento de arranque del proyecto **Certavi**, la reescritura de la app de registro de gimnasio (antes «Winter Arc · registro», repositorio `gym_app`).
 > Al crear el repositorio, este archivo se copia como `context.md` en la raíz. Desde ese momento es la **fuente de verdad del estado del proyecto**: qué está decidido, qué está hecho, qué falta y con qué prompt se arranca cada fase. Lo mantiene al día el agente de contexto.
 >
-> Última actualización: 6 nov 2026 · Estado: **Fase 0 cerrada (`v0.1.0`) · Fase 1 cerrada (`v0.2.0`) · Fase 2 cerrada (`v0.3.0`) · Fase 3 cerrada (`v0.4.0`) · Fase 4 cerrada (`v0.5.0`, desplegada en Netlify) · Fase 5 cerrada (`v0.6.0`, sin publicar: PR `dev → main`, release y tag pendientes del usuario)**
+> Última actualización: 10 nov 2026 · Estado: **Fases 0 a 8 cerradas (`v0.1.0` a `v0.9.0`; la 4 desplegada en Netlify, el resto sin publicar) · Fase 9 ⏳ planificada (`v0.10.0`, ajustes tras el uso real, decidida el 10 nov) · Fase 10 ⏳ (`v1.0.0`, QA final y migración)**
 
 ---
 
@@ -18,7 +18,7 @@
 7. [Flujo de trabajo: ramas, commits, versiones y tags](#7-flujo-de-trabajo)
 8. [Claude Code: reglas, agentes y comandos](#8-claude-code-reglas-agentes-y-comandos)
 9. [Preparación antes de la Fase 0 (manual, en tu PC)](#9-preparación-antes-de-la-fase-0)
-10. [Hoja de ruta por fases con sus prompts](#10-hoja-de-ruta-por-fases)
+10. [Hoja de ruta por fases con sus prompts](#10-hoja-de-ruta-por-fases) (Fase 9 ajustes y Fase 10 QA/v1.0.0 planificadas)
 11. [Backlog v2 y más allá](#11-backlog-v2)
 12. [Registro de progreso](#12-registro-de-progreso)
 
@@ -204,7 +204,7 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Carga | Todas las pantallas salvo Hoy y la sesión son `lazy`; los tests de pantallas precargan las rutas | Principal de 890 a 372 kB; Hoy y la sesión son la ruta diaria |
 | Service worker | `registerType: 'prompt'`, solo precache; `/api/**` y `/.netlify/**` nunca en caché (ADR-0005) | Datos siempre del servidor; el usuario elige cuándo actualizar |
 | Herramientas | `/dev/ui` solo en desarrollo, Vitest y build e2e; knip en CI | Galería fuera de producción; sin código muerto |
-| Lighthouse | Escritorio en `dev`: 100 / 100 / 96 / 54 (SEO bajo a propósito: `noindex`); móvil pendiente | Insignias de la Fase 9; la categoría PWA ya no existe |
+| Lighthouse | Escritorio en `dev`: 100 / 100 / 96 / 54 (SEO bajo a propósito: `noindex`); móvil pendiente | Insignias de la Fase 10; la categoría PWA ya no existe |
 | Instalabilidad | Comprobada a mano en el iPhone (standalone, cinco pestañas) y en el panel Aplicación | Lighthouse ya no la mide |
 | Paquetes | vite-plugin-pwa 2.0.0, workbox-window 7.4.1, @vite-pwa/assets-generator 2.0.0, knip 6.44.2 | Versiones fijadas en `package.json` |
 
@@ -574,7 +574,8 @@ Formato: `tipo(ámbito): descripción en inglés, imperativo, minúsculas`.
 | `v0.7.0` | Fase 6: catálogo con filtros, ejercicios propios y editor de rutinas |
 | `v0.8.0` | Fase 7: calendario, progreso, fichas y bloques opcionales |
 | `v0.9.0` | Fase 8: pulido PWA, accesibilidad y rendimiento |
-| **`v1.0.0`** | Fase 9: QA completo, migración real y despliegue definitivo |
+| `v0.10.0` | Fase 9: ajustes tras el uso real (planificada) |
+| **`v1.0.0`** | Fase 10: QA completo, migración real y despliegue definitivo |
 
 - **Tag anotado**, por ejemplo: `git tag -a v0.3.0 -m "v0.3.0 · domain model and catalog"` y `git push origin v0.3.0`.
 - `CHANGELOG.md` en formato *Keep a Changelog*, mantenido por el agente de contexto.
@@ -694,7 +695,7 @@ Cada fase sigue el mismo ciclo:
 
 **Estado (2026-11-07)**: **cerrada** 
 
-**Log (History)**: [Fase 6](docs/history.md#fase7)
+**Log (History)**: [Fase 7](docs/history.md#fase7)
 
 ---
 
@@ -704,19 +705,86 @@ Cada fase sigue el mismo ciclo:
 
 **Estado (2026-11-08)**: **cerrada** 
 
-**Log (History)**: [Fase 6](docs/history.md#fase8)
+**Log (History)**: [Fase 8](docs/history.md#fase8)
 
 ---
 
-### Fase 9 · QA final, migración real y v1.0.0 ⏳
+### Fase 9 · Ajustes tras el uso real → `v0.10.0` ⏳
+
+**Ramas** (cada una sale de `dev` y vuelve por PR; el orden de la lista es el propuesto):
+- **Rama 0** `docs/phase-9-polish`: esta reestructuración de la documentación.
+- **Rama 1** `chore/dependabot`
+- **Rama 2** `fix/ui-polish`
+- **Rama 3** `feature/routine-week-edits`
+- **Rama 4** `feature/machine-setup`
+- **Rama 5** `chore/e2e-speed`
+
+**Decisión (2026-11-10)**: tras 3-4 días de uso real de la v0.9.0, el usuario listó 9 mejoras. Se implementan **antes** de la QA final (Fase 10), para que la regresión completa del blind-tester pruebe la app que de verdad se va a publicar. La semana de prueba de la app corre en paralelo; cada rama se despliega en `dev` (Netlify) al mergearse.
+
+**Estado (2026-11-10)**: ⏳ **planificada, sin implementar**. Sin código ni tests ejecutados para esta fase.
+
+**Ideas → decisión**:
+
+| # | Idea | Decisión |
+|---|---|---|
+| 1 | Texto: número de volumen descentrado (margen por defecto de `dd`; también Hoy y calendario) y números grandes en gráficas y resúmenes | Rama 2 |
+| 2 | Transiciones suaves entre pantallas (fundido corto, salida en Sheet y Dialog) | Rama 2 |
+| 3 | Tests y CI: dividir los cercanos a 60 s, quitar los que sobran, CI ≤ 10 min | Rama 5 |
+| 4 | Logo en la cabecera y en Ajustes («Acerca de»); favicon redondo o transparente (dos variantes, elige el usuario) | Rama 2 |
+| 5 | Paquetes al día y seguridad: Dependabot y `npm audit` en CI | Rama 1 |
+| 6 | Semanas cerradas: cambiar descarga y senderismo (corrige el aviso «N semanas sin descargar») | Rama 3 |
+| 7 | Vista de rutina: cada ejercicio como tarjeta con enlace a su ficha, y la nota de la rutina visible en la sesión | Rama 3 |
+| 8 | Editor de rutinas: fila de chips numerados para saltar a cada ejercicio | Rama 3 |
+| 9 | Ajustes de la máquina (respaldo, asiento…) en ficha y sesión | Rama 4 |
+
+**Pasos por rama**:
+- **Rama 1 · `chore/dependabot`** (idea 5): `.github/dependabot.yml` (npm semanal con destino `dev`, máximo 5 PR abiertos, prefijo `chore(deps)`, dependencias de desarrollo minor y patch agrupadas, majors una a una, ignorar `typescript` ≥ 6.1, `eslint` ≥ 10 y `@types/node` de major > 22; `github-actions` mensual). `npm audit --audit-level=high --omit=dev` en el job de comprobaciones de CI. Tú activas en GitHub las alertas y las actualizaciones de seguridad de Dependabot.
+- **Rama 2 · `fix/ui-polish`** (ideas 1, 2 y 4):
+  - `dl, dd` al reset de márgenes de `src/theme/global.css`. El `dd` tenía 40 px de margen inicial y descentraba el número de volumen (también en WeekCard de Hoy y WeekPanel del calendario).
+  - Componente `Stat` en `src/ui`, reutilizado en los totales de SessionPage, WeekCard, WeekPanel, ProgressPage y StatsCard.
+  - Números resumen de `--fs-2xl` a `--fs-xl`, en negrita en lugar de negro.
+  - Gráficas que miden el ancho real del contenedor (ResizeObserver en `ChartFrame`; 360 px de respaldo en jsdom), para que el texto de los ejes sea de 12 px real.
+  - Transición de 150 ms entre pantallas con la View Transitions API (`viewTransition` de React Router); animación de salida en Sheet y Dialog; todo desactivado con `prefers-reduced-motion`; en Playwright, `reducedMotion: 'reduce'`.
+  - Componente `Logo` (SVG en línea con tokens) de unos 28 px a la izquierda del h1 en Layout, en todas las pantallas, y bloque «Acerca de» en Ajustes (logo, nombre, versión y enlace al repositorio).
+  - Favicon en dos variantes, mostradas en `/dev/ui` para que elijas: A (círculo azul lleno) y B (disco transparente en el azul de acento, con variante oscura dentro del SVG).
+  - Los iconos PWA y apple-touch siguen cuadrados y opacos (iOS recorta y pinta de negro lo transparente).
+- **Rama 3 · `feature/routine-week-edits`** (ideas 6, 7 y 8):
+  - Semanas cerradas pasadas: se pueden cambiar la descarga (deload) y el hiking; el tamaño de la semana sigue bloqueado y las semanas futuras siguen bloqueadas. Se recalcula `plannedSetsByGroup` con la regla de cierre de `src/domain/rules/calendar.ts`, y `weeksSinceDeload` corrige después el aviso «N semanas sin descargar».
+  - Vista de rutina: cada ejercicio como Card de solo lectura, igual que ExerciseCard de la sesión, con un enlace «Ver ficha» claro.
+  - La nota del elemento de rutina (`PlanItem.note`) se muestra también en ExerciseCard de la sesión (hoy nunca se muestra).
+  - Editor de rutinas: fila envuelta de chips numerados de todos los ejercicios bajo el título; al tocar un chip, hace scroll y foco a la tarjeta.
+- **Rama 4 · `feature/machine-setup`** (idea 9):
+  - Campo opcional `setup?: {label (1-24), value (1-12)}[]` (máximo 4) en la entidad Exercise, válido para ejercicios de catálogo y propios.
+  - `setExerciseSetup` en `src/data/exercises.ts`; tarjeta en la ficha del ejercicio; línea compacta y hoja de edición en la ExerciseCard de la sesión.
+  - Sincronizado, documentado en `docs/api/sync-v1.md` como campo opcional e incluido en las exportaciones.
+  - Sin nueva versión de Dexie (el campo no está indexado). security-reviewer al final.
+- **Rama 5 · `chore/e2e-speed`** (idea 3):
+  - `reportSlowTests` para medir; una ejecución de `e2e:all` (antes se pide permiso al usuario).
+  - Partir en WebKit los tests de más de 30 s por criterio de aceptación.
+  - Cargar los datos e2e con un fixture de backup sintético de Certavi en lugar del importador de gym_app (5 specs lo usan hoy; es requisito para que la Fase 10 pueda borrar el importador).
+  - Recortar tests redundantes: `components.spec.ts` a un test de axe por tema; AC-SYNC-11 de 42 intentos a 2-3; revisar las etiquetas `@all-engines`.
+  - CI: objetivo ≤ 10 min. Chromium en 2 shards, `dist-e2e` construido una vez y compartido como artefacto, `retries` 1, `workers` 2 solo si el runner tiene 4 vCPU.
+  - Corregir documentación desfasada: el workflow ejecuta los tres jobs e2e en paralelo (`max-parallel` y `needs` están comentados), mientras `.claude/rules/e2e.md` y este archivo dicen secuencial; timeouts citados como 10/12/15 min cuando son 25 reales. Revisar context.md:100, :156, :175 y docs/history.md:188.
+
+**Cierre**: `/close-phase final`, PR `dev → main` y tag `v0.10.0`.
+
+**Prompt**:
+
+```text
+Lee context.md, sección 10, Fase 9 (ajustes tras el uso real, v0.10.0). Trabaja rama a rama, cada una desde dev, en el orden de la lista: docs/phase-9-polish (ya en curso), chore/dependabot, fix/ui-polish, feature/routine-week-edits, feature/machine-setup y chore/e2e-speed. Antes de empezar una rama, espera a que el usuario confirme que la anterior está mergeada en dev. No ejecutes git de escritura: al cerrar cada rama propón los commits (archivos y mensaje). Lint, typecheck, test:coverage y build deben pasar. Para chore/e2e-speed pide permiso antes de lanzar e2e:all. Lo que quede fuera del alcance de cada rama va a «Suggestions».
+```
+
+---
+
+### Fase 10 · QA final, migración real y v1.0.0 ⏳
 
 **Rama**: `release/1.0.0`, o directamente un PR de `dev` a `main`.
 
 **Pasos**:
-1. El blind-tester hace una regresión completa, en español y en inglés, claro y oscuro, sin conexión.
+1. El blind-tester hace una regresión completa, en español y en inglés, claro y oscuro, sin conexión. Incluye el logo, las transiciones, la edición de semanas cerradas, las tarjetas de rutina, los chips del editor y los ajustes de la máquina (todo de la Fase 9).
 2. Tú usas Certavi en paralelo con gym_app durante 1 semana.
 3. Exportas por última vez desde gym_app, importas en Certavi y compruebas los recuentos.
-4. **Quitar el rastro de gym_app** (añadido el 2026-11-06), solo **después** de la migración real del paso 3, porque hasta entonces hace falta el importador: eliminar «Importar desde la app anterior» (`ImportExport.tsx`, claves i18n `importLegacy`/`notLegacy`…), `src/data/legacy/`, `src/domain/seed/legacyAliases.ts` (los alias solo sirven para datos de gym_app), `docs/migration.md`, la sección 6 de este archivo y las menciones en README, spec y ADR. Decidir si `context.md` y `docs/history.md` (que cuentan el origen del proyecto) se quedan en el repo público o se resumen. Motivo: la intención es que lo usen tú y gente de tu entorno, no que sea «la v2 de otra app». Importar datos de otras apps (Hevy, Strong…) queda en el backlog v2.
+4. **Quitar el rastro de gym_app** (añadido el 2026-11-06), solo **después** de la migración real del paso 3, porque hasta entonces hace falta el importador: eliminar «Importar desde la app anterior» (`ImportExport.tsx`, claves i18n `importLegacy`/`notLegacy`…), `src/data/legacy/`, `src/domain/seed/legacyAliases.ts` (los alias solo sirven para datos de gym_app), `docs/migration.md`, la sección 6 de este archivo y las menciones en README, spec y ADR. Decidir si `context.md` y `docs/history.md` (que cuentan el origen del proyecto) se quedan en el repo público o se resumen. Motivo: la intención es que lo usen tú y gente de tu entorno, no que sea «la v2 de otra app». Importar datos de otras apps (Hevy, Strong…) queda en el backlog v2. Requisito previo (añadido el 2026-11-10): la Fase 9 (`chore/e2e-speed`) hace que los e2e carguen sus datos con un fixture sintético de Certavi y no con el importador, para que borrarlo aquí no rompa la suite.
 5. Release `v1.0.0`, tag y despliegue a producción.
 6. Archivas `gym_app`.
 7. **Documentación de portfolio** (añadido el 2026-11-06):
@@ -733,7 +801,7 @@ Cada fase sigue el mismo ciclo:
 **Prompt**:
 
 ```text
-Lee context.md. FASE 9: preparación de la v1.0.0. Lanza al blind-tester para una regresión completa
+Lee context.md. FASE 10: preparación de la v1.0.0. Lanza al blind-tester para una regresión completa
 (es/en, claro/oscuro, offline, 390x844). Prepara una checklist de migración real para que la ejecute yo
 (exportar de gym_app, importar, verificar recuentos por tipo de registro). Después, quita el rastro de gym_app
 (importador, alias, migración) y deja README en español e inglés con banner, capturas reales que yo te pase e
@@ -746,7 +814,9 @@ con versión y tag.
 
 ## 11. Backlog v2
 
-- **Fotos de las máquinas**: hechas con el móvil, comprimidas en el cliente y guardadas en Netlify Blobs, con miniatura en la ficha y en la sesión.
+- **Fotos de las máquinas**: hechas con el móvil, comprimidas en el cliente y guardadas en Netlify Blobs, con miniatura en la ficha y en la sesión. (Añadido el 2026-11-10) Se mostrarían junto a los «Ajustes de la máquina» de la Fase 9 (`feature/machine-setup`).
+- **Reordenar ejercicios arrastrando** en el editor de rutinas (añadido el 2026-11-10), reutilizando la fila de chips numerados de la Fase 9 (`feature/routine-week-edits`).
+- **Renovate en lugar de Dependabot** (añadido el 2026-11-10): si los PR agrupados de Dependabot de la Fase 9 (`chore/dependabot`) no bastan, valorar Renovate con automerge de parches con CI en verde.
 - **Backend serio**: Postgres (Neon o Supabase) o un servicio en Java/Spring o Python/FastAPI que cumpla `sync-v1`. Solo si aparece una necesidad real (consultas en servidor, varios usuarios…).
 - **Más funciones**:
   - plantillas de ciclos con fechas de inicio y fin;
@@ -754,8 +824,8 @@ con versión y tag.
   - comparación entre ciclos;
   - superseries.
 - **App nativa**: con Capacitor, si algún día hay Mac y cuenta de desarrollador.
-- **Importar desde otras apps (Hevy, Strong…)** (añadido el 2026-11-06): importar su CSV con un paso para asignar cada ejercicio al catálogo de Certavi (o crearlo como ejercicio propio), porque los ids no coinciden. Un menú selector de «app de origen» sustituiría al importador de gym_app, que sale en la Fase 9. Enlazar las apps por API solo si existe una API oficial.
-- **Uso por otras personas**: una clave de sync por persona con su propio espacio de datos en el servidor (cambia el contrato `sync-v1`, lleva ADR y revisión de seguridad); primera vez guiada (empezar vacío o con plantillas) y bloques personales desactivados por defecto. Ver Fase 9.
+- **Importar desde otras apps (Hevy, Strong…)** (añadido el 2026-11-06): importar su CSV con un paso para asignar cada ejercicio al catálogo de Certavi (o crearlo como ejercicio propio), porque los ids no coinciden. Un menú selector de «app de origen» sustituiría al importador de gym_app, que sale en la Fase 10. Enlazar las apps por API solo si existe una API oficial.
+- **Uso por otras personas**: una clave de sync por persona con su propio espacio de datos en el servidor (cambia el contrato `sync-v1`, lleva ADR y revisión de seguridad); primera vez guiada (empezar vacío o con plantillas) y bloques personales desactivados por defecto. Ver Fase 10.
 - **Peso levantado por rutina**, si no cabe en la Fase 7.
 
 ---
@@ -764,7 +834,7 @@ con versión y tag.
 
 [Tabla Registro](docs/history.md#seccion12)
 
-**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ✅ (`v0.7.0`, sin publicar) · 7 ✅ (`v0.8.0`, sin publicar) · 8 ✅ (`v0.9.0`, sin publicar) · 9 ⏳
+**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ✅ (`v0.7.0`, sin publicar) · 7 ✅ (`v0.8.0`, sin publicar) · 8 ✅ (`v0.9.0`, sin publicar) · 9 ⏳ (`v0.10.0`, planificada 2026-11-10) · 10 ⏳ (`v1.0.0`)
 
 **Preguntas abiertas**:
 - Qué estiramientos van en el bloque «Estiramientos» (antes de la Fase 7).
@@ -777,7 +847,7 @@ con versión y tag.
 - Fase 7: regla del gemelo durante la rehabilitación (60 kg en la semana 1, +5 kg/semana sin dolor al día siguiente hasta 80 kg, y solo si bajar escaleras no duele), con cambios aditivos en el modelo de progresión (ver la Fase 7).
 - Fase 7: revisión del ciclo (`sixWeekReview` de gym_app) en las pantallas de progreso.
 - Fase 7 (añadido el 2026-11-06): racha semanal; peso levantado, ejercicios y series por semana / mes con selector; peso levantado por rutina (`feature/training-stats`); escala 0-10 en una fila en móvil (`feature/optional-blocks`).
-- Fase 9 (añadido el 2026-11-06): quitar el rastro de gym_app tras la migración; README es/en con banner, capturas e insignias; evaluación de uso por otras personas; gitleaks sobre el historial y licencia MIT antes de hacerlo público.
+- Fase 10 (añadido el 2026-11-06): quitar el rastro de gym_app tras la migración; README es/en con banner, capturas e insignias; evaluación de uso por otras personas; gitleaks sobre el historial y licencia MIT antes de hacerlo público.
 - ~~Fase 3 (`feature/import-export`): corregir la tabla de la sección 6 y `docs/migration.md` con los nombres reales de gym_app (2.4).~~ Hecho el 2026-11-03.
 - ~~Fase 5: UI para exportar el JSON de una sesión~~ Hecho el 2026-11-06 (`v0.6.0`). Fase 7: UI para exportar el JSON de una semana (`exportWeek`).
 - Sugerencia (no hecha, 2026-11-03) para la Fase 8: con un `Dialog` abierto, la página de fondo sigue en el árbol de accesibilidad (solo `aria-modal`); valorar `inert` en el fondo (afecta al `Dialog` compartido).
