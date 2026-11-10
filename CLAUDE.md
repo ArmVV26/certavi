@@ -38,21 +38,22 @@ Native App Store app, multi-user, social features.
 
 ## 2. Stack
 
-| Layer      | Tool                                                                                          |
-| ---------- | --------------------------------------------------------------------------------------------- |
-| Build      | Vite                                                                                          |
-| UI         | React 19, React Router 8 (`RouterProvider` from `react-router/dom`)                           |
-| State      | Dexie as source of truth (`useLiveQuery` from `dexie-react-hooks`) + local UI state. No Redux |
-| Validation | zod — schemas shared by client and function (sync contract, importer)                         |
-| Styles     | Design tokens as CSS custom properties + CSS Modules. Light/dark via `data-theme`             |
-| Fonts      | Self-hosted with `@fontsource-variable/archivo` (nothing loaded from third parties)           |
-| i18n       | `i18next` + `react-i18next` (`es` default, `en` optional)                                     |
-| PWA        | `vite-plugin-pwa` (Workbox): precache, "new version" prompt                                   |
-| Charts     | Hand-written SVG (no chart library)                                                           |
-| Backend    | Netlify Functions (TypeScript) + `@netlify/blobs`                                             |
-| Tests      | Vitest + RTL + jsdom; Playwright (Chromium locally; Chromium + WebKit in `e2e:all` and CI)    |
-| Quality    | ESLint (flat, type-checked) + Prettier + `tsc`; husky + commitlint                            |
-| CI         | GitHub Actions: lint, typecheck, test:coverage, build on PRs to dev/main; e2e on PRs to main  |
+| Layer      | Tool                                                                                                      |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| Build      | Vite                                                                                                      |
+| UI         | React 19, React Router 8 (`RouterProvider` from `react-router/dom`)                                       |
+| State      | Dexie as source of truth (`useLiveQuery` from `dexie-react-hooks`) + local UI state. No Redux             |
+| Validation | zod — schemas shared by client and function (sync contract, importer)                                     |
+| Styles     | Design tokens as CSS custom properties + CSS Modules. Light/dark via `data-theme`                         |
+| Fonts      | Self-hosted with `@fontsource-variable/archivo` (nothing loaded from third parties)                       |
+| i18n       | `i18next` + `react-i18next` (`es` default, `en` optional)                                                 |
+| PWA        | `vite-plugin-pwa` (Workbox): precache, "new version" prompt                                               |
+| Charts     | Hand-written SVG (no chart library)                                                                       |
+| Backend    | Netlify Functions (TypeScript) + `@netlify/blobs`                                                         |
+| Tests      | Vitest + RTL + jsdom; Playwright (Chromium locally; Chromium + WebKit in `e2e:all` and CI)                |
+| Quality    | ESLint (flat, type-checked) + Prettier + `tsc`; husky + commitlint                                        |
+| CI         | GitHub Actions: lint, typecheck, knip, audit, test:coverage, build on PRs to dev/main; e2e on PRs to main |
+| Deps       | Dependabot (`.github/dependabot.yml`): weekly PRs to `dev`; rules in `rules/dependencies.md`              |
 
 **Version constraints (pinned exact in `package.json`):** TypeScript stays on **6.0.x**
 (typescript-eslint supports `<6.1`) and ESLint on **9.x** (eslint-plugin-react and jsx-a11y do
@@ -96,7 +97,7 @@ React UI ─► hooks ─► Domain (pure TS) ─► Repositories ─► Dexie (
 
 ```
 .claude/            rules/, skills/, agents/, settings.json (permissions), BASE_VERSION
-.github/workflows/  ci.yml
+.github/            workflows/ci.yml, dependabot.yml
 docs/               spec/ (functional spec — the ONLY thing the blind-tester reads), api/sync-v1.md,
                     adr/, design/, deploy-netlify.md, migration.md, history.md
 netlify/functions/  sync.ts — thin adapter over server/sync
