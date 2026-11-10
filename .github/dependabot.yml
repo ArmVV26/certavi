@@ -1,0 +1,55 @@
+# Dependabot version updates. Security alerts and security updates are switched on in
+# GitHub (Settings → Code security) and do not depend on this file.
+#
+# Every PR targets `dev` (the integration branch) and goes through the normal CI checks.
+# Minor and patch updates arrive grouped, one PR per kind; every major update arrives alone,
+# so it can be reviewed and fixed on its own branch.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:00'
+      timezone: Europe/Madrid
+    open-pull-requests-limit: 5
+    # Wait a few days before proposing a brand-new release, so a compromised or yanked
+    # version is gone before it reaches a PR. Does not delay security updates.
+    cooldown:
+      default-days: 3
+    # `deps` is the only dependency scope allowed by commitlint (commitlint.config.js).
+    commit-message:
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(deps)'
+    groups:
+      dev-minor-patch:
+        dependency-type: development
+        update-types: [minor, patch]
+      runtime-minor-patch:
+        dependency-type: production
+        update-types: [minor, patch]
+    ignore:
+      # TypeScript stays on 6.0.x: typescript-eslint supports `<6.1` (CLAUDE.md §2).
+      - dependency-name: typescript
+        versions: ['>=6.1.0']
+      # ESLint stays on 9.x: eslint-plugin-react and jsx-a11y do not support 10 yet.
+      - dependency-name: eslint
+        versions: ['>=10.0.0']
+      - dependency-name: '@eslint/js'
+        versions: ['>=10.0.0']
+      # Type definitions follow the Node major pinned in .nvmrc (22).
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: monthly
+      timezone: Europe/Madrid
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: 'ci(deps)'
