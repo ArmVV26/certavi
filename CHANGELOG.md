@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- E2E: test data is loaded from a synthetic Certavi backup fixture instead of the gym_app importer (sync and PWA specs). The sync conflict test runs fewer attempts.
+- CI: the e2e job is split into parallel jobs (Chromium and WebKit, two shards each) that share one prebuilt bundle; Playwright retries once.
+
 ## [0.9.0] - Unreleased
 
 PWA polish, accessibility and performance (Phase 8).
