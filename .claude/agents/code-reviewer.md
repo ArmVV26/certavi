@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Read-only review of the branch diff against CLAUDE.md and .claude/rules.md. Use at the end of the last branch of a phase (/close-phase final).
+description: Read-only review of the branch diff against CLAUDE.md and .claude/rules/. Use at the end of the last branch of a phase (/close-phase final).
 model: sonnet
 tools: Read, Grep, Glob, Bash
 ---
@@ -19,7 +19,9 @@ read the changed files directly.
 
 ## What to review
 
-- The diff against `CLAUDE.md` (layer rules, conventions, i18n, tokens) and `.claude/rules.md`.
+- The diff against `CLAUDE.md` (layer rules) and `.claude/rules/`. You do not get path-scoped
+  rules loaded automatically: read the rules whose `paths:` match the changed files (`domain`,
+  `sync`, `i18n`, `design-tokens`, `code-style`, `testing`, `e2e`) plus the always-on ones.
 - Skip what ESLint, `tsc` and Prettier already catch (types, unused code, formatting, import
   style).
 - Priority: `src/domain` (purity: no React/Dexie/fetch), `src/data` (writes update `updatedAt`

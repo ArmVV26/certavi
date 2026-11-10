@@ -1,6 +1,8 @@
 ---
+name: start-phase
 description: Start a Certavi phase or branch — read only what is needed and present a plan (in Spanish) for approval.
 argument-hint: <phase number>
+disable-model-invocation: true
 ---
 
 We are starting **Phase $ARGUMENTS** of Certavi. Write the plan in **Spanish**.
