@@ -49,7 +49,7 @@ export default defineConfig([
       react: { version: 'detect' },
     },
     rules: {
-      // Use the Dialog component instead (see .claude/rules.md).
+      // Use the Dialog component instead (see .claude/rules/code-style.md).
       'no-alert': 'error',
     },
   },
@@ -62,7 +62,7 @@ export default defineConfig([
     },
   },
 
-  // No fixed waits in e2e tests (.claude/rules.md): use web-first assertions, `expect.poll`,
+  // No fixed waits in e2e tests (.claude/rules/e2e.md): use web-first assertions, `expect.poll`,
   // `page.clock` for app timers and `settle()` from tests/e2e/helpers.ts for "nothing happens".
   {
     files: ['tests/**/*.ts'],
@@ -71,7 +71,7 @@ export default defineConfig([
         'error',
         {
           selector: "CallExpression[callee.property.name='waitForTimeout']",
-          message: 'No real-time waits in e2e tests: see .claude/rules.md.',
+          message: 'No real-time waits in e2e tests: see .claude/rules/e2e.md.',
         },
       ],
     },
