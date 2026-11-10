@@ -26,7 +26,7 @@ export const KEEPALIVE_TIMEOUT_MS = 30_000;
 export const ATTEMPT_LOG_SIZE = 40;
 
 /**
- * A record as it travels (§4): the envelope the server checks plus an opaque, flat payload.
+ * A record as it travels (§4): the envelope the server checks plus an opaque payload (top-level fields; their values can be nested JSON).
  * `type` is any non-empty string here — the server does not know the client's record types.
  */
 export const wireRecordSchema = z.looseObject({
