@@ -6,8 +6,10 @@ import {
   applyBlockLogPatch,
   blockLogId,
   bodyWeightId,
+  closeWeek,
   defaultWeekPlan,
   emptyBlockLog,
+  livePlan,
   mondayOf,
   weekPlanId,
   type Activity,
@@ -90,7 +92,12 @@ export function readToday(db: CertaviDb, today: string): Promise<TodayData> {
 
 export type WeekPatch = Partial<Pick<WeekPlan, 'size' | 'hiking' | 'deload'>>;
 
-/** Changes the options of the week that starts on `monday`, creating its record if needed. */
+/**
+ * Changes the options of the week that starts on `monday`, creating its record if needed.
+ * In a closed week only deload and hiking can change (its size is ignored); the frozen planned
+ * sets are recomputed with the new options and the routines of this moment, and the closing
+ * time is kept.
+ */
 export function updateWeek(
   db: CertaviDb,
   monday: string,
@@ -98,11 +105,29 @@ export function updateWeek(
   options: RepositoryOptions = {},
 ): Promise<WeekPlan> {
   const weeks = createRepository(db, 'weekPlan', options);
-  return db.transaction('rw', [db.weekPlans, db.pending, db.meta], async () => {
-    const row = await db.weekPlans.get(weekPlanId(monday));
-    const base = row && isLive(row) ? row : defaultWeekPlan(monday, 0);
-    return weeks.put({ ...base, ...patch });
-  });
+  const now = options.now ?? Date.now;
+  return db.transaction(
+    'rw',
+    [db.weekPlans, db.routines, db.exercises, db.pending, db.meta],
+    async () => {
+      const row = await db.weekPlans.get(weekPlanId(monday));
+      const base = row && isLive(row) ? row : defaultWeekPlan(monday, 0);
+      if (!base.plannedSetsByGroup) return weeks.put({ ...base, ...patch });
+
+      const { deload = base.deload, hiking = base.hiking } = patch;
+      const next = { ...base, deload, hiking };
+      const [routines, exercises] = await Promise.all([
+        db.routines.toArray(),
+        db.exercises.toArray(),
+      ]);
+      const plan = livePlan(
+        next,
+        new Map(routines.filter((r) => isLive(r)).map((r) => [r.id, r])),
+        new Map(exercises.filter((e) => isLive(e)).map((e) => [e.id, e])),
+      );
+      return weeks.put(closeWeek(next, plan, now()));
+    },
+  );
 }
 
 export interface ActivityInput {

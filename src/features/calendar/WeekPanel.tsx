@@ -31,7 +31,6 @@ export function WeekPanel({ model, monday, onClose }: WeekPanelProps) {
   const range = weekRange(monday, locale);
   const number = (value: number) => formatNumber(value, locale);
   const future = detail.timing === 'future';
-  const readOnly = future || detail.closed;
   const deloadHint = detail.options.deload ? t('today.week.deloadOn') : t('today.week.deloadOff');
 
   function change(patch: WeekPatch) {
@@ -78,7 +77,8 @@ export function WeekPanel({ model, monday, onClose }: WeekPanelProps) {
       <WeekOptions
         week={detail.options}
         deloadHint={deloadHint}
-        disabled={readOnly}
+        disabled={future}
+        sizeLocked={detail.closed}
         onChange={change}
       />
       {detail.closed && (
