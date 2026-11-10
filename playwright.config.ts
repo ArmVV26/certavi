@@ -3,6 +3,9 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = 4173;
 const BASE_URL = `http://localhost:${String(PORT)}`;
 const isCI = !!process.env.CI;
+// CI builds `dist-e2e` once in its own job and downloads it into every e2e job (E2E_PREBUILT=1),
+// so the web server only serves it. Never set it locally: a stale `dist-e2e` would hide changes.
+const prebuilt = process.env.E2E_PREBUILT === '1';
 
 // iPhone-sized viewport used by every project (see context.md: tests run at 390×844).
 const IPHONE_VIEWPORT = { width: 390, height: 844 };
@@ -23,13 +26,16 @@ const WEBKIT_EXPECT_TIMEOUT = 15_000;
 //                       20 min cap (passed with --global-timeout). It was 10 min until Phase 5, but 93
 //                       Chromium tests (~3 min with 2 workers) + the WebKit ones (~8 min) no longer fit;
 //                       the cap hit whichever test was running (AC-SESSION-27 / 28).
-// - CI                → a matrix of jobs run one after another (chromium; webkit shard 1/2 and
-//                       2/2), each with Playwright's default workers (1 on a 2-vCPU runner)
-//                       and 2 retries.
+// - CI                → a `build-e2e` job builds `dist-e2e` once and shares it as an artifact; then
+//                       a matrix of four jobs runs in parallel (chromium shard 1/2 and 2/2, webkit
+//                       shard 1/2 and 2/2), each with Playwright's default workers (1 on a 2-vCPU
+//                       runner) and 1 retry (a test that needs two is flaky: fix it).
 // WebKit only runs the tests whose behaviour depends on the engine (IndexedDB, sync, import /
 // export, downloads, Today, 390 px layout). UI logic that is engine-independent (theme,
 // language, navigation, components) runs in Chromium only. Tag a test or a `describe` with
 // `{ tag: '@all-engines' }` to run it in WebKit too.
+// `reportSlowTests` lists the 20 slowest tests of a run that took over 20 s, so a test drifting
+// towards the WebKit cap (60 s) shows up before it fails. Split it by acceptance criterion then.
 // Each test has 30 s (60 s in WebKit, see WEBKIT_TIMEOUT) and each assertion 5 s (15 s in WebKit,
 // see WEBKIT_EXPECT_TIMEOUT); do not add `test.slow` for WebKit.
 // Never set `channel: 'chrome'`: tests run on Playwright's own browsers, never the user's Chrome.
@@ -38,10 +44,11 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   workers: isCI ? undefined : 2,
-  retries: isCI ? 2 : 0,
+  retries: isCI ? 1 : 0,
   maxFailures: isCI ? undefined : 3,
   timeout: 30_000,
   globalTimeout: 5 * 60_000,
+  reportSlowTests: { max: 20, threshold: 20_000 },
   // The HTML report is written to playwright-report/ but never opened or served.
   // Locally the console reporter is terse (`dot`) to save output; CI keeps `list`.
   reporter: isCI ? [['list'], ['html', { open: 'never' }]] : [['dot'], ['html', { open: 'never' }]],
@@ -83,7 +90,7 @@ export default defineConfig({
     // `--mode e2e` keeps the component catalog (/dev/ui, src/app/devUi.ts) that some specs use;
     // the production build (`npm run build`) does not have it. It goes to its own folder so a
     // later `npm run preview` never serves the catalog.
-    command: `npx vite build --mode e2e --outDir dist-e2e && npx vite preview --outDir dist-e2e --port ${String(PORT)} --strictPort`,
+    command: `${prebuilt ? '' : 'npx vite build --mode e2e --outDir dist-e2e && '}npx vite preview --outDir dist-e2e --port ${String(PORT)} --strictPort`,
     url: BASE_URL,
     reuseExistingServer: false,
     timeout: 60_000,
