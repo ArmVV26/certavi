@@ -27,6 +27,27 @@
   font-weight: var(--fw-semibold);
 }
 
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips li {
+  max-width: 100%;
+}
+
+/* A long exercise name wraps inside its chip instead of overflowing. */
+.chips .chip {
+  max-width: 100%;
+  padding-block: var(--space-1);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
 .list {
   display: flex;
   flex-direction: column;
