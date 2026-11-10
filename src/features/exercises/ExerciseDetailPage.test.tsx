@@ -205,6 +205,46 @@ describe('ExerciseDetailPage', () => {
     expect((await repos.exercise.get('remo-t'))?.increment).toBe(before);
   });
 
+  it('adds, edits and removes the machine settings of a seed exercise', async () => {
+    const { user, repos } = await open('remo-t');
+    expect(await screen.findByText('Aún no has anotado ajustes')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Añadir ajustes' }));
+    await user.type(screen.getByLabelText('Nombre del ajuste 1'), 'Respaldo');
+    await user.type(screen.getByLabelText('Valor del ajuste 1'), '3');
+    await user.click(screen.getByRole('button', { name: 'Añadir ajuste' }));
+    await user.type(screen.getByLabelText('Nombre del ajuste 2'), 'Asiento');
+    await user.type(screen.getByLabelText('Valor del ajuste 2'), '5');
+    await user.click(screen.getByRole('button', { name: 'Guardar ajustes' }));
+    expect(await screen.findByText('Ajustes guardados')).toBeInTheDocument();
+    expect(await screen.findByText('Respaldo: 3')).toBeInTheDocument();
+    expect(screen.getByText('Asiento: 5')).toBeInTheDocument();
+    expect((await repos.exercise.get('remo-t'))?.setup).toHaveLength(2);
+
+    await user.click(screen.getByRole('button', { name: 'Editar ajustes' }));
+    await user.clear(screen.getByLabelText('Valor del ajuste 1'));
+    await user.type(screen.getByLabelText('Valor del ajuste 1'), '4');
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(await screen.findByText('Respaldo: 3')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Editar ajustes' }));
+    await user.click(screen.getByRole('button', { name: 'Quitar ajuste 2' }));
+    await user.click(screen.getByRole('button', { name: 'Quitar ajuste 1' }));
+    await user.click(screen.getByRole('button', { name: 'Guardar ajustes' }));
+    expect(await screen.findByText('Aún no has anotado ajustes')).toBeInTheDocument();
+    expect((await repos.exercise.get('remo-t'))?.setup).toBeUndefined();
+  });
+
+  it('refuses a setting without a name and saves nothing', async () => {
+    const { user, repos } = await open('remo-t');
+    await user.click(await screen.findByRole('button', { name: 'Añadir ajustes' }));
+    await user.type(screen.getByLabelText('Valor del ajuste 1'), '3');
+    await user.click(screen.getByRole('button', { name: 'Guardar ajustes' }));
+    expect(screen.getByText('Escribe el nombre del ajuste')).toBeInTheDocument();
+    expect(screen.getByLabelText('Nombre del ajuste 1')).toHaveFocus();
+    expect((await repos.exercise.get('remo-t'))?.setup).toBeUndefined();
+  });
+
   it('offers edit and archive for an exercise the user created', async () => {
     await open('exe_mine');
     expect(await screen.findByRole('heading', { level: 2, name: 'Press landmine' })).toBeVisible();
