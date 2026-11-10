@@ -113,6 +113,18 @@ describe('the session card', () => {
     expect(screen.getByText('Series efectivas')).toBeInTheDocument();
   });
 
+  it('shows the note the routine has for an exercise, and only for it', async () => {
+    const db = await seededDb();
+    const lower = await db.routines.get('lowerFull');
+    await open({ db, routineId: 'lowerFull', items: lower && !lower.deleted ? lower.items : [] });
+
+    const hack = screen
+      .getByRole('heading', { name: 'Sentadilla hack con banda', level: 3 })
+      .closest('article');
+    expect(hack).toHaveTextContent('Banda morada por defecto');
+    expect(screen.getAllByText(/^Banda morada por defecto/)).toHaveLength(1);
+  });
+
   it('shows a free session without exercises, still able to take notes and be finished', async () => {
     await open({ items: [] });
     expect(screen.getByRole('heading', { name: 'Sesión libre' })).toBeInTheDocument();

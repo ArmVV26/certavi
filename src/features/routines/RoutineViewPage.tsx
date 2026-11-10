@@ -10,7 +10,9 @@ import { useLocale } from '../../i18n/LocaleContext';
 import { resolveText } from '../../i18n/text';
 import { Button } from '../../ui/Button';
 import { buttonClasses } from '../../ui/buttonClasses';
+import { Card } from '../../ui/Card';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
+import { cx } from '../../ui/cx';
 import { EmptyState } from '../../ui/EmptyState';
 import { Icon } from '../../ui/Icon';
 import { Tag } from '../../ui/Tag';
@@ -109,16 +111,30 @@ function View({ routine, exercises }: { routine: Routine; exercises: readonly Ex
           <ol className={styles.list} aria-label={t('routines.view.list')}>
             {routine.items.map((item) => {
               const exercise = byId.get(item.exerciseId);
+              const exerciseName = exercise ? resolveText(t, exercise.name) : item.exerciseId;
               return (
-                <li key={item.exerciseId} className={styles.item}>
-                  <span className={styles.top}>
-                    <Link to={`/exercises/${item.exerciseId}`} className={styles.link}>
-                      {exercise ? resolveText(t, exercise.name) : item.exerciseId}
+                <li key={item.exerciseId}>
+                  <Card element="article" className={styles.item}>
+                    <div className={styles.top}>
+                      <h4 className={styles.exerciseName}>{exerciseName}</h4>
+                      {item.optional && <Tag>{t('routines.optional')}</Tag>}
+                    </div>
+                    {exercise && (
+                      <p className={styles.meta}>
+                        {t(`exercises.groups.${exercise.primaryGroup}`)}
+                      </p>
+                    )}
+                    <p className={styles.scheme}>{schemeText(t, item.scheme)}</p>
+                    {item.note && <p className={styles.note}>{resolveText(t, item.note)}</p>}
+                    <Link
+                      to={`/exercises/${item.exerciseId}`}
+                      aria-label={t('routines.view.sheetOf', { name: exerciseName })}
+                      className={cx(buttonClasses({ variant: 'secondary' }), styles.sheet)}
+                    >
+                      {t('routines.view.sheet')}
+                      <Icon name="chevronRight" size={18} />
                     </Link>
-                    {item.optional && <Tag>{t('routines.optional')}</Tag>}
-                  </span>
-                  <span className={styles.scheme}>{schemeText(t, item.scheme)}</span>
-                  {item.note && <span className={styles.note}>{resolveText(t, item.note)}</span>}
+                  </Card>
                 </li>
               );
             })}

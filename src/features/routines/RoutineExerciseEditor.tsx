@@ -19,7 +19,7 @@ import { Checkbox } from '../../ui/Checkbox';
 import { IconButton } from '../../ui/IconButton';
 import { SelectField } from '../../ui/SelectField';
 import { TextArea, TextField } from '../../ui/TextField';
-import { repsFieldId, rirFieldId } from './fieldIds';
+import { exerciseTitleId, repsFieldId, rirFieldId } from './fieldIds';
 import styles from './RoutineExerciseEditor.module.css';
 
 interface RoutineExerciseEditorProps {
@@ -51,7 +51,7 @@ export function RoutineExerciseEditor({
   onRemove,
 }: RoutineExerciseEditorProps) {
   const { t } = useTranslation();
-  const titleId = `routine-exercise-${item.exerciseId}`;
+  const titleId = exerciseTitleId(item.exerciseId);
   const rows = routineRows(item.scheme);
   const change = (scheme: ReturnType<typeof addRoutineRow>) => {
     if (scheme) onChange(withScheme(item, scheme));
@@ -72,7 +72,7 @@ export function RoutineExerciseEditor({
     <Card>
       <div role="group" aria-labelledby={titleId} className={styles.exercise}>
         <div className={styles.header}>
-          <h3 id={titleId} className={styles.name}>
+          <h3 id={titleId} tabIndex={-1} className={styles.name}>
             {name}
           </h3>
           <div className={styles.buttons}>

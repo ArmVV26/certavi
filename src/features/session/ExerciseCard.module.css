@@ -46,6 +46,13 @@
   font-size: var(--fs-sm);
 }
 
+.routineNote {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-style: italic;
+  overflow-wrap: anywhere;
+}
+
 .hint {
   color: var(--accent);
   font-size: var(--fs-sm);

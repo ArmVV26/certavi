@@ -105,10 +105,17 @@ A card with the heading **"Semana <range>" / "Week <range>"** (followed by "· S
   "Sessions" as "<done> de <size>" / "<done> of <size>" — same meaning as in Today's "Esta semana".
   For a closed week the planned number is the frozen one.
 - **Options of the week**, the same three controls as Today — "Sesiones" (3/4/5 selector),
-  "Semana con senderismo" and "Semana de descarga" (and their hints) — for the **current week and
-  past weeks that are not closed**. They behave as in Today (including the deload toast).
-  - In a **closed** week they are shown read-only (disabled) with the note **"Semana cerrada: el
-    plan quedó guardado el <date>." / "Week closed: the plan was saved on <date>."**
+  "Semana con senderismo" and "Semana de descarga" (and their hints). They behave as in Today
+  (including the deload toast). The current week and past weeks that are not closed have all
+  three enabled.
+  - In a **closed** week only the **"Sesiones" selector is read-only** (disabled); **"Semana con
+    senderismo" and "Semana de descarga" stay enabled**, so a deload or a hiking week forgotten
+    at the time can be marked afterwards. The panel shows the note **"Semana cerrada: el plan
+    quedó guardado el <date>. Solo puedes cambiar la descarga y el senderismo." / "Week closed:
+    the plan was saved on <date>. You can only change the deload and hiking options."** Changing
+    one of them recomputes the week's planned sets (the "Series efectivas" denominator) with the
+    new options and the routines **at that moment**, and the week keeps its "Cerrada" label and
+    its closing date.
   - In a **future** week they are shown read-only with **"Todavía no puedes cambiar esta semana."
     / "You can't change this week yet."**
 - **"Peso medio de la semana" / "Average weekly weight"**: the same field and **"Guardar peso" /
@@ -130,7 +137,9 @@ of closing**, and the closing time. Weeks are closed:
   foreground on a new day), for every week that is already over, is not closed yet and has data
   (a session, an activity or a week record).
 
-A closed week's planned sets never change afterwards, even if a routine is edited or restored. A
+A closed week's planned sets never change afterwards, even if a routine is edited or restored; the
+only exception is the user changing the week's deload or hiking option (see the panel above),
+which recomputes them. The number of sessions of a closed week cannot be changed. A
 week with no record gets the default options (5 sessions, no hiking, no deload) when closed. The
 current week and future weeks are never closed. Closing syncs like any other write (the most
 recent write wins, as for every record).
@@ -213,7 +222,8 @@ Then the toast "Semana de descarga: las sesiones nuevas salen reducidas" (same a
 Given sessions in a week that ended last Sunday and no week record
 When the app starts
 Then that week's button name ends with "· Cerrada" and its panel shows "Semana cerrada: el plan
-quedó guardado el <date>." with the three options disabled
+quedó guardado el <date>. Solo puedes cambiar la descarga y el senderismo." with the "Sesiones"
+selector disabled and the two switches enabled
 And editing a routine afterwards (adding a set to Push) does not change the week's planned sets.
 
 **AC-CAL-13 · Current and future weeks are not closed**
@@ -243,6 +253,28 @@ Given the device is offline
 When I log an activity on a past day, change a week's weight and reload
 Then everything is still there and the sync indicator shows changes waiting.
 
+**AC-CAL-18 · Mark a closed week as deload**
+Given a week that ended last Sunday, is closed and has sessions
+When I open its panel and turn on "Semana de descarga"
+Then the toast "Semana de descarga: las sesiones nuevas salen reducidas" appears, the week button
+name ends with "· Descarga · Cerrada" (markers first, "Cerrada" last) and the switch stays on
+after reloading
+And the "Series efectivas" denominator drops to the deload plan
+And "Sesiones" stays disabled and "Semana cerrada: …" is still shown.
+
+**AC-CAL-19 · The deload reminder follows closed weeks**
+Given six finished weeks with sessions and none marked as deload, so Today shows "Llevas 6 semanas
+sin descarga. …" (today.md)
+When I mark one of those past weeks as deload in the calendar and go back to Today
+Then the count of weeks without a deload restarts from that week (it counts only the full weeks
+after it), the notice disappears when fewer than six remain and the deload switch hint reads
+"Llevas <n> semanas seguidas sin descargar." with the new count.
+
+**AC-CAL-20 · Hiking in a closed week**
+When I turn on "Semana con senderismo" in a closed week
+Then the week button name gets "· Senderismo" before "· Cerrada", the switch stays on after reloading and the
+planned sets are recomputed (Lower A is replaced as in Today's hiking week).
+
 ## 4. Edge cases
 
 - **Midnight**: the calendar follows the device date when the app returns to the foreground
@@ -269,7 +301,9 @@ Then everything is still there and the sync indicator shows changes waiting.
 
 - Editing or deleting an activity or a block log from the calendar (activities can be added only;
   deleting sessions is in the session screen).
-- Reopening or editing the options of a closed week.
+- Reopening a closed week or changing its number of sessions (only its deload and hiking options
+  can be changed).
+- Changing the options of a future week.
 - Creating or editing the plan start date.
 - Block logs, metrics and charts (`blocks.md`); progress charts and weekly set counts per muscle
   group (`progress.md`).
