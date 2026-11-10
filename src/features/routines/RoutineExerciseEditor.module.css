@@ -12,6 +12,8 @@
 }
 
 .name {
+  /* Room for the sticky header when a jump chip scrolls here. */
+  scroll-margin-top: 6rem;
   font-size: var(--fs-md);
   font-weight: var(--fw-bold);
   overflow-wrap: anywhere;

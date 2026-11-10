@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { SEED_ROUTINES_BY_ID, differsFromSeed } from '../../domain';
 import { ensureSeed } from '../../data/seed';
 import type { Locale } from '../../i18n/locale';
@@ -44,6 +44,65 @@ describe('RoutineEditorPage', () => {
     expect(
       within(press).getByRole('button', { name: 'Subir Press inclinado con mancuernas' }),
     ).toBeDisabled();
+  });
+
+  describe('jump chips', () => {
+    const chips = () =>
+      within(screen.getByRole('navigation', { name: 'Ir a un ejercicio' }))
+        .getAllByRole('button')
+        .map((b) => b.textContent);
+
+    it('lists every exercise in order, numbered', async () => {
+      await open('/routines/push/edit');
+      await group('Press inclinado con mancuernas');
+      const names = chips();
+      expect(names).toHaveLength(7);
+      expect(names[0]).toBe('1 Press inclinado con mancuernas');
+      expect(names[6]).toMatch(/^7 /);
+    });
+
+    it('scrolls to the card and focuses its heading without changing anything', async () => {
+      const scroll = vi.spyOn(Element.prototype, 'scrollIntoView');
+      const { user } = await open('/routines/push/edit');
+      await group('Aperturas en máquina');
+      await user.click(screen.getByRole('button', { name: /^\d+ Aperturas en máquina$/ }));
+      const heading = screen.getByRole('heading', { level: 3, name: 'Aperturas en máquina' });
+      expect(heading).toHaveFocus();
+      expect(scroll).toHaveBeenCalledTimes(1);
+      expect(dialogOpen()).not.toBeInTheDocument();
+      // Nothing is dirty: Discard goes back without asking.
+      await click(user, 'Descartar');
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { level: 1, name: 'Rutina' })).toBeVisible();
+      });
+      expect(dialogOpen()).not.toBeInTheDocument();
+      scroll.mockRestore();
+    });
+
+    it('follows moving, removing, undoing and adding', async () => {
+      const { user } = await open('/routines/push/edit');
+      await group('Press inclinado con mancuernas');
+      await click(user, 'Bajar Press inclinado con mancuernas');
+      expect(chips().slice(0, 2)).toEqual([
+        '1 Press de pecho en máquina vertical',
+        '2 Press inclinado con mancuernas',
+      ]);
+
+      await click(user, 'Quitar Aperturas en máquina');
+      expect(chips()).toHaveLength(6);
+      expect(chips().some((c) => c.includes('Aperturas'))).toBe(false);
+      await click(user, 'Deshacer');
+      expect(chips()).toHaveLength(7);
+
+      await click(user, 'Añadir ejercicio');
+      const sheet = await screen.findByRole('dialog', { name: 'Añadir ejercicio' });
+      await user.type(within(sheet).getByLabelText('Buscar ejercicio'), 'remo en t');
+      await user.click(within(sheet).getByRole('button', { name: /Remo en T/ }));
+      await waitFor(() => {
+        expect(chips()).toHaveLength(8);
+      });
+      expect(chips()[7]).toBe('8 Remo en T');
+    });
   });
 
   it('adds an exercise at the end, with its default sets, and refuses the ones already there', async () => {
@@ -141,7 +200,10 @@ describe('RoutineEditorPage', () => {
 
     expect(await screen.findByText('Rutina guardada')).toBeInTheDocument();
     expect(await screen.findByRole('heading', { level: 1, name: 'Rutina' })).toBeVisible();
-    const link = await screen.findByRole('link', { name: 'Press inclinado con mancuernas' });
+    const link = await screen.findByRole('heading', {
+      level: 4,
+      name: 'Press inclinado con mancuernas',
+    });
     const item = link.closest('li');
     expect(item).toHaveTextContent('1 × 5 + 2 back-off 8-10 · RIR 2');
     expect(item).toHaveTextContent('Opcional');
