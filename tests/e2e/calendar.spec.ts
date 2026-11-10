@@ -115,6 +115,57 @@ function selected(scope: Page | Locator, name: string | RegExp): Locator {
     .or(scope.getByRole('button', { name, exact: true, pressed: true }));
 }
 
+const DELOAD_SWITCH = /^Semana de descarga/;
+const HIKING_SWITCH = /^Semana (con|de) senderismo/;
+const CLOSED_NOTE =
+  /^Semana cerrada: el plan quedó guardado el .+\. Solo puedes cambiar la descarga y el senderismo\.$/;
+const DELOAD_TOAST = 'Semana de descarga: las sesiones nuevas salen reducidas';
+/** The week with the seeded session of the closed-week tests: 26 October - 1 November. */
+const CLOSED_RANGE = '26 oct – 1 nov';
+
+/** The note of a closed week's panel. */
+function closedNote(page: Page): Locator {
+  return page.getByText(CLOSED_NOTE);
+}
+
+/** Closed week (AC-CAL-12): only the "Sesiones" selector is read-only, both switches work. */
+async function expectClosedPanel(page: Page): Promise<void> {
+  await expect(closedNote(page)).toBeVisible();
+  await expect(page.getByRole('switch', { name: DELOAD_SWITCH })).toBeEnabled();
+  await expect(page.getByRole('switch', { name: HIKING_SWITCH })).toBeEnabled();
+  for (const size of ['3', '4', '5']) {
+    await expect(
+      option(page.getByRole('main'), size),
+      `size ${size} of a closed week`,
+    ).toBeDisabled();
+  }
+}
+
+/** "Series efectivas" of the open week panel: the planned number of "<done> / <planned>". */
+async function plannedSets(page: Page): Promise<number> {
+  const text = await page.getByRole('main').innerText();
+  return Number(/\d+ \/ (\d+)/.exec(text)?.[1]);
+}
+
+/**
+ * A Pull session on Wednesday 28 October, then the app starts again on Wednesday 4 November: the
+ * week of 26 October - 1 November is closed. Leaves its panel open and returns the planned sets.
+ */
+async function openClosedWeek(page: Page): Promise<number> {
+  await openCalendarAt(page, WED);
+  await logSessionOn(page, 'miércoles, 28 de octubre', 'Pull');
+  await page.goto('/calendar');
+  await expect(h1(page, 'Calendario')).toBeVisible();
+  await expect(weekButton(page, CLOSED_RANGE)).toHaveAccessibleName(
+    weekName(CLOSED_RANGE, ' · Cerrada'),
+  );
+  await weekButton(page, CLOSED_RANGE).click();
+  await expectClosedPanel(page);
+  const planned = await plannedSets(page);
+  expect(planned, 'planned sets of the closed week').toBeGreaterThan(0);
+  return planned;
+}
+
 function indicator(page: Page): Locator {
   return page.getByRole('link', { name: /^(Sincronización|Sync): / });
 }
@@ -437,12 +488,7 @@ test.describe('calendar (data and layout)', { tag: '@all-engines' }, () => {
     );
 
     await weekButton(page, '2–8 nov').click();
-    await expect(page.getByText(/^Semana cerrada: el plan quedó guardado el /)).toBeVisible();
-    await expect(page.getByRole('switch', { name: /^Semana de descarga/ })).toBeDisabled();
-    await expect(page.getByRole('switch', { name: /^Semana (con|de) senderismo/ })).toBeDisabled();
-    for (const size of ['3', '4', '5']) {
-      await expect(option(main, size), `size ${size} of a closed week`).toBeDisabled();
-    }
+    await expectClosedPanel(page);
     // Its weight form still works (checked in the weight test).
     await expect(button(page, 'Guardar peso')).toBeVisible();
 
@@ -465,6 +511,127 @@ test.describe('calendar (data and layout)', { tag: '@all-engines' }, () => {
     await expect(weekButton(page, '30 nov – 6 dic')).toHaveAccessibleName(
       weekName('30 nov – 6 dic'),
     );
+  });
+
+  test('AC-CAL-18 · a closed week can be marked as deload: toast, marker order, plan recomputed, kept after a reload and undone; the sessions selector and the closing note stay', async ({
+    page,
+  }) => {
+    const base = await openClosedWeek(page);
+    const noteBefore = await closedNote(page).innerText();
+    const deload = page.getByRole('switch', { name: DELOAD_SWITCH });
+
+    await deload.click();
+    await expect(toast(page, DELOAD_TOAST)).toBeVisible();
+    await expect(deload).toBeChecked();
+    // Markers first, "Cerrada" last.
+    await expect(weekButton(page, CLOSED_RANGE)).toHaveAccessibleName(
+      weekName(CLOSED_RANGE, ' · Descarga · Cerrada'),
+    );
+    await expect.poll(() => plannedSets(page), { timeout: WAIT }).toBeLessThan(base);
+    const reduced = await plannedSets(page);
+    expect(reduced, 'deload plan').toBeGreaterThan(0);
+    await expectClosedPanel(page);
+    expect(await closedNote(page).innerText(), 'the closing date does not change').toBe(noteBefore);
+
+    // Still there after the app starts again.
+    await page.reload();
+    await expect(h1(page, 'Calendario')).toBeVisible();
+    await expect(weekButton(page, CLOSED_RANGE)).toHaveAccessibleName(
+      weekName(CLOSED_RANGE, ' · Descarga · Cerrada'),
+    );
+    await weekButton(page, CLOSED_RANGE).click();
+    await expect(page.getByRole('switch', { name: DELOAD_SWITCH })).toBeChecked();
+    await expectClosedPanel(page);
+    await expect.poll(() => plannedSets(page), { timeout: WAIT }).toBe(reduced);
+    expect(await closedNote(page).innerText()).toBe(noteBefore);
+
+    // Turning it off again brings the normal plan back.
+    await page.getByRole('switch', { name: DELOAD_SWITCH }).click();
+    await expect(page.getByRole('switch', { name: DELOAD_SWITCH })).not.toBeChecked();
+    await expect(weekButton(page, CLOSED_RANGE)).toHaveAccessibleName(
+      weekName(CLOSED_RANGE, ' · Cerrada'),
+    );
+    await expect.poll(() => plannedSets(page), { timeout: WAIT }).toBe(base);
+    await expectClosedPanel(page);
+  });
+
+  test('AC-CAL-20 · hiking in a closed week: marker before "Cerrada", kept after a reload, planned sets recomputed', async ({
+    page,
+  }) => {
+    const base = await openClosedWeek(page);
+    const hiking = page.getByRole('switch', { name: HIKING_SWITCH });
+    await hiking.click();
+    await expect(hiking).toBeChecked();
+    await expect(weekButton(page, CLOSED_RANGE)).toHaveAccessibleName(
+      weekName(CLOSED_RANGE, ' · Senderismo · Cerrada'),
+    );
+    // A hiking week plans fewer sets than a normal one (Lower A is replaced).
+    await expect.poll(() => plannedSets(page), { timeout: WAIT }).toBeLessThan(base);
+    const hikingPlan = await plannedSets(page);
+    await expectClosedPanel(page);
+
+    await page.reload();
+    await expect(h1(page, 'Calendario')).toBeVisible();
+    await expect(weekButton(page, CLOSED_RANGE)).toHaveAccessibleName(
+      weekName(CLOSED_RANGE, ' · Senderismo · Cerrada'),
+    );
+    await weekButton(page, CLOSED_RANGE).click();
+    await expect(page.getByRole('switch', { name: HIKING_SWITCH })).toBeChecked();
+    await expect(page.getByRole('switch', { name: DELOAD_SWITCH })).not.toBeChecked();
+    await expect.poll(() => plannedSets(page), { timeout: WAIT }).toBe(hikingPlan);
+    await expectClosedPanel(page);
+  });
+
+  test('AC-CAL-19 · marking a past week as deload in the calendar restarts the count of weeks without a deload in Today', async ({
+    page,
+  }) => {
+    // One Push session in each of the six weeks before the current one (Monday 2 November).
+    await page.clock.setFixedTime(new Date(2026, 10, 2, 9, 30));
+    await gotoReady(page, '/', 'Hoy');
+    const other = page
+      .getByRole('heading', { name: 'Otra sesión u otro día', exact: true })
+      .locator('xpath=ancestor::*[count(.//h2) = 1][last()]');
+    for (const monday of [
+      '2026-10-26',
+      '2026-10-19',
+      '2026-10-12',
+      '2026-10-05',
+      '2026-09-28',
+      '2026-09-21',
+    ]) {
+      await page.getByLabel('Fecha', { exact: true }).fill(monday);
+      await button(other, 'Push').click();
+      await expectSessionScreen(page, 'Push');
+      await toToday(page);
+    }
+    const reminder = page.getByText(/^Llevas \d+ semanas sin descarga\./);
+    await expect(
+      page.getByText(
+        'Llevas 6 semanas sin descarga. Lo recomendado es una cada 6-8: márcala abajo cuando te venga bien.',
+        { exact: true },
+      ),
+    ).toBeVisible();
+
+    // The app starts again: those weeks are closed. Mark the week of 12-18 October as deload.
+    await page.goto('/calendar');
+    await expect(h1(page, 'Calendario')).toBeVisible();
+    await button(page, 'Mes anterior').click();
+    await expect(monthHeading(page, 'octubre de 2026')).toBeVisible();
+    await expect(weekButton(page, '12–18 oct')).toHaveAccessibleName(
+      weekName('12–18 oct', ' · Cerrada'),
+    );
+    await weekButton(page, '12–18 oct').click();
+    await expectClosedPanel(page);
+    await page.getByRole('switch', { name: DELOAD_SWITCH }).click();
+    await expect(toast(page, DELOAD_TOAST)).toBeVisible();
+    await expect(weekButton(page, '12–18 oct')).toHaveAccessibleName(
+      weekName('12–18 oct', ' · Descarga · Cerrada'),
+    );
+
+    // Today counts only the full weeks after it (19 and 26 October): the notice is gone.
+    await toToday(page);
+    await expect(page.getByRole('main')).toContainText('Llevas 2 semanas seguidas sin descargar.');
+    await expect(reminder).toHaveCount(0);
   });
 
   test('AC-CAL-14 / 15 · weight of a closed past week (0 kg refused, kept after reload, seen in Today) and the week JSON without other weeks', async ({

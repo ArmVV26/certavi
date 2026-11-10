@@ -24,7 +24,7 @@ const itemOf = async (name: string, listName = 'Ejercicios de la rutina') => {
   const list = await screen.findByRole('list', { name: listName });
   const item = within(list)
     .getAllByRole('listitem')
-    .find((li) => within(li).queryByRole('link', { name }));
+    .find((li) => within(li).queryByRole('heading', { level: 4, name }));
   if (!item) throw new Error(`no item for ${name}`);
   return item;
 };
@@ -40,7 +40,7 @@ describe('RoutineViewPage', () => {
     const list = screen.getByRole('list', { name: 'Ejercicios de la rutina' });
     const names = within(list)
       .getAllByRole('listitem')
-      .map((li) => within(li).getByRole('link').textContent);
+      .map((li) => within(li).getByRole('heading', { level: 4 }).textContent);
     expect(names).toHaveLength(7);
     expect(names[0]).toBe('Press inclinado con mancuernas');
     expect(await itemOf('Press inclinado con mancuernas')).toHaveTextContent(
@@ -61,13 +61,24 @@ describe('RoutineViewPage', () => {
     expect(hack).toHaveTextContent('Banda morada por defecto');
   });
 
+  it('shows each exercise as a card with its group, name and a sheet link', async () => {
+    await open('/routines/push');
+    const card = await itemOf('Aperturas en máquina');
+    expect(within(card).getByText('Pecho')).toBeVisible();
+    const link = within(card).getByRole('link', { name: 'Ver ficha de Aperturas en máquina' });
+    expect(link).toHaveTextContent('Ver ficha');
+    expect(link).toHaveAttribute('href', '/exercises/aperturas-maquina');
+    // The name is plain text, not a link.
+    expect(screen.queryByRole('link', { name: 'Aperturas en máquina' })).not.toBeInTheDocument();
+  });
+
   it('tags an optional exercise', async () => {
     await open('/routines/pull');
     const list = await screen.findByRole('list', { name: 'Ejercicios de la rutina' });
     expect(within(list).getAllByText('Opcional')).toHaveLength(1);
   });
 
-  it('links each exercise to its page and the routine to its editor', async () => {
+  it('links each exercise card to its sheet and the routine to its editor', async () => {
     const { user, router } = await open('/routines/push');
     expect(await screen.findByRole('link', { name: 'Editar' })).toHaveAttribute(
       'href',
@@ -77,7 +88,7 @@ describe('RoutineViewPage', () => {
       'href',
       '/routines',
     );
-    await user.click(screen.getByRole('link', { name: 'Aperturas en máquina' }));
+    await user.click(screen.getByRole('link', { name: 'Ver ficha de Aperturas en máquina' }));
     await waitFor(() => {
       expect(router.state.location.pathname).toBe('/exercises/aperturas-maquina');
     });

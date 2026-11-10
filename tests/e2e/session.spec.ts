@@ -673,6 +673,42 @@ test.describe('active session', { tag: '@all-engines' }, () => {
     await expect(page.getByText('Sesión no encontrada', { exact: true })).toBeVisible();
   });
 
+  test('AC-SESSION-37 · the routine note of an exercise shows under its plan line in a session of that routine, and only there', async ({
+    page,
+  }) => {
+    await openToday(page);
+    await startOther(page, 'Lower Full');
+    const main = page.getByRole('main');
+
+    const hack = await exCard(page, 'Sentadilla hack con banda');
+    await expect(hack).toContainText(/\d+ series?[\s\S]*Banda morada por defecto/);
+    await expect(hack).toContainText('Banda morada por defecto. Si usas otra, apunta el color');
+    // Right under the plan line, before the hint / last time lines of a fresh install.
+    await expect(hack).toContainText(/Banda morada por defecto[\s\S]*Sin registros previos/);
+    // The Nota button of the card is the user's own note, a different thing.
+    await expect(hack.getByRole('button', { name: 'Nota', exact: true })).toBeVisible();
+
+    // The line is on that card only: no other card of the session repeats it.
+    await expect(main.getByText(/Banda morada por defecto/)).toHaveCount(1);
+    const ups = page.getByRole('button', { name: /^Subir / });
+    const count = await ups.count();
+    expect(count, 'exercises in Lower Full').toBeGreaterThan(1);
+    const names: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const snapshot = await ups.nth(i).ariaSnapshot();
+      names.push(/button "Subir (.+?)"/.exec(snapshot)?.[1] ?? snapshot);
+    }
+    const otherName = names.find((n) => n !== 'Sentadilla hack con banda');
+    expect(otherName, 'another exercise of Lower Full').toBeTruthy();
+    const other = await exCard(page, otherName ?? '');
+    await expect(other).not.toContainText('Banda morada');
+
+    // A session of another routine does not show it.
+    await backToToday(page);
+    await startRoutine(page, 'Push');
+    await expect(main).not.toContainText('Banda morada por defecto');
+  });
+
   test('AC-SESSION-22 · English and dark mode at 390 px: no Spanish, no sideways scroll, every row control visible, axe in both themes', async ({
     page,
     browserName,

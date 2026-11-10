@@ -255,6 +255,7 @@ export function ExerciseCard({
       ) : (
         <>
           <p className={styles.muted}>{planLine}</p>
+          {item.note && <p className={styles.routineNote}>{resolveText(t, item.note)}</p>}
           {hint && <p className={styles.hint}>{hint}</p>}
           <p className={styles.muted}>{lastTime}</p>
 

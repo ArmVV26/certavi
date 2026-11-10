@@ -245,10 +245,41 @@ describe('Calendar · week panel', () => {
     ).toBeDefined();
 
     await user.click(closed);
-    expect(screen.getByRole('switch', { name: 'Semana de descarga' })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: '3' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'Semana de descarga' })).toBeEnabled();
+    expect(screen.getByRole('switch', { name: 'Semana con senderismo' })).toBeEnabled();
     expect(screen.getByText(/^Semana cerrada: el plan quedó guardado el /)).toBeInTheDocument();
     // The current week is never closed.
     expect(week(/^Semana 2.{1,5}8 nov$/)).toBeVisible();
+  });
+
+  it('marks a closed week as deload and recomputes its planned sets', async () => {
+    const db = await seededDb();
+    await createRepositories(db).weekPlan.put(
+      makeWeekPlan({
+        week: '2026-10-26',
+        closedAt: 5,
+        plannedSetsByGroup: { ...emptyGroupCounts(), chest: 7 },
+      }),
+    );
+    const { user } = await openCalendar({ db });
+    await user.click(
+      await screen.findByRole('button', { name: /^Semana 26 oct.{1,5}1 nov · Cerrada$/ }),
+    );
+    expect(screen.getByText('0 / 7')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('switch', { name: 'Semana de descarga' }));
+    expect(
+      await screen.findByText('Semana de descarga: las sesiones nuevas salen reducidas'),
+    ).toBeVisible();
+    expect(
+      await screen.findByRole('button', {
+        name: /^Semana 26 oct.{1,5}1 nov · Descarga · Cerrada$/,
+      }),
+    ).toBeVisible();
+    expect(screen.queryByText('0 / 7')).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: '3' })).toBeDisabled();
+    expect(await db.weekPlans.get('week_2026-10-26')).toMatchObject({ deload: true, closedAt: 5 });
   });
 
   it('keeps the frozen plan when a routine changes later', async () => {

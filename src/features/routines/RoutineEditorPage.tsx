@@ -22,12 +22,13 @@ import { saveRoutine } from '../../data/routines';
 import { resolveText } from '../../i18n/text';
 import { Button } from '../../ui/Button';
 import { buttonClasses } from '../../ui/buttonClasses';
+import { Chip } from '../../ui/Chip';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import { EmptyState } from '../../ui/EmptyState';
 import { Notice } from '../../ui/Notice';
 import { useToast } from '../../ui/ToastContext';
 import { AddExerciseSheet } from '../session/AddExerciseSheet';
-import { repsFieldId, rirFieldId } from './fieldIds';
+import { exerciseTitleId, repsFieldId, rirFieldId } from './fieldIds';
 import { RoutineExerciseEditor } from './RoutineExerciseEditor';
 import styles from './RoutineEditorPage.module.css';
 import { summaryText } from './routineText';
@@ -166,6 +167,12 @@ function Editor({ routine, catalog }: { routine: Routine; catalog: CatalogView }
     }
   };
 
+  const jumpTo = (exerciseId: string) => {
+    const heading = document.getElementById(exerciseTitleId(exerciseId));
+    heading?.scrollIntoView({ block: 'start' });
+    heading?.focus({ preventScroll: true });
+  };
+
   const issuesOf = (exerciseId: string) => shownIssues.filter((i) => i.exerciseId === exerciseId);
 
   return (
@@ -196,6 +203,25 @@ function Editor({ routine, catalog }: { routine: Routine; catalog: CatalogView }
 
       {items.length === 0 && (
         <p className={styles.error}>{t('routines.edit.errors.noExercises')}</p>
+      )}
+
+      {items.length > 0 && (
+        <nav aria-label={t('routines.edit.jump')}>
+          <ol className={styles.chips}>
+            {items.map((item, index) => (
+              <li key={item.exerciseId}>
+                <Chip
+                  className={styles.chip}
+                  onClick={() => {
+                    jumpTo(item.exerciseId);
+                  }}
+                >
+                  {String(index + 1)} {nameOf(item.exerciseId)}
+                </Chip>
+              </li>
+            ))}
+          </ol>
+        </nav>
       )}
 
       <ul className={styles.list} aria-label={t('routines.edit.list')}>

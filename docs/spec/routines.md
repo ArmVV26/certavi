@@ -51,16 +51,24 @@ changes anything. Elements, in this order:
 - a link **"Editar" / "Edit"** (to `/routines/<id>/edit`) and, only when the routine is edited, a
   button **"Restaurar original" / "Restore original"** (§2.4);
 - a section **"Ejercicios" / "Exercises"** with an ordered list named **"Ejercicios de la rutina"
-  / "Routine exercises"**, in the routine's order. Each item shows:
-  - the exercise name, a link to its detail page (`/exercises/<exerciseId>`), and the tag
-    **"Opcional" / "Optional"** when it is optional;
+  / "Routine exercises"**, in the routine's order. Each item is a **card** (surface with border
+  and rounded corners, like the exercise cards of a session) that shows:
+  - the exercise name as a heading (level 4, plain text — not a link and not underlined) and the
+    tag **"Opcional" / "Optional"** when it is optional;
+  - its muscle group, for example "Pecho" / "Chest";
   - its scheme as text, built from its blocks joined by " + " and followed by " · RIR <rir>" if
     there is a RIR. A block is "<n> aprox." / "<n> appr." (approach), "<n> top", "<n> back-off",
     "<n> bilbo" — each followed by its reps when it has some, for example "1 top 6-8" — or
     "<n> × <reps>" for straight sets. Examples: **"1 top 6-8 + 2 back-off 8-10 · RIR 1-2"**,
     **"3 × 10-15 · RIR 1-2"**, **"1 aprox. + 1 top 6-8 + 2 back-off 8-10 · RIR 1-2"** (Spanish;
     English "1 appr. + …");
-  - the note of the exercise in the routine, if it has one.
+  - the note of the exercise in the routine, if it has one;
+  - a link that looks like a button, **"Ver ficha" / "View sheet"** with a chevron, to its detail
+    page (`/exercises/<exerciseId>`). Its accessible name is **"Ver ficha de <ejercicio>" / "View
+    <exercise> sheet"**. It is at least 44 px high.
+
+The note of an exercise in the routine is also shown in that exercise's card during a session
+(session.md §2.2).
 
 A routine without exercises (it cannot be saved like that, but it could arrive from another
 device) shows **"Esta rutina no tiene ejercicios" / "This routine has no exercises"**.
@@ -75,6 +83,13 @@ kept in the page only: **nothing is saved until "Guardar"**. Elements, in this o
 - the buttons **"Guardar" / "Save"** and **"Descartar" / "Discard"**;
 - the summary line **"<n> ejercicios · <m> series"** of the routine _as being edited_, which
   changes with every edit;
+- a navigation **"Ir a un ejercicio" / "Jump to an exercise"** with one chip per exercise, in the
+  routine's order, numbered from 1: **"1 Press inclinado con mancuernas"**, **"2 …"**. The chips
+  wrap onto several rows so that **all of them are visible without scrolling sideways**. Tapping a
+  chip scrolls the page to that exercise's card (below the sticky header) and moves the focus to
+  its heading. The chips follow the list as it is being edited: moving an exercise changes the
+  order and the numbers, adding one adds its chip at the end, removing one takes its chip out (and
+  "Deshacer" puts it back in its place). Nothing is saved or marked as changed by tapping a chip;
 - the list **"Ejercicios de la rutina" / "Routine exercises"**; each exercise is a group named
   after the exercise (heading level 3) with:
   - the buttons **"Subir <ejercicio>" / "Move <exercise> up"**, **"Bajar <ejercicio>" / "Move
@@ -161,7 +176,9 @@ And Today still shows no session started (opening a routine never creates a sess
 
 **AC-ROUTINES-03 · From the viewer to an exercise**
 Given the viewer of "Push"
-When I tap an exercise name
+Then each exercise is a card with its name as heading, its group, its scheme and a "Ver ficha"
+button-like link (the names are not links)
+When I tap "Ver ficha de Aperturas en máquina"
 Then I am on the detail page of that exercise, and its "En rutinas" section lists "Push".
 
 **AC-ROUTINES-04 · Add an exercise**
@@ -282,6 +299,19 @@ Then I see "No encontramos esta rutina" and a link back to the list.
 **AC-ROUTINES-21 · Appearance**
 The list, the viewer and the editor work in light and dark mode, in English (with the texts of §2)
 and at 390 px wide without horizontal scrolling, and pass the axe accessibility checks.
+
+**AC-ROUTINES-22 · Jump chips**
+Given the editor of "Push" (7 exercises)
+Then the navigation "Ir a un ejercicio" shows 7 chips "1 Press inclinado con mancuernas" …
+"7 …", all visible at 390 px wide without horizontal scroll
+When I tap the chip of the last exercise
+Then that exercise's card is in view (not under the header) and its heading has the focus
+And nothing was changed (leaving the page does not ask to discard)
+When I tap "Bajar Press inclinado con mancuernas"
+Then the first chip is now "1 Press de pecho en máquina vertical" and "2 Press inclinado con
+mancuernas"
+When I remove an exercise the chips lose it and renumber, and "Deshacer" restores it
+When I add "Remo en T" it appears as the last chip.
 
 ## 4. Edge cases
 
