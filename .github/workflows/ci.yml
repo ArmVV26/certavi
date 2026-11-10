@@ -39,6 +39,11 @@ jobs:
       - name: Unused code
         run: npm run knip
 
+      # Known vulnerabilities (high or critical) in the runtime dependencies that ship to users.
+      # Dev-only packages are skipped: they never reach the browser or the function.
+      - name: Audit runtime dependencies
+        run: npm audit --audit-level=high --omit=dev
+
       # Runs every unit and component test once, and fails if src/domain coverage drops below
       # 90 % (thresholds in vite.config.ts).
       - name: Unit and component tests, with domain coverage
