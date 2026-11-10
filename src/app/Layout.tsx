@@ -5,7 +5,9 @@ import { useCloseFinishedWeeks } from '../data/useCloseFinishedWeeks';
 import { useToday } from '../features/today/useToday';
 import { SyncIndicator } from '../features/settings/SyncIndicator';
 import { ThemeToggle } from '../theme/ThemeToggle';
+import { cx } from '../ui/cx';
 import { Icon } from '../ui/Icon';
+import { Logo } from '../ui/Logo';
 import styles from './Layout.module.css';
 import { NAV_ITEMS, isNavItemActive, titleKeyOf } from './navigation';
 import { UpdatePrompt } from './pwa/UpdatePrompt';
@@ -17,7 +19,7 @@ import { UpdatePrompt } from './pwa/UpdatePrompt';
 export function Layout() {
   const { t } = useTranslation();
   const matches = useMatches();
-  const { pathname } = useLocation();
+  const { pathname, key } = useLocation();
   const title = t(titleKeyOf(matches));
   const headingRef = useRef<HTMLHeadingElement>(null);
   const isFirstPage = useRef(true);
@@ -45,6 +47,7 @@ export function Layout() {
       </a>
       <div className={styles.top}>
         <header className={styles.header}>
+          <Logo className={styles.logo} />
           <h1 ref={headingRef} tabIndex={-1} className={styles.title}>
             {title}
           </h1>
@@ -69,7 +72,14 @@ export function Layout() {
         </header>
         <UpdatePrompt />
       </div>
-      <main id="main" tabIndex={-1} className={styles.main}>
+      {/* Keyed by path: each section fades in on arrival. The first page does not (its key is
+          "default"), so the app opens without an animation. */}
+      <main
+        key={pathname}
+        id="main"
+        tabIndex={-1}
+        className={cx(styles.main, key !== 'default' && styles.arriving)}
+      >
         <Outlet />
       </main>
     </div>
