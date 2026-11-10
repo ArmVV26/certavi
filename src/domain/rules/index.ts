@@ -7,6 +7,7 @@ export * from './dayPlan';
 export * from './deload';
 export * from './exerciseEdit';
 export * from './exerciseFilter';
+export * from './exerciseSetup';
 export * from './history';
 export * from './progress';
 export * from './progression';

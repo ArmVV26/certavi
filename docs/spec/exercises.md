@@ -75,18 +75,21 @@ Sections, in this order:
    must be between 0,25 and 50 kg; otherwise the field shows **"El incremento debe estar entre
    0,25 y 50 kg" / "The step must be between 0.25 and 50 kg"** and nothing is saved. The step is
    what the progression suggestions add to the weight (see rules.md).
-4. **"Récords" / "Records"** (only if the exercise has been logged): **"1RM estimado" /
+4. **"Ajustes de la máquina" / "Machine settings"**: the positions the user sets on the bench or
+   machine for this exercise (backrest, seat, pin…), see §2.7. It works for every exercise, seed or
+   not.
+5. **"Récords" / "Records"** (only if the exercise has been logged): **"1RM estimado" /
    "Estimated 1RM"**, **"Peso máximo" / "Max weight"** (weight × reps) and **"Mejor volumen" /
    "Best volume"**, each with its value in kg and the date, and **"Mejores marcas por repeticiones"
    / "Best marks by reps"**: a list "<n> reps · <kg> kg", one per repetition count, from the
    rules in rules.md (warm-up and approach sets and deload weeks never set records).
-5. **"Historial" / "History"** (only if the exercise has been logged): the sessions where it
+6. **"Historial" / "History"** (only if the exercise has been logged): the sessions where it
    has effective sets, **newest first**. Each entry is a link to that session
    (`/session/<id>`) showing the date and its effective sets as "<kg> × <reps>" separated by
    " · "; with the tags **"Descarga" / "Deload"** and **"No cuenta" / "Does not count"** when they
    apply.
 
-An exercise that has never been logged shows, instead of sections 4 and 5, the message **"Aún no
+An exercise that has never been logged shows, instead of sections 5 and 6, the message **"Aún no
 has registrado este ejercicio" / "You haven't logged this exercise yet"**.
 
 For an id that does not exist the page shows **"No encontramos este ejercicio" / "We couldn't
@@ -158,6 +161,33 @@ exercise"** at the top. It opens the form (§2.4); when the exercise is saved it
 end of that session** and the app returns to the session with the toast **"Ejercicio creado y
 añadido a la sesión" / "Exercise created and added to the session"**. "Cancelar" returns to the
 session. What was typed in the session and not saved yet is kept (session.md §4).
+
+### 2.7 Machine settings
+
+Each exercise can keep up to **4 settings**: a short name and a value, for example "Respaldo" →
+"3", "Asiento" → "5", "Pin" → "7". They are meant to be written once and read in the gym, so the
+machine is set up in seconds. They belong to the exercise, not to a session or a routine, and they
+are part of the exercise record (they sync and are in the full backup).
+
+On the detail page the card **"Ajustes de la máquina" / "Machine settings"** shows:
+
+- with no settings, the text **"Aún no has anotado ajustes" / "No settings noted yet"** and a button
+  **"Añadir ajustes" / "Add settings"**;
+- with settings, a list "<name>: <value>" (for example "Respaldo: 3") and a button **"Editar
+  ajustes" / "Edit settings"**.
+
+The button opens the editor inside the card (the same editor as in the session, session.md §2.2):
+one row per setting with the fields **"Nombre del ajuste <n>" / "Setting <n> name"** (up to 24
+characters) and **"Valor del ajuste <n>" / "Setting <n> value"** (up to 12 characters), a button
+**"Quitar ajuste <n>" / "Remove setting <n>"** per row, a button **"Añadir ajuste" / "Add setting"**
+(disabled when there are 4) and **"Guardar ajustes" / "Save settings"** and **"Cancelar" /
+"Cancel"**. Saving shows the toast **"Ajustes guardados" / "Settings saved"**.
+
+Rules when saving: spaces at the ends are ignored; a row left completely empty is dropped; a row
+with a value but no name shows **"Escribe el nombre del ajuste" / "Enter the setting name"** and a
+row with a name but no value shows **"Escribe el valor del ajuste" / "Enter the setting value"**
+(under the wrong field, linked to it for screen readers); nothing is saved while there is an error.
+Saving with no rows removes all the settings.
 
 ## 3. Acceptance criteria
 
@@ -284,6 +314,34 @@ Given the language is English and the theme dark
 Then every text of this spec appears in English, the layout fits 390 px without horizontal scroll
 and there are no accessibility violations on the catalog, the detail page and the form.
 
+**AC-EXERCISES-21 · Add machine settings**
+Given the detail page of a seed exercise with no settings
+Then the card "Ajustes de la máquina" says "Aún no has anotado ajustes"
+When I press "Añadir ajustes", type "Respaldo" and "3" in the first row, press "Añadir ajuste", type
+"Asiento" and "5" in the second row and press "Guardar ajustes"
+Then I see "Ajustes guardados" and the card lists "Respaldo: 3" and "Asiento: 5"
+And after reloading the page they are still there.
+
+**AC-EXERCISES-22 · Edit and remove machine settings**
+Given an exercise with the settings "Respaldo: 3" and "Asiento: 5"
+When I press "Editar ajustes", change the value of the first one to 4 and press "Guardar ajustes"
+Then the card lists "Respaldo: 4" and "Asiento: 5"
+And when I remove both rows and save, the card says "Aún no has anotado ajustes" again
+And "Cancelar" closes the editor without changing anything.
+
+**AC-EXERCISES-23 · Machine settings rules**
+Given the editor of the machine settings
+When I type a value without a name and press "Guardar ajustes"
+Then I see "Escribe el nombre del ajuste", the name field has the focus and nothing is saved
+And with a name and no value I see "Escribe el valor del ajuste"
+And "Añadir ajuste" is disabled when there are 4 rows, and the fields do not accept more than 24
+(name) or 12 (value) characters.
+
+**AC-EXERCISES-24 · Settings survive editing the exercise**
+Given an exercise I created with machine settings
+When I edit its name and save the form
+Then its machine settings are unchanged.
+
 ## 4. Edge cases
 
 - **Without connection:** creating, editing, archiving and changing the step work the same; they
@@ -298,11 +356,15 @@ and there are no accessibility violations on the catalog, the detail page and th
 - **A very long name** wraps to several lines in the list and the detail page.
 - **Archived exercise opened by its URL** works (it shows the tag and "Desarchivar").
 - **Seed exercises whose step was changed** keep their custom step after the app is updated.
+- **Machine settings on seed exercises** are kept after the app is updated, like the step.
+- **Two devices that edit the settings** of the same exercise: the last change wins as a whole
+  record. An old version of the app that edits the exercise can drop the settings.
 
 ## 5. Out of scope
 
 - Deleting an exercise (archiving is the way; the history is never lost).
-- Renaming, changing or archiving seed exercises, and photos of the machines (backlog v2).
+- Renaming or archiving seed exercises (their weight step and machine settings can change), and
+  photos of the machines (backlog v2).
 - Choosing a default scheme with a top set and back-off sets when creating an exercise (the form
   creates straight sets; the routine editor can build any scheme).
 - The evolution chart of the exercise (Phase 7, with the rest of the charts).

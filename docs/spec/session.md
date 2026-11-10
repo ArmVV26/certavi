@@ -78,6 +78,9 @@ down: those buttons are disabled). They stay visible when the card is folded (§
   por defecto" on "Sentadilla hack con banda"): the note text, in muted italics, right under the
   plan line. It is the note written in the routine (routines.md), different from the **"Nota"**
   button of the card, which is the user's note of that session. Exercises added by hand have none.
+- **Machine settings** (only when the exercise has settings, exercises.md §2.7): one line with
+  them as "<name> <value>" separated by " · ", for example **"Respaldo 3 · Asiento 5"**, under
+  the routine note. They are the settings of the exercise, the same in every session.
 - **Progression hint** (only when there is a last time; texts for the rule results of
   [rules.md](rules.md) §3):
   - go up: "Sube a 65 kg" / "Go up to 65 kg";
@@ -129,13 +132,20 @@ down: those buttons are disabled). They stay visible when the card is folded (§
   saved), "Back-off sugerido: 57,5 kg (−10 % del top)" / "Suggested back-off: 57.5 kg (−10 % of
   top)". It updates while the top weight is typed. It is only a text: it does not fill any field.
 - **Buttons:** "+ Calentamiento" / "+ Warm-up", "+ Serie extra" / "+ Extra set", "Nota" /
-  "Note" (reads "Nota ✎" / "Note ✎" when the exercise has a note) and **"Quitar ejercicio" /
+  "Note" (reads "Nota ✎" / "Note ✎" when the exercise has a note), **"Ajustes" / "Settings"**
+  (reads "Ajustes ✎" / "Settings ✎" when the exercise has machine settings; it opens the sheet
+  below) and **"Quitar ejercicio" /
   "Remove exercise"** (danger; §2.7). An extra set is an effective row with the caption "Extra"
   that is added at the bottom.
 - **Note area** (opened by "Nota"): a text area **"Nota del ejercicio" / "Exercise note"**, a
   checkbox **"No cuenta para la progresión" / "Does not count for progression"** and, when it
   is checked, a choice of reason: "Máquina ocupada" / "Machine busy", "Faltan discos" / "Missing
   plates", "Otra banda" / "Other band", "Otro" / "Other".
+- **Machine settings sheet:** a sheet titled **"Ajustes de la máquina" / "Machine settings"**
+  with the editor of exercises.md §2.7 (rows "Nombre del ajuste <n>" / "Valor del ajuste <n>",
+  "Añadir ajuste", "Quitar ajuste <n>", "Guardar ajustes"). Saving closes the sheet, shows
+  "Ajustes guardados" / "Settings saved" and updates the line of the card; the typed sets of the
+  session are not touched.
 - **Folding:** a card with all its working rows saved folds by itself when the last one is saved
   and shows the one-line summary of its effective sets ("62,5 × 8 · 57,5 × 10"). Tapping the
   heading unfolds it. When the session opens, completed cards are folded and the others
@@ -612,6 +622,20 @@ Given a "Lower Full" session
 Then the card of "Sentadilla hack con banda" shows its routine note ("Banda morada por defecto. Si usas
 otra, apunta el color: …") under its plan line
 And the card of an exercise without a routine note shows no such line.
+
+**AC-SESSION-38 · Machine settings in the session**
+Given a session with "Press de pecho en máquina" and no settings for it
+Then its card has the button "Ajustes" and no settings line
+When I press "Ajustes", type "Respaldo" / "3" and "Asiento" / "5" and press "Guardar ajustes"
+Then the sheet closes, I see "Ajustes guardados", the card shows "Respaldo 3 · Asiento 5" and the
+button reads "Ajustes ✎"
+And the detail page of that exercise lists "Respaldo: 3" and "Asiento: 5"
+And a typed, unsaved weight in that card is still there.
+
+**AC-SESSION-39 · Machine settings are the same in every session**
+Given "Respaldo 3 · Asiento 5" saved for an exercise
+When I open another session that has that exercise
+Then its card shows the same line.
 
 ## 4. Edge cases
 

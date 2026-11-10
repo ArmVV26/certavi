@@ -616,6 +616,28 @@
       "mine": "Propio",
       "archived": "Archivado"
     },
+    "setup": {
+      "title": "Ajustes de la máquina",
+      "empty": "Aún no has anotado ajustes",
+      "add": "Añadir ajustes",
+      "edit": "Editar ajustes",
+      "item": "{{label}}: {{value}}",
+      "labelField": "Nombre del ajuste {{n}}",
+      "valueField": "Valor del ajuste {{n}}",
+      "remove": "Quitar ajuste {{n}}",
+      "addRow": "Añadir ajuste",
+      "save": "Guardar ajustes",
+      "cancel": "Cancelar",
+      "saved": "Ajustes guardados",
+      "failed": "No se pudieron guardar los ajustes. Inténtalo de nuevo.",
+      "errors": {
+        "label-empty": "Escribe el nombre del ajuste",
+        "value-empty": "Escribe el valor del ajuste",
+        "label-too-long": "El nombre puede tener hasta {{max}} caracteres",
+        "value-too-long": "El valor puede tener hasta {{max}} caracteres",
+        "too-many": "Puedes anotar hasta {{max}} ajustes"
+      }
+    },
     "errors": {
       "name-empty": "Escribe un nombre",
       "name-too-long": "El nombre puede tener hasta {{max}} caracteres",
@@ -1088,6 +1110,8 @@
       "addExtra": "+ Serie extra",
       "note": "Nota",
       "noteFilled": "Nota ✎",
+      "setup": "Ajustes",
+      "setupFilled": "Ajustes ✎",
       "summary": "{{weight}} × {{reps}}",
       "moveUp": "Subir {{name}}",
       "moveDown": "Bajar {{name}}",

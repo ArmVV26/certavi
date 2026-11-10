@@ -52,7 +52,7 @@ interface SyncEnvelope {
   serverSeq?: number; // assigned by the server; clients never send it (ignored if they do)
 }
 
-type SyncRecord = SyncEnvelope & Record<string, unknown>; // payload fields are flat
+type SyncRecord = SyncEnvelope & Record<string, unknown>; // payload fields are top-level; values may be nested JSON
 ```
 
 Validation on the server (per record): `id` is a non-empty string of at most 120 characters,
@@ -238,3 +238,15 @@ Data exported from gym_app is converted by the legacy importer, not by the serve
 
 Breaking changes to this contract create **`/api/v2`**; v1 stays available until every client
 has migrated. Additive changes (new optional response fields) do not bump the version.
+
+Additive changes to the **record payloads** do not bump it either, because the server never
+interprets them. Example: `exercise` records gained the optional field
+`setup?: { label: string (1-24 chars), value: string (1-12 chars) }[]` (at most 4 items), the
+machine settings of the exercise. A backend stores and returns it like any other payload field.
+A client that does not know the field drops it when it rewrites the exercise (archiving it,
+changing its step…). That rewrite carries a newer `updatedAt`, so under last-write-wins it also
+replaces the settings on the server and on the other devices: the loss is permanent until the user
+types them again. It is accepted because there is a single user who updates the app on every
+device. The limits of `setup` (4 items, 24 and 12 characters) must never be narrowed: a client
+rejects a record whose `setup` breaks its own limits, so a wider value written by a newer client
+would make an older one discard the whole exercise.
