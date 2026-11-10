@@ -18,7 +18,7 @@ import { expectTheme, gotoReady, h1, mainNav, NAV_EN, NAV_ES, setLanguage } from
 // playwright.config.ts blocks service workers for every spec; this one needs the real thing.
 test.use({ serviceWorkers: 'allow' });
 
-const GYM_SAMPLE = path.join(process.cwd(), 'tests', 'fixtures', 'gym-app-sample.json');
+const SAMPLE = path.join(process.cwd(), 'tests', 'fixtures', 'certavi-backup-sample.json');
 const SYNC_PATH = '/api/v1/sync';
 
 /** One timeout for every wait on the app. */
@@ -133,32 +133,32 @@ async function saveKey(page: Page, key: string): Promise<void> {
   await button(page, 'Guardar clave').click();
 }
 
-/** Imports a gym_app file from Settings and waits for "Registros importados: n". */
-async function importGym(page: Page, file: string, n: number): Promise<void> {
+/** Imports a Certavi backup from Settings and waits for "Registros importados: n". */
+async function importBackup(page: Page, file: string, n: number): Promise<void> {
   const chooser = page.waitForEvent('filechooser');
-  await button(page, 'Importar desde la app anterior').click();
+  await button(page, 'Importar copia de Certavi').click();
   await (await chooser).setFiles(file);
   const dialog = page
-    .getByRole('dialog', { name: 'Importar desde la app anterior', exact: true })
-    .or(page.getByRole('alertdialog', { name: 'Importar desde la app anterior', exact: true }));
+    .getByRole('dialog', { name: 'Importar copia de Certavi', exact: true })
+    .or(page.getByRole('alertdialog', { name: 'Importar copia de Certavi', exact: true }));
   await expect(dialog).toBeVisible();
   await button(dialog, 'Importar').click();
   await expect(toast(page, `Registros importados: ${String(n)}`)).toBeVisible();
   await expect(dialog).toBeHidden();
 }
 
-/** The gym_app sample plus one new activity (one more record to import). */
+/** The backup sample plus one new activity (one more record to import). */
 function oneActivityFile(testInfo: TestInfo, id: string, note: string): string {
-  const sample = JSON.parse(readFileSync(GYM_SAMPLE, 'utf8')) as {
+  const sample = JSON.parse(readFileSync(SAMPLE, 'utf8')) as {
     records: Record<string, unknown>[];
   };
   sample.records.push({
     id,
-    t: 'act',
-    u: 1792800000000,
+    type: 'activity',
+    updatedAt: 1792800000000,
     date: '2026-10-27',
-    kind: 'futbol',
-    min: 45,
+    kind: 'football',
+    minutes: 45,
     note,
   });
   const file = testInfo.outputPath(`${id}.json`);
@@ -272,7 +272,7 @@ test.describe('pwa', () => {
     context,
   }) => {
     await openInstalled(page, '/settings', 'Ajustes');
-    await importGym(page, GYM_SAMPLE, 29);
+    await importBackup(page, SAMPLE, 29);
     await expect(rowValue(page, 'Sesiones')).toHaveText('3');
     await expect(rowValue(page, 'Series')).toHaveText('11');
 
@@ -343,7 +343,7 @@ test.describe('pwa', () => {
     const note = 'E2E pwa offline change';
 
     await openInstalled(page, '/settings', 'Ajustes');
-    await importGym(page, GYM_SAMPLE, 29);
+    await importBackup(page, SAMPLE, 29);
     const beforeKey = syncCount(server);
     await saveKey(page, E2E_SYNC_KEY);
     await expect(toast(page, 'Clave guardada.')).toBeVisible();
@@ -353,7 +353,7 @@ test.describe('pwa', () => {
     await context.setOffline(true);
     await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sin conexión');
     const offlineCount = syncCount(server);
-    await importGym(page, oneActivityFile(testInfo, 'act_e2e_pwa_0001', note), 1);
+    await importBackup(page, oneActivityFile(testInfo, 'act_e2e_pwa_0001', note), 1);
     await expect(indicator(page)).toHaveAccessibleName(
       'Sincronización: Sin conexión · 1 pendiente',
     );
