@@ -52,6 +52,9 @@ export default defineConfig({
     // The service worker would cache the app between tests and hide failures; only
     // tests/e2e/pwa.spec.ts turns it on with `test.use({ serviceWorkers: 'allow' })`.
     serviceWorkers: 'block',
+    // The app fades sections in (src/app/Layout.module.css). With reduced motion the durations
+    // are 0 ms, so a test (or an axe scan) never sees a half-faded page.
+    reducedMotion: 'reduce',
   },
   projects: [
     {

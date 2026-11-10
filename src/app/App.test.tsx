@@ -77,7 +77,10 @@ describe('app shell', () => {
     await waitFor(() => {
       expect(heading()).toHaveTextContent(title);
     });
-    expect(document.title).toBe(`${title} · Certavi`);
+    // The tab title is set by an effect right after the heading is drawn: wait for it too.
+    await waitFor(() => {
+      expect(document.title).toBe(`${title} · Certavi`);
+    });
   });
 
   it('navigates with the tab bar and moves focus to the new title', async () => {
@@ -93,6 +96,29 @@ describe('app shell', () => {
       'page',
     );
     expect(within(nav()).getByRole('link', { name: 'Hoy' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('shows the logo as decoration, to the left of the title', () => {
+    renderApp('/');
+    const header = heading().closest('header');
+    const logo = header?.querySelector('svg');
+    expect(logo).toHaveAttribute('aria-hidden', 'true');
+    // Before the title in reading order, and it adds no name of its own to the header.
+    expect(logo?.compareDocumentPosition(heading())).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(within(header as HTMLElement).queryByRole('img')).not.toBeInTheDocument();
+    expect(within(header as HTMLElement).queryByRole('link', { name: /certavi/i })).toBeNull();
+  });
+
+  it('fades a section in when it opens, but not the first page', async () => {
+    const user = userEvent.setup();
+    renderApp('/');
+    const main = () => screen.getByRole('main');
+    expect(main().className).not.toMatch(/arriving/);
+
+    await user.click(within(nav()).getByRole('link', { name: 'Calendario' }));
+
+    expect(main().className).toMatch(/arriving/);
+    expect(heading()).toHaveTextContent('Calendario');
   });
 
   it('does not link the component catalog from the tab bar', () => {

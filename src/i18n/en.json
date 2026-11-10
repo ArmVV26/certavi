@@ -257,6 +257,11 @@
     },
     "developer": "Developer",
     "uiCatalog": "Component catalog",
+    "about": {
+      "title": "About",
+      "version": "Version {{version}}",
+      "source": "Source code on GitHub"
+    },
     "data": {
       "title": "Data",
       "intro": "Everything is saved on this device first.",

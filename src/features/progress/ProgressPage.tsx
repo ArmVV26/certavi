@@ -5,6 +5,7 @@ import { useDatabase } from '../../data/DatabaseContext';
 import { readProgress } from '../../data/progress';
 import { useLocale } from '../../i18n/LocaleContext';
 import { EmptyState } from '../../ui/EmptyState';
+import { Stat, StatGrid } from '../../ui/Stat';
 import { useToday } from '../today/useToday';
 import { weekRange } from '../today/weekRange';
 import { ExerciseCard } from './ExerciseCard';
@@ -62,7 +63,7 @@ function Summary({ model }: { model: ProgressModel }) {
   const { locale } = useLocale();
   const { done, planned } = model.setsThisWeek;
   return (
-    <dl className={styles.stats}>
+    <StatGrid>
       {model.weekNumber !== null && (
         <Stat
           label={t('progress.summary.week')}
@@ -85,16 +86,6 @@ function Summary({ model }: { model: ProgressModel }) {
         value={String(model.recordsThisMonth)}
         note={t('progress.summary.recordsNote')}
       />
-    </dl>
-  );
-}
-
-function Stat({ label, value, note }: { label: string; value: string; note: string }) {
-  return (
-    <div className={styles.stat}>
-      <dt className={styles.statLabel}>{label}</dt>
-      <dd className={styles.statValue}>{value}</dd>
-      <dd className={styles.statNote}>{note}</dd>
-    </div>
+    </StatGrid>
   );
 }

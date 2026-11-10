@@ -1,9 +1,12 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import {
   NAV_ES,
   NAV_PATHS,
   PAGES,
   boxOf,
+  expectTheme,
   gotoReady,
   h1,
   hasHorizontalScroll,
@@ -12,6 +15,124 @@ import {
   viewportOf,
   type Box,
 } from './helpers';
+
+interface LogoInfo {
+  found: boolean;
+  decorative: boolean;
+  inLink: boolean;
+  beforeTitle: boolean;
+  /** Distance (px) from the right edge of the logo to the left edge of the title text. */
+  gapToTitle: number;
+  /** Vertical centre of the logo is inside the vertical span of the title. */
+  sameRow: boolean;
+  width: number;
+  height: number;
+  insideViewport: boolean;
+}
+
+/** The logo of the header: the first image or drawing in the header that is not a button or a bar link. */
+async function logoInfo(page: Page): Promise<LogoInfo> {
+  return page.getByRole('banner').evaluate((banner): LogoInfo => {
+    const empty: LogoInfo = {
+      found: false,
+      decorative: false,
+      inLink: false,
+      beforeTitle: false,
+      gapToTitle: NaN,
+      sameRow: false,
+      width: 0,
+      height: 0,
+      insideViewport: false,
+    };
+    const logo = Array.from(banner.querySelectorAll('svg, img')).find(
+      (el) => !el.closest('nav') && !el.closest('button'),
+    );
+    const title = document.querySelector('h1');
+    if (!logo || !title) return empty;
+    const hidden =
+      logo.closest('[aria-hidden="true"]') !== null ||
+      ['none', 'presentation'].includes(logo.getAttribute('role') ?? '');
+    const named =
+      !!logo.getAttribute('aria-label') ||
+      !!logo.getAttribute('aria-labelledby') ||
+      !!logo.querySelector('title') ||
+      !!logo.getAttribute('alt');
+    const range = document.createRange();
+    range.selectNodeContents(title);
+    const text = range.getBoundingClientRect();
+    const box = logo.getBoundingClientRect();
+    const mid = box.top + box.height / 2;
+    return {
+      found: true,
+      decorative: hidden || (!named && logo.getAttribute('role') !== 'img'),
+      inLink: logo.closest('a') !== null,
+      beforeTitle: (logo.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
+      gapToTitle: text.left - box.right,
+      sameRow: mid >= text.top && mid <= text.bottom,
+      width: box.width,
+      height: box.height,
+      insideViewport: box.left >= 0 && box.right <= window.innerWidth && box.top >= 0,
+    };
+  });
+}
+
+async function expectLogoOnEverySection(page: Page): Promise<void> {
+  for (const p of PAGES.slice(0, 5)) {
+    await gotoReady(page, p.path, p.es);
+    const logo = await logoInfo(page);
+    expect(logo.found, `logo in the header of ${p.path}`).toBe(true);
+    expect(logo.decorative, `logo of ${p.path} is hidden from screen readers`).toBe(true);
+    expect(logo.inLink, `logo of ${p.path} is not a link`).toBe(false);
+    expect(logo.beforeTitle, `logo of ${p.path} comes before the title`).toBe(true);
+    expect(logo.gapToTitle, `logo of ${p.path} is to the left of the title`).toBeGreaterThanOrEqual(
+      -1,
+    );
+    expect(logo.sameRow, `logo of ${p.path} is on the title row`).toBe(true);
+    expect(logo.width, `logo of ${p.path} has a size`).toBeGreaterThanOrEqual(12);
+    expect(logo.height).toBeGreaterThanOrEqual(12);
+    expect(logo.insideViewport, `logo of ${p.path} is on screen`).toBe(true);
+    // Not announced: no image in the header's accessibility tree.
+    await expect(page.getByRole('banner').getByRole('img')).toHaveCount(0);
+  }
+}
+
+/** Waits until the page of `name` is whole: opaque, uncovered, with content, no running fade. */
+async function expectPageSettled(page: Page, name: string): Promise<void> {
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const title = document.querySelector('h1');
+          const main = document.querySelector('main');
+          if (!title || !main) return { ok: false, why: 'no title or main' };
+          let opacity = 1;
+          for (let el: Element | null = title; el; el = el.parentElement) {
+            opacity *= parseFloat(getComputedStyle(el).opacity);
+          }
+          const box = title.getBoundingClientRect();
+          const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+          const fading = document.getAnimations().filter((a) => {
+            const effect = a.effect as KeyframeEffect | null;
+            return (
+              a.playState === 'running' &&
+              (effect?.pseudoElement ?? '').startsWith('::view-transition')
+            );
+          }).length;
+          const why = [
+            opacity < 0.99 ? `opacity ${String(opacity)}` : '',
+            hit && (hit === title || title.contains(hit)) ? '' : 'title covered',
+            main.innerText.trim().length < 3 ? 'main is blank' : '',
+            getComputedStyle(main).visibility === 'visible' ? '' : 'main hidden',
+            fading > 0 ? `${String(fading)} view transitions running` : '',
+          ]
+            .filter(Boolean)
+            .join('; ');
+          return { ok: why === '', why };
+        }),
+      { message: `page "${name}" must be whole once the change has finished` },
+    )
+    .toEqual({ ok: true, why: '' });
+}
 
 test.describe('navigation', () => {
   test('AC-NAV-01 · opens on Today with the main navigation in order', async ({ page }) => {
@@ -248,6 +369,95 @@ test.describe('navigation', () => {
     expect(hrefs.some((h) => h.includes('/dev/ui'))).toBe(false);
   });
 
+  test('AC-NAV-11 · at 390 px every section shows a decorative logo before the title, in both themes', async ({
+    page,
+  }) => {
+    expect(viewportOf(page).width).toBe(390);
+    await expectLogoOnEverySection(page);
+
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await gotoReady(page, '/', 'Hoy');
+    await expectTheme(page, 'dark');
+    const dark = await logoInfo(page);
+    expect(dark.found).toBe(true);
+    expect(dark.width).toBeGreaterThanOrEqual(12);
+    expect(dark.decorative).toBe(true);
+  });
+
+  test('AC-NAV-12 · changing section shows and focuses the heading, changes the address and never leaves the page blank, covered or faded', async ({
+    page,
+  }) => {
+    await gotoReady(page, '/', 'Hoy');
+    await expectPageSettled(page, 'Hoy');
+    const nav = mainNav(page);
+    const visits = [
+      ...PAGES.slice(1, 5).map((p) => ({ name: p.es, path: p.path, content: p.contentEs })),
+      { name: 'Hoy', path: '/', content: PAGES[0]?.contentEs },
+    ];
+    for (const { name, path, content } of visits) {
+      await nav.getByRole('link', { name, exact: true }).click();
+      await expect(h1(page, name)).toBeVisible();
+      await expect(h1(page, name)).toBeFocused();
+      await expect.poll(() => new URL(page.url()).pathname).toBe(path);
+      if (content) await expect(page.getByText(content, { exact: true })).toBeVisible();
+      await expectPageSettled(page, name);
+    }
+
+    // Quick succession: two taps in a row still end on the last section, whole.
+    await nav.getByRole('link', { name: 'Rutinas', exact: true }).click();
+    await nav.getByRole('link', { name: 'Progreso', exact: true }).click();
+    await expect(h1(page, 'Progreso')).toBeFocused();
+    await expect.poll(() => new URL(page.url()).pathname).toBe('/progress');
+    await expectPageSettled(page, 'Progreso');
+    expect(await hasHorizontalScroll(page)).toBe(false);
+  });
+
+  test('AC-ABOUT-01 · Settings ends with the "Acerca de" card: name, version from package.json and the GitHub link', async ({
+    page,
+  }) => {
+    const version = (
+      JSON.parse(readFileSync(resolve(process.cwd(), 'package.json'), 'utf8')) as {
+        version: string;
+      }
+    ).version;
+    await gotoReady(page, '/settings', 'Ajustes');
+    const main = page.getByRole('main');
+    await expect(main.getByText('Acerca de', { exact: true })).toBeVisible();
+
+    // The card: the outermost ancestor of the title that holds no other card title.
+    const about = main
+      .getByText('Acerca de', { exact: true })
+      .locator(
+        'xpath=ancestor::*[not(.//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][normalize-space(.)!="Acerca de"]) and not(.//*[normalize-space(text())="Apariencia"]) and not(.//*[normalize-space(text())="Desarrollo"])][last()]',
+      );
+
+    // It is the last card: nothing with text follows it, at any level up to <main>.
+    const nothingAfter = await about.evaluate((card) => {
+      const main = document.querySelector('main');
+      for (let el: Element | null = card; el && el !== main; el = el.parentElement) {
+        for (let s = el.nextElementSibling; s; s = s.nextElementSibling) {
+          if (s.textContent.trim() !== '') return false;
+        }
+      }
+      return true;
+    });
+    expect(nothingAfter, 'no card after "Acerca de"').toBe(true);
+    // Reading order, which does not depend on where the page is scrolled to.
+    const titles = await main.getByRole('heading', { level: 2 }).allTextContents();
+    expect(titles.at(-1), 'the last card of Ajustes').toBe('Acerca de');
+    for (const earlier of ['Apariencia', 'Desarrollo']) {
+      expect(titles.indexOf(earlier), `"${earlier}" comes before "Acerca de"`).toBeGreaterThan(-1);
+    }
+
+    await expect(about.getByText('Certavi', { exact: true })).toBeVisible();
+    await expect(about.getByText(`Versión ${version}`, { exact: true })).toBeVisible();
+    const link = about.getByRole('link', { name: 'Código fuente en GitHub', exact: true });
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute('href', /^https:\/\/github\.com\//);
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', /(^|\s)noopener(\s|$)/);
+  });
+
   test('edge · offline after loading, the shell keeps working without network requests', async ({
     page,
     context,
@@ -292,6 +502,13 @@ test.describe('navigation', () => {
 
 test.describe('navigation · wide screen', () => {
   test.use({ viewport: { width: 1024, height: 768 } });
+
+  test('AC-NAV-11 · at 1024 px every section shows a decorative logo before the title', async ({
+    page,
+  }) => {
+    expect(viewportOf(page).width).toBe(1024);
+    await expectLogoOnEverySection(page);
+  });
 
   test('AC-NAV-08 · on a 1024 px screen the navigation is at the top, in the header', async ({
     page,

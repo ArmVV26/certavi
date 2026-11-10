@@ -26,6 +26,7 @@ import { EmptyState } from '../../ui/EmptyState';
 import { Notice } from '../../ui/Notice';
 import { ScalePicker } from '../../ui/ScalePicker';
 import { cx } from '../../ui/cx';
+import { Stat, StatGrid } from '../../ui/Stat';
 import { Tag } from '../../ui/Tag';
 import { TextArea } from '../../ui/TextField';
 import { AddExerciseSheet } from './AddExerciseSheet';
@@ -159,16 +160,14 @@ function SessionScreen({ view }: { view: SessionView }) {
         {!inProgress && (
           <>
             <p className={styles.muted}>{t('session.finishedHint')}</p>
-            <dl className={styles.totals}>
-              <div>
-                <dt>{t('session.effectiveSets')}</dt>
-                <dd>{effective.length}</dd>
-              </div>
-              <div>
-                <dt>{t('session.volume')}</dt>
-                <dd>{formatNumber(volume(sets), locale, { maximumFractionDigits: 0 })}</dd>
-              </div>
-            </dl>
+            <StatGrid>
+              <Stat filled label={t('session.effectiveSets')} value={effective.length} />
+              <Stat
+                filled
+                label={t('session.volume')}
+                value={formatNumber(volume(sets), locale, { maximumFractionDigits: 0 })}
+              />
+            </StatGrid>
           </>
         )}
       </Card>
