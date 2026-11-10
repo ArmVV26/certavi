@@ -34,6 +34,10 @@ web-app metas (`apple-mobile-web-app-capable`, `mobile-web-app-capable`,
 `apple-mobile-web-app-title` = "Certavi", status bar style) so the home-screen app opens without
 Safari's bars.
 
+The **browser tab icon** is a different file from the app icons: a round version of the same mark
+(`/favicon.svg`, linked with `type="image/svg+xml"`; `/favicon.ico` stays as the fallback). The
+app icons above stay square and opaque. Only the tab icon is round.
+
 ### 2.2 Standalone layout
 
 In the installed app the five navigation tabs (Hoy, Calendario, Rutinas, Progreso, Ajustes /
