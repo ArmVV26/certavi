@@ -252,7 +252,7 @@ export function viewportOf(page: Page): { width: number; height: number } {
  * Resolves after two animation frames: whatever the page reacts to has been rendered. For checks
  * that "nothing happens" after an action. It only covers what the page does synchronously or in
  * the next frames; if the thing that must not happen would come from an app timer, move that
- * timer with `page.clock` instead. Never a real-time wait (see .claude/rules.md).
+ * timer with `page.clock` instead. Never a real-time wait (see .claude/rules/*).
  */
 export async function settle(page: Page): Promise<void> {
   await page.evaluate(
