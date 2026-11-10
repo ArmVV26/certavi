@@ -105,3 +105,10 @@
   gap: var(--space-3);
   flex-basis: 100%;
 }
+
+.setupLine {
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}

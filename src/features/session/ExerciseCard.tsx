@@ -9,6 +9,7 @@ import {
   knownBands,
   parseIsoDate,
   progressionAdvice,
+  setupLine,
   isPlannedKind,
   strapsBandDefaults,
   EXCLUSION_REASONS,
@@ -21,16 +22,22 @@ import {
   type ProgressionAdvice,
   type RehabContext,
   type SetEntry,
+  type SetupDraftRow,
 } from '../../domain';
+import { useDatabase } from '../../data/DatabaseContext';
+import { setExerciseSetup } from '../../data/exercises';
 import type { RowDraft } from '../../data/sessionDrafts';
 import { formatDate, formatNumber } from '../../i18n/format';
 import { useLocale } from '../../i18n/LocaleContext';
 import { resolveText } from '../../i18n/text';
+import { SetupEditor } from '../exercises/SetupEditor';
 import { Card } from '../../ui/Card';
 import { Checkbox } from '../../ui/Checkbox';
 import { SelectField } from '../../ui/SelectField';
+import { Sheet } from '../../ui/Sheet';
 import { Switch } from '../../ui/Switch';
 import { Tag } from '../../ui/Tag';
+import { useToast } from '../../ui/ToastContext';
 import { TextArea, TextField } from '../../ui/TextField';
 import { Button } from '../../ui/Button';
 import { IconButton } from '../../ui/IconButton';
@@ -256,6 +263,9 @@ export function ExerciseCard({
         <>
           <p className={styles.muted}>{planLine}</p>
           {item.note && <p className={styles.routineNote}>{resolveText(t, item.note)}</p>}
+          {exercise?.setup && exercise.setup.length > 0 && (
+            <p className={styles.setupLine}>{setupLine(exercise.setup)}</p>
+          )}
           {hint && <p className={styles.hint}>{hint}</p>}
           <p className={styles.muted}>{lastTime}</p>
 
@@ -367,6 +377,7 @@ export function ExerciseCard({
               {t('session.exercise.addExtra')}
             </Button>
             <NoteButton exerciseId={exerciseId} note={note} actions={actions} />
+            {exercise && <SetupButton exercise={exercise} />}
             <Button
               variant="danger"
               onClick={() => {
@@ -404,6 +415,54 @@ function hintText(
     case 'no-reference':
       return null;
   }
+}
+
+/** The "Ajustes" button and the sheet where the machine settings of the exercise are edited. */
+function SetupButton({ exercise }: { exercise: Exercise }) {
+  const { t } = useTranslation();
+  const db = useDatabase();
+  const toast = useToast();
+  const [open, setOpen] = useState(false);
+  const filled = (exercise.setup?.length ?? 0) > 0;
+
+  const save = async (rows: SetupDraftRow[]) => {
+    try {
+      await setExerciseSetup(db, exercise.id, rows);
+    } catch (error) {
+      toast.show({ message: t('exercises.setup.failed'), tone: 'danger' });
+      throw error;
+    }
+    setOpen(false);
+    toast.show({ message: t('exercises.setup.saved'), tone: 'success' });
+  };
+
+  return (
+    <>
+      <Button
+        variant="secondary"
+        onClick={() => {
+          setOpen(true);
+        }}
+      >
+        {t(filled ? 'session.exercise.setupFilled' : 'session.exercise.setup')}
+      </Button>
+      <Sheet
+        open={open}
+        title={t('exercises.setup.title')}
+        onClose={() => {
+          setOpen(false);
+        }}
+      >
+        <SetupEditor
+          setup={exercise.setup}
+          onSave={save}
+          onCancel={() => {
+            setOpen(false);
+          }}
+        />
+      </Sheet>
+    </>
+  );
 }
 
 interface NoteButtonProps {
