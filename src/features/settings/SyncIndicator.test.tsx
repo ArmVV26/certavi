@@ -1,5 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRepositories } from '../../data/repository';
 import { createTestEngine } from '../../data/sync/testing';
 import type { SyncState } from '../../data/sync/engine';
@@ -9,6 +9,16 @@ import { renderApp } from '../../test/renderApp';
 import { SYNC_ICON, errorKeyOf, syncLabelOf } from './syncText';
 
 const banner = () => screen.getByRole('banner');
+
+// Wednesday 4 November 2026. The sessions below are from this week; with the real clock the app
+// would close that week on start-up (a `weekPlan` joins the pending queue) and the counts drift.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 10, 4, 10, 0));
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('Sync indicator', () => {
   it('says sync is not set up and links to Settings', () => {
