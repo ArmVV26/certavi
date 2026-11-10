@@ -42,6 +42,10 @@
   background: var(--bg);
 }
 
+.logo {
+  flex: none;
+}
+
 .title {
   flex: 1;
   min-width: 0;
@@ -105,6 +109,17 @@
 
 .main:focus {
   outline: none;
+}
+
+/* A short fade when a section opens (0 ms with reduced motion: the durations are tokens). */
+.arriving {
+  animation: arrive var(--duration-normal) var(--ease-standard);
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+  }
 }
 
 /* Wide screens: navigation in the header, no bottom bar. */

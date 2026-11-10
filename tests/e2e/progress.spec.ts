@@ -9,6 +9,7 @@ import {
   hasHorizontalScroll,
   mainNav,
   setLanguage,
+  tileMetrics,
 } from './helpers';
 
 // Spec: docs/spec/progress.md (Phase 7, branch feature/progress). The device date is fixed to
@@ -718,6 +719,140 @@ test.describe('progress', () => {
       await expect(page.getByRole('heading', { name: 'Evolución', exact: true })).toHaveCount(0);
     },
   );
+
+  test('AC-PRO-16 · chart text is 12 px at 390 px and at 1024 px, and the chart fills its card without scrolling sideways', async ({
+    page,
+  }) => {
+    await seedAndOpen(page, SESSIONS);
+    expect(page.viewportSize()?.width).toBe(390);
+    const heads = ['Series por semana', 'Peso corporal'] as const;
+
+    // Axis text as rendered: its font size times the scale the drawing is shown at.
+    interface Measure {
+      texts: number;
+      sizes: number[];
+      chartWidth: number;
+      chartLeft: number;
+      chartRight: number;
+      cardLeft: number;
+      cardRight: number;
+      cardOverflows: boolean;
+    }
+    const measure = (heading: string): Promise<Measure> =>
+      card(page, heading).evaluate((el): Measure => {
+        const svg = Array.from(el.querySelectorAll('svg')).find(
+          (s) => s.querySelector('text') !== null,
+        );
+        if (!svg) throw new Error('no chart with text in the card');
+        const labels = Array.from(svg.querySelectorAll('text')).filter(
+          (t) => t.textContent.trim() !== '',
+        );
+        const sizes = labels.map(
+          (t) => parseFloat(getComputedStyle(t).fontSize) * (t.getScreenCTM()?.a ?? 1),
+        );
+        const s = svg.getBoundingClientRect();
+        const c = el.getBoundingClientRect();
+        return {
+          texts: labels.length,
+          sizes,
+          chartWidth: s.width,
+          chartLeft: s.left,
+          chartRight: s.right,
+          cardLeft: c.left,
+          cardRight: c.right,
+          cardOverflows: el.scrollWidth > el.clientWidth + 1,
+        };
+      });
+
+    async function expectChartsOk(width: number): Promise<void> {
+      for (const heading of heads) {
+        const m = await measure(heading);
+        const where = `${heading} at ${String(width)} px`;
+        expect(m.texts, `${where}: axis labels`).toBeGreaterThan(0);
+        for (const size of m.sizes) {
+          expect(
+            Math.abs(size - 12),
+            `${where}: axis text is ${String(size)} px`,
+          ).toBeLessThanOrEqual(0.5);
+        }
+        expect(m.chartLeft, `${where}: chart starts inside its card`).toBeGreaterThanOrEqual(
+          m.cardLeft - 1,
+        );
+        expect(m.chartRight, `${where}: chart ends inside its card`).toBeLessThanOrEqual(
+          m.cardRight + 1,
+        );
+        expect(m.chartWidth, `${where}: chart fills its card`).toBeGreaterThanOrEqual(
+          (m.cardRight - m.cardLeft) * 0.8,
+        );
+        expect(m.cardOverflows, `${where}: card scrolls sideways`).toBe(false);
+      }
+      expect(await hasHorizontalScroll(page), `page scrolls sideways at ${String(width)} px`).toBe(
+        false,
+      );
+    }
+
+    await expect(chart(card(page, 'Series por semana'), /gráfica de columnas/)).toBeVisible();
+    await expectChartsOk(390);
+    const narrow = (await measure('Series por semana')).chartWidth;
+
+    // Wider screen, resized live: the drawing grows, the text does not.
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await expect
+      .poll(async () => (await measure('Series por semana')).chartWidth)
+      .toBeGreaterThan(narrow + 100);
+    await expectChartsOk(1024);
+
+    // And when the page is opened at that width.
+    await page.reload();
+    await expect(h1(page, 'Progreso')).toBeVisible();
+    await expect(chart(card(page, 'Series por semana'), /gráfica de columnas/)).toBeVisible();
+    await expectChartsOk(1024);
+  });
+
+  test('AC-PRO-17 · in every summary tile the label, the number and the note share the left edge, and no number is bigger than the title', async ({
+    page,
+  }) => {
+    await seedAndOpen(page, SESSIONS);
+    const main = page.getByRole('main');
+    await expect(main).toContainText(/Sesiones\s*6\s*en total/);
+
+    // [label, start of the number, start of the note]
+    const tiles = await tileMetrics(page, {
+      Semana: ['Semana', '5', '2'],
+      Series: ['Series', '15', 'esta semana'],
+      Sesiones: ['Sesiones', '6', 'en total'],
+      Récords: ['Récords', '1', 'este mes'],
+    });
+    const titleFont = await h1(page, 'Progreso').evaluate((el) =>
+      parseFloat(getComputedStyle(el).fontSize),
+    );
+    for (const [label, tile] of Object.entries(tiles)) {
+      const [labelLeft, numberLeft, noteLeft] = tile.parts;
+      expect(labelLeft, `"${label}" tile is on screen`).not.toBeNaN();
+      expect(numberLeft, `"${label}" tile has its number`).not.toBeNaN();
+      expect(noteLeft, `"${label}" tile has its note`).not.toBeNaN();
+      const base = labelLeft ?? NaN;
+      expect(
+        Math.abs((numberLeft ?? NaN) - base),
+        `"${label}": number vs label left edge`,
+      ).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs((noteLeft ?? NaN) - base),
+        `"${label}": note vs label left edge`,
+      ).toBeLessThanOrEqual(1);
+      for (const left of tile.lines) {
+        expect(
+          Math.abs(left - base),
+          `"${label}": text lines ${tile.lines.join(', ')}`,
+        ).toBeLessThanOrEqual(1);
+      }
+      expect(
+        tile.maxFont,
+        `"${label}": number is not bigger than the page title`,
+      ).toBeLessThanOrEqual(titleFont + 0.5);
+    }
+    expect(await hasHorizontalScroll(page)).toBe(false);
+  });
 
   test(
     'AC-PRO-15 · English and dark at 390 px: English texts, decimal point, no horizontal scroll with every table open, no serious axe issues in dark and light',

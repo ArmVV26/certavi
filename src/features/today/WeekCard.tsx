@@ -8,6 +8,7 @@ import { resolveText } from '../../i18n/text';
 import { Card } from '../../ui/Card';
 import { cx } from '../../ui/cx';
 import { Icon } from '../../ui/Icon';
+import { Stat, StatGrid } from '../../ui/Stat';
 import styles from './TodayPage.module.css';
 import type { TodayDay, TodayModel } from './todayModel';
 import { useRoutineName } from './useRoutineName';
@@ -52,31 +53,29 @@ export function WeekCard({ model, streak, onChange }: WeekCardProps) {
         ))}
       </ul>
 
-      <dl className={styles.figures}>
-        <div className={styles.figure}>
-          <dt>{t('today.week.effectiveSets')}</dt>
-          <dd className={styles.figureValue}>
-            {number(model.doneSets)} / {number(model.plannedSets)}
-          </dd>
-        </div>
-        <div className={styles.figure}>
-          <dt>{t('today.week.sessions')}</dt>
-          <dd className={styles.figureValue}>
-            {t('today.week.sessionsOf', {
-              done: number(model.weekSessions),
-              size: number(model.plannedSessions),
-            })}
-          </dd>
-        </div>
+      <StatGrid>
+        <Stat
+          filled
+          label={t('today.week.effectiveSets')}
+          value={`${number(model.doneSets)} / ${number(model.plannedSets)}`}
+        />
+        <Stat
+          filled
+          label={t('today.week.sessions')}
+          value={t('today.week.sessionsOf', {
+            done: number(model.weekSessions),
+            size: number(model.plannedSessions),
+          })}
+        />
         {streak && (
-          <div className={cx(styles.figure, styles.figureWide)}>
-            <dt>{t('today.week.streak')}</dt>
-            <dd className={styles.figureValue}>
-              {t('today.week.streakValue', { count: streak.current })}
-            </dd>
-          </div>
+          <Stat
+            filled
+            wide
+            label={t('today.week.streak')}
+            value={t('today.week.streakValue', { count: streak.current })}
+          />
         )}
-      </dl>
+      </StatGrid>
 
       <WeekOptions week={model.week} deloadHint={deloadHint} onChange={onChange} />
     </Card>

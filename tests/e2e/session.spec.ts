@@ -10,6 +10,7 @@ import {
   hasHorizontalScroll,
   mainNav,
   setLanguage,
+  tileMetrics,
   viewportOf,
 } from './helpers';
 
@@ -628,6 +629,20 @@ test.describe('active session', { tag: '@all-engines' }, () => {
     await expect(toast(page, /^Sesión guardada/)).toBeVisible();
     await expect(main).toContainText(/Series efectivas\s*\d+/);
     await expect(main).toContainText(/Volumen\s*\d/);
+    // Each figure is a tile: its label and its number start at the same left edge (no indent).
+    const tiles = await tileMetrics(page, { 'Series efectivas': [], Volumen: [] });
+    for (const [label, tile] of Object.entries(tiles)) {
+      expect(tile.lines.length, `"${label}" tile has a label and a number`).toBeGreaterThanOrEqual(
+        2,
+      );
+      const first = tile.lines[0] ?? NaN;
+      for (const left of tile.lines) {
+        expect(
+          Math.abs(left - first),
+          `"${label}" tile: text lines ${tile.lines.join(', ')}`,
+        ).toBeLessThanOrEqual(1);
+      }
+    }
     await expect(
       main.getByText('Sesión terminada. Puedes corregir cualquier dato: se guarda al momento.', {
         exact: true,

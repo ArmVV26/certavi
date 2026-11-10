@@ -290,6 +290,23 @@ When I open Progreso
 Then every text is in English, charts keep readable colours and nothing scrolls horizontally
 ```
 
+```
+AC-PRO-16 · Chart text keeps its size on any screen
+Given a chart with data (for example "Series por semana" in Progreso)
+When the screen is 390 px wide, and again when it is 1024 px wide
+Then the axis numbers and labels of the chart are 12 px tall in both cases
+  (the text does not grow with the width of the screen)
+And the chart fills the width of its card without scrolling horizontally
+```
+
+```
+AC-PRO-17 · Figures line up with their label
+Given the summary figures of Progreso ("Semana", "Series", "Sesiones", "Récords")
+Then in every tile the label, the number and the note start at the same left edge
+And no tile has its number shifted to the right of its label
+And the numbers are not larger than the page title
+```
+
 ## 5. Edge cases
 
 - No cycle start saved: the first logged session sets it (§2.1). The review works the same.

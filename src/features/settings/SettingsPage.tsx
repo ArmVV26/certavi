@@ -9,6 +9,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { Card } from '../../ui/Card';
 import { Icon } from '../../ui/Icon';
 import { Segmented } from '../../ui/Segmented';
+import { AboutCard } from './AboutCard';
 import { DataCard } from './DataCard';
 import { RestCard } from './RestCard';
 import { SyncCard } from './SyncCard';
@@ -67,6 +68,8 @@ export function SettingsPage() {
           </Link>
         </Card>
       )}
+
+      <AboutCard />
     </div>
   );
 }

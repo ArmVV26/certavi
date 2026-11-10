@@ -423,7 +423,8 @@ And finishing or deleting the session discards all typed values that were not sa
 **AC-SESSION-17 · Finish and reopen**
 Given an in-progress session of today with sets saved
 When I tap "Terminar sesión"
-Then it reads "Terminada", the figures "Series efectivas" and "Volumen" appear, a toast says
+Then it reads "Terminada", the figures "Series efectivas" and "Volumen" appear (each one a tile
+whose label and number start at the same left edge, with no indent on the number), a toast says
 "Sesión guardada" (with "· n récord(s)" when the session set records, never in a deload week)
 and the button becomes "Marcar como en curso"
 When I tap "Marcar como en curso", it reads "En curso" again
