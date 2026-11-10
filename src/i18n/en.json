@@ -616,6 +616,28 @@
       "mine": "Mine",
       "archived": "Archived"
     },
+    "setup": {
+      "title": "Machine settings",
+      "empty": "No settings noted yet",
+      "add": "Add settings",
+      "edit": "Edit settings",
+      "item": "{{label}}: {{value}}",
+      "labelField": "Setting {{n}} name",
+      "valueField": "Setting {{n}} value",
+      "remove": "Remove setting {{n}}",
+      "addRow": "Add setting",
+      "save": "Save settings",
+      "cancel": "Cancel",
+      "saved": "Settings saved",
+      "failed": "Couldn't save the settings. Try again.",
+      "errors": {
+        "label-empty": "Enter the setting name",
+        "value-empty": "Enter the setting value",
+        "label-too-long": "The name can have up to {{max}} characters",
+        "value-too-long": "The value can have up to {{max}} characters",
+        "too-many": "You can note up to {{max}} settings"
+      }
+    },
     "errors": {
       "name-empty": "Enter a name",
       "name-too-long": "The name can have up to {{max}} characters",
@@ -1088,6 +1110,8 @@
       "addExtra": "+ Extra set",
       "note": "Note",
       "noteFilled": "Note ✎",
+      "setup": "Settings",
+      "setupFilled": "Settings ✎",
       "summary": "{{weight}} × {{reps}}",
       "moveUp": "Move {{name}} up",
       "moveDown": "Move {{name}} down",
