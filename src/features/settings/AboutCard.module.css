@@ -1,0 +1,38 @@
+.heading {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+}
+
+.version {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-variant-numeric: var(--numeric-features);
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--touch-target);
+  color: var(--accent);
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+}
