@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../test/render';
 import { BarRows } from './BarRows';
 import { ChartFrame } from './ChartFrame';
@@ -83,6 +83,56 @@ describe('ColumnChart', () => {
       <ColumnChart description="Nada" formatY={String} columns={[]} />,
     );
     expect(container.querySelectorAll('rect')).toHaveLength(0);
+  });
+});
+
+describe('chart width', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** A layout engine for jsdom: every element is `width` wide. (Spies are restored by Vitest.) */
+  function layOutAt(width: number) {
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({ width } as DOMRect);
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe = vi.fn();
+        unobserve = vi.fn();
+        disconnect = vi.fn();
+      },
+    );
+  }
+
+  it('draws on a 360-wide canvas when there is no layout (tests, old engines)', () => {
+    const { container } = renderWithProviders(
+      <ColumnChart description="Sin medir" formatY={String} columns={[]} />,
+    );
+    expect(container.querySelector('svg')).toHaveAttribute('viewBox', '0 0 360 180');
+  });
+
+  it.each([
+    ['LineChart', 700],
+    ['ColumnChart', 310],
+  ])('%s draws on a canvas as wide as its container (%i px)', (kind, width) => {
+    layOutAt(width);
+    const { container } = renderWithProviders(
+      kind === 'LineChart' ? (
+        <LineChart description="Medido" formatY={String} points={[{ x: 0, y: 1, name: 'a' }]} />
+      ) : (
+        <ColumnChart description="Medido" formatY={String} columns={[]} />
+      ),
+    );
+    // One unit is one pixel: the 12 px axis text keeps its size on any screen.
+    expect(container.querySelector('svg')).toHaveAttribute('viewBox', `0 0 ${String(width)} 180`);
+  });
+
+  it('never goes below 200 px', () => {
+    layOutAt(80);
+    const { container } = renderWithProviders(
+      <ColumnChart description="Estrecho" formatY={String} columns={[]} />,
+    );
+    expect(container.querySelector('svg')).toHaveAttribute('viewBox', '0 0 200 180');
   });
 });
 
