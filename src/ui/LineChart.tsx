@@ -1,5 +1,6 @@
 import { linearScale, niceTicks } from './chartScale';
 import styles from './Chart.module.css';
+import { useChartWidth } from './useChartWidth';
 
 export interface LinePoint {
   /** Position on the horizontal axis (e.g. days since some date). Points are drawn in this order. */
@@ -23,7 +24,6 @@ interface LineChartProps {
   yRange?: { min: number; max: number; step: number };
 }
 
-const WIDTH = 360;
 const MARGIN = { top: 10, right: 14, bottom: 24, left: 44 };
 
 function fixedTicks({ min, max, step }: { min: number; max: number; step: number }) {
@@ -41,13 +41,14 @@ export function LineChart({
   reference,
   yRange,
 }: LineChartProps) {
+  const [svgRef, width] = useChartWidth();
   const values = points.map((p) => p.y);
   if (reference) values.push(reference.value);
   const ticks = yRange ? fixedTicks(yRange) : niceTicks(Math.min(...values), Math.max(...values));
   const tickValues = ticks.values;
 
   const xs = points.map((p) => p.x);
-  const x = linearScale(Math.min(...xs), Math.max(...xs), MARGIN.left, WIDTH - MARGIN.right);
+  const x = linearScale(Math.min(...xs), Math.max(...xs), MARGIN.left, width - MARGIN.right);
   const y = linearScale(ticks.min, ticks.max, height - MARGIN.bottom, MARGIN.top);
   const first = points[0];
   const last = points.at(-1);
@@ -57,8 +58,9 @@ export function LineChart({
 
   return (
     <svg
+      ref={svgRef}
       className={styles.svg}
-      viewBox={`0 0 ${String(WIDTH)} ${String(height)}`}
+      viewBox={`0 0 ${String(width)} ${String(height)}`}
       role="img"
       aria-label={description}
     >
@@ -67,7 +69,7 @@ export function LineChart({
           <line
             className={styles.grid}
             x1={MARGIN.left}
-            x2={WIDTH - MARGIN.right}
+            x2={width - MARGIN.right}
             y1={y(value)}
             y2={y(value)}
           />
@@ -86,7 +88,7 @@ export function LineChart({
         <line
           className={styles.reference}
           x1={MARGIN.left}
-          x2={WIDTH - MARGIN.right}
+          x2={width - MARGIN.right}
           y1={y(reference.value)}
           y2={y(reference.value)}
         />
