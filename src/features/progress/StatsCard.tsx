@@ -6,10 +6,10 @@ import { formatDate, formatNumber } from '../../i18n/format';
 import type { Locale } from '../../i18n/locale';
 import { useLocale } from '../../i18n/LocaleContext';
 import { Card } from '../../ui/Card';
-import { cx } from '../../ui/cx';
 import { ChartFrame } from '../../ui/ChartFrame';
 import { ColumnChart } from '../../ui/ColumnChart';
 import { Segmented } from '../../ui/Segmented';
+import { Stat, StatGrid } from '../../ui/Stat';
 import { weekRange } from '../today/weekRange';
 import { dayMonth } from './chartText';
 import styles from './ProgressPage.module.css';
@@ -69,15 +69,14 @@ export function StatsCard({ model }: { model: ProgressModel }) {
     <Card element="section">
       <h2 className={styles.heading}>{t('progress.stats.title')}</h2>
 
-      <dl className={styles.stats}>
-        <div className={cx(styles.stat, styles.statWide)}>
-          <dt className={styles.statLabel}>{t('progress.stats.streak')}</dt>
-          <dd className={styles.statValue}>
-            {t('progress.stats.streakValue', { count: streak.current })}
-          </dd>
-          <dd className={styles.statNote}>{note}</dd>
-        </div>
-      </dl>
+      <StatGrid>
+        <Stat
+          wide
+          label={t('progress.stats.streak')}
+          value={t('progress.stats.streakValue', { count: streak.current })}
+          note={note}
+        />
+      </StatGrid>
 
       <Segmented
         legend={t('progress.stats.summaryBy')}
@@ -92,18 +91,18 @@ export function StatsCard({ model }: { model: ProgressModel }) {
       {current && (
         <>
           <p className={styles.sub}>{subtitle(period, current.start, locale, t)}</p>
-          <dl className={styles.stats}>
-            <Figure
+          <StatGrid>
+            <Stat
               wide
               label={t('progress.stats.volume')}
               value={t('progress.stats.kg', { value: kilos(current.volume, locale) })}
             />
-            <Figure
+            <Stat
               label={t('progress.stats.exercises')}
               value={formatNumber(current.exercises, locale)}
             />
-            <Figure label={t('progress.stats.sets')} value={formatNumber(current.sets, locale)} />
-          </dl>
+            <Stat label={t('progress.stats.sets')} value={formatNumber(current.sets, locale)} />
+          </StatGrid>
         </>
       )}
 
@@ -148,14 +147,5 @@ export function StatsCard({ model }: { model: ProgressModel }) {
         />
       </ChartFrame>
     </Card>
-  );
-}
-
-function Figure({ label, value, wide }: { label: string; value: string; wide?: boolean }) {
-  return (
-    <div className={cx(styles.stat, wide && styles.statWide)}>
-      <dt className={styles.statLabel}>{label}</dt>
-      <dd className={styles.statValue}>{value}</dd>
-    </div>
   );
 }

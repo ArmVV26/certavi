@@ -156,39 +156,6 @@ a.dayInner:focus-visible {
   white-space: nowrap;
 }
 
-.figures {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
-}
-
-.figure {
-  display: flex;
-  flex-direction: column;
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--surface-2);
-}
-
-.figureWide {
-  grid-column: 1 / -1;
-}
-
-.figure dt {
-  color: var(--text-muted);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-semibold);
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
-}
-
-.figureValue {
-  font-family: var(--font-numeric);
-  font-size: var(--fs-xl);
-  font-variant-numeric: var(--numeric-features);
-  font-weight: var(--fw-bold);
-}
-
 .stack {
   display: flex;
   flex-direction: column;
