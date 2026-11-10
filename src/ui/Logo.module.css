@@ -1,0 +1,11 @@
+.tile {
+  fill: var(--accent);
+}
+
+.plate {
+  stroke: var(--on-accent);
+}
+
+.hub {
+  fill: var(--on-accent);
+}

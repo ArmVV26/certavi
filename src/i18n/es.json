@@ -257,6 +257,11 @@
     },
     "developer": "Desarrollo",
     "uiCatalog": "Catálogo de componentes",
+    "about": {
+      "title": "Acerca de",
+      "version": "Versión {{version}}",
+      "source": "Código fuente en GitHub"
+    },
     "data": {
       "title": "Datos",
       "intro": "Todo se guarda primero en este dispositivo.",
