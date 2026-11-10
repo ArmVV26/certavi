@@ -1,6 +1,8 @@
 ---
+name: close-phase
 description: Close the current branch (default) or the last branch of a phase ("final") — checks, branch e2e, reviewers, status in context.md and commit plan.
 argument-hint: [final]
+disable-model-invocation: true
 ---
 
 Close the current branch of Certavi. Argument: `$ARGUMENTS` — empty means a **regular branch
@@ -18,10 +20,9 @@ Never run git commands that write (commit, push, merge, tag, branch): the user d
    `git diff --name-only dev...HEAD -- tests/e2e` (branches are often uncommitted at this point).
    Launch the `blind-tester` agent with the acceptance criteria of the branch (from
    `docs/spec/`); it writes **at most 8 new tests**. It runs only
-   `npm run e2e -- <those spec files>` under the e2e rules in `.claude/rules.md`: foreground,
-   Chromium, nothing else after `--`. **One pass and a single fix** if something fails; then
-   report. If the branch touched no e2e spec, skip e2e and say so. Do not run e2e yourself in
-   parallel.
+   `npm run e2e -- <those spec files>` under `.claude/rules/e2e.md`. **One pass and a single fix**
+   if something fails; then report. If the branch touched no e2e spec, skip e2e and say so. Do not
+   run e2e yourself in parallel.
 3. **Security review** — if the diff touches `server/`, `src/data/sync/`, `package.json` or
    `netlify.toml`, launch the `security-reviewer` agent (it is read-only). Summarise its output.
 4. **Status in `context.md`** — **no context-keeper on regular branches.** You add, in the
@@ -50,9 +51,8 @@ Then:
 After step 3 and before step 4, also:
 
 - **e2e:all** — the blind-tester runs `npm run e2e:all` **once** (Chromium: every test; WebKit:
-  only `@all-engines` tests; 20 min cap, same rules: foreground, no extra flags, one run plus at most one after a fix). A
-  WebKit-only failure is reported like any other; never skip it to get the PR through (CI
-  repeats this run on the PR to `main`; incident of 2026-11-04).
+  only `@all-engines` tests). A WebKit-only failure is reported like any other; never skip it to
+  get the PR through (CI repeats this run on the PR to `main`; incident of 2026-11-04).
 - **Reviews** — launch `code-reviewer` and `security-reviewer` (always, regardless of the diff).
 - **Context keeper** — launch the `context-keeper` agent with a short factual summary of the
   phase (files, decisions, tests passed). It updates `context.md`, `docs/history.md`,
