@@ -74,6 +74,10 @@ down: those buttons are disabled). They stay visible when the card is folded (§
 - **Plan line:** "3 series · 6-8 reps · RIR 1-2" / "3 sets · 6-8 reps · RIR 1-2": the working
   rows of the exercise that day (it follows the rows removed or changed), their rep targets and
   the routine's RIR.
+- **Routine note** (only when the routine has a note for that exercise, for example "Banda morada
+  por defecto" on "Sentadilla hack con banda"): the note text, in muted italics, right under the
+  plan line. It is the note written in the routine (routines.md), different from the **"Nota"**
+  button of the card, which is the user's note of that session. Exercises added by hand have none.
 - **Progression hint** (only when there is a last time; texts for the rule results of
   [rules.md](rules.md) §3):
   - go up: "Sube a 65 kg" / "Go up to 65 kg";
@@ -602,6 +606,12 @@ notices and the notifications are in English, with correct contrast
 And at 390×844 there is no horizontal scroll, the rest bar does not cover the last card or the
 actions (the page can be scrolled until they show), and the sheets fit with their buttons
 reachable.
+
+**AC-SESSION-37 · The routine note shows in the session**
+Given a "Lower Full" session
+Then the card of "Sentadilla hack con banda" shows its routine note ("Banda morada por defecto. Si usas
+otra, apunta el color: …") under its plan line
+And the card of an exercise without a routine note shows no such line.
 
 ## 4. Edge cases
 
