@@ -24,6 +24,8 @@ export type SyncedSettings = z.infer<typeof syncedSettingsSchema>;
  */
 export const deviceSettingsSchema = z.object({
   theme: z.enum(['system', 'light', 'dark']),
+  /** No-colour ("zero dopamine") mode: greys only, on top of the light or dark theme. */
+  mono: z.boolean(),
   locale: z.enum(['es', 'en']),
   sound: z.boolean(),
   vibration: z.boolean(),
