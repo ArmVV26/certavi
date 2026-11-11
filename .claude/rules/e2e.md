@@ -34,9 +34,10 @@ These rules keep it from happening again.
   `maxFailures` 3; CI uses default workers (1 on a 2-vCPU runner, the size of private repos) +
   **1 retry**: a test that needs two is flaky, fix it.
   30 s per test (60 s in WebKit: the project's `timeout` in `playwright.config.ts`; no
-  `test.slow` for WebKit) and 5 s per assertion (15 s in WebKit: the project's `expect.timeout`); global timeout 5 min (`npm run e2e`) / 20 min (`npm run e2e:all`). Reporters:
-  locally `dot` + `html`, in CI `list` + `html` (`open: 'never'`, report port 9323). Chromium
-  `deviceScaleFactor` 2; never `channel: 'chrome'`.
+  `test.slow` for WebKit) and 5 s per assertion (15 s in WebKit: the project's `expect.timeout`); global timeout 5 min (`npm run e2e`) / `--global-timeout=1600000` ms (`npm run e2e:all`). Reporters:
+  locally `dot` + `html` + `json`, in CI `list` + `html` + `json` (`open: 'never'`, report port
+  9323; the JSON goes to `e2e-timings/last-run.json`, git-ignored). Chromium `deviceScaleFactor`
+  2; never `channel: 'chrome'`.
 - Tagging for WebKit: do not tag engine-independent UI logic (theme, language, navigation,
   components): WebKit in CI has one worker and is the scarce resource. Keep the tagged set small:
   a new spec file gets a tag on its `describe` only if all of it qualifies.
@@ -85,6 +86,24 @@ These rules keep it from happening again.
 - **Never install browsers** (`npx playwright install`): the user does it. Never open the HTML
   report (`npx playwright show-report`).
 - When you finish, `npm run ports:check` must show every port free.
+
+## Measuring the time of every test (phase 9, branch 6)
+
+A full `npm run e2e:all` (Chromium + WebKit) takes 10-15 min: longer than Claude's shell allows
+(10 min) and the rule above forbids background runs. That is why the slow tests could not be
+measured or split in `chore/e2e-speed`: `reportSlowTests` names slow files only, and `dot` prints
+no times. So the **user** runs it, in their own terminal, and Claude only reads the result:
+
+1. User: `npm run e2e:all` (add `-- --workers=1` for times close to CI's, which has one worker).
+   It writes `e2e-timings/last-run.json`. No hand-made flags are needed for Claude's runs.
+2. Claude (or the user): `npm run e2e:timings` lists, per project, the slowest tests, marking
+   **slow** (half the time limit: 15 s Chromium, 30 s WebKit) and **NEAR** (three quarters: 22 s
+   and 45 s) and the tests that needed a retry. It reads nothing but that JSON.
+3. CI uploads the JSON of every job as `e2e-timings-<project>-<shard>` (14 days). Download the
+   four artifacts and run `npm run e2e:timings -- chromium-1.json chromium-2.json …` to see the
+   real CI times, which are what decide whether a WebKit test goes over 60 s.
+4. Split each test marked slow in WebKit **by acceptance criterion** (one `test` per AC, the
+   shared setup in a helper) or cut steps that belong to unit tests.
 
 ## Time and waits (mandatory — real-time waits broke CI in WebKit on 2026-11-04)
 

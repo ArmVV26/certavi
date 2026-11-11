@@ -23,9 +23,10 @@ const WEBKIT_EXPECT_TIMEOUT = 15_000;
 // Limits that keep a local run from saturating the PC (incident of 2026-11-02, see context.md):
 // - `npm run e2e`     → Chromium only (every test), 2 workers, stops after 3 failures, 5 min cap.
 // - `npm run e2e:all` → Chromium (every test) + WebKit (only tests tagged `@all-engines`),
-//                       20 min cap (passed with --global-timeout). It was 10 min until Phase 5, but 93
-//                       Chromium tests (~3 min with 2 workers) + the WebKit ones (~8 min) no longer fit;
-//                       the cap hit whichever test was running (AC-SESSION-27 / 28).
+//                       cap of 1 600 000 ms (~27 min, passed with --global-timeout in package.json).
+//                       It was 10 min until Phase 5 and 20 min until Phase 9: with one worker (as in
+//                       CI) the WebKit tests alone take ~19 min, and the cap hit whichever test was
+//                       running. In CI each job runs a shard, so the cap does not apply there.
 // - CI                → a `build-e2e` job builds `dist-e2e` once and shares it as an artifact; then
 //                       a matrix of four jobs runs in parallel (chromium shard 1/2 and 2/2, webkit
 //                       shard 1/2 and 2/2), each with Playwright's default workers (1 on a 2-vCPU
@@ -51,7 +52,13 @@ export default defineConfig({
   reportSlowTests: { max: 20, threshold: 20_000 },
   // The HTML report is written to playwright-report/ but never opened or served.
   // Locally the console reporter is terse (`dot`) to save output; CI keeps `list`.
-  reporter: isCI ? [['list'], ['html', { open: 'never' }]] : [['dot'], ['html', { open: 'never' }]],
+  // The JSON report holds the time of every test: `npm run e2e:timings` reads it (it is the only
+  // way to see which tests drift towards the time limit; `dot` prints no times).
+  reporter: [
+    isCI ? ['list'] : ['dot'],
+    ['html', { open: 'never' }],
+    ['json', { outputFile: 'e2e-timings/last-run.json' }],
+  ],
   use: {
     baseURL: BASE_URL,
     trace: 'on-first-retry',
