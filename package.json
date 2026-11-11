@@ -1,7 +1,7 @@
 {
   "name": "certavi",
   "private": true,
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Offline-first PWA to log strength training: routines, sessions, sets, progress and mobility blocks.",
   "type": "module",
   "license": "UNLICENSED",
