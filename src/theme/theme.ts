@@ -16,6 +16,27 @@ export const THEME_COLOR: Readonly<Record<ResolvedTheme, string>> = {
   dark: '#0b0f14',
 };
 
+/** The same in no-colour mode (`data-mono`): must equal `--bg` of the mono blocks in tokens.css. */
+export const THEME_COLOR_MONO: Readonly<Record<ResolvedTheme, string>> = {
+  light: '#f2f2f2',
+  dark: '#0d0d0d',
+};
+
+/** No-colour ("zero dopamine") mode: a device-only on/off setting, on top of light or dark. */
+export const MONO_STORAGE_KEY = 'certavi.mono';
+
+const isFlag = (value: unknown): value is 'on' | 'off' => value === 'on' || value === 'off';
+
+/** Reads the no-colour mode. Missing, invalid or blocked storage → off. */
+export function readMono(storage: ReadableStorage | null): boolean {
+  return readDeviceSetting(storage, MONO_STORAGE_KEY, isFlag, 'off') === 'on';
+}
+
+/** Saves the no-colour mode. Returns false if storage is unavailable; the mode still applies. */
+export function writeMono(storage: WritableStorage | null, mono: boolean): boolean {
+  return writeDeviceSetting(storage, MONO_STORAGE_KEY, mono ? 'on' : 'off');
+}
+
 export function isThemePreference(value: unknown): value is ThemePreference {
   return typeof value === 'string' && (THEME_PREFERENCES as readonly string[]).includes(value);
 }
@@ -51,26 +72,29 @@ export function systemPrefersDark(win: Window): boolean {
   return typeof win.matchMedia === 'function' && win.matchMedia(DARK_SCHEME_QUERY).matches;
 }
 
-/** Sets `data-theme` on <html> and the browser's theme-color. */
-export function applyTheme(doc: Document, theme: ResolvedTheme): void {
+/** Sets `data-theme` (and `data-mono`) on <html> and the browser's theme-color. */
+export function applyTheme(doc: Document, theme: ResolvedTheme, mono = false): void {
   doc.documentElement.dataset.theme = theme;
+  doc.documentElement.toggleAttribute('data-mono', mono);
 
+  const color = (mono ? THEME_COLOR_MONO : THEME_COLOR)[theme];
   const metas = doc.head.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]');
   if (metas.length === 0) {
     const meta = doc.createElement('meta');
     meta.name = 'theme-color';
-    meta.content = THEME_COLOR[theme];
+    meta.content = color;
     doc.head.append(meta);
     return;
   }
   for (const meta of metas) {
-    meta.content = THEME_COLOR[theme];
+    meta.content = color;
   }
 }
 
 /** Applies the saved theme before React renders, so the first frame has the right colours. */
 export function initTheme(win: Window): ResolvedTheme {
-  const theme = resolveTheme(readThemePreference(getLocalStorage(win)), systemPrefersDark(win));
-  applyTheme(win.document, theme);
+  const storage = getLocalStorage(win);
+  const theme = resolveTheme(readThemePreference(storage), systemPrefersDark(win));
+  applyTheme(win.document, theme, readMono(storage));
   return theme;
 }

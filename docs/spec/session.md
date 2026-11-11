@@ -11,7 +11,7 @@ re-draws **and reloads**.
 
 The sets of an exercise are a list of **rows**, as in Hevy: the routine gives the first rows,
 and for that day only the user can **add a row** ("+ Serie extra", "+ Calentamiento"), **remove
-a row** (swipe) and **change the type of a row** (warm-up, effective, dropset) without the row
+a row** (from the row's menu, or by swiping it) and **change the type of a row** (warm-up, effective, dropset) without the row
 moving. None of this changes the routine.
 
 How a session is started is described in [today.md](today.md). The rules behind "last time", the
@@ -118,16 +118,22 @@ down: those buttons are disabled). They stay visible when the card is folded (§
   - **✓** is labelled "Marcar serie hecha" / "Mark set done" (empty row) or "Serie hecha
     (pulsa para quitar)" / "Set done (tap to remove)" (saved row). On a row with **no kg and no
     reps typed**, ✓ saves the values of **Anterior**.
-  - **Type choice:** a sheet titled "Tipo de serie" / "Set type" with three options:
-    **"Calentamiento" / "Warm-up"**, **"Efectiva" / "Effective"** and **"Dropset"**; the
+  - **Type choice (the row's menu):** a sheet titled "Tipo de serie" / "Set type" with three
+    options: **"Calentamiento" / "Warm-up"**, **"Efectiva" / "Effective"** and **"Dropset"**; the
     current one is marked. Choosing one changes the row at once, saved or not, and the row stays
     where it is. Choosing "Efectiva" on a warm-up or dropset row gives it the role "Serie" /
-    "Set" (the roles Top and Back-off only come from the routine).
-  - **Removing a row:** swiping the row to the left shows a red **"Quitar" / "Remove"** button;
-    tapping it removes the row. The same button is also reachable with the keyboard and screen
-    readers (it is named "Quitar serie 2" / "Remove set 2" and shows when it gets the focus), so
-    removing never depends on swiping. An empty row goes away at once; a saved row asks first
-    (§2.5). The rows below move up and the saved sets in them keep their data.
+    "Set" (the roles Top and Back-off only come from the routine). Below the options the sheet
+    has a danger button **"Quitar serie" / "Remove set"** (named "Quitar serie 2" / "Remove set
+    2"): see "Removing a row".
+  - **Removing a row:** from the row's menu (button "Quitar serie" at the bottom of the sheet),
+    which works with a plain tap on a phone. Swiping the row to the left is a shortcut: it shows
+    a red **"Quitar" / "Remove"** button. Both do the same. The swipe button is also reachable
+    with the keyboard and screen readers (it shows when it gets the focus), so removing never
+    depends on swiping. An empty row goes away at once; a saved row asks first (§2.5). The rows
+    below move up and the saved sets in them keep their data. On the **last row** of an exercise
+    the menu button is disabled and says **"Es la última serie. Para quitarla, quita el
+    ejercicio." / "This is the last set. To remove it, remove the exercise."**, and swiping does
+    nothing.
 - **Suggested back-off:** when the exercise has a top set and its weight is known (typed or
   saved), "Back-off sugerido: 57,5 kg (−10 % del top)" / "Suggested back-off: 57.5 kg (−10 % of
   top)". It updates while the top weight is typed. It is only a text: it does not fill any field.
@@ -637,6 +643,35 @@ Given "Respaldo 3 · Asiento 5" saved for an exercise
 When I open another session that has that exercise
 Then its card shows the same line.
 
+**AC-SESSION-40 · Leaving the session without coverage**
+Given a session in progress with two rows, I saved the first one (the rest bar is showing) and a
+weight field of the second row has the focus
+And the phone has no network (offline), or it reports being online but the sync server never
+answers
+When I tap each tab of the navigation bar (Calendario, Rutinas, Progreso, Ajustes, then Hoy)
+Then each tap opens its section at once (the URL and the title change) and nothing covers the tabs
+And from there I can go back to the session and the typed value is still in the field
+And while a section's file is still loading, a thin progress line shows under the header.
+
+**AC-SESSION-41 · Removing a set from its menu**
+Given a session with an exercise of 3 rows, the second one saved
+When I tap the type button of the third (empty) row and then "Quitar serie 3"
+Then the sheet closes, the exercise has 2 rows and I see "Serie quitada" with "Deshacer"
+When I tap the type button of the second (saved) row and "Quitar serie 2"
+Then I am asked to confirm, and after confirming the row and its set are gone
+And on the last remaining row, the "Quitar serie" button in the menu is disabled and shows "Es la
+última serie. Para quitarla, quita el ejercicio."
+And swiping an exercise's last row does nothing.
+
+**AC-SESSION-42 · Saving a set does not blank it**
+Given a row with 60 kg, 8 reps and RIR 2 typed
+When I tap ✓ (on a phone with a lot of history, or with the device slowed down)
+Then at no moment are the fields empty: 60, 8 and 2 stay visible from before the tap until the row
+is shown as done
+And the row turns to the done look right after the tap, without waiting for the screen to reload
+its data
+And the same holds when I correct a saved row (the old values never flash back).
+
 ## 4. Edge cases
 
 - **Double tap on ✓**: saves the set once.
@@ -644,8 +679,8 @@ Then its card shows the same line.
 - **Reload in the middle**: saved sets, rows, types, notes, readiness and finished state are
   kept; typed values are kept as drafts (AC-SESSION-16). Folded or unfolded state of the cards
   is not kept.
-- **The last row of an exercise cannot be removed** (it has no "Quitar" button); the exercise
-  itself is removed with "Quitar ejercicio".
+- **The last row of an exercise cannot be removed** (its "Quitar serie" button is disabled and
+  explains why); the exercise itself is removed with "Quitar ejercicio".
 - **Removing the last exercise** of a routine session leaves it with no exercises ("Sin
   ejercicios todavía.") and "+ Añadir ejercicio".
 - **Undo after something else changed**: "Deshacer" brings back what was removed even if other

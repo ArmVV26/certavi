@@ -69,6 +69,10 @@ Card **"Apariencia" / "Appearance"** with two groups of options (radio buttons):
 
 - **"Tema" / "Theme":** "Automático" / "Automatic", "Claro" / "Light", "Oscuro" / "Dark".
 - **"Idioma" / "Language":** "Español", "English" (each in its own language).
+- Switch **"Sin color (modo 0 dopamina)" / "No colour (zero-dopamine mode)"** with the description
+  **"Todo en blanco, negro y gris, sobre el tema claro u oscuro." / "Everything in black, white
+  and grey, on top of the light or dark theme."** (off at first). It belongs to this device only
+  (it is not synced) and does not change the theme button.
 
 Card **"Descanso" / "Rest"** (between "Apariencia" and the data cards), for the rest timer of the
 session (see [session.md](session.md) §2.6):
@@ -232,6 +236,30 @@ The page's `theme-color` matches the background: `#f4f5f7` in light, `#0b0f14` i
 **AC-THEME-08 · Readable in both themes**
 Every page passes an automatic accessibility check (axe) with no serious or critical issues,
 including colour contrast, in light and in dark.
+
+**AC-THEME-09 · Zero-dopamine mode (no colour)**
+Given I am on Ajustes
+When I turn on "Sin color (modo 0 dopamina)"
+Then every colour of the app turns into a grey (no hue anywhere: header, tabs, buttons, tags,
+charts, set rows), at once and without reloading
+And the theme keeps working: light stays light-grey, dark stays dark-grey, and the theme button
+still cycles automatic / light / dark
+And a done set, a pending set and a warm-up set can still be told apart (by brightness and
+shape, not by hue), and the "plan met" bars of Progreso too
+When I turn it off, the colours come back.
+
+**AC-THEME-10 · Remembered, no flash**
+Given the mode is on
+When I reload the app or close and open it
+Then it is still on, from the first paint (the page never shows its colours first), also on a
+phone in dark mode
+And it is a device setting: it does not travel with the sync, and importing or restoring a backup
+does not change it.
+
+**AC-THEME-11 · Readable in no-colour mode**
+In no-colour mode, in light and in dark, every page passes the automatic accessibility check
+(axe) with no serious or critical issues, including colour contrast
+And the browser colour (`theme-color`) matches the page background of the mode.
 
 ### Rest settings
 

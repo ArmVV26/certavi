@@ -9,6 +9,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { Card } from '../../ui/Card';
 import { Icon } from '../../ui/Icon';
 import { Segmented } from '../../ui/Segmented';
+import { Switch } from '../../ui/Switch';
 import { AboutCard } from './AboutCard';
 import { DataCard } from './DataCard';
 import { RestCard } from './RestCard';
@@ -17,7 +18,7 @@ import styles from './SettingsPage.module.css';
 
 export function SettingsPage() {
   const { t } = useTranslation();
-  const { preference, setPreference } = useTheme();
+  const { preference, setPreference, mono, setMono } = useTheme();
   const { locale, setLocale } = useLocale();
 
   return (
@@ -44,6 +45,12 @@ export function SettingsPage() {
             value,
             label: t(`settings.languageNames.${value}`),
           }))}
+        />
+        <Switch
+          label={t('settings.mono')}
+          description={t('settings.monoHint')}
+          checked={mono}
+          onChange={setMono}
         />
       </Card>
 

@@ -7,10 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Monochrome mode («0 dopamine»): a device-only switch in Settings > Appearance that removes all color (grey tokens in both themes, AA contrast kept). Applied before the first paint through `public/theme-init.js`.
+- Session: «Quitar serie» in the set-type sheet, so sets can be removed without swiping (disabled with a reason on the last row).
+- Progress: «Series por grupo muscular» on mobile shows two lines per group («8 / 12 · faltan 4» or «✓») and one cell per set across the full width.
+- Screens are preloaded two seconds after load, and a thin «Opening the screen» bar shows while a navigation is pending.
+- `npm run e2e:timings` reads the per-test timings written by the Playwright JSON reporter; CI uploads them as artifacts.
+
 ### Changed
 
+- Session: the rest timer ticks in its own bar, so the session screen no longer re-renders four times per second. This is a preventive change for the report that the screen was hard to leave on iPhone; the cause of that report is not confirmed.
+- E2E: the CI e2e jobs upload a per-test timing report on every run (retained 14 days). The `e2e:all` global timeout is 1600000 ms.
 - E2E: test data is loaded from a synthetic Certavi backup fixture instead of the gym_app importer (sync and PWA specs). The sync conflict test runs fewer attempts.
 - CI: the e2e job is split into parallel jobs (Chromium and WebKit, two shards each) that share one prebuilt bundle; Playwright retries once.
+
+### Fixed
+
+- Session: marking a set ✓ emptied its values for 1-2 seconds before the row turned green. The just-saved set now stays visible until the local query catches up.
+- Session: sets could not be removed on iPhone (the only way was a swipe over a full row). Use «Quitar serie» instead.
 
 ## [0.9.0] - Unreleased
 

@@ -16,6 +16,23 @@ pixel spacing.
 
 Header button order: automatic → light → dark → automatic (`nextThemePreference`).
 
+### No-colour mode ("zero dopamine")
+
+A second, independent switch: **Ajustes → Apariencia → "Sin color (modo 0 dopamina)"**. It puts
+`data-mono` on `<html>` (set by `initTheme()` before the first render, so there is no flash) and
+two blocks in `tokens.css`, `:root[data-mono][data-theme='light']` and `…'dark'`, replace the 12
+colour tokens with greys. It is a device-only setting (`certavi.mono`, `'on'` / `'off'`), never
+synced, and it does not change the theme preference or the header button.
+
+- Components do not change: they already use tokens only. Everything that was a hue is now a
+  brightness, so the meaning that used to live in the hue must also live in a shape or a text
+  (the tick of a done set, the **C** of a warm-up, "faltan 4" / "✓" in the group bars).
+- Brightness ladder (light / dark): `--accent` is the strongest, `--success` is a mid grey
+  (`#6e6e6e` / `#9e9e9e`) so a "plan met" bar and a normal bar differ.
+- `theme-color` uses `THEME_COLOR_MONO`; `tokens.test.ts` checks the same 18 AA pairs for both
+  mono blocks, that every mono colour is a pure grey and that accent and success stay apart.
+- This is the base of the backlog's "basic mode" (fewer sections), which is not built yet.
+
 ## Colour
 
 | Token          | Light     | Dark      | Use                                                 |
@@ -42,7 +59,7 @@ the rest timer. The colour itself is the text on its tint.
 
 ### Contrast
 
-`src/theme/tokens.test.ts` parses `tokens.css` and checks **18 text pairs per theme** against
+`src/theme/tokens.test.ts` parses `tokens.css` and checks **18 text pairs per theme** (light, dark and the two no-colour themes) against
 WCAG AA (≥ 4.5:1), tints included. Minimum today: **5.29:1**. The test fails if a token change
 breaks AA, if the two dark blocks drift apart, or if `THEME_COLOR` stops matching `--bg`.
 

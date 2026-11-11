@@ -7,9 +7,11 @@ import {
   DARK_SCHEME_QUERY,
   applyTheme,
   nextThemePreference,
+  readMono,
   readThemePreference,
   resolveTheme,
   systemPrefersDark,
+  writeMono,
   writeThemePreference,
 } from './theme';
 import type { ThemePreference } from './theme';
@@ -36,15 +38,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     getSystemPrefersDark,
     getServerSnapshot,
   );
+  const [mono, setMonoState] = useState(() => readMono(getLocalStorage(window)));
   const resolved = resolveTheme(preference, prefersDark);
 
   useLayoutEffect(() => {
-    applyTheme(document, resolved);
-  }, [resolved]);
+    applyTheme(document, resolved, mono);
+  }, [resolved, mono]);
 
   const setPreference = useCallback((next: ThemePreference) => {
     setPreferenceState(next);
     writeThemePreference(getLocalStorage(window), next);
+  }, []);
+
+  const setMono = useCallback((next: boolean) => {
+    setMonoState(next);
+    writeMono(getLocalStorage(window), next);
   }, []);
 
   const cyclePreference = useCallback(() => {
@@ -52,8 +60,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [preference, setPreference]);
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ preference, resolved, setPreference, cyclePreference }),
-    [preference, resolved, setPreference, cyclePreference],
+    () => ({ preference, resolved, setPreference, cyclePreference, mono, setMono }),
+    [preference, resolved, setPreference, cyclePreference, mono, setMono],
   );
 
   return <ThemeContext value={value}>{children}</ThemeContext>;

@@ -718,10 +718,13 @@ Cada fase sigue el mismo ciclo:
 - **Rama 3** `feature/routine-week-edits`
 - **Rama 4** `feature/machine-setup`
 - **Rama 5** `chore/e2e-speed` 🚧 implementada (2026-11-10), pendiente de CI real; ver su estado abajo
+- **Rama 6** `fix/gym-feedback` 🚧 implementada y verificada en local (2026-11-11), sale de `dev`; la crea el usuario; ver su estado abajo
 
 **Decisión (2026-11-10)**: tras 3-4 días de uso real de la v0.9.0, el usuario listó 9 mejoras. Se implementan **antes** de la QA final (Fase 10), para que la regresión completa del blind-tester pruebe la app que de verdad se va a publicar. La semana de prueba de la app corre en paralelo; cada rama se despliega en `dev` (Netlify) al mergearse.
 
-**Estado (2026-11-10)**: ⏳ **en curso**. Rama 5 implementada (🚧); el estado de las ramas 1 a 4 no se actualiza aquí.
+**Decisión (2026-11-11)**: tras entrenar con v0.9.x, el usuario encontró 3 fallos en la sesión (sobre todo sin cobertura) y 3 mejoras de gráfica y ajustes. Todo va en la rama 6.
+
+**Estado (2026-11-11)**: ⏳ **en curso**. Ramas 5 y 6 implementadas (🚧), pendientes de las comprobaciones que hace el usuario (rama 6, «Pendiente»); el estado de las ramas 1 a 4 no se actualiza aquí.
 
 **Ideas → decisión**:
 
@@ -736,6 +739,12 @@ Cada fase sigue el mismo ciclo:
 | 7 | Vista de rutina: cada ejercicio como tarjeta con enlace a su ficha, y la nota de la rutina visible en la sesión | Rama 3 |
 | 8 | Editor de rutinas: fila de chips numerados para saltar a cada ejercicio | Rama 3 |
 | 9 | Ajustes de la máquina (respaldo, asiento…) en ficha y sesión | Rama 4 |
+| 10 | Sesión: no se podía salir a otra pestaña (sin cobertura; algo encima de los enlaces; sin barra de descanso visible) | Rama 6 |
+| 11 | Sesión: no se podían borrar series | Rama 6 |
+| 12 | Sesión: al marcar ✓ los valores desaparecían 1-2 s y volvían con la fila verde | Rama 6 |
+| 13 | Progreso: gráfica «Series por grupo muscular» en móvil (barras de ~150 px): dos líneas por grupo y una casilla por serie a todo el ancho | Rama 6 |
+| 14 | Modo «0 dopamina» (sin color), interruptor aparte en Ajustes > Apariencia; ajuste del dispositivo, no sincronizado | Rama 6 |
+| 15 | E2E: medir el tiempo por test (la rama 5 no pudo) y partir o recortar los de WebKit > 30 s | Rama 6 |
 
 **Pasos por rama**:
 - **Rama 1 · `chore/dependabot`** (idea 5): `.github/dependabot.yml` (npm semanal con destino `dev`, máximo 5 PR abiertos, prefijo `chore(deps)`, dependencias de desarrollo minor y patch agrupadas, majors una a una, ignorar `typescript` ≥ 6.1, `eslint` ≥ 10 y `@types/node` de major > 22; `github-actions` mensual). `npm audit --audit-level=high --omit=dev` en el job de comprobaciones de CI. Tú activas en GitHub las alertas y las actualizaciones de seguridad de Dependabot.
@@ -768,12 +777,23 @@ Cada fase sigue el mismo ciclo:
 
 **Estado rama 5 (2026-11-10)**: 🚧 implementada. Hecho: `reportSlowTests`; fixture sintético `tests/fixtures/certavi-backup-sample.json` en `sync.spec.ts` y `pwa.spec.ts` (el importador de gym_app queda solo en `import-export.spec.ts`, que se borra en la Fase 10); AC-SYNC-11 de 42 a 3 intentos (el tope de 40 lo cubre `attemptLog.test.ts`); CI con `build-e2e` y 4 jobs en paralelo, `retries` 1, `timeout-minutes` 25 → 15. Sin hacer: `components.spec.ts` sin recortar; `@all-engines` sin revisar y tests de WebKit > 30 s sin partir (`reportSlowTests` no dio tiempos por test); `workers` 2 no aplicado (repo privado, 2 vCPU). Pendiente: primer PR a `main` para ver el tiempo real del CI y que `download-artifact@v8` funciona.
 
+**Actualización (2026-11-11)**: lo «sin hacer» de partir tests > 30 s queda resuelto por la medición de la rama 6 (ningún test llega a la mitad de su límite, así que no hay que partir ninguno).
+
+- **Rama 6 · `fix/gym-feedback`** (ideas 10-15, decidida el 2026-11-11). 🚧 implementada y verificada en local: lint, typecheck, knip, prettier, `test:coverage`, build y e2e de Chromium de `session`, `progress` y `theme` en verde; `e2e:all` completo ejecutado por el usuario. Specs escritos antes del código: AC-SESSION-40/41/42, AC-PRO-18, AC-THEME-09/10/11 y el interruptor de Ajustes.
+  - **Idea 12 (✓ vacía los valores 1-2 s)**. Causa **confirmada**: `markDone` borraba el borrador al guardar, pero `useLiveQuery` aún no traía el set (`readSession` relee todo el historial). Arreglo: capa «pendiente» (`src/features/session/pendingSets.ts`, `usePendingSets.ts`) que superpone el set recién guardado hasta que la consulta lo alcanza; se olvida al quitar la fila o el ejercicio, o al desmarcar. Tests unitarios y de pantalla con `readSession` ralentizado (falla sin el arreglo).
+  - **Idea 11 (no se podían borrar series)**. Causa: el único camino era deslizar la fila (`useSwipe` en `SetRow.tsx`), casi imposible sobre una fila llena de campos en iPhone. Arreglo: «Quitar serie» en la hoja «Tipo de serie», deshabilitado con motivo en la última fila; el deslizamiento solo se activa si se puede quitar. La sospecha de zod queda descartada: `removeSessionRow` funciona con sesiones del fixture importado (test en `sessionLog.test.ts`).
+  - **Idea 10 (no se podía salir de la sesión)**. Causa **sin confirmar**: ningún código bloquea la navegación. Medidas preventivas: (a) el tic de 250 ms del descanso pasa de `useRestTimer` a `RestTimerBar` (la sesión ya no se repinta 4 veces por segundo; el hook guarda `endsAt` y avisa con `setTimeout`); (b) `preloadScreens()` en `src/app/routes.tsx` descarga las pantallas lazy 2 s después de `load`; (c) barra fina «Abriendo la pantalla» en `Layout` (`useNavigation`). No aplicado: reajuste tras cerrar el teclado de iOS (solo si se confirma esa causa). Test `@all-engines` AC-SESSION-40 (offline y con el sync colgado): pasa en Chromium; falta WebKit.
+  - **Idea 13 (gráfica de series por grupo en móvil)**. `BarRows` con geometría en variables CSS por fila (`--value`, `--target`, `--span`, `--scale`) y `@container (max-width: 30rem)`: dos líneas por grupo («8 / 12 · faltan 4» o «✓»); barra del largo del plan (o de las series hechas si son más), cortada en una casilla por serie, con el mismo ancho de casilla en todos los grupos; series de más en otro tono; barra continua si la escala pasa de 30. Escritorio sin cambios. Claves `progress.groups.remaining_one/_other` y `remainingMet`.
+  - **Idea 14 (modo «0 dopamina»)**. Ajuste del dispositivo `certavi.mono` (`'on'`/`'off'`, no sincronizado), atributo `data-mono` en `<html>`, bloques `:root[data-mono][data-theme='light'|'dark']` en `tokens.css` con los 12 tokens en gris puro, `THEME_COLOR_MONO`, interruptor en Ajustes > Apariencia y `mono` en `deviceSettingsSchema`. `tokens.test.ts` comprueba los pares AA también en mono, que todo sea gris puro y que accent y success se distingan. Para que aplique desde el primer pintado: `public/theme-init.js` (script clásico bloqueante en `index.html`; archivo propio porque la CSP de `netlify.toml` es `script-src 'self'`), con `src/theme/themeInit.test.ts` que lo mantiene igual que `initTheme()`. Documentado en `docs/design/tokens.md` y `.claude/rules/design-tokens.md`.
+  - **Idea 15 (e2e)**. Reporter JSON a `e2e-timings/last-run.json` (git-ignored), `scripts/e2e-timings.mjs` y `npm run e2e:timings`; CI sube el artefacto `e2e-timings-<project>-<shard>` siempre (14 días). Flujo en `.claude/rules/e2e.md`. `e2e:all` con `--global-timeout=1600000` (subido en `package.json` porque con 1 worker en local no cabía en el valor anterior). Medición local con 1 worker (usuario): ningún test llega a la mitad de su límite, así que no se parte ninguno. Lo que pesa es el total de WebKit, que en CI con dos shards queda cerca de `timeout-minutes`. Recortes candidatos si hace falta: quitar `@all-engines` a AC-BLK-11 (independiente del motor) y revisar AC-SYNC-12/13/08/07/04/05 y AC-EXPORT-01. Quedan «Pendiente»: recorte de `components.spec.ts` y revisión de etiquetas (opcional).
+  - **Pendiente** (lo hace el usuario): (a) crear `fix/gym-feedback` desde `dev`, hacer los commits y abrir el PR; (b) probar en iPhone sin cobertura, con el descanso en marcha y un campo abierto (idea 10); (c) correr los specs de `session` en WebKit (`npx playwright test --project=webkit tests/e2e/session.spec.ts`) para AC-SESSION-40/41/42; (d) decidir si se recortan las etiquetas `@all-engines`; (e) `playwright.config.ts` (comentario L26-28) sigue diciendo 20 min para `e2e:all`: corregir al tocar config.
+
 **Cierre**: `/close-phase final`, PR `dev → main` y tag `v0.10.0`.
 
 **Prompt**:
 
 ```text
-Lee context.md, sección 10, Fase 9 (ajustes tras el uso real, v0.10.0). Trabaja rama a rama, cada una desde dev, en el orden de la lista: docs/phase-9-polish (ya en curso), chore/dependabot, fix/ui-polish, feature/routine-week-edits, feature/machine-setup y chore/e2e-speed. Antes de empezar una rama, espera a que el usuario confirme que la anterior está mergeada en dev. No ejecutes git de escritura: al cerrar cada rama propón los commits (archivos y mensaje). Lint, typecheck, test:coverage y build deben pasar. Para chore/e2e-speed pide permiso antes de lanzar e2e:all. Lo que quede fuera del alcance de cada rama va a «Suggestions».
+Lee context.md, sección 10, Fase 9 (ajustes tras el uso real, v0.10.0). Trabaja rama a rama, cada una desde dev, en el orden de la lista: docs/phase-9-polish (ya en curso), chore/dependabot, fix/ui-polish, feature/routine-week-edits, feature/machine-setup y chore/e2e-speed, y después fix/gym-feedback. Antes de empezar una rama, espera a que el usuario confirme que la anterior está mergeada en dev. No ejecutes git de escritura: al cerrar cada rama propón los commits (archivos y mensaje). Lint, typecheck, test:coverage y build deben pasar. Para chore/e2e-speed pide permiso antes de lanzar e2e:all. Lo que quede fuera del alcance de cada rama va a «Suggestions».
 ```
 
 ---
@@ -829,6 +849,8 @@ con versión y tag.
 - **Importar desde otras apps (Hevy, Strong…)** (añadido el 2026-11-06): importar su CSV con un paso para asignar cada ejercicio al catálogo de Certavi (o crearlo como ejercicio propio), porque los ids no coinciden. Un menú selector de «app de origen» sustituiría al importador de gym_app, que sale en la Fase 10. Enlazar las apps por API solo si existe una API oficial.
 - **Uso por otras personas**: una clave de sync por persona con su propio espacio de datos en el servidor (cambia el contrato `sync-v1`, lleva ADR y revisión de seguridad); primera vez guiada (empezar vacío o con plantillas) y bloques personales desactivados por defecto. Ver Fase 10.
 - **Peso levantado por rutina**, si no cabe en la Fase 7.
+- **Tests de WebKit: medir en CI real tras la rama 6** (añadido el 2026-11-11): los tiempos locales con 1 worker no son los de CI; con el medidor por test de la rama 6 y el primer PR a `main`, decidir si hace falta recortar más `@all-engines`.
+- **Modo básico** (añadido el 2026-11-11, idea del usuario): opción que reduce cada pantalla a lo esencial (menos secciones, tarjetas y datos visibles) para entrenar con el mínimo de distracción. Se construiría sobre el interruptor «Sin color (modo 0 dopamina)» de la Fase 9 (rama 6, `fix/gym-feedback`): mismo sitio en Ajustes → Apariencia y mismo tipo de ajuste (de dispositivo, no sincronizado). Por definir: qué se considera «lo esencial» en Hoy, sesión, Progreso, Calendario y Rutinas. Fuera del alcance de la Fase 9.
 
 ---
 
@@ -836,14 +858,14 @@ con versión y tag.
 
 [Tabla Registro](docs/history.md#seccion12)
 
-**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ✅ (`v0.7.0`, sin publicar) · 7 ✅ (`v0.8.0`, sin publicar) · 8 ✅ (`v0.9.0`, sin publicar) · 9 ⏳ (`v0.10.0`, en curso: rama 5 🚧) · 10 ⏳ (`v1.0.0`)
+**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ✅ (`v0.7.0`, sin publicar) · 7 ✅ (`v0.8.0`, sin publicar) · 8 ✅ (`v0.9.0`, sin publicar) · 9 ⏳ (`v0.10.0`, en curso: ramas 5 y 6 🚧) · 10 ⏳ (`v1.0.0`)
 
 **Preguntas abiertas**:
 - Qué estiramientos van en el bloque «Estiramientos» (antes de la Fase 7).
 - (2026-11-04) ¿Es IndexedDB tan lento en el iPhone real (Safari) como en WebKit de escritorio (segundos por importación o primera lectura)? Medir antes de optimizar (Fase 5, «Revisar al empezar»). Sin medir; ya se puede, porque la app está desplegada.
 - ~~(2026-11-04) ¿Hace falta `test.slow()` en WebKit en `tests/e2e/sync.spec.ts`?~~ Resuelto el 2026-11-05: sustituido por el `timeout` de 60 s del proyecto `webkit` (2.6).
 - (2026-11-04) ¿Baja el job e2e de CI de 5 min con la caché de navegadores? Sin medir (el PR `dev → main` de la Fase 4 pasó en verde, pero no consta la duración). Con la suite de `feature/today` (166 tests en `e2e:all`) se estima ≥ 14 min con 1 worker: ver `chore/ci-e2e-shards` en la Fase 5. **(2026-11-10)** Rama 5 pasa a 4 jobs en paralelo con `build-e2e`: sin medir en CI real.
-- (2026-11-10) Tiempo real del e2e de CI tras la rama 5 (objetivo ≤ 10 min). `reportSlowTests` (Playwright lo aplica por archivo y el reporter `dot` no imprimió tiempos): medir en el primer PR a `main`.
+- (2026-11-10) Tiempo real del e2e de CI tras la rama 5 (objetivo ≤ 10 min). `reportSlowTests` (Playwright lo aplica por archivo y el reporter `dot` no imprimió tiempos): medir en el primer PR a `main`. **(2026-11-11)** La rama 6 (idea 15) añade el medidor por test (reporter JSON, `npm run e2e:timings`, artefacto por job). La medición local con 1 worker ya está hecha (ver rama 6); los tiempos reales de CI faltan hasta el primer PR a `main`.
 - (2026-11-06) Medir en el iPhone real el sonido del temporizador con la pantalla bloqueada y el flujo sin conexión de la sesión (Fase 5, pendiente manual).
 
 **Pendiente para fases futuras**:

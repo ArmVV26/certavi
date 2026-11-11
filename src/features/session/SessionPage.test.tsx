@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { straightSets, topBackoff, type PlanItem, type SetEntry } from '../../domain';
 import { makeSession, makeSet } from '../../domain/testing/builders';
 import type { CertaviDb } from '../../data/db';
@@ -10,8 +10,23 @@ import { openTestDatabase } from '../../test/render';
 import { renderApp } from '../../test/renderApp';
 import type { Locale } from '../../i18n/locale';
 
+// A slow device: when `delay` is set, reading the session takes that long after the data is read.
+const slow = vi.hoisted(() => ({ delay: 0 }));
+vi.mock('../../data/sessions', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../data/sessions')>();
+  return {
+    ...actual,
+    readSession: async (...args: Parameters<typeof actual.readSession>) => {
+      const view = await actual.readSession(...args);
+      if (slow.delay > 0) await new Promise((resolve) => setTimeout(resolve, slow.delay));
+      return view;
+    },
+  };
+});
+
 beforeEach(() => {
   localStorage.clear();
+  slow.delay = 0;
 });
 
 const plan = (exerciseId: string, scheme: PlanItem['scheme'], optional = false): PlanItem => ({
@@ -197,6 +212,27 @@ describe('logging sets', () => {
       rir: 2,
       straps: true,
     });
+  });
+
+  it('keeps the values on screen and shows the row as done while the session is read again', async () => {
+    const { user } = await open();
+    const remo = card('Remo en T');
+    const weight = remo.getByLabelText('Peso de la serie 1');
+    await user.type(weight, '60');
+    await user.type(remo.getByLabelText('Repeticiones de la serie 1'), '8');
+
+    slow.delay = 1_500;
+    await user.click(doneButton(remo, 0));
+
+    // Well before the slow read ends, the row is already done and nothing went blank.
+    const done = await remo.findByRole(
+      'button',
+      { name: 'Serie hecha (pulsa para quitar)' },
+      { timeout: 1_000 },
+    );
+    expect(done).toBeInTheDocument();
+    expect(weight).toHaveValue('60');
+    expect(remo.getByLabelText('Repeticiones de la serie 1')).toHaveValue('8');
   });
 
   it('saves "Anterior" when ✓ is pressed on an empty row', async () => {
@@ -414,6 +450,48 @@ describe('rows', () => {
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(await screen.findByText('0 de 1 hechas')).toBeInTheDocument();
     expect(aperturas.queryByRole('button', { name: /^Quitar serie/ })).not.toBeInTheDocument();
+  });
+
+  it('removes a row from its menu with a plain tap, asking first when it is saved', async () => {
+    const { db, user } = await open();
+    const remo = card('Remo en T');
+    await user.type(remo.getByLabelText('Peso de la serie 2'), '52');
+    await user.type(remo.getByLabelText('Repeticiones de la serie 2'), '8');
+    await user.click(doneButton(remo, 1));
+    await screen.findByText('1 de 8 hechas');
+
+    // An empty row goes at once and the notification offers "Deshacer".
+    await user.click(remo.getByRole('button', { name: 'Tipo de la serie 3: efectiva' }));
+    const sheet = screen.getByRole('dialog', { name: 'Tipo de serie' });
+    await user.click(within(sheet).getByRole('button', { name: 'Quitar serie 3' }));
+    expect(screen.queryByRole('dialog', { name: 'Tipo de serie' })).not.toBeInTheDocument();
+    expect(await screen.findByText('1 de 7 hechas')).toBeInTheDocument();
+    expect(await screen.findByText('Serie quitada')).toBeInTheDocument();
+
+    // A saved row asks for confirmation and keeps its data until confirmed.
+    await user.click(remo.getByRole('button', { name: 'Tipo de la serie 2: efectiva' }));
+    await user.click(
+      within(screen.getByRole('dialog', { name: 'Tipo de serie' })).getByRole('button', {
+        name: 'Quitar serie 2',
+      }),
+    );
+    const dialog = await screen.findByRole('alertdialog', { name: '¿Quitar la serie 2?' });
+    expect(await loggedSets(db)).toHaveLength(1);
+    await user.click(within(dialog).getByRole('button', { name: 'Quitar' }));
+    expect(await screen.findByText('0 de 6 hechas')).toBeInTheDocument();
+    expect(await loggedSets(db)).toHaveLength(0);
+  });
+
+  it('disables "Quitar serie" on the last row of an exercise and says why', async () => {
+    const { user } = await open({ items: [plan('aperturas-maquina', straightSets('10-15', 1))] });
+    const aperturas = card('Aperturas en máquina');
+    await user.click(aperturas.getByRole('button', { name: 'Tipo de la serie 1: efectiva' }));
+    const sheet = screen.getByRole('dialog', { name: 'Tipo de serie' });
+    const remove = within(sheet).getByRole('button', { name: 'Quitar serie 1' });
+    expect(remove).toBeDisabled();
+    expect(remove).toHaveAccessibleDescription(
+      'Es la última serie. Para quitarla, quita el ejercicio.',
+    );
   });
 
   it('changes the type of a row without moving it', async () => {

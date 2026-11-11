@@ -41,6 +41,7 @@ export function GroupSetsCard({ model }: { model: ProgressModel }) {
       done: oneDecimal(done, locale),
       count: planned,
     });
+    const missing = planned - done;
     return {
       key: group,
       label,
@@ -49,6 +50,15 @@ export function GroupSetsCard({ model }: { model: ProgressModel }) {
       valueText: t('progress.groups.value', {
         done: oneDecimal(done, locale),
         planned: oneDecimal(planned, locale),
+      }),
+      // Shown on phones after the numbers: what is missing, or a tick when the plan is met.
+      ...(planned > 0 && {
+        remainingText: met
+          ? t('progress.groups.remainingMet')
+          : t('progress.groups.remaining', {
+              count: missing,
+              missing: oneDecimal(missing, locale),
+            }),
       }),
       name: met ? `${name}, ${t('progress.groups.met')}` : name,
     };
