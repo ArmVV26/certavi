@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DisplayRow } from '../../domain';
@@ -6,6 +6,7 @@ import type { RowDraft } from '../../data/sessionDrafts';
 import type { RowType } from '../../data/sessionLog';
 import { formatNumber } from '../../i18n/format';
 import { useLocale } from '../../i18n/LocaleContext';
+import { Button } from '../../ui/Button';
 import { cx } from '../../ui/cx';
 import { Icon } from '../../ui/Icon';
 import { NumberField } from '../../ui/NumberField';
@@ -49,7 +50,10 @@ function typeOf(row: DisplayRow): RowType {
   return row.kind === 'warmup' ? 'warmup' : row.kind === 'dropset' ? 'dropset' : 'effective';
 }
 
-/** One row of sets: type, last time, weight, reps, RIR and ✓. Swipe it left to remove it. */
+/**
+ * One row of sets: type, last time, weight, reps, RIR and ✓. Its menu (the type button) changes the
+ * type and removes the row; swiping it left is a shortcut to remove it.
+ */
 export function SetRow({
   exerciseId,
   row,
@@ -70,6 +74,7 @@ export function SetRow({
   const { t } = useTranslation();
   const { locale } = useLocale();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const lastSetId = useId();
   const swipe = useSwipe();
 
   useEffect(() => {
@@ -121,8 +126,8 @@ export function SetRow({
             swipe.state === 'open' && styles.open,
             swipe.state === 'dragging' && styles.dragging,
           )}
-          style={swipe.style}
-          {...swipe.handlers}
+          style={canRemove ? swipe.style : undefined}
+          {...(canRemove ? swipe.handlers : undefined)}
         >
           <p className={styles.caption}>{caption}</p>
           <div className={styles.grid}>
@@ -214,6 +219,28 @@ export function SetRow({
             </li>
           ))}
         </ul>
+        {/* Removing never depends on swiping: it is one plain tap away on any phone. */}
+        <div className={styles.menuRemove}>
+          <Button
+            variant="danger"
+            icon="trash"
+            fullWidth
+            disabled={!canRemove}
+            aria-label={t('session.row.removeOf', { name })}
+            aria-describedby={canRemove ? undefined : lastSetId}
+            onClick={() => {
+              setSheetOpen(false);
+              onRemove();
+            }}
+          >
+            {t('session.row.removeSet')}
+          </Button>
+          {!canRemove && (
+            <p id={lastSetId} className={styles.menuHint}>
+              {t('session.row.lastSet')}
+            </p>
+          )}
+        </div>
       </Sheet>
     </li>
   );
