@@ -25,6 +25,9 @@ updates:
       prefix: 'chore(deps)'
       prefix-development: 'chore(deps)'
     groups:
+      i18n:
+        patterns: ['i18next', 'react-i18next']
+        update-types: [major, minor, patch]
       dev-minor-patch:
         dependency-type: development
         update-types: [minor, patch]
