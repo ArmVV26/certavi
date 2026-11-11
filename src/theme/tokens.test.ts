@@ -1,7 +1,7 @@
 // Guards the design tokens: every theme defines every colour, the two dark blocks match,
 // theme-color equals --bg, and every colour pair the UI uses meets WCAG AA (4.5:1).
 import { describe, expect, it } from 'vitest';
-import { THEME_COLOR } from './theme';
+import { THEME_COLOR, THEME_COLOR_MONO } from './theme';
 import tokensCss from './tokens.css?raw';
 
 type Declarations = Map<string, string>;
@@ -32,6 +32,8 @@ const rules = parseRules(tokensCss);
 const LIGHT = ":root, :root[data-theme='light']";
 const DARK_SYSTEM = ':root:not([data-theme])';
 const DARK_APP = ":root[data-theme='dark']";
+const MONO_LIGHT = ":root[data-mono][data-theme='light']";
+const MONO_DARK = ":root[data-mono][data-theme='dark']";
 
 function block(selector: string): Declarations {
   const found = rules.get(selector);
@@ -128,7 +130,7 @@ const TEXT_PAIRS: readonly [keyof Palette, keyof Palette, string][] = [
 ];
 
 describe('design tokens', () => {
-  it.each([LIGHT, DARK_SYSTEM, DARK_APP])(
+  it.each([LIGHT, DARK_SYSTEM, DARK_APP, MONO_LIGHT, MONO_DARK])(
     '%s defines every colour token as a hex value',
     (selector) => {
       const declarations = block(selector);
@@ -151,9 +153,32 @@ describe('design tokens', () => {
     expect(block(DARK_APP).get('--bg')).toBe(THEME_COLOR.dark);
   });
 
+  it('matches theme-color with --bg in each no-colour theme', () => {
+    expect(block(MONO_LIGHT).get('--bg')).toBe(THEME_COLOR_MONO.light);
+    expect(block(MONO_DARK).get('--bg')).toBe(THEME_COLOR_MONO.dark);
+  });
+
+  it.each([MONO_LIGHT, MONO_DARK])('%s has no hue: every colour is a pure grey', (selector) => {
+    for (const token of COLOR_TOKENS) {
+      const [r, g, b] = toRgb(block(selector).get(token) ?? '');
+      expect([token, g, b]).toEqual([token, r, r]);
+    }
+  });
+
+  it.each([MONO_LIGHT, MONO_DARK])(
+    '%s tells a met bar from a normal one, and a done tick from a pending one, by brightness',
+    (selector) => {
+      const colors = palette(selector);
+      expect(contrast(colors['--accent'], colors['--success'])).toBeGreaterThanOrEqual(2);
+      expect(contrast(colors['--success'], colors['--surface-2'])).toBeGreaterThanOrEqual(3);
+    },
+  );
+
   describe.each([
     ['light', LIGHT],
     ['dark', DARK_APP],
+    ['no-colour light', MONO_LIGHT],
+    ['no-colour dark', MONO_DARK],
   ])('%s theme contrast (WCAG AA ≥ 4.5:1)', (_name, selector) => {
     const colors = palette(selector);
     it.each(TEXT_PAIRS)('%s on %s (%s)', (fg, bg) => {

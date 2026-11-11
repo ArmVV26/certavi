@@ -8,7 +8,9 @@ import {
   countSchemeSets,
   isValidIncrement,
   parseIsoDate,
+  type ExerciseSetupItem,
   type HistoryEntry,
+  type SetupDraftRow,
 } from '../../domain';
 import { useDatabase } from '../../data/DatabaseContext';
 import { readExerciseDetail, type ExerciseDetailView } from '../../data/exerciseCatalog';
@@ -16,6 +18,7 @@ import {
   ExerciseInRoutineError,
   setExerciseArchived,
   setExerciseIncrement,
+  setExerciseSetup,
 } from '../../data/exercises';
 import { formatDate, formatNumber } from '../../i18n/format';
 import { useLocale } from '../../i18n/LocaleContext';
@@ -32,6 +35,7 @@ import { Tag } from '../../ui/Tag';
 import { useToast } from '../../ui/ToastContext';
 import { EvolutionCard } from './EvolutionCard';
 import styles from './ExerciseDetailPage.module.css';
+import { SetupEditor } from './SetupEditor';
 
 /** One exercise: its data, records, history and weight step; the ones the user made can be edited. */
 export function ExerciseDetailPage() {
@@ -176,6 +180,8 @@ function DetailScreen({ detail }: { detail: ExerciseDetailView }) {
       </Card>
 
       <StepCard key={exercise.increment} exerciseId={exercise.id} increment={exercise.increment} />
+
+      <SetupCard exerciseId={exercise.id} setup={exercise.setup} />
 
       {history.length === 0 ? (
         <p className={styles.muted}>{t('exercises.detail.neverLogged')}</p>
@@ -329,6 +335,66 @@ function StepCard({ exerciseId, increment }: { exerciseId: string; increment: nu
           {t('exercises.detail.stepSave')}
         </Button>
       </div>
+    </Card>
+  );
+}
+
+/** The machine settings of the exercise (backrest, seat…), shown and edited in place. */
+function SetupCard({
+  exerciseId,
+  setup,
+}: {
+  exerciseId: string;
+  setup: readonly ExerciseSetupItem[] | undefined;
+}) {
+  const { t } = useTranslation();
+  const db = useDatabase();
+  const toast = useToast();
+  const [editing, setEditing] = useState(false);
+
+  const save = async (rows: SetupDraftRow[]) => {
+    try {
+      await setExerciseSetup(db, exerciseId, rows);
+    } catch (error) {
+      toast.show({ message: t('exercises.setup.failed'), tone: 'danger' });
+      throw error;
+    }
+    setEditing(false);
+    toast.show({ message: t('exercises.setup.saved'), tone: 'success' });
+  };
+
+  return (
+    <Card element="section">
+      <h3 className={styles.heading}>{t('exercises.setup.title')}</h3>
+      {editing ? (
+        <SetupEditor
+          setup={setup}
+          onSave={save}
+          onCancel={() => {
+            setEditing(false);
+          }}
+        />
+      ) : (
+        <div className={styles.setup}>
+          {setup && setup.length > 0 ? (
+            <ul className={styles.plain}>
+              {setup.map((item, index) => (
+                <li key={index}>{t('exercises.setup.item', item)}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className={styles.muted}>{t('exercises.setup.empty')}</p>
+          )}
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setEditing(true);
+            }}
+          >
+            {t(setup && setup.length > 0 ? 'exercises.setup.edit' : 'exercises.setup.add')}
+          </Button>
+        </div>
+      )}
     </Card>
   );
 }

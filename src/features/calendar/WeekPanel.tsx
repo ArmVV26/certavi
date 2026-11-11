@@ -7,8 +7,8 @@ import { useLocale } from '../../i18n/LocaleContext';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { downloadFile } from '../../ui/download';
+import { Stat, StatGrid } from '../../ui/Stat';
 import { WeekWeightForm } from '../today/BodyWeightCard';
-import todayStyles from '../today/TodayPage.module.css';
 import { useSave } from '../today/useSave';
 import { WeekOptions } from '../today/WeekOptions';
 import { weekRange } from '../today/weekRange';
@@ -31,7 +31,6 @@ export function WeekPanel({ model, monday, onClose }: WeekPanelProps) {
   const range = weekRange(monday, locale);
   const number = (value: number) => formatNumber(value, locale);
   const future = detail.timing === 'future';
-  const readOnly = future || detail.closed;
   const deloadHint = detail.options.deload ? t('today.week.deloadOn') : t('today.week.deloadOff');
 
   function change(patch: WeekPatch) {
@@ -59,28 +58,27 @@ export function WeekPanel({ model, monday, onClose }: WeekPanelProps) {
         </Button>
       </div>
 
-      <dl className={todayStyles.figures}>
-        <div className={todayStyles.figure}>
-          <dt>{t('today.week.effectiveSets')}</dt>
-          <dd className={todayStyles.figureValue}>
-            {number(detail.doneSets)} / {number(detail.plannedSets)}
-          </dd>
-        </div>
-        <div className={todayStyles.figure}>
-          <dt>{t('today.week.sessions')}</dt>
-          <dd className={todayStyles.figureValue}>
-            {t('today.week.sessionsOf', {
-              done: number(detail.sessions),
-              size: number(detail.plannedSessions),
-            })}
-          </dd>
-        </div>
-      </dl>
+      <StatGrid>
+        <Stat
+          filled
+          label={t('today.week.effectiveSets')}
+          value={`${number(detail.doneSets)} / ${number(detail.plannedSets)}`}
+        />
+        <Stat
+          filled
+          label={t('today.week.sessions')}
+          value={t('today.week.sessionsOf', {
+            done: number(detail.sessions),
+            size: number(detail.plannedSessions),
+          })}
+        />
+      </StatGrid>
 
       <WeekOptions
         week={detail.options}
         deloadHint={deloadHint}
-        disabled={readOnly}
+        disabled={future}
+        sizeLocked={detail.closed}
         onChange={change}
       />
       {detail.closed && (

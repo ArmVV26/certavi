@@ -4,11 +4,15 @@
 import {
   exerciseFromDraft,
   isValidIncrement,
+  normalizeSetup,
   routinesWithExercise,
+  sameSetup,
   validateExerciseDraft,
   type Exercise,
   type ExerciseDraft,
   type ExerciseDraftError,
+  type SetupDraftRow,
+  type SetupError,
   type ValidateOptions,
 } from '../domain';
 import type { CertaviDb } from './db';
@@ -47,6 +51,19 @@ export class ExerciseInRoutineError extends Error {
     this.name = 'ExerciseInRoutineError';
     this.exerciseId = exerciseId;
     this.routineIds = routineIds;
+  }
+}
+
+/** The machine settings are not valid; `errors` says which row and field. */
+export class InvalidSetupError extends Error {
+  readonly errors: readonly SetupError[];
+
+  constructor(errors: readonly SetupError[]) {
+    super(
+      `Invalid machine settings: ${errors.map((e) => `${String(e.row)}:${e.code}`).join(', ')}`,
+    );
+    this.name = 'InvalidSetupError';
+    this.errors = errors;
   }
 }
 
@@ -105,7 +122,11 @@ export function updateExercise(
     const current = await editableExercise(exercises, id);
     const errors = validateExerciseDraft(draft, await exercises.list(), { nameOf, editingId: id });
     if (errors.length > 0) throw new InvalidExerciseError(errors);
-    return exercises.put(exerciseFromDraft(draft, id, current.archived));
+    // The form does not edit the machine settings: keep them.
+    return exercises.put({
+      ...exerciseFromDraft(draft, id, current.archived),
+      ...(current.setup ? { setup: current.setup } : {}),
+    });
   });
 }
 
@@ -155,5 +176,29 @@ export function setExerciseIncrement(
     const current = await liveExercise(exercises, id);
     if (current.increment === increment) return current;
     return exercises.put({ ...current, increment });
+  });
+}
+
+/**
+ * Saves the machine settings of any exercise, seed or not. The rows are trimmed and the empty ones
+ * dropped; no rows removes the settings. Throws `InvalidSetupError` (and writes nothing) when a row
+ * is not valid and `ExerciseNotFoundError` for an unknown id. Writes nothing when they do not change.
+ */
+export function setExerciseSetup(
+  db: CertaviDb,
+  id: string,
+  rows: readonly SetupDraftRow[],
+  options: RepositoryOptions = {},
+): Promise<Exercise> {
+  const exercises = createRepository(db, 'exercise', options);
+  return db.transaction('rw', [db.exercises, db.pending, db.meta], async () => {
+    const result = normalizeSetup(rows);
+    if (!result.ok) throw new InvalidSetupError(result.errors);
+    const current = await liveExercise(exercises, id);
+    if (sameSetup(current.setup, result.setup)) return current;
+    const next: Exercise = { ...current };
+    if (result.setup.length > 0) next.setup = result.setup;
+    else delete next.setup;
+    return exercises.put(next);
   });
 }

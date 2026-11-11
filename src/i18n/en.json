@@ -1,6 +1,7 @@
 {
   "app": {
     "skipToContent": "Skip to content",
+    "loading": "Opening the screen",
     "documentTitle": "{{page}} · Certavi"
   },
   "nav": {
@@ -63,7 +64,7 @@
         "short_other": "{{count}} sessions",
         "closed": "Closed"
       },
-      "closedNote": "Week closed: its plan was saved on {{date}}.",
+      "closedNote": "Week closed: the plan was saved on {{date}}. You can only change the deload and hiking options.",
       "future": "You can't change this week yet.",
       "download": "Download the week as JSON"
     },
@@ -149,6 +150,9 @@
       "row_other": "{{group}}: {{done}} of {{count}} sets",
       "met": "plan met",
       "value": "{{done}} / {{planned}}",
+      "remaining_one": "{{missing}} to go",
+      "remaining_other": "{{missing}} to go",
+      "remainingMet": "✓",
       "legendDone": "Sets done",
       "legendMet": "Plan met",
       "legendPlan": "Plan"
@@ -247,6 +251,8 @@
     "appearance": "Appearance",
     "theme": "Theme",
     "language": "Language",
+    "mono": "No colour (zero-dopamine mode)",
+    "monoHint": "Everything in black, white and grey, on top of the light or dark theme.",
     "languageNames": {
       "es": "Español",
       "en": "English"
@@ -257,6 +263,11 @@
     },
     "developer": "Developer",
     "uiCatalog": "Component catalog",
+    "about": {
+      "title": "About",
+      "version": "Version {{version}}",
+      "source": "Source code on GitHub"
+    },
     "data": {
       "title": "Data",
       "intro": "Everything is saved on this device first.",
@@ -611,6 +622,28 @@
       "mine": "Mine",
       "archived": "Archived"
     },
+    "setup": {
+      "title": "Machine settings",
+      "empty": "No settings noted yet",
+      "add": "Add settings",
+      "edit": "Edit settings",
+      "item": "{{label}}: {{value}}",
+      "labelField": "Setting {{n}} name",
+      "valueField": "Setting {{n}} value",
+      "remove": "Remove setting {{n}}",
+      "addRow": "Add setting",
+      "save": "Save settings",
+      "cancel": "Cancel",
+      "saved": "Settings saved",
+      "failed": "Couldn't save the settings. Try again.",
+      "errors": {
+        "label-empty": "Enter the setting name",
+        "value-empty": "Enter the setting value",
+        "label-too-long": "The name can have up to {{max}} characters",
+        "value-too-long": "The value can have up to {{max}} characters",
+        "too-many": "You can note up to {{max}} settings"
+      }
+    },
     "errors": {
       "name-empty": "Enter a name",
       "name-too-long": "The name can have up to {{max}} characters",
@@ -754,6 +787,8 @@
       "restore": "Restore original",
       "exercises": "Exercises",
       "list": "Routine exercises",
+      "sheet": "View sheet",
+      "sheetOf": "View {{name}} sheet",
       "empty": "This routine has no exercises",
       "notFound": "We couldn't find this routine",
       "restoreTitle": "Restore the original routine?",
@@ -785,6 +820,7 @@
       "rirHint": "For example 2 or 1-2",
       "note": "Note",
       "addExercise": "Add exercise",
+      "jump": "Jump to an exercise",
       "alreadyIn": "Already in the routine",
       "errorsTitle": "Check the routine: some fields have errors",
       "errors": {
@@ -1080,6 +1116,8 @@
       "addExtra": "+ Extra set",
       "note": "Note",
       "noteFilled": "Note ✎",
+      "setup": "Settings",
+      "setupFilled": "Settings ✎",
       "summary": "{{weight}} × {{reps}}",
       "moveUp": "Move {{name}} up",
       "moveDown": "Move {{name}} down",
@@ -1125,7 +1163,9 @@
         "dropset": "Dropset"
       },
       "remove": "Remove",
-      "removeOf": "Remove set {{name}}"
+      "removeOf": "Remove set {{name}}",
+      "removeSet": "Remove set",
+      "lastSet": "This is the last set. To remove it, remove the exercise."
     },
     "notes": {
       "exercise": "Exercise note",

@@ -148,7 +148,8 @@ describe('records', () => {
     expect(syncedSettingsSchema.safeParse({ ...synced, id: 'other' }).success).toBe(false);
     expect('theme' in syncedSettingsSchema.shape).toBe(false);
     expect('syncKey' in syncedSettingsSchema.shape).toBe(false);
-    const device = { theme: 'system', locale: 'es', sound: true, vibration: false };
+    expect('mono' in syncedSettingsSchema.shape).toBe(false);
+    const device = { theme: 'system', mono: false, locale: 'es', sound: true, vibration: false };
     expect(deviceSettingsSchema.safeParse(device).success).toBe(true);
   });
 });

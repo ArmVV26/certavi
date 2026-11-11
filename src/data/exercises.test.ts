@@ -5,9 +5,11 @@ import {
   ExerciseInRoutineError,
   ExerciseNotEditableError,
   InvalidExerciseError,
+  InvalidSetupError,
   createExercise,
   setExerciseArchived,
   setExerciseIncrement,
+  setExerciseSetup,
   updateExercise,
 } from './exercises';
 import { createRepositories } from './repository';
@@ -223,5 +225,79 @@ describe('setExerciseIncrement', () => {
     await expect(setExerciseIncrement(db, 'nope', 5, { now })).rejects.toThrow(
       ExerciseNotFoundError,
     );
+  });
+});
+
+describe('setExerciseSetup', () => {
+  const rows = [
+    { label: ' Respaldo ', value: '3' },
+    { label: 'Asiento', value: '5' },
+    { label: '', value: '' },
+  ];
+  const saved = [
+    { label: 'Respaldo', value: '3' },
+    { label: 'Asiento', value: '5' },
+  ];
+
+  it('saves the cleaned settings of a seed exercise and queues it', async () => {
+    const { db, repos } = await setup();
+    const updated = await setExerciseSetup(db, 'remo-t', rows, { now });
+    expect(updated).toMatchObject({ id: 'remo-t', setup: saved, custom: false, updatedAt: NOW });
+    expect((await repos.exercise.get('remo-t'))?.setup).toEqual(saved);
+    expect(await db.pending.get('remo-t')).toMatchObject({ type: 'exercise' });
+  });
+
+  it('keeps the settings when the seed is applied again', async () => {
+    const { db, repos } = await setup();
+    await setExerciseSetup(db, 'remo-t', rows, { now });
+    await ensureSeed(db);
+    expect((await repos.exercise.get('remo-t'))?.setup).toEqual(saved);
+  });
+
+  it('works for a created exercise and replaces the previous settings', async () => {
+    const { db } = await setup();
+    const created = await createExercise(db, draft(), { now });
+    await setExerciseSetup(db, created.id, rows, { now });
+    const next = await setExerciseSetup(db, created.id, [{ label: 'Pin', value: '7' }], { now });
+    expect(next.setup).toEqual([{ label: 'Pin', value: '7' }]);
+  });
+
+  it('removes the field when no rows are left', async () => {
+    const { db } = await setup();
+    await setExerciseSetup(db, 'remo-t', rows, { now });
+    const cleared = await setExerciseSetup(db, 'remo-t', [{ label: '', value: ' ' }], { now });
+    expect(cleared).not.toHaveProperty('setup');
+    expect(await db.exercises.get('remo-t')).not.toHaveProperty('setup');
+  });
+
+  it('writes nothing when the settings do not change', async () => {
+    const { db } = await setup();
+    await setExerciseSetup(db, 'remo-t', [], { now });
+    expect(await db.pending.count()).toBe(0);
+    await setExerciseSetup(db, 'remo-t', rows, { now });
+    await db.pending.clear();
+    await setExerciseSetup(db, 'remo-t', saved, { now });
+    expect(await db.pending.count()).toBe(0);
+  });
+
+  it('rejects invalid rows and unknown ids without writing', async () => {
+    const { db } = await setup();
+    await expect(
+      setExerciseSetup(db, 'remo-t', [{ label: '', value: '3' }], { now }),
+    ).rejects.toThrow(InvalidSetupError);
+    await expect(setExerciseSetup(db, 'nope', rows, { now })).rejects.toThrow(
+      ExerciseNotFoundError,
+    );
+    expect(await db.pending.count()).toBe(0);
+  });
+
+  it('survives editing the form of a created exercise', async () => {
+    const { db } = await setup();
+    const created = await createExercise(db, draft(), { now });
+    await setExerciseSetup(db, created.id, rows, { now });
+    const edited = await updateExercise(db, created.id, draft({ name: 'Press landmine 2' }), {
+      now,
+    });
+    expect(edited.setup).toEqual(saved);
   });
 });

@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../test/render';
 import { BarRows } from './BarRows';
 import { ChartFrame } from './ChartFrame';
@@ -86,6 +86,56 @@ describe('ColumnChart', () => {
   });
 });
 
+describe('chart width', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** A layout engine for jsdom: every element is `width` wide. (Spies are restored by Vitest.) */
+  function layOutAt(width: number) {
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({ width } as DOMRect);
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe = vi.fn();
+        unobserve = vi.fn();
+        disconnect = vi.fn();
+      },
+    );
+  }
+
+  it('draws on a 360-wide canvas when there is no layout (tests, old engines)', () => {
+    const { container } = renderWithProviders(
+      <ColumnChart description="Sin medir" formatY={String} columns={[]} />,
+    );
+    expect(container.querySelector('svg')).toHaveAttribute('viewBox', '0 0 360 180');
+  });
+
+  it.each([
+    ['LineChart', 700],
+    ['ColumnChart', 310],
+  ])('%s draws on a canvas as wide as its container (%i px)', (kind, width) => {
+    layOutAt(width);
+    const { container } = renderWithProviders(
+      kind === 'LineChart' ? (
+        <LineChart description="Medido" formatY={String} points={[{ x: 0, y: 1, name: 'a' }]} />
+      ) : (
+        <ColumnChart description="Medido" formatY={String} columns={[]} />
+      ),
+    );
+    // One unit is one pixel: the 12 px axis text keeps its size on any screen.
+    expect(container.querySelector('svg')).toHaveAttribute('viewBox', `0 0 ${String(width)} 180`);
+  });
+
+  it('never goes below 200 px', () => {
+    layOutAt(80);
+    const { container } = renderWithProviders(
+      <ColumnChart description="Estrecho" formatY={String} columns={[]} />,
+    );
+    expect(container.querySelector('svg')).toHaveAttribute('viewBox', '0 0 200 180');
+  });
+});
+
 describe('BarRows', () => {
   it('names each row in text and marks the rows that met the plan', () => {
     const { container } = renderWithProviders(
@@ -123,6 +173,61 @@ describe('BarRows', () => {
     expect(container.querySelectorAll('[class*="fillMet"]')).toHaveLength(1);
     // A mark for the two rows that have a plan.
     expect(container.querySelectorAll('[class*="targetMark"]')).toHaveLength(2);
+  });
+
+  const row = (key: string, value: number, target: number, remainingText?: string) => ({
+    key,
+    label: key,
+    value,
+    target,
+    valueText: `${String(value)} / ${String(target)}`,
+    ...(remainingText && { remainingText }),
+    name: `${key}: ${String(value)} de ${String(target)} series`,
+  });
+
+  it('puts what is missing after the numbers, for the narrow layout', () => {
+    renderWithProviders(
+      <BarRows
+        rows={[row('Pecho', 8, 12, 'faltan 4'), row('Espalda', 14, 14, '✓'), row('Core', 0, 0)]}
+      />,
+    );
+    expect(screen.getByText('8 / 12')).toHaveTextContent('8 / 12 · faltan 4');
+    expect(screen.getByText('14 / 14')).toHaveTextContent('14 / 14 · ✓');
+    expect(screen.getByText('0 / 0')).toHaveTextContent(/^0 \/ 0$/);
+  });
+
+  const geometry = (item: HTMLElement) =>
+    ['--value', '--target', '--span', '--scale'].map((name) => item.style.getPropertyValue(name));
+
+  it('sets the cells of each row (its plan or its sets, if more) on one shared scale', () => {
+    const { container } = renderWithProviders(
+      <BarRows rows={[row('Pecho', 8, 12), row('Triceps', 6, 6), row('Hombro', 9, 7)]} />,
+    );
+    const items = [...container.querySelectorAll<HTMLElement>('li')];
+    // value, plan, cells of the row, scale: the scale is the biggest row, so every row has the
+    // same cell width and a row with half the sets has half the bar.
+    expect(items.map(geometry)).toEqual([
+      ['8', '12', '12', '12'],
+      ['6', '6', '6', '12'],
+      ['9', '7', '9', '12'],
+    ]);
+    expect(container.querySelectorAll('[data-cells]')).toHaveLength(3);
+  });
+
+  it('keeps a continuous bar when there are too many sets for cells', () => {
+    const { container } = renderWithProviders(<BarRows rows={[row('Pecho', 20, 31)]} />);
+    expect(container.querySelector('[data-cells]')).toBeNull();
+  });
+
+  it('draws the sets beyond the plan apart, only for rows that went over it', () => {
+    const { container } = renderWithProviders(
+      <BarRows rows={[row('Pecho', 15, 12), row('Espalda', 12, 12), row('Core', 3, 0)]} />,
+    );
+    // Only Pecho went over its plan; its extra part is drawn from the plan to the value.
+    const extra = container.querySelectorAll('[class*="fillExtra"]');
+    expect(extra).toHaveLength(1);
+    expect(extra[0]?.closest('li')?.style.getPropertyValue('--target')).toBe('12');
+    expect(extra[0]?.closest('li')?.style.getPropertyValue('--value')).toBe('15');
   });
 });
 

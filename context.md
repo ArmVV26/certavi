@@ -3,7 +3,7 @@
 > Documento de arranque del proyecto **Certavi**, la reescritura de la app de registro de gimnasio (antes «Winter Arc · registro», repositorio `gym_app`).
 > Al crear el repositorio, este archivo se copia como `context.md` en la raíz. Desde ese momento es la **fuente de verdad del estado del proyecto**: qué está decidido, qué está hecho, qué falta y con qué prompt se arranca cada fase. Lo mantiene al día el agente de contexto.
 >
-> Última actualización: 6 nov 2026 · Estado: **Fase 0 cerrada (`v0.1.0`) · Fase 1 cerrada (`v0.2.0`) · Fase 2 cerrada (`v0.3.0`) · Fase 3 cerrada (`v0.4.0`) · Fase 4 cerrada (`v0.5.0`, desplegada en Netlify) · Fase 5 cerrada (`v0.6.0`, sin publicar: PR `dev → main`, release y tag pendientes del usuario)**
+> Última actualización: 10 nov 2026 · Estado: **Fases 0 a 8 cerradas (`v0.1.0` a `v0.9.0`; la 4 desplegada en Netlify, el resto sin publicar) · Fase 9 ⏳ planificada (`v0.10.0`, ajustes tras el uso real, decidida el 10 nov) · Fase 10 ⏳ (`v1.0.0`, QA final y migración)**
 
 ---
 
@@ -18,7 +18,7 @@
 7. [Flujo de trabajo: ramas, commits, versiones y tags](#7-flujo-de-trabajo)
 8. [Claude Code: reglas, agentes y comandos](#8-claude-code-reglas-agentes-y-comandos)
 9. [Preparación antes de la Fase 0 (manual, en tu PC)](#9-preparación-antes-de-la-fase-0)
-10. [Hoja de ruta por fases con sus prompts](#10-hoja-de-ruta-por-fases)
+10. [Hoja de ruta por fases con sus prompts](#10-hoja-de-ruta-por-fases) (Fase 9 ajustes y Fase 10 QA/v1.0.0 planificadas)
 11. [Backlog v2 y más allá](#11-backlog-v2)
 12. [Registro de progreso](#12-registro-de-progreso)
 
@@ -97,7 +97,7 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Textos de `src/ui` | `src/ui` puede usar `react-i18next` **solo para sus propias etiquetas genéricas** (claves `ui.*`, p. ej. «Cerrar») | Mantener la regla «todo texto por i18n» sin pasar etiquetas triviales por props |
 | Ajustes del dispositivo | Lectura/escritura de preferencias locales (tema, idioma) centralizada en `src/data/deviceStorage.ts` | Un único punto de acceso al almacenamiento del dispositivo |
 | Ámbito de commit para diseño | Los documentos de diseño usan el ámbito **`theme`** | `design` no es un ámbito permitido por commitlint |
-| Límites de e2e | Tras el incidente del 2026-11-02 (sección 12): `playwright.config.ts` con **2 workers** en local (CI: los de por defecto + 2 reintentos), `retries` 0 y `maxFailures` 3 en local, `timeout` 30 s por test, `globalTimeout` 5 min (`npm run e2e`) y 10 min (`npm run e2e:all`, vía `--global-timeout=600000`), reporter `list` + `html` (`open: 'never'`), webServer con `reuseExistingServer: false` y timeout 60 s, chromium con `deviceScaleFactor` 2 (antes 3), nunca `channel: 'chrome'`. **`npm run e2e` = solo Chromium**; nuevo **`npm run e2e:all`** = Chromium + WebKit. Puerto **9323** (informe de Playwright) añadido a `ports:check` y `ports:kill`. CI: job `e2e` (Chromium + WebKit, `npm run e2e:all`) **solo en PR a `main`**, después del job de checks, que sube el informe si falla. `.claude/settings.json` deniega `npx playwright install` y `npx playwright show-report` (Bash y PowerShell). Reglas nuevas en `.claude/rules.md`, `.claude/agents/blind-tester.md` y `.claude/commands/close-phase.md`: e2e solo con `npm run e2e`, en primer plano, sin flags extra, sin sondeo en segundo plano y sin nada pesado en paralelo; si pasa de 5 min o se cuelga → parar, `ports:kill`, comprobar puertos e informar; nunca reintentar en bucle (una ejecución + una tras un arreglo); nunca instalar navegadores; los e2e cubren flujos de usuario y criterios de aceptación (las combinaciones exhaustivas van a tests unitarios); axe una vez por pantalla y tema; objetivo `npm run e2e` < 2 min | Evitar que la suite sature el PC del usuario |
+| Límites de e2e | Tras el incidente del 2026-11-02 (sección 12): `playwright.config.ts` con **2 workers** en local (CI: los de por defecto + 1 reintento, desde la Fase 9 rama 5), `retries` 0 y `maxFailures` 3 en local, `timeout` 30 s por test, `globalTimeout` 5 min (`npm run e2e`) y 10 min (`npm run e2e:all`, vía `--global-timeout=600000`), reporter `list` + `html` (`open: 'never'`), webServer con `reuseExistingServer: false` y timeout 60 s, chromium con `deviceScaleFactor` 2 (antes 3), nunca `channel: 'chrome'`. **`npm run e2e` = solo Chromium**; nuevo **`npm run e2e:all`** = Chromium + WebKit. Puerto **9323** (informe de Playwright) añadido a `ports:check` y `ports:kill`. CI (Fase 9 rama 5, sustituye a lo anterior): job `build-e2e` construye `dist-e2e` una vez (artefacto) y 4 jobs e2e corren en **paralelo** (`chromium` y `webkit`, shards 1/2 y 2/2, `E2E_PREBUILT=1`) **solo en PR a `main`**; cada job sube su informe si falla. `.claude/settings.json` deniega `npx playwright install` y `npx playwright show-report` (Bash y PowerShell). Reglas nuevas en `.claude/rules.md`, `.claude/agents/blind-tester.md` y `.claude/commands/close-phase.md`: e2e solo con `npm run e2e`, en primer plano, sin flags extra, sin sondeo en segundo plano y sin nada pesado en paralelo; si pasa de 5 min o se cuelga → parar, `ports:kill`, comprobar puertos e informar; nunca reintentar en bucle (una ejecución + una tras un arreglo); nunca instalar navegadores; los e2e cubren flujos de usuario y criterios de aceptación (las combinaciones exhaustivas van a tests unitarios); axe una vez por pantalla y tema; objetivo `npm run e2e` < 2 min | Evitar que la suite sature el PC del usuario |
 | Suite e2e reducida | Decisión del usuario (2026-11-02): de **111 a 38 tests por navegador** (navegación 12, tema 9, idioma 5, componentes 11, humo 1). Los e2e cubren flujos de usuario y criterios de aceptación; las combinaciones exhaustivas van a tests unitarios. axe se ejecuta **una vez por pantalla y tema (claro/oscuro), solo en Chromium** (se omite en WebKit). AC-NAV-09 («Tab llega al enlace "saltar al contenido"») es una **excepción documentada de WebKit** (`test.skip` con motivo); se sigue comprobando en Chromium, y el foco + Enter se comprueban en ambos motores | Suite rápida y ligera (~19 s en Chromium) sin perder cobertura de los criterios de aceptación |
 
 ### 2.3 Decisiones de la Fase 2 (2026-11-03)
@@ -153,7 +153,7 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Motor del cliente (**ADR-0004**, `docs/adr/0004-client-sync-engine.md`) | Lotes de 300 hasta vaciar la cola, 413 parte el lote a la mitad, un intento a la vez, backoff 4/8/15/30/60 s, 2 s de espera tras crecer la cola, cada 45 s con pendientes, los errores fatales paran hasta cambiar la clave o pulsar «Sincronizar ahora», sin conexión no hay peticiones, envío final con `keepalive` (≤ 55 KB); la respuesta se aplica en una transacción (se desencola solo si `updatedAt` no cambió; el eco no escribe en las tablas de registros) | Paridad con gym_app sin perder datos |
 | Estado «Sincronizado» (**2026-11-04**, `fix/e2e-webkit-sync`) | `idle` («Sincronizado») **solo después de un intento que salió bien**. Con clave, el motor arranca en `syncing` («Sincronizando…»); `setKey()` pone `syncing` y lanza `trigger('key')` en un `finally` (un fallo al volver a encolar nunca lo deja atascado en `syncing`). `docs/spec/sync.md` §2.1 y AC-SYNC-03 lo recogen | Antes `setKey()` y el arranque con clave mostraban «Sincronizado» sin haber hablado con el servidor, contra la spec; en WebKit se veía durante segundos (incidente del 2026-11-04, sección 12) |
 | E2E sin esperas de tiempo real (**2026-11-04**) | Nada de `waitForTimeout` ni de esperar a que pase un debounce o un backoff: los temporizadores de la app se mueven con `page.clock` (`install()` antes de `goto`, `runFor`/`pauseAt`); el estado se espera con aserciones web-first o `expect.poll`; antes de inyectar un fallo en el servidor falso (`failNext`) se espera a que haya respondido la petición anterior; timeouts coherentes dentro de un mismo paso. Recogido en `.claude/rules.md`, `.claude/agents/blind-tester.md` («Time and waits») y `CLAUDE.md` §9 | WebKit puede tardar segundos más que Chromium en IndexedDB; las esperas fijas hacían frágiles AC-SYNC-06/09 |
-| Caché de navegadores en CI (**2026-11-04**) | Job `e2e`: paso que lee la versión de Playwright, `actions/cache@v6` de `~/.cache/ms-playwright` con clave `playwright-<os>-<versión>`; si falla la caché, `playwright install --with-deps chromium webkit`; si acierta, solo `playwright install-deps chromium webkit`. Sube `playwright-report/` y `test-results/` (trazas, `trace: 'on-first-retry'`) si falla. `timeout-minutes` 20 → **12**. Objetivo: job e2e < 5 min (**sin medir todavía**) | El job e2e del PR de la Fase 4 tardó 14 min 14 s (2–3 min solo instalando navegadores) y sin trazas para diagnosticar |
+| Caché de navegadores en CI (**2026-11-04**) | Job `e2e`: paso que lee la versión de Playwright, `actions/cache@v6` de `~/.cache/ms-playwright` con clave `playwright-<os>-<versión>`; si falla la caché, `playwright install --with-deps chromium webkit`; si acierta, solo `playwright install-deps chromium webkit`. Sube `playwright-report/` y `test-results/` (trazas, `trace: 'on-first-retry'`) si falla. `timeout-minutes` 20 → **12** (superado en la Fase 9 rama 5: 15 en el job e2e, 10 en `build-e2e`). Objetivo: job e2e < 5 min (**sin medir todavía**) | El job e2e del PR de la Fase 4 tardó 14 min 14 s (2–3 min solo instalando navegadores) y sin trazas para diagnosticar |
 | `e2e:all` en `/close-phase` (**2026-11-04**) | En la **última rama de cada fase**, el blind-tester ejecuta `npm run e2e:all` (Chromium + WebKit) **una vez** antes del PR `dev → main` (`.claude/commands/close-phase.md`, `.claude/rules.md`, `.claude/agents/blind-tester.md`, `CLAUDE.md` §9). Fuera de eso, `e2e:all` solo si lo pide el usuario | En la Fase 4 WebKit no se ejecutó nunca antes del PR y lo detectó CI |
 | Versión del arreglo (**2026-11-04**) | El arreglo entra en **`v0.5.0`**: `CHANGELOG.md` lo apunta en «Fixed» de 0.5.0. **Confirmado**: el usuario creó el tag `v0.5.0` (no `v0.5.1`) tras el PR `dev → main` con CI en verde | `v0.5.0` no se había publicado |
 
@@ -172,7 +172,7 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Peso corporal | Válido entre **20 y 300 kg** | — |
 | Orden | Actividades en orden de guardado (`updatedAt`); las sesiones empatadas se ordenan por `updatedAt` | Con el reloj fijo (e2e) el orden era aleatorio (fallo de AC-TODAY-12 en WebKit) |
 | Timeouts de tests (aceptado por el usuario) | `src/test/setup.ts`: RTL `asyncUtilTimeout` **5 s**; `vite.config.ts`: `testTimeout` **15 s** en el proyecto `ui` | Con `test:coverage` (v8 + todos los workers ocupados) una escritura → consulta en vivo → repintado pasaba de 1 s y hacía fallar al azar tests viejos y nuevos (SyncCard, ImportExport, TodayPage) |
-| e2e en CI (`chore/ci-e2e-shards`) | Etiqueta **`@all-engines`**: el proyecto `webkit` solo ejecuta los tests etiquetados (sync, data, import-export, today, smoke y AC-NAV-03); navegación, tema, idioma y componentes, solo Chromium. El job `e2e` de CI es una **matriz** `fail-fast: false` con 3 jobs: `chromium`, `webkit 1/2`, `webkit 2/2` (navegador instalado y cacheado por job, informe propio, `timeout-minutes` 15), **en serie** (`max-parallel: 1`: chromium → webkit 1/2 → webkit 2/2, sin cortar si uno falla). Validación con un PR borrador a `main`. Arreglo tras el primer PR de prueba: `webkit 2/2` fallaba por tiempo (30 s) en AC-SYNC-13 (dos dispositivos, no era un fallo de la app) → `test.slow` en WebKit también en AC-SYNC-12 y 13, como AC-SYNC-09. Segundo arreglo (2026-11-05, segundo PR de prueba): chromium y `webkit 1/2` en verde, pero `webkit 2/2` volvió a agotar los 30 s en AC-SYNC-14 (English) y AC-TODAY-10/11, a 1–4 pasos del final, y otros tests rondaban el límite (AC-TODAY-12 29,3 s) → **`timeout` de 60 s en el proyecto `webkit`** (`WEBKIT_TIMEOUT` en `playwright.config.ts`; Chromium sigue en 30 s) y se quitan los tres `test.slow` de `sync.spec.ts`. Tercer arreglo (2026-11-05, `npm run e2e:all` local en `feature/active-session`: fallaron dos tests, solo en WebKit y por una aserción de 5 s, no por el tiempo del test): **`expect.timeout` de 15 s en el proyecto `webkit`** (`WEBKIT_EXPECT_TIMEOUT`; Chromium sigue en 5 s) porque la primera lectura de IndexedDB con dos pestañas dejaba la tarjeta «Datos» en «Cargando…» (`data.spec.ts` «two tabs»), y el foco al título tras navegar pasa a **`useLayoutEffect`** (`src/app/Layout.tsx`) porque, con un WebKit lento, el efecto llegaba en medio del `fill()` de la clave, le quitaba el foco al campo y «Guardar clave» enviaba vacío (AC-SYNC-14 English); `saveKey()` comprueba ahora `toHaveValue`. Con eso AC-SYNC-14 llegó al registro de intentos y falló por esperar **exactamente 4** intentos (había 5): al guardar la clave el motor vuelve a encolar todo y, si el cambio de la cola llega con el primer intento ya en marcha (IndexedDB lento en WebKit), lanza un intento más justo después (`rerun` de `onQueueCount`, `src/data/sync/engine.ts`); no es un fallo de la app, así que el test pide **al menos 4**, una sola «Clave incorrecta» y los dos últimos en orden. `ci.yml` no cambia: la matriz usa `--project=webkit`, que ya lleva este ajuste. Contenedor oficial de Playwright valorado y descartado por ahora: solo ahorra la instalación del navegador, no acelera WebKit | En CI (2 vCPU, 1 worker) `e2e:all` se estimaba ≥ 14 min, por encima del tope de 10 min |
+| e2e en CI (`chore/ci-e2e-shards`) | Etiqueta **`@all-engines`**: el proyecto `webkit` solo ejecuta los tests etiquetados (sync, data, import-export, today, smoke y AC-NAV-03); navegación, tema, idioma y componentes, solo Chromium. El job `e2e` de CI es una **matriz** `fail-fast: false` con 3 jobs: `chromium`, `webkit 1/2`, `webkit 2/2` (navegador instalado y cacheado por job, informe propio, `timeout-minutes` 15), **en serie** (`max-parallel: 1`); **superado** en la Fase 9 rama 5 (4 jobs en paralelo, ver Fase 9). Validación con un PR borrador a `main`. Arreglo tras el primer PR de prueba: `webkit 2/2` fallaba por tiempo (30 s) en AC-SYNC-13 (dos dispositivos, no era un fallo de la app) → `test.slow` en WebKit también en AC-SYNC-12 y 13, como AC-SYNC-09. Segundo arreglo (2026-11-05, segundo PR de prueba): chromium y `webkit 1/2` en verde, pero `webkit 2/2` volvió a agotar los 30 s en AC-SYNC-14 (English) y AC-TODAY-10/11, a 1–4 pasos del final, y otros tests rondaban el límite (AC-TODAY-12 29,3 s) → **`timeout` de 60 s en el proyecto `webkit`** (`WEBKIT_TIMEOUT` en `playwright.config.ts`; Chromium sigue en 30 s) y se quitan los tres `test.slow` de `sync.spec.ts`. Tercer arreglo (2026-11-05, `npm run e2e:all` local en `feature/active-session`: fallaron dos tests, solo en WebKit y por una aserción de 5 s, no por el tiempo del test): **`expect.timeout` de 15 s en el proyecto `webkit`** (`WEBKIT_EXPECT_TIMEOUT`; Chromium sigue en 5 s) porque la primera lectura de IndexedDB con dos pestañas dejaba la tarjeta «Datos» en «Cargando…» (`data.spec.ts` «two tabs»), y el foco al título tras navegar pasa a **`useLayoutEffect`** (`src/app/Layout.tsx`) porque, con un WebKit lento, el efecto llegaba en medio del `fill()` de la clave, le quitaba el foco al campo y «Guardar clave» enviaba vacío (AC-SYNC-14 English); `saveKey()` comprueba ahora `toHaveValue`. Con eso AC-SYNC-14 llegó al registro de intentos y falló por esperar **exactamente 4** intentos (había 5): al guardar la clave el motor vuelve a encolar todo y, si el cambio de la cola llega con el primer intento ya en marcha (IndexedDB lento en WebKit), lanza un intento más justo después (`rerun` de `onQueueCount`, `src/data/sync/engine.ts`); no es un fallo de la app, así que el test pide **al menos 4**, una sola «Clave incorrecta» y los dos últimos en orden. `ci.yml` no cambia: la matriz usa `--project=webkit`, que ya lleva este ajuste. Contenedor oficial de Playwright valorado y descartado por ahora: solo ahorra la instalación del navegador, no acelera WebKit | En CI (2 vCPU, 1 worker) `e2e:all` se estimaba ≥ 14 min, por encima del tope de 10 min |
 | Filas de una serie (rama 2, 2026-11-05) | Cada ejercicio de la sesión es una lista de filas, como en Hevy: `WorkoutSession.items[].scheme` incluye también filas de calentamiento, dropset y extra; `SetEntry.slot` es la posición de su fila y `kind` su tipo, que el usuario cambia (Calentamiento / Efectiva / Dropset) sin que la fila se mueva. Tipo nuevo `dropset`: serie efectiva y volumen, no cuenta para 1RM ni récords. «+ Serie extra» añade una fila; quitar una fila (no la última) se hace deslizando a la izquierda, con botón «Quitar» alcanzable por teclado. Las sesiones de gym_app (`w`/`p`/`x`) se convierten con `normalizeLegacySessions` tras importar y al arrancar. Lo escrito sin ✓ se guarda en localStorage (`certavi.draft.<id>`, solo en el dispositivo) y sobrevive a recargas. «Eliminar sesión» entra en esta rama (el «Deshacer» va en la 3) | El usuario eligió que la fila no se mueva al cambiar su tipo; ver ADR-0003 |
 | Temporizador de descanso (rama 3, 2026-11-06) | Descanso 180 s (fila básica), 120 s (aislamiento), 60 s (tras calentamiento) y +30 s tras una serie top; ajuste ±15 s; tiempos de 15 a 900 s en Ajustes (sincronizados); sonido y vibración solo en el dispositivo (`certavi.restSound`, `certavi.restVibration`); se cierra con ✕ o al terminar la sesión | — |
 
@@ -204,7 +204,7 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Carga | Todas las pantallas salvo Hoy y la sesión son `lazy`; los tests de pantallas precargan las rutas | Principal de 890 a 372 kB; Hoy y la sesión son la ruta diaria |
 | Service worker | `registerType: 'prompt'`, solo precache; `/api/**` y `/.netlify/**` nunca en caché (ADR-0005) | Datos siempre del servidor; el usuario elige cuándo actualizar |
 | Herramientas | `/dev/ui` solo en desarrollo, Vitest y build e2e; knip en CI | Galería fuera de producción; sin código muerto |
-| Lighthouse | Escritorio en `dev`: 100 / 100 / 96 / 54 (SEO bajo a propósito: `noindex`); móvil pendiente | Insignias de la Fase 9; la categoría PWA ya no existe |
+| Lighthouse | Escritorio en `dev`: 100 / 100 / 96 / 54 (SEO bajo a propósito: `noindex`); móvil pendiente | Insignias de la Fase 10; la categoría PWA ya no existe |
 | Instalabilidad | Comprobada a mano en el iPhone (standalone, cinco pestañas) y en el panel Aplicación | Lighthouse ya no la mide |
 | Paquetes | vite-plugin-pwa 2.0.0, workbox-window 7.4.1, @vite-pwa/assets-generator 2.0.0, knip 6.44.2 | Versiones fijadas en `package.json` |
 
@@ -259,13 +259,14 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 certavi/
 ├─ .claude/
 │  ├─ settings.json          # permisos: qué puede y no puede ejecutar Claude Code
-│  ├─ rules.md               # restricciones de trabajo (importado desde CLAUDE.md)
+│  ├─ BASE_VERSION           # versión de la base de configuración de la que parte
+│  ├─ rules/                 # restricciones de trabajo (git, dependencies, e2e, i18n, sync…; unas con `paths:`)
 │  ├─ agents/
 │  │  ├─ context-keeper.md
 │  │  └─ blind-tester.md
-│  └─ commands/
-│     ├─ start-phase.md      # /start-phase N
-│     └─ close-phase.md      # /close-phase: propone ramas, commits, versión y tag
+│  └─ skills/
+│     ├─ start-phase/SKILL.md   # /start-phase N
+│     └─ close-phase/SKILL.md   # /close-phase: propone ramas, commits, versión y tag
 ├─ .github/workflows/ci.yml
 ├─ docs/
 │  ├─ spec/                  # especificación funcional (la única que lee el tester)
@@ -573,7 +574,8 @@ Formato: `tipo(ámbito): descripción en inglés, imperativo, minúsculas`.
 | `v0.7.0` | Fase 6: catálogo con filtros, ejercicios propios y editor de rutinas |
 | `v0.8.0` | Fase 7: calendario, progreso, fichas y bloques opcionales |
 | `v0.9.0` | Fase 8: pulido PWA, accesibilidad y rendimiento |
-| **`v1.0.0`** | Fase 9: QA completo, migración real y despliegue definitivo |
+| `v0.10.0` | Fase 9: ajustes tras el uso real (planificada) |
+| **`v1.0.0`** | Fase 10: QA completo, migración real y despliegue definitivo |
 
 - **Tag anotado**, por ejemplo: `git tag -a v0.3.0 -m "v0.3.0 · domain model and catalog"` y `git push origin v0.3.0`.
 - `CHANGELOG.md` en formato *Keep a Changelog*, mantenido por el agente de contexto.
@@ -693,7 +695,7 @@ Cada fase sigue el mismo ciclo:
 
 **Estado (2026-11-07)**: **cerrada** 
 
-**Log (History)**: [Fase 6](docs/history.md#fase7)
+**Log (History)**: [Fase 7](docs/history.md#fase7)
 
 ---
 
@@ -703,19 +705,29 @@ Cada fase sigue el mismo ciclo:
 
 **Estado (2026-11-08)**: **cerrada** 
 
-**Log (History)**: [Fase 6](docs/history.md#fase8)
+**Log (History)**: [Fase 8](docs/history.md#fase8)
 
 ---
 
-### Fase 9 · QA final, migración real y v1.0.0 ⏳
+### Fase 9 · Ajustes tras el uso real → `v0.10.0` ⏳
+
+**Ramas**: `docs/phase-9-polish`, `chore/dependabot`, `fix/ui-polish`, `feature/routine-week-edits`, `feature/machine-setup`, `chore/e2e-speed` y `fix/gym-feedback`.
+
+**Estado (2026-11-11)**: **cerrada** 
+
+**Log (History)**: [Fase 9](docs/history.md#fase9)
+
+---
+
+### Fase 10 · QA final, migración real y v1.0.0 ⏳
 
 **Rama**: `release/1.0.0`, o directamente un PR de `dev` a `main`.
 
 **Pasos**:
-1. El blind-tester hace una regresión completa, en español y en inglés, claro y oscuro, sin conexión.
+1. El blind-tester hace una regresión completa, en español y en inglés, claro y oscuro, sin conexión. Incluye el logo, las transiciones, la edición de semanas cerradas, las tarjetas de rutina, los chips del editor y los ajustes de la máquina (todo de la Fase 9).
 2. Tú usas Certavi en paralelo con gym_app durante 1 semana.
 3. Exportas por última vez desde gym_app, importas en Certavi y compruebas los recuentos.
-4. **Quitar el rastro de gym_app** (añadido el 2026-11-06), solo **después** de la migración real del paso 3, porque hasta entonces hace falta el importador: eliminar «Importar desde la app anterior» (`ImportExport.tsx`, claves i18n `importLegacy`/`notLegacy`…), `src/data/legacy/`, `src/domain/seed/legacyAliases.ts` (los alias solo sirven para datos de gym_app), `docs/migration.md`, la sección 6 de este archivo y las menciones en README, spec y ADR. Decidir si `context.md` y `docs/history.md` (que cuentan el origen del proyecto) se quedan en el repo público o se resumen. Motivo: la intención es que lo usen tú y gente de tu entorno, no que sea «la v2 de otra app». Importar datos de otras apps (Hevy, Strong…) queda en el backlog v2.
+4. **Quitar el rastro de gym_app** (añadido el 2026-11-06), solo **después** de la migración real del paso 3, porque hasta entonces hace falta el importador: eliminar «Importar desde la app anterior» (`ImportExport.tsx`, claves i18n `importLegacy`/`notLegacy`…), `src/data/legacy/`, `src/domain/seed/legacyAliases.ts` (los alias solo sirven para datos de gym_app), `docs/migration.md`, la sección 6 de este archivo y las menciones en README, spec y ADR. Decidir si `context.md` y `docs/history.md` (que cuentan el origen del proyecto) se quedan en el repo público o se resumen. Motivo: la intención es que lo usen tú y gente de tu entorno, no que sea «la v2 de otra app». Importar datos de otras apps (Hevy, Strong…) queda en el backlog v2. Requisito previo (añadido el 2026-11-10): la Fase 9 (`chore/e2e-speed`) hace que los e2e carguen sus datos con un fixture sintético de Certavi y no con el importador, para que borrarlo aquí no rompa la suite.
 5. Release `v1.0.0`, tag y despliegue a producción.
 6. Archivas `gym_app`.
 7. **Documentación de portfolio** (añadido el 2026-11-06):
@@ -732,7 +744,7 @@ Cada fase sigue el mismo ciclo:
 **Prompt**:
 
 ```text
-Lee context.md. FASE 9: preparación de la v1.0.0. Lanza al blind-tester para una regresión completa
+Lee context.md. FASE 10: preparación de la v1.0.0. Lanza al blind-tester para una regresión completa
 (es/en, claro/oscuro, offline, 390x844). Prepara una checklist de migración real para que la ejecute yo
 (exportar de gym_app, importar, verificar recuentos por tipo de registro). Después, quita el rastro de gym_app
 (importador, alias, migración) y deja README en español e inglés con banner, capturas reales que yo te pase e
@@ -745,7 +757,9 @@ con versión y tag.
 
 ## 11. Backlog v2
 
-- **Fotos de las máquinas**: hechas con el móvil, comprimidas en el cliente y guardadas en Netlify Blobs, con miniatura en la ficha y en la sesión.
+- **Fotos de las máquinas**: hechas con el móvil, comprimidas en el cliente y guardadas en Netlify Blobs, con miniatura en la ficha y en la sesión. (Añadido el 2026-11-10) Se mostrarían junto a los «Ajustes de la máquina» de la Fase 9 (`feature/machine-setup`).
+- **Reordenar ejercicios arrastrando** en el editor de rutinas (añadido el 2026-11-10), reutilizando la fila de chips numerados de la Fase 9 (`feature/routine-week-edits`).
+- **Renovate en lugar de Dependabot** (añadido el 2026-11-10): si los PR agrupados de Dependabot de la Fase 9 (`chore/dependabot`) no bastan, valorar Renovate con automerge de parches con CI en verde.
 - **Backend serio**: Postgres (Neon o Supabase) o un servicio en Java/Spring o Python/FastAPI que cumpla `sync-v1`. Solo si aparece una necesidad real (consultas en servidor, varios usuarios…).
 - **Más funciones**:
   - plantillas de ciclos con fechas de inicio y fin;
@@ -753,9 +767,11 @@ con versión y tag.
   - comparación entre ciclos;
   - superseries.
 - **App nativa**: con Capacitor, si algún día hay Mac y cuenta de desarrollador.
-- **Importar desde otras apps (Hevy, Strong…)** (añadido el 2026-11-06): importar su CSV con un paso para asignar cada ejercicio al catálogo de Certavi (o crearlo como ejercicio propio), porque los ids no coinciden. Un menú selector de «app de origen» sustituiría al importador de gym_app, que sale en la Fase 9. Enlazar las apps por API solo si existe una API oficial.
-- **Uso por otras personas**: una clave de sync por persona con su propio espacio de datos en el servidor (cambia el contrato `sync-v1`, lleva ADR y revisión de seguridad); primera vez guiada (empezar vacío o con plantillas) y bloques personales desactivados por defecto. Ver Fase 9.
+- **Importar desde otras apps (Hevy, Strong…)** (añadido el 2026-11-06): importar su CSV con un paso para asignar cada ejercicio al catálogo de Certavi (o crearlo como ejercicio propio), porque los ids no coinciden. Un menú selector de «app de origen» sustituiría al importador de gym_app, que sale en la Fase 10. Enlazar las apps por API solo si existe una API oficial.
+- **Uso por otras personas**: una clave de sync por persona con su propio espacio de datos en el servidor (cambia el contrato `sync-v1`, lleva ADR y revisión de seguridad); primera vez guiada (empezar vacío o con plantillas) y bloques personales desactivados por defecto. Ver Fase 10.
 - **Peso levantado por rutina**, si no cabe en la Fase 7.
+- **Tests de WebKit: medir en CI real tras la rama 6** (añadido el 2026-11-11): los tiempos locales con 1 worker no son los de CI; con el medidor por test de la rama 6 y el primer PR a `main`, decidir si hace falta recortar más `@all-engines`.
+- **Modo básico** (añadido el 2026-11-11, idea del usuario): opción que reduce cada pantalla a lo esencial (menos secciones, tarjetas y datos visibles) para entrenar con el mínimo de distracción. Se construiría sobre el interruptor «Sin color (modo 0 dopamina)» de la Fase 9 (rama 6, `fix/gym-feedback`): mismo sitio en Ajustes → Apariencia y mismo tipo de ajuste (de dispositivo, no sincronizado). Por definir: qué se considera «lo esencial» en Hoy, sesión, Progreso, Calendario y Rutinas. Fuera del alcance de la Fase 9.
 
 ---
 
@@ -763,20 +779,21 @@ con versión y tag.
 
 [Tabla Registro](docs/history.md#seccion12)
 
-**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ✅ (`v0.7.0`, sin publicar) · 7 ✅ (`v0.8.0`, sin publicar) · 8 ✅ (`v0.9.0`, sin publicar) · 9 ⏳
+**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ✅ (`v0.7.0`, sin publicar) · 7 ✅ (`v0.8.0`, sin publicar) · 8 ✅ (`v0.9.0`, sin publicar) · 9 ⏳ (`v0.10.0`, en curso: ramas 5 y 6 🚧) · 10 ⏳ (`v1.0.0`)
 
 **Preguntas abiertas**:
 - Qué estiramientos van en el bloque «Estiramientos» (antes de la Fase 7).
 - (2026-11-04) ¿Es IndexedDB tan lento en el iPhone real (Safari) como en WebKit de escritorio (segundos por importación o primera lectura)? Medir antes de optimizar (Fase 5, «Revisar al empezar»). Sin medir; ya se puede, porque la app está desplegada.
 - ~~(2026-11-04) ¿Hace falta `test.slow()` en WebKit en `tests/e2e/sync.spec.ts`?~~ Resuelto el 2026-11-05: sustituido por el `timeout` de 60 s del proyecto `webkit` (2.6).
-- (2026-11-04) ¿Baja el job e2e de CI de 5 min con la caché de navegadores? Sin medir (el PR `dev → main` de la Fase 4 pasó en verde, pero no consta la duración). Con la suite de `feature/today` (166 tests en `e2e:all`) se estima ≥ 14 min con 1 worker: ver `chore/ci-e2e-shards` en la Fase 5.
+- (2026-11-04) ¿Baja el job e2e de CI de 5 min con la caché de navegadores? Sin medir (el PR `dev → main` de la Fase 4 pasó en verde, pero no consta la duración). Con la suite de `feature/today` (166 tests en `e2e:all`) se estima ≥ 14 min con 1 worker: ver `chore/ci-e2e-shards` en la Fase 5. **(2026-11-10)** Rama 5 pasa a 4 jobs en paralelo con `build-e2e`: sin medir en CI real.
+- (2026-11-10) Tiempo real del e2e de CI tras la rama 5 (objetivo ≤ 10 min). `reportSlowTests` (Playwright lo aplica por archivo y el reporter `dot` no imprimió tiempos): medir en el primer PR a `main`. **(2026-11-11)** La rama 6 (idea 15) añade el medidor por test (reporter JSON, `npm run e2e:timings`, artefacto por job). La medición local con 1 worker ya está hecha (ver rama 6); los tiempos reales de CI faltan hasta el primer PR a `main`.
 - (2026-11-06) Medir en el iPhone real el sonido del temporizador con la pantalla bloqueada y el flujo sin conexión de la sesión (Fase 5, pendiente manual).
 
 **Pendiente para fases futuras**:
 - Fase 7: regla del gemelo durante la rehabilitación (60 kg en la semana 1, +5 kg/semana sin dolor al día siguiente hasta 80 kg, y solo si bajar escaleras no duele), con cambios aditivos en el modelo de progresión (ver la Fase 7).
 - Fase 7: revisión del ciclo (`sixWeekReview` de gym_app) en las pantallas de progreso.
 - Fase 7 (añadido el 2026-11-06): racha semanal; peso levantado, ejercicios y series por semana / mes con selector; peso levantado por rutina (`feature/training-stats`); escala 0-10 en una fila en móvil (`feature/optional-blocks`).
-- Fase 9 (añadido el 2026-11-06): quitar el rastro de gym_app tras la migración; README es/en con banner, capturas e insignias; evaluación de uso por otras personas; gitleaks sobre el historial y licencia MIT antes de hacerlo público.
+- Fase 10 (añadido el 2026-11-06): quitar el rastro de gym_app tras la migración; README es/en con banner, capturas e insignias; evaluación de uso por otras personas; gitleaks sobre el historial y licencia MIT antes de hacerlo público.
 - ~~Fase 3 (`feature/import-export`): corregir la tabla de la sección 6 y `docs/migration.md` con los nombres reales de gym_app (2.4).~~ Hecho el 2026-11-03.
 - ~~Fase 5: UI para exportar el JSON de una sesión~~ Hecho el 2026-11-06 (`v0.6.0`). Fase 7: UI para exportar el JSON de una semana (`exportWeek`).
 - Sugerencia (no hecha, 2026-11-03) para la Fase 8: con un `Dialog` abierto, la página de fondo sigue en el árbol de accesibilidad (solo `aria-modal`); valorar `inert` en el fondo (afecta al `Dialog` compartido).

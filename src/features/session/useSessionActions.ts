@@ -44,6 +44,7 @@ import { useToast } from '../../ui/ToastContext';
 import { useToday } from '../today/useToday';
 import { fieldId } from './fieldId';
 import { unlockAudio } from './restAlerts';
+import type { PendingSetsApi } from './usePendingSets';
 import type { RestTimerApi } from './useRestTimer';
 import type { DraftStore } from './useSessionDrafts';
 
@@ -85,7 +86,12 @@ export interface NoteChange {
 }
 
 /** Everything the session screen does to the data, with errors shown as a toast. */
-export function useSessionActions(view: SessionView, store: DraftStore, rest: RestTimerApi) {
+export function useSessionActions(
+  view: SessionView,
+  store: DraftStore,
+  rest: RestTimerApi,
+  pending: PendingSetsApi,
+) {
   const { t } = useTranslation();
   const db = useDatabase();
   const toast = useToast();
@@ -168,6 +174,8 @@ export function useSessionActions(view: SessionView, store: DraftStore, rest: Re
       }),
     );
     if (!saved) return;
+    // The saved set shows at once; the typed values can go because the row reads it instead.
+    pending.add(saved.value);
     store.set(exerciseId, row.slot, null);
     // The rest timer only runs for a new set of today's session that is still in progress.
     if (view.session.date === today && view.session.endedAt === null) {
@@ -206,7 +214,10 @@ export function useSessionActions(view: SessionView, store: DraftStore, rest: Re
         rir: draft.rir,
       }),
     );
-    if (done) store.set(exerciseId, row.slot, null);
+    if (done) {
+      pending.add(done.value);
+      store.set(exerciseId, row.slot, null);
+    }
   };
 
   const requestUnsave = (exerciseId: string, slot: number) => {
@@ -216,9 +227,12 @@ export function useSessionActions(view: SessionView, store: DraftStore, rest: Re
   const removeNow = async (exerciseId: string, slot: number) => {
     const done = await guard(() => removeSessionRow(db, sessionId, exerciseId, slot));
     if (!done) return;
+    // The rows below moved: what was pending for them no longer fits.
+    pending.forgetExercise(exerciseId);
     store.follow(exerciseId, done.value.remap);
     offerUndo(t('session.toast.rowRemoved'), async () => {
       const edit = await restoreRow(db, done.value.undo);
+      pending.forgetExercise(exerciseId);
       store.follow(exerciseId, edit.remap);
       return t('session.toast.rowRestored');
     });
@@ -227,6 +241,7 @@ export function useSessionActions(view: SessionView, store: DraftStore, rest: Re
   const removeExerciseNow = async (exerciseId: string) => {
     const done = await guard(() => removeExercise(db, sessionId, exerciseId));
     if (!done) return;
+    pending.forgetExercise(exerciseId);
     store.dropExercise(exerciseId);
     offerUndo(t('session.toast.exerciseRemoved'), async () => {
       await restoreExercise(db, done.value);
@@ -278,6 +293,7 @@ export function useSessionActions(view: SessionView, store: DraftStore, rest: Re
     const slot = kind === 'extra' ? rows.length : firstWork === -1 ? rows.length : firstWork;
     const done = await guard(() => addRow(db, sessionId, exerciseId, kind));
     if (!done) return;
+    pending.forgetExercise(exerciseId);
     store.follow(exerciseId, done.value.remap);
     setFocusRequest({ exerciseId, slot });
   };
@@ -326,6 +342,7 @@ export function useSessionActions(view: SessionView, store: DraftStore, rest: Re
     setDialog(null);
     if (!current) return;
     if (current.kind === 'unsave') {
+      pending.forgetSlot(current.exerciseId, current.slot);
       await guard(() => unlogSet(db, sessionId, current.exerciseId, current.slot));
     } else if (current.kind === 'remove') {
       await removeNow(current.exerciseId, current.slot);

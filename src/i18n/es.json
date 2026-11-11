@@ -1,6 +1,7 @@
 {
   "app": {
     "skipToContent": "Saltar al contenido",
+    "loading": "Abriendo la pantalla",
     "documentTitle": "{{page}} · Certavi"
   },
   "nav": {
@@ -63,7 +64,7 @@
         "short_other": "{{count}} sesiones",
         "closed": "Cerrada"
       },
-      "closedNote": "Semana cerrada: el plan quedó guardado el {{date}}.",
+      "closedNote": "Semana cerrada: el plan quedó guardado el {{date}}. Solo puedes cambiar la descarga y el senderismo.",
       "future": "Todavía no puedes cambiar esta semana.",
       "download": "Descargar JSON de la semana"
     },
@@ -149,6 +150,9 @@
       "row_other": "{{group}}: {{done}} de {{count}} series",
       "met": "plan cumplido",
       "value": "{{done}} / {{planned}}",
+      "remaining_one": "falta {{missing}}",
+      "remaining_other": "faltan {{missing}}",
+      "remainingMet": "✓",
       "legendDone": "Series hechas",
       "legendMet": "Plan cumplido",
       "legendPlan": "Plan"
@@ -247,6 +251,8 @@
     "appearance": "Apariencia",
     "theme": "Tema",
     "language": "Idioma",
+    "mono": "Sin color (modo 0 dopamina)",
+    "monoHint": "Todo en blanco, negro y gris, sobre el tema claro u oscuro.",
     "languageNames": {
       "es": "Español",
       "en": "English"
@@ -257,6 +263,11 @@
     },
     "developer": "Desarrollo",
     "uiCatalog": "Catálogo de componentes",
+    "about": {
+      "title": "Acerca de",
+      "version": "Versión {{version}}",
+      "source": "Código fuente en GitHub"
+    },
     "data": {
       "title": "Datos",
       "intro": "Todo se guarda primero en este dispositivo.",
@@ -611,6 +622,28 @@
       "mine": "Propio",
       "archived": "Archivado"
     },
+    "setup": {
+      "title": "Ajustes de la máquina",
+      "empty": "Aún no has anotado ajustes",
+      "add": "Añadir ajustes",
+      "edit": "Editar ajustes",
+      "item": "{{label}}: {{value}}",
+      "labelField": "Nombre del ajuste {{n}}",
+      "valueField": "Valor del ajuste {{n}}",
+      "remove": "Quitar ajuste {{n}}",
+      "addRow": "Añadir ajuste",
+      "save": "Guardar ajustes",
+      "cancel": "Cancelar",
+      "saved": "Ajustes guardados",
+      "failed": "No se pudieron guardar los ajustes. Inténtalo de nuevo.",
+      "errors": {
+        "label-empty": "Escribe el nombre del ajuste",
+        "value-empty": "Escribe el valor del ajuste",
+        "label-too-long": "El nombre puede tener hasta {{max}} caracteres",
+        "value-too-long": "El valor puede tener hasta {{max}} caracteres",
+        "too-many": "Puedes anotar hasta {{max}} ajustes"
+      }
+    },
     "errors": {
       "name-empty": "Escribe un nombre",
       "name-too-long": "El nombre puede tener hasta {{max}} caracteres",
@@ -754,6 +787,8 @@
       "restore": "Restaurar original",
       "exercises": "Ejercicios",
       "list": "Ejercicios de la rutina",
+      "sheet": "Ver ficha",
+      "sheetOf": "Ver ficha de {{name}}",
       "empty": "Esta rutina no tiene ejercicios",
       "notFound": "No encontramos esta rutina",
       "restoreTitle": "¿Restaurar la rutina original?",
@@ -785,6 +820,7 @@
       "rirHint": "Por ejemplo 2 o 1-2",
       "note": "Nota",
       "addExercise": "Añadir ejercicio",
+      "jump": "Ir a un ejercicio",
       "alreadyIn": "Ya está en la rutina",
       "errorsTitle": "Revisa la rutina: hay campos con errores",
       "errors": {
@@ -1080,6 +1116,8 @@
       "addExtra": "+ Serie extra",
       "note": "Nota",
       "noteFilled": "Nota ✎",
+      "setup": "Ajustes",
+      "setupFilled": "Ajustes ✎",
       "summary": "{{weight}} × {{reps}}",
       "moveUp": "Subir {{name}}",
       "moveDown": "Bajar {{name}}",
@@ -1125,7 +1163,9 @@
         "dropset": "Dropset"
       },
       "remove": "Quitar",
-      "removeOf": "Quitar serie {{name}}"
+      "removeOf": "Quitar serie {{name}}",
+      "removeSet": "Quitar serie",
+      "lastSet": "Es la última serie. Para quitarla, quita el ejercicio."
     },
     "notes": {
       "exercise": "Nota del ejercicio",

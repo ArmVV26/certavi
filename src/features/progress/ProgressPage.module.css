@@ -4,51 +4,6 @@
   gap: var(--space-4);
 }
 
-.stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-2);
-  margin: 0;
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--space-3);
-  border: var(--border-width) solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-}
-
-.stat dd {
-  margin: 0;
-}
-
-.statWide {
-  grid-column: 1 / -1;
-}
-
-.statLabel {
-  color: var(--text-muted);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.statValue {
-  font-size: var(--fs-2xl);
-  font-weight: var(--fw-black);
-  line-height: var(--lh-tight);
-  font-variant-numeric: tabular-nums;
-}
-
-.statNote {
-  color: var(--text-muted);
-  font-size: var(--fs-sm);
-}
-
 .heading {
   font-size: var(--fs-lg);
   font-weight: var(--fw-bold);

@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page, type Route } from '@playwright/test';
 import {
   allUiText,
+  boxOf,
   expectTheme,
   findSpanishWords,
   gotoReady,
@@ -9,6 +10,7 @@ import {
   hasHorizontalScroll,
   mainNav,
   setLanguage,
+  viewportOf,
 } from './helpers';
 
 // Spec: docs/spec/routines.md (Phase 6, branch feature/routine-editor). Spanish on the 390x844
@@ -83,20 +85,34 @@ function exerciseList(page: Page, name = 'Ejercicios de la rutina'): Locator {
   return page.getByRole('list', { name, exact: true });
 }
 
-/** Viewer: the item of one exercise. */
+/** Viewer: the card of one exercise (its name is a level 4 heading, plain text). */
 function viewerItem(page: Page, name: string, list = 'Ejercicios de la rutina'): Locator {
   return exerciseList(page, list)
     .getByRole('listitem')
-    .filter({ has: page.getByText(name, { exact: true }) });
+    .filter({ has: page.getByRole('heading', { level: 4, name, exact: true }) });
 }
 
-/** Viewer: exercise names in order (first line of each item). */
+/** Viewer: exercise names in order (the level 4 headings of the cards). */
 async function viewerNames(page: Page, list = 'Ejercicios de la rutina'): Promise<string[]> {
-  const items = exerciseList(page, list).getByRole('listitem');
-  await expect(items.first()).toBeVisible();
-  return items.evaluateAll((els) =>
-    els.map((el) => (el as HTMLElement).innerText.split('\n')[0]?.trim() ?? ''),
-  );
+  const headings = exerciseList(page, list).getByRole('heading', { level: 4 });
+  await expect(headings.first()).toBeVisible();
+  const names = await headings.allInnerTexts();
+  return names.map((n) => n.trim());
+}
+
+/** Editor: the chips of "Ir a un ejercicio" (links or buttons, in order). */
+function jumpChips(page: Page, name = 'Ir a un ejercicio'): Locator {
+  return page.getByRole('navigation', { name, exact: true }).locator('a, button');
+}
+
+/** The chips as "<n> <name>" with the whitespace collapsed. */
+async function chipTexts(page: Page): Promise<string[]> {
+  const texts = await jumpChips(page).allInnerTexts();
+  return texts.map((t) => t.replace(/\s+/g, ' ').trim());
+}
+
+function numbered(names: string[]): string[] {
+  return names.map((n, i) => `${String(i + 1)} ${n}`);
 }
 
 /** Editor: exercise names in order (the level 3 headings). */
@@ -231,12 +247,25 @@ test.describe('routines · list and viewer', { tag: '@all-engines' }, () => {
     await mainNav(page).getByRole('link', { name: 'Rutinas', exact: true }).click();
     await routineLink(page, 'Push').click();
     await expect(h1(page, 'Rutina')).toBeVisible();
-    await viewerItem(page, 'Press inclinado con mancuernas')
-      .getByRole('link', { name: 'Press inclinado con mancuernas', exact: true })
-      .click();
+    const incline = viewerItem(page, 'Press inclinado con mancuernas');
+    await expect(incline).toContainText('Pecho');
+    // The name is plain text: the only link of the card is "Ver ficha de …".
+    await expect(incline.getByRole('link')).toHaveCount(1);
+    await expect(
+      incline.getByRole('link', { name: 'Press inclinado con mancuernas', exact: true }),
+    ).toHaveCount(0);
+    const sheet = viewerItem(page, 'Aperturas en máquina').getByRole('link', {
+      name: 'Ver ficha de Aperturas en máquina',
+      exact: true,
+    });
+    await expect(sheet).toHaveAttribute('href', /\/exercises\/[^/]+$/);
+    expect((await boxOf(sheet)).height, 'the link is at least 44 px high').toBeGreaterThanOrEqual(
+      43.9,
+    );
+    await sheet.click();
     await expect(page).toHaveURL(/\/exercises\/[^/]+$/);
     await expect(
-      page.getByRole('heading', { level: 2, name: 'Press inclinado con mancuernas', exact: true }),
+      page.getByRole('heading', { level: 2, name: 'Aperturas en máquina', exact: true }),
     ).toBeVisible();
     await expect(main(page)).toContainText(/En rutinas[\s\S]*Push/);
 
@@ -352,6 +381,73 @@ test.describe('routines · editor structure', { tag: '@all-engines' }, () => {
     await button(dialogOf(page, '¿Descartar los cambios?'), 'Descartar cambios').click();
     await expect(h1(page, 'Rutina')).toBeVisible();
     await expect(summaryText(page, base.text)).toBeVisible();
+  });
+
+  test('AC-ROUTINES-22 · jump chips: all seven visible at 390 px, the last one focuses its heading below the header without changing anything, and they follow move / remove / undo / add', async ({
+    page,
+  }) => {
+    await openEditor(page, 'Push');
+    const names = await editorNames(page);
+    expect(names).toHaveLength(7);
+    const chips = jumpChips(page);
+    await expect(chips).toHaveCount(7);
+    await expect.poll(() => chipTexts(page)).toEqual(numbered(names));
+
+    // All chips are on the screen: no sideways scroll, each one inside the 390 px width.
+    const { width, height } = viewportOf(page);
+    expect(width).toBe(390);
+    expect(await hasHorizontalScroll(page), 'horizontal scroll with the chips').toBe(false);
+    for (const chip of await chips.all()) {
+      const box = await boxOf(chip);
+      expect(box.x, 'chip inside the screen (left)').toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width, 'chip inside the screen (right)').toBeLessThanOrEqual(width + 0.5);
+    }
+
+    // The last chip: the card comes into view, not under the header, and its heading has focus.
+    const lastName = names[6] ?? '';
+    await chips.last().click();
+    const heading = page.getByRole('heading', { level: 3, name: lastName, exact: true });
+    await expect(heading).toBeFocused();
+    // In view and not covered by anything (the sticky header): polled, the scroll may be smooth.
+    await expect
+      .poll(
+        () =>
+          heading.evaluate((el, viewHeight) => {
+            const r = el.getBoundingClientRect();
+            const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+            const uncovered = top !== null && (top === el || el.contains(top));
+            return uncovered && r.top >= 0 && r.bottom <= viewHeight;
+          }, height),
+        { message: 'the heading is in view and not under the header' },
+      )
+      .toBe(true);
+
+    // Tapping a chip changed nothing: "Descartar" leaves without asking.
+    await button(page, 'Descartar').click();
+    await expect(h1(page, 'Rutina')).toBeVisible();
+    await expect(dialogOf(page, '¿Descartar los cambios?')).toHaveCount(0);
+    await page.getByRole('link', { name: 'Editar', exact: true }).click();
+    await expect(h1(page, 'Editar rutina')).toBeVisible();
+
+    // Moving an exercise changes the order and the numbers.
+    await button(page, 'Bajar Press inclinado con mancuernas').click();
+    await expect
+      .poll(async () => (await chipTexts(page)).slice(0, 2))
+      .toEqual(['1 Press de pecho en máquina vertical', '2 Press inclinado con mancuernas']);
+    const moved = await editorNames(page);
+    await expect.poll(() => chipTexts(page)).toEqual(numbered(moved));
+
+    // Removing one takes its chip out and renumbers; "Deshacer" puts it back in its place.
+    await button(page, 'Quitar Aperturas en máquina').click();
+    const without = moved.filter((n) => n !== 'Aperturas en máquina');
+    expect(without).toHaveLength(6);
+    await expect.poll(() => chipTexts(page)).toEqual(numbered(without));
+    await button(page, 'Deshacer').click();
+    await expect.poll(() => chipTexts(page)).toEqual(numbered(moved));
+
+    // Adding one appends its chip.
+    await addToRoutine(page, 'remo', 'Remo en T');
+    await expect.poll(() => chipTexts(page)).toEqual(numbered([...moved, 'Remo en T']));
   });
 
   test('AC-ROUTINES-09 / 10 · type, reps, RIR, optional and note', async ({ page }) => {
@@ -610,7 +706,9 @@ test.describe('routines · leaving and persistence', { tag: '@all-engines' }, ()
     expect((await editorNames(page)).at(-1)).toBe('Mi remo');
     await save(page);
     expect((await viewerNames(page)).at(-1)).toBe('Mi remo');
-    await viewerItem(page, 'Mi remo').getByRole('link', { name: 'Mi remo', exact: true }).click();
+    await viewerItem(page, 'Mi remo')
+      .getByRole('link', { name: 'Ver ficha de Mi remo', exact: true })
+      .click();
     await expect(
       page.getByRole('heading', { level: 2, name: 'Mi remo', exact: true }),
     ).toBeVisible();
@@ -702,11 +800,10 @@ test.describe('routines · appearance', () => {
     await expect(page.getByRole('link', { name: 'Edit', exact: true })).toBeVisible();
     await expect(button(page, 'Restore original')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Exercises', exact: true })).toBeVisible();
-    await expect(
-      viewerItem(page, 'Press inclinado con mancuernas', 'Routine exercises')
-        .or(exerciseList(page, 'Routine exercises').getByRole('listitem').first())
-        .first(),
-    ).toContainText('1 top 6-8 + 2 back-off 8-10 · RIR 1-2');
+    const firstCard = exerciseList(page, 'Routine exercises').getByRole('listitem').first();
+    await expect(firstCard.getByRole('heading', { level: 4 })).toBeVisible();
+    await expect(firstCard).toContainText('1 top 6-8 + 2 back-off 8-10 · RIR 1-2');
+    await expect(firstCard.getByRole('link', { name: /^View .+ sheet$/ })).toBeVisible();
     expect(findSpanishWords(await allUiText(page))).toEqual([]);
 
     await page.getByRole('link', { name: 'Edit', exact: true }).click();
@@ -715,6 +812,7 @@ test.describe('routines · appearance', () => {
     await expect(button(page, 'Discard')).toBeVisible();
     await expect(button(page, 'Add exercise')).toBeVisible();
     await expect(page.getByRole('list', { name: 'Routine exercises', exact: true })).toBeVisible();
+    await expect(jumpChips(page, 'Jump to an exercise').first()).toBeVisible();
     const first = main(page).getByRole('heading', { level: 3 }).first();
     const card = first.locator('xpath=ancestor::*[count(.//h3) = 1][last()]');
     await expect(card.getByRole('combobox', { name: 'Type of set 1', exact: true })).toBeVisible();

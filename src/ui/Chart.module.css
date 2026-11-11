@@ -172,8 +172,10 @@
   border-bottom: 0;
 }
 
-/* Bars per group: HTML rows, so the numbers wrap and scale with the text. */
+/* Bars per group: HTML rows, so the numbers wrap and scale with the text. The list is a size
+   container: on a narrow card (a phone) every row changes layout, see the end of this block. */
 .rows {
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -201,9 +203,11 @@
   background: var(--surface-2);
 }
 
+/* The geometry comes from four numbers on the row (see BarRows.tsx): --value, --target, --scale. */
 .fill {
   position: absolute;
   inset: 0 auto 0 0;
+  width: calc(100% * var(--value) / var(--scale));
   min-width: 0;
   border-radius: 6px;
   background: var(--accent);
@@ -215,6 +219,7 @@
 
 .targetMark {
   position: absolute;
+  left: calc(100% * var(--target) / var(--scale));
   top: -3px;
   bottom: -3px;
   width: 3px;
@@ -228,4 +233,89 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-weight: var(--fw-semibold);
+}
+
+/* What is missing and the sets beyond the plan: only for the narrow layout below. */
+.rowRemaining,
+.fillExtra {
+  display: none;
+}
+
+.fillExtra {
+  position: absolute;
+  inset-block: 0;
+  left: calc(100% * var(--target) / var(--scale));
+  width: calc(100% * (var(--value) - var(--target)) / var(--scale));
+  background: color-mix(in srgb, var(--success) 55%, var(--text));
+}
+
+/* Narrow card (a phone): two lines per group, the name and the numbers on top and the bar under
+   them, as long as the plan (or the sets done, if more) on the card's scale and cut into one cell
+   per set: every group shares the cell width, so a longer bar means more sets. --span is the
+   cells of the row; --scale is the biggest span, which takes the whole card. */
+@container (max-width: 30rem) {
+  .row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'label value'
+      'track track';
+    row-gap: var(--space-1);
+    margin-block: var(--space-1);
+  }
+
+  .rowLabel {
+    grid-area: label;
+  }
+
+  .rowValue {
+    grid-area: value;
+    min-width: 0;
+  }
+
+  .rowRemaining,
+  .fillExtra {
+    display: inline;
+  }
+
+  .fillExtra {
+    display: block;
+  }
+
+  .track {
+    grid-area: track;
+    justify-self: start;
+    width: calc(100% * var(--span) / var(--scale));
+    height: 16px;
+    border-radius: 4px;
+  }
+
+  .fill {
+    width: calc(100% * var(--value) / var(--span));
+    border-radius: 4px;
+  }
+
+  .fillExtra {
+    left: calc(100% * var(--target) / var(--span));
+    width: calc(100% * (var(--value) - var(--target)) / var(--span));
+  }
+
+  .targetMark {
+    left: calc(100% * var(--target) / var(--span));
+    z-index: 1;
+  }
+
+  /* The gaps between cells: thin lines in the card's colour over the bar. */
+  .track[data-cells]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to right,
+      transparent 0,
+      transparent calc(100% / var(--span) - 2px),
+      var(--surface) calc(100% / var(--span) - 2px),
+      var(--surface) calc(100% / var(--span))
+    );
+  }
 }

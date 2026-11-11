@@ -26,11 +26,13 @@ import { EmptyState } from '../../ui/EmptyState';
 import { Notice } from '../../ui/Notice';
 import { ScalePicker } from '../../ui/ScalePicker';
 import { cx } from '../../ui/cx';
+import { Stat, StatGrid } from '../../ui/Stat';
 import { Tag } from '../../ui/Tag';
 import { TextArea } from '../../ui/TextField';
 import { AddExerciseSheet } from './AddExerciseSheet';
 import { alertRestEnd } from './restAlerts';
 import { RestTimerBar } from './RestTimerBar';
+import { usePendingSets } from './usePendingSets';
 import { useRemoteChanges } from './useRemoteChanges';
 import { useRestTimer } from './useRestTimer';
 import { SessionDetailsSheet } from './SessionDetailsSheet';
@@ -72,12 +74,15 @@ export function SessionPage() {
 function SessionScreen({ view }: { view: SessionView }) {
   const { t } = useTranslation();
   const { locale } = useLocale();
-  const { session, routine, exercises, sets, notes, references, deload, rehab } = view;
+  const { session, routine, exercises, notes, references, deload, rehab } = view;
   const store = useSessionDrafts(session.id);
+  // A set just saved shows at once, without waiting for the screen to read the session again.
+  const pending = usePendingSets(view.sets);
+  const sets = pending.sets;
   const rest = useRestTimer(() => {
     alertRestEnd(readRestAlerts(getLocalStorage(window)));
   });
-  const actions = useSessionActions(view, store, rest);
+  const actions = useSessionActions(view, store, rest, pending);
   const remote = useRemoteChanges(session.id);
   const navigate = useNavigate();
   const [adding, setAdding] = useState(false);
@@ -159,16 +164,14 @@ function SessionScreen({ view }: { view: SessionView }) {
         {!inProgress && (
           <>
             <p className={styles.muted}>{t('session.finishedHint')}</p>
-            <dl className={styles.totals}>
-              <div>
-                <dt>{t('session.effectiveSets')}</dt>
-                <dd>{effective.length}</dd>
-              </div>
-              <div>
-                <dt>{t('session.volume')}</dt>
-                <dd>{formatNumber(volume(sets), locale, { maximumFractionDigits: 0 })}</dd>
-              </div>
-            </dl>
+            <StatGrid>
+              <Stat filled label={t('session.effectiveSets')} value={effective.length} />
+              <Stat
+                filled
+                label={t('session.volume')}
+                value={formatNumber(volume(sets), locale, { maximumFractionDigits: 0 })}
+              />
+            </StatGrid>
           </>
         )}
       </Card>

@@ -9,6 +9,7 @@ import {
   hasHorizontalScroll,
   mainNav,
   setLanguage,
+  tileMetrics,
 } from './helpers';
 
 // Spec: docs/spec/progress.md (Phase 7, branch feature/progress). The device date is fixed to
@@ -322,6 +323,90 @@ function card(page: Page, heading: string, lang: 'es' | 'en' = 'es'): Locator {
 /** A row of the muscle-group bars: its text reads "Pecho: 12 de 13 series" (plus "plan cumplido"). */
 function row(scope: Locator, text: RegExp): Locator {
   return scope.getByRole('listitem').filter({ hasText: text });
+}
+
+/** What a user sees of one muscle group: its text line(s), its bar and the cells of the bar. */
+interface GroupGeometry {
+  name: string;
+  /** The visible figures of the group, e.g. "12 / 13 · falta 1". */
+  text: string;
+  nameMid: number;
+  figMid: number;
+  lineHeight: number;
+  textBottom: number;
+  rowHeight: number;
+  barTop: number;
+  barBottom: number;
+  barWidth: number;
+  /** Cells of the bar (one per set; the bar is as long as the plan, or the sets done if more). */
+  cells: number;
+  /** How many of those cells the filled part of the bar covers. */
+  filled: number;
+  /** The width of one cell: the bar's width over its cells. */
+  cellWidth: number;
+  /** The thin gaps that cut the bar into cells are drawn (they are not on a wide screen). */
+  gaps: boolean;
+}
+
+/**
+ * Measures every group row of the "Series por grupo muscular" card from what is rendered: the
+ * first visible text is the name, the visible texts with digits / "✓" / "falta" / "·" are the
+ * figures, the bar is the widest element of the row that holds none of that text, its first child
+ * is the filled part, and the cells are the `--span` of the row (cut by gaps drawn over the bar).
+ */
+function groupGeometry(scope: Locator): Promise<GroupGeometry[]> {
+  return scope.evaluate((cardEl): GroupGeometry[] => {
+    const out: GroupGeometry[] = [];
+    for (const item of Array.from(cardEl.querySelectorAll('li, [role="listitem"]'))) {
+      const nodes: { text: string; rect: DOMRect; parent: Element }[] = [];
+      const walker = document.createTreeWalker(item, NodeFilter.SHOW_TEXT);
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        const text = (n.textContent ?? '').trim();
+        const parent = n.parentElement;
+        if (!text || !parent) continue;
+        // Text only for screen readers sits in a 1 px clipped box: it is not on screen, but its
+        // text range still reports the size of the whole text, so it must not count as visible.
+        if (parent.getBoundingClientRect().width <= 2) continue;
+        const range = document.createRange();
+        range.selectNodeContents(n);
+        const rect = range.getBoundingClientRect();
+        if (rect.width > 2 && rect.height > 2) nodes.push({ text, rect, parent });
+      }
+      const nameNode = nodes.find((n) => /^\p{L}/u.test(n.text));
+      if (!nameNode) continue;
+      const figs = nodes.filter((n) => n !== nameNode && /[\d✓·]|falt/.test(n.text));
+      if (figs.length === 0) continue;
+      const figTop = Math.min(...figs.map((f) => f.rect.top));
+      const figBottom = Math.max(...figs.map((f) => f.rect.bottom));
+      const bar = Array.from(item.querySelectorAll('*'))
+        .filter((el) => !nodes.some((n) => el.contains(n.parent)))
+        .map((el) => ({ el, rect: el.getBoundingClientRect() }))
+        .filter(({ rect }) => rect.width > 40 && rect.height > 0)
+        .sort((a, b) => b.rect.width - a.rect.width)[0];
+      const cells = Number.parseFloat(getComputedStyle(item).getPropertyValue('--span'));
+      const barWidth = bar?.rect.width ?? 0;
+      const cellWidth = barWidth / cells;
+      const fill = bar?.el.firstElementChild?.getBoundingClientRect().width ?? 0;
+      const gapsContent = bar ? getComputedStyle(bar.el, '::after').content : 'none';
+      out.push({
+        name: nameNode.text,
+        text: figs.map((f) => f.text).join(' '),
+        nameMid: (nameNode.rect.top + nameNode.rect.bottom) / 2,
+        figMid: (figTop + figBottom) / 2,
+        lineHeight: nameNode.rect.height,
+        textBottom: Math.max(nameNode.rect.bottom, figBottom),
+        rowHeight: item.getBoundingClientRect().height,
+        barTop: bar?.rect.top ?? NaN,
+        barBottom: bar?.rect.bottom ?? NaN,
+        barWidth,
+        cells,
+        filled: fill / cellWidth,
+        cellWidth,
+        gaps: gapsContent !== 'none' && gapsContent !== 'normal',
+      });
+    }
+    return out;
+  });
 }
 
 /** A chart: a figure whose image carries the description ("Peso corporal: gráfica de líneas, 3 puntos…"). */
@@ -718,6 +803,221 @@ test.describe('progress', () => {
       await expect(page.getByRole('heading', { name: 'Evolución', exact: true })).toHaveCount(0);
     },
   );
+
+  test('AC-PRO-16 · chart text is 12 px at 390 px and at 1024 px, and the chart fills its card without scrolling sideways', async ({
+    page,
+  }) => {
+    await seedAndOpen(page, SESSIONS);
+    expect(page.viewportSize()?.width).toBe(390);
+    const heads = ['Series por semana', 'Peso corporal'] as const;
+
+    // Axis text as rendered: its font size times the scale the drawing is shown at.
+    interface Measure {
+      texts: number;
+      sizes: number[];
+      chartWidth: number;
+      chartLeft: number;
+      chartRight: number;
+      cardLeft: number;
+      cardRight: number;
+      cardOverflows: boolean;
+    }
+    const measure = (heading: string): Promise<Measure> =>
+      card(page, heading).evaluate((el): Measure => {
+        const svg = Array.from(el.querySelectorAll('svg')).find(
+          (s) => s.querySelector('text') !== null,
+        );
+        if (!svg) throw new Error('no chart with text in the card');
+        const labels = Array.from(svg.querySelectorAll('text')).filter(
+          (t) => t.textContent.trim() !== '',
+        );
+        const sizes = labels.map(
+          (t) => parseFloat(getComputedStyle(t).fontSize) * (t.getScreenCTM()?.a ?? 1),
+        );
+        const s = svg.getBoundingClientRect();
+        const c = el.getBoundingClientRect();
+        return {
+          texts: labels.length,
+          sizes,
+          chartWidth: s.width,
+          chartLeft: s.left,
+          chartRight: s.right,
+          cardLeft: c.left,
+          cardRight: c.right,
+          cardOverflows: el.scrollWidth > el.clientWidth + 1,
+        };
+      });
+
+    async function expectChartsOk(width: number): Promise<void> {
+      for (const heading of heads) {
+        const m = await measure(heading);
+        const where = `${heading} at ${String(width)} px`;
+        expect(m.texts, `${where}: axis labels`).toBeGreaterThan(0);
+        for (const size of m.sizes) {
+          expect(
+            Math.abs(size - 12),
+            `${where}: axis text is ${String(size)} px`,
+          ).toBeLessThanOrEqual(0.5);
+        }
+        expect(m.chartLeft, `${where}: chart starts inside its card`).toBeGreaterThanOrEqual(
+          m.cardLeft - 1,
+        );
+        expect(m.chartRight, `${where}: chart ends inside its card`).toBeLessThanOrEqual(
+          m.cardRight + 1,
+        );
+        expect(m.chartWidth, `${where}: chart fills its card`).toBeGreaterThanOrEqual(
+          (m.cardRight - m.cardLeft) * 0.8,
+        );
+        expect(m.cardOverflows, `${where}: card scrolls sideways`).toBe(false);
+      }
+      expect(await hasHorizontalScroll(page), `page scrolls sideways at ${String(width)} px`).toBe(
+        false,
+      );
+    }
+
+    await expect(chart(card(page, 'Series por semana'), /gráfica de columnas/)).toBeVisible();
+    await expectChartsOk(390);
+    const narrow = (await measure('Series por semana')).chartWidth;
+
+    // Wider screen, resized live: the drawing grows, the text does not.
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await expect
+      .poll(async () => (await measure('Series por semana')).chartWidth)
+      .toBeGreaterThan(narrow + 100);
+    await expectChartsOk(1024);
+
+    // And when the page is opened at that width.
+    await page.reload();
+    await expect(h1(page, 'Progreso')).toBeVisible();
+    await expect(chart(card(page, 'Series por semana'), /gráfica de columnas/)).toBeVisible();
+    await expectChartsOk(1024);
+  });
+
+  test('AC-PRO-17 · in every summary tile the label, the number and the note share the left edge, and no number is bigger than the title', async ({
+    page,
+  }) => {
+    await seedAndOpen(page, SESSIONS);
+    const main = page.getByRole('main');
+    await expect(main).toContainText(/Sesiones\s*6\s*en total/);
+
+    // [label, start of the number, start of the note]
+    const tiles = await tileMetrics(page, {
+      Semana: ['Semana', '5', '2'],
+      Series: ['Series', '15', 'esta semana'],
+      Sesiones: ['Sesiones', '6', 'en total'],
+      Récords: ['Récords', '1', 'este mes'],
+    });
+    const titleFont = await h1(page, 'Progreso').evaluate((el) =>
+      parseFloat(getComputedStyle(el).fontSize),
+    );
+    for (const [label, tile] of Object.entries(tiles)) {
+      const [labelLeft, numberLeft, noteLeft] = tile.parts;
+      expect(labelLeft, `"${label}" tile is on screen`).not.toBeNaN();
+      expect(numberLeft, `"${label}" tile has its number`).not.toBeNaN();
+      expect(noteLeft, `"${label}" tile has its note`).not.toBeNaN();
+      const base = labelLeft ?? NaN;
+      expect(
+        Math.abs((numberLeft ?? NaN) - base),
+        `"${label}": number vs label left edge`,
+      ).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs((noteLeft ?? NaN) - base),
+        `"${label}": note vs label left edge`,
+      ).toBeLessThanOrEqual(1);
+      for (const left of tile.lines) {
+        expect(
+          Math.abs(left - base),
+          `"${label}": text lines ${tile.lines.join(', ')}`,
+        ).toBeLessThanOrEqual(1);
+      }
+      expect(
+        tile.maxFont,
+        `"${label}": number is not bigger than the page title`,
+      ).toBeLessThanOrEqual(titleFont + 0.5);
+    }
+    expect(await hasHorizontalScroll(page)).toBe(false);
+  });
+
+  test('AC-PRO-18 · sets per muscle group on a phone: name and "n / plan · faltan k" on one line, a full-width bar of equal cells below it; one line with a continuous bar at 1024 px', async ({
+    page,
+  }) => {
+    await seedAndOpen(page, SESSIONS);
+    expect(page.viewportSize()?.width).toBe(390);
+    const groups = card(page, 'Series por grupo muscular');
+    await expect(row(groups, /Pecho: 12 de 13 series/)).toBeVisible();
+
+    const geometry = async (): Promise<GroupGeometry[]> => groupGeometry(groups);
+    const must = (list: GroupGeometry[], name: string): GroupGeometry => {
+      const found = list.find((g) => g.name.startsWith(name));
+      if (!found) throw new Error(`no measurable row for "${name}": ${JSON.stringify(list)}`);
+      return found;
+    };
+
+    // This week: Pecho 12 of 13 ("falta 1"), Espalda 3 of 14 ("faltan 11").
+    const narrow = await geometry();
+    const pecho = must(narrow, 'Pecho');
+    const espalda = must(narrow, 'Espalda');
+    expect(pecho.text).toMatch(/12\s*\/\s*13\s*·\s*falta 1(?!\d)/);
+    expect(espalda.text).toMatch(/3\s*\/\s*14\s*·\s*faltan 11(?!\d)/);
+    for (const g of narrow) {
+      // Two lines: the name and the figures share the first one; the bar is under them.
+      expect(
+        Math.abs(g.nameMid - g.figMid),
+        `${g.name}: name and figures share a line`,
+      ).toBeLessThan(g.lineHeight / 2);
+      expect(g.barTop, `${g.name}: bar is under the text`).toBeGreaterThanOrEqual(g.textBottom - 2);
+    }
+    // A bar as wide as the card for the biggest plan; none wider than the card.
+    expect(Math.max(...narrow.map((g) => g.barWidth)), 'widest bar').toBeGreaterThan(250);
+    const cardWidth = (await groups.boundingBox())?.width ?? 0;
+    for (const g of narrow)
+      expect(g.barWidth, `${g.name}: bar inside the card`).toBeLessThanOrEqual(cardWidth);
+    // One cell per planned set, done and pending told apart; the same cell width everywhere
+    // (so the group with the smaller plan has the shorter bar).
+    expect(pecho.cells, 'Pecho cells').toBe(13);
+    expect(Math.round(pecho.filled), 'Pecho: 12 done').toBe(12);
+    expect(espalda.cells, 'Espalda cells').toBe(14);
+    expect(Math.round(espalda.filled), 'Espalda: 3 done').toBe(3);
+    expect(pecho.barWidth, 'Pecho has the shorter bar').toBeLessThan(espalda.barWidth);
+    const withCells = narrow.filter((g) => g.cells > 0);
+    const widths = withCells.map((g) => g.cellWidth);
+    expect(
+      Math.max(...widths) - Math.min(...widths),
+      `cell widths ${widths.join(', ')}`,
+    ).toBeLessThanOrEqual(1);
+    expect(
+      withCells.every((g) => g.gaps),
+      'the bars are cut into cells',
+    ).toBe(true);
+
+    // The accessible name of the group does not change (AC-PRO-02).
+    await expect(row(groups, /Espalda: 3 de 14 series/)).toBeVisible();
+
+    // A group that reached its plan shows "✓" instead of "faltan" (last week: Espalda 2 of 2).
+    await groups.getByRole('radio', { name: 'Semana pasada', exact: true }).check();
+    await expect(row(groups, /Espalda: 2 de 2 series.*plan cumplido/i)).toBeVisible();
+    await expect
+      .poll(async () => must(await geometry(), 'Espalda').text)
+      .toMatch(/2\s*\/\s*2[\s·]*✓/);
+    expect(must(await geometry(), 'Espalda').text).not.toMatch(/falta/);
+
+    // Wide screen: each group is a single line with a continuous bar.
+    await page.setViewportSize({ width: 1024, height: 768 });
+    // (The layout changes with the width, so the bar is measured again once it is in place.)
+    await expect
+      .poll(async () => (await geometry()).every((g) => g.rowHeight < g.lineHeight * 2.2), {
+        message: 'every group fits one line at 1024 px',
+      })
+      .toBe(true);
+    for (const g of await geometry()) {
+      const mid = g.nameMid;
+      expect(g.barTop, `${g.name}: bar starts at the line of the name`).toBeLessThanOrEqual(mid);
+      expect(g.barBottom, `${g.name}: bar ends at the line of the name`).toBeGreaterThanOrEqual(
+        mid,
+      );
+      expect(g.gaps, `${g.name}: continuous bar, no gaps between cells`).toBe(false);
+    }
+  });
 
   test(
     'AC-PRO-15 · English and dark at 390 px: English texts, decimal point, no horizontal scroll with every table open, no serious axe issues in dark and light',

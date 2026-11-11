@@ -32,6 +32,8 @@ h4,
 p,
 ul,
 ol,
+dl,
+dd,
 figure {
   margin: 0;
 }

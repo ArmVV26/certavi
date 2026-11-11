@@ -46,6 +46,13 @@
   font-size: var(--fs-sm);
 }
 
+.routineNote {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-style: italic;
+  overflow-wrap: anywhere;
+}
+
 .hint {
   color: var(--accent);
   font-size: var(--fs-sm);
@@ -97,4 +104,11 @@
   flex-direction: column;
   gap: var(--space-3);
   flex-basis: 100%;
+}
+
+.setupLine {
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
 }

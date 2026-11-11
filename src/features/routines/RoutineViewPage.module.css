@@ -59,17 +59,14 @@
 .list {
   display: flex;
   flex-direction: column;
+  gap: var(--space-3);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-1);
-  border-bottom: 1px solid var(--border);
+  gap: var(--space-2);
 }
 
 .top {
@@ -79,15 +76,17 @@
   gap: var(--space-2);
 }
 
-.link {
-  color: var(--text);
-  font-weight: var(--fw-semibold);
+.exerciseName {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
   overflow-wrap: anywhere;
 }
 
 .scheme {
-  color: var(--text-muted);
+  color: var(--text);
+  font-family: var(--font-numeric);
   font-size: var(--fs-sm);
+  font-variant-numeric: var(--numeric-features);
 }
 
 .note {
@@ -95,4 +94,10 @@
   font-size: var(--fs-sm);
   font-style: italic;
   overflow-wrap: anywhere;
+}
+
+.sheet {
+  align-self: flex-start;
+  gap: var(--space-1);
+  min-height: var(--touch-target);
 }

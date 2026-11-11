@@ -4,15 +4,31 @@ import { describe, expect, it, vi } from 'vitest';
 import { setSystemDark } from '../test/matchMedia';
 import { useTheme } from './ThemeContext';
 import { ThemeProvider } from './ThemeProvider';
-import { THEME_COLOR, THEME_STORAGE_KEY } from './theme';
+import { MONO_STORAGE_KEY, THEME_COLOR, THEME_COLOR_MONO, THEME_STORAGE_KEY } from './theme';
 
 // Test-only probe; its texts are not user-facing, so they do not go through i18n.
 function Probe() {
-  const { preference, resolved, cyclePreference, setPreference } = useTheme();
+  const { preference, resolved, cyclePreference, setPreference, setMono } = useTheme();
   return (
     <div>
       <p>preference: {preference}</p>
       <p>resolved: {resolved}</p>
+      <button
+        type="button"
+        onClick={() => {
+          setMono(true);
+        }}
+      >
+        mono on
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          setMono(false);
+        }}
+      >
+        mono off
+      </button>
       <button type="button" onClick={cyclePreference}>
         cycle
       </button>
@@ -103,6 +119,34 @@ describe('ThemeProvider', () => {
 
     expect(screen.getByText('preference: dark')).toBeInTheDocument();
     expect(htmlTheme()).toBe('dark');
+  });
+
+  it('turns the no-colour mode on and off without touching the theme, and keeps it', async () => {
+    const user = userEvent.setup();
+    setSystemDark(true);
+    renderWithTheme();
+    expect(document.documentElement).not.toHaveAttribute('data-mono');
+
+    await user.click(screen.getByRole('button', { name: 'mono on' }));
+    expect(document.documentElement).toHaveAttribute('data-mono');
+    expect(htmlTheme()).toBe('dark');
+    expect(localStorage.getItem(MONO_STORAGE_KEY)).toBe('on');
+    const meta = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    expect(meta?.content).toBe(THEME_COLOR_MONO.dark);
+
+    await user.click(screen.getByRole('button', { name: 'cycle' }));
+    expect(htmlTheme()).toBe('light');
+    expect(document.documentElement).toHaveAttribute('data-mono');
+
+    await user.click(screen.getByRole('button', { name: 'mono off' }));
+    expect(document.documentElement).not.toHaveAttribute('data-mono');
+    expect(localStorage.getItem(MONO_STORAGE_KEY)).toBe('off');
+  });
+
+  it('restores the no-colour mode on start (reload)', () => {
+    localStorage.setItem(MONO_STORAGE_KEY, 'on');
+    renderWithTheme();
+    expect(document.documentElement).toHaveAttribute('data-mono');
   });
 
   it('sets theme-color to the active background', () => {

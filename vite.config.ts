@@ -1,11 +1,18 @@
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
 
+// The version shown in Settings → About is the one in package.json (see src/app/appInfo.ts).
+const { version } = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
+) as { version: string };
+
 // Fixed ports with strictPort: if a port is busy, fail loudly instead of silently picking another.
-// See .claude/rules.md → "Processes and ports".
+// See .claude/rules/processes-windows.md.
 export default defineConfig({
+  define: { __APP_VERSION__: JSON.stringify(version) },
   plugins: [
     react(),
     // Service worker + manifest (ADR-0005). Only the build output is precached; `/api/**` is never

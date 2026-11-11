@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { E2E_SYNC_KEY } from '../mocks/sync-server';
 import {
   allUiText,
   boxOf,
@@ -10,6 +11,8 @@ import {
   hasHorizontalScroll,
   mainNav,
   setLanguage,
+  settle,
+  tileMetrics,
   viewportOf,
 } from './helpers';
 
@@ -169,6 +172,42 @@ async function axe(page: Page, label: string): Promise<void> {
         .join('\n'),
   );
   expect(serious, `${label}\n${summary.join('\n')}`).toEqual([]);
+}
+
+/** The tabs of the bottom bar in the order AC-SESSION-40 taps them, with the URL each opens. */
+const TABS = [
+  ['Calendario', /\/calendar$/],
+  ['Rutinas', /\/routines$/],
+  ['Progreso', /\/progress$/],
+  ['Ajustes', /\/settings$/],
+  ['Hoy', /\/$/],
+] as const;
+
+/**
+ * Taps each tab with a real click (no `force`): if anything covers a tab, Playwright reports the
+ * element that intercepts the tap. Every tab must open its section at once.
+ */
+async function tapEveryTab(page: Page): Promise<void> {
+  for (const [name, url] of TABS) {
+    await mainNav(page).getByRole('link', { name, exact: true }).click({ timeout: 5_000 });
+    await expect(page, `tab ${name}: URL`).toHaveURL(url);
+    await expect(h1(page, name), `tab ${name}: title`).toBeVisible();
+    await expect(page, `tab ${name}: document title`).toHaveTitle(`${name} · Certavi`);
+  }
+}
+
+/** The "Tipo de serie" sheet: the closest container of its title that holds a "Quitar serie". */
+function typeSheet(page: Page): Locator {
+  return page
+    .getByText('Tipo de serie', { exact: true })
+    .locator(
+      'xpath=ancestor::*[.//button[contains(@aria-label,"Quitar serie") or contains(normalize-space(.),"Quitar serie")]][1]',
+    );
+}
+
+async function openTypeSheet(page: Page, card: Locator, i: number): Promise<void> {
+  await rows(card).type(i).click();
+  await expect(page.getByText('Tipo de serie', { exact: true })).toBeVisible();
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -628,6 +667,20 @@ test.describe('active session', { tag: '@all-engines' }, () => {
     await expect(toast(page, /^Sesión guardada/)).toBeVisible();
     await expect(main).toContainText(/Series efectivas\s*\d+/);
     await expect(main).toContainText(/Volumen\s*\d/);
+    // Each figure is a tile: its label and its number start at the same left edge (no indent).
+    const tiles = await tileMetrics(page, { 'Series efectivas': [], Volumen: [] });
+    for (const [label, tile] of Object.entries(tiles)) {
+      expect(tile.lines.length, `"${label}" tile has a label and a number`).toBeGreaterThanOrEqual(
+        2,
+      );
+      const first = tile.lines[0] ?? NaN;
+      for (const left of tile.lines) {
+        expect(
+          Math.abs(left - first),
+          `"${label}" tile: text lines ${tile.lines.join(', ')}`,
+        ).toBeLessThanOrEqual(1);
+      }
+    }
     await expect(
       main.getByText('Sesión terminada. Puedes corregir cualquier dato: se guarda al momento.', {
         exact: true,
@@ -656,6 +709,42 @@ test.describe('active session', { tag: '@all-engines' }, () => {
     await expect(page.getByRole('main')).toContainText('0 de 5');
     await page.goto(new URL(url).pathname);
     await expect(page.getByText('Sesión no encontrada', { exact: true })).toBeVisible();
+  });
+
+  test('AC-SESSION-37 · the routine note of an exercise shows under its plan line in a session of that routine, and only there', async ({
+    page,
+  }) => {
+    await openToday(page);
+    await startOther(page, 'Lower Full');
+    const main = page.getByRole('main');
+
+    const hack = await exCard(page, 'Sentadilla hack con banda');
+    await expect(hack).toContainText(/\d+ series?[\s\S]*Banda morada por defecto/);
+    await expect(hack).toContainText('Banda morada por defecto. Si usas otra, apunta el color');
+    // Right under the plan line, before the hint / last time lines of a fresh install.
+    await expect(hack).toContainText(/Banda morada por defecto[\s\S]*Sin registros previos/);
+    // The Nota button of the card is the user's own note, a different thing.
+    await expect(hack.getByRole('button', { name: 'Nota', exact: true })).toBeVisible();
+
+    // The line is on that card only: no other card of the session repeats it.
+    await expect(main.getByText(/Banda morada por defecto/)).toHaveCount(1);
+    const ups = page.getByRole('button', { name: /^Subir / });
+    const count = await ups.count();
+    expect(count, 'exercises in Lower Full').toBeGreaterThan(1);
+    const names: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const snapshot = await ups.nth(i).ariaSnapshot();
+      names.push(/button "Subir (.+?)"/.exec(snapshot)?.[1] ?? snapshot);
+    }
+    const otherName = names.find((n) => n !== 'Sentadilla hack con banda');
+    expect(otherName, 'another exercise of Lower Full').toBeTruthy();
+    const other = await exCard(page, otherName ?? '');
+    await expect(other).not.toContainText('Banda morada');
+
+    // A session of another routine does not show it.
+    await backToToday(page);
+    await startRoutine(page, 'Push');
+    await expect(main).not.toContainText('Banda morada por defecto');
   });
 
   test('AC-SESSION-22 · English and dark mode at 390 px: no Spanish, no sideways scroll, every row control visible, axe in both themes', async ({
@@ -719,5 +808,218 @@ test.describe('active session', { tag: '@all-engines' }, () => {
       await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
       await axe(page, 'Session with sets (en, light)');
     }
+  });
+
+  // AC-SESSION-40 · two ways of having no coverage. The sections are opened once before going
+  // offline: the tests run without a service worker, which on a phone keeps the app's files.
+  for (const variant of ['offline', 'online but the sync server never answers'] as const) {
+    test(
+      `AC-SESSION-40 · leaving a session with the rest bar open and a weight field focused: every tab opens and the typed weight is kept (${variant})`,
+      { tag: '@all-engines' },
+      async ({ page, context }) => {
+        await page.clock.install({ time: MON });
+        if (variant === 'offline') {
+          await gotoReady(page, '/', 'Hoy');
+          await tapEveryTab(page); // ends on Hoy, with every section loaded
+          await context.setOffline(true);
+        } else {
+          // The request is taken and never answered: the phone thinks it is online.
+          await context.route('**/api/v1/**', () => new Promise<void>(() => undefined));
+          await gotoReady(page, '/settings', 'Ajustes');
+          await page.getByLabel('Clave de sincronización', { exact: true }).fill(E2E_SYNC_KEY);
+          await page.getByRole('button', { name: 'Guardar clave', exact: true }).click();
+          await expect(
+            page.getByRole('button', { name: 'Cambiar clave', exact: true }),
+          ).toBeVisible();
+          await mainNav(page).getByRole('link', { name: 'Hoy', exact: true }).click();
+          await expect(h1(page, 'Hoy')).toBeVisible();
+        }
+
+        await startRoutine(page, 'Push');
+        const banca = await exCard(page, BENCH);
+        await logSet(banca, 0, '60', '8');
+        // The rest bar is open ...
+        await expect(page.getByText('Descanso', { exact: true }).first()).toBeVisible();
+        // ... and a weight field of the second row has the focus, with a typed value.
+        const r = rows(banca);
+        await r.kg(1).fill('55');
+        await expect(r.kg(1)).toBeFocused();
+
+        await tapEveryTab(page);
+
+        // Back to the session from Today: the typed value is still in the field.
+        await page
+          .getByRole('button', { name: 'Continuar Push', exact: true })
+          .or(page.getByRole('link', { name: 'Continuar Push', exact: true }))
+          .click();
+        await expectSession(page, 'Push');
+        const again = rows(await exCard(page, BENCH));
+        await expect(again.kg(1)).toHaveValue('55');
+        await expect(again.done(0)).toHaveAccessibleName(/^Serie hecha/);
+      },
+    );
+  }
+
+  test('AC-SESSION-41 · removing a set from the "Tipo de serie" menu: empty row at once with "Deshacer", saved row after confirming, and never the last row', async ({
+    page,
+  }) => {
+    await openToday(page);
+    await startOther(page, 'Pull');
+    const remo = await exCard(page, 'Remo en T');
+    const r = rows(remo);
+    await expect.poll(() => r.count()).toBe(3);
+    await logSet(remo, 1, '45', '8'); // the second row is saved
+
+    // The third (empty) row goes at once, with a notice and "Deshacer".
+    await openTypeSheet(page, remo, 2);
+    await typeSheet(page).getByRole('button', { name: 'Quitar serie 3', exact: true }).click();
+    await expect(page.getByText('Tipo de serie', { exact: true })).toHaveCount(0);
+    await expect(dialog(page)).toHaveCount(0);
+    await expect.poll(() => r.count()).toBe(2);
+    await expect(toast(page, 'Serie quitada')).toBeVisible();
+    await page.getByRole('button', { name: 'Deshacer', exact: true }).click();
+    await expect.poll(() => r.count()).toBe(3);
+    await expect(r.kg(1)).toHaveValue('45');
+
+    // Remove it again, then the saved second row: this one asks first.
+    await openTypeSheet(page, remo, 2);
+    await typeSheet(page).getByRole('button', { name: 'Quitar serie 3', exact: true }).click();
+    await expect.poll(() => r.count()).toBe(2);
+    await openTypeSheet(page, remo, 1);
+    await typeSheet(page).getByRole('button', { name: 'Quitar serie 2', exact: true }).click();
+    await expect(dialog(page).getByText('¿Quitar la serie 2?', { exact: true })).toBeVisible();
+    await expect(dialog(page)).toContainText('45 kg × 8');
+    await dialogButton(page, 'Quitar').click();
+    await expect.poll(() => r.count()).toBe(1);
+    await expect(remo.getByRole('button', { name: /^Serie hecha/ })).toHaveCount(0);
+
+    // The last remaining row cannot be removed from its menu, and says why.
+    await openTypeSheet(page, remo, 0);
+    const sheet = typeSheet(page);
+    await expect(sheet.getByRole('button', { name: /^Quitar serie/ })).toBeDisabled();
+    await expect(
+      sheet.getByText('Es la última serie. Para quitarla, quita el ejercicio.', { exact: true }),
+    ).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByText('Tipo de serie', { exact: true })).toHaveCount(0);
+
+    // Swiping the last row does nothing.
+    const box = await boxOf(r.type(0));
+    const y = box.y + box.height / 2;
+    const x = box.x + box.width / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x - 60, y, { steps: 5 });
+    await page.mouse.move(x - 160, y, { steps: 5 });
+    await page.mouse.up();
+    await settle(page);
+    await expect(remo.getByRole('button', { name: /^Quitar serie/ })).toHaveCount(0);
+    await expect(dialog(page)).toHaveCount(0);
+    expect(await r.count()).toBe(1);
+  });
+
+  test('AC-SESSION-42 · tapping ✓ never blanks the row (device slowed down in Chromium), and correcting a saved value does not flash the old one back', async ({
+    page,
+    browserName,
+  }) => {
+    await openToday(page);
+    await startRoutine(page, 'Push');
+    const banca = await exCard(page, BENCH);
+    const r = rows(banca);
+    await r.kg(0).fill('61');
+    await r.reps(0).fill('9');
+    await r.rir(0).selectOption({ label: '2' });
+
+    // Records every moment the DOM changes and every frame in which one of the three typed
+    // values is missing from the page (61 kg, 9 reps, RIR 2). Unique numbers: nothing else has them.
+    await page.evaluate(() => {
+      const w = window as unknown as { __blank: string[]; __frames: number; __stop: () => void };
+      w.__blank = [];
+      w.__frames = 0;
+      const has = (selector: string, value: string): boolean =>
+        Array.from(document.querySelectorAll<HTMLInputElement | HTMLSelectElement>(selector)).some(
+          (el) => el.value === value,
+        );
+      const check = (): void => {
+        w.__frames++;
+        const missing = [
+          has('input', '61') ? '' : 'kg',
+          has('input', '9') ? '' : 'reps',
+          has('select', '2') ? '' : 'rir',
+        ].filter(Boolean);
+        if (missing.length > 0) w.__blank.push(missing.join('+'));
+      };
+      const observer = new MutationObserver(check);
+      observer.observe(document.body, { subtree: true, childList: true, attributes: true });
+      let running = true;
+      const loop = (): void => {
+        if (!running) return;
+        check();
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+      w.__stop = () => {
+        running = false;
+        observer.disconnect();
+      };
+    });
+
+    const cpu = browserName === 'chromium' ? await page.context().newCDPSession(page) : undefined;
+    await cpu?.send('Emulation.setCPUThrottlingRate', { rate: 6 });
+    try {
+      await r.done(0).click();
+      // Right after the tap: the row looks done and still holds its values.
+      await expect(r.done(0)).toHaveAccessibleName('Serie hecha (pulsa para quitar)');
+      await expect(r.kg(0)).toHaveValue('61');
+      await expect(r.reps(0)).toHaveValue('9');
+      await expect(r.rir(0)).toHaveValue('2');
+      await settle(page);
+    } finally {
+      await cpu?.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+    }
+    const saved = await page.evaluate(() => {
+      const w = window as unknown as { __blank: string[]; __frames: number; __stop: () => void };
+      w.__stop();
+      return { blank: [...w.__blank], frames: w.__frames };
+    });
+    expect(saved.frames, 'the recorder looked at the page').toBeGreaterThan(2);
+    expect(saved.blank, 'frames in which a typed value was missing after ✓').toEqual([]);
+
+    // Correcting the saved reps: the old 9 never comes back once 10 is typed.
+    await r.reps(0).fill('10');
+    await page.evaluate(() => {
+      const w = window as unknown as { __blank: string[] };
+      w.__blank.length = 0;
+      const has = (value: string): boolean =>
+        Array.from(document.querySelectorAll<HTMLInputElement>('input')).some(
+          (el) => el.value === value,
+        );
+      const check = (): void => {
+        if (has('9') || !has('10')) w.__blank.push(has('9') ? 'old 9 is back' : 'no 10');
+      };
+      const observer = new MutationObserver(check);
+      observer.observe(document.body, { subtree: true, childList: true, attributes: true });
+      let running = true;
+      const loop = (): void => {
+        if (!running) return;
+        check();
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+      (window as unknown as { __stop: () => void }).__stop = () => {
+        running = false;
+        observer.disconnect();
+      };
+    });
+    await r.reps(0).blur();
+    await expect(r.done(0)).toHaveAccessibleName(/^Serie hecha/);
+    await expect(r.reps(0)).toHaveValue('10');
+    await settle(page);
+    const flash = await page.evaluate(() => {
+      const w = window as unknown as { __blank: string[]; __stop: () => void };
+      w.__stop();
+      return w.__blank;
+    });
+    expect(flash, 'frames with the old value or without the new one').toEqual([]);
   });
 });

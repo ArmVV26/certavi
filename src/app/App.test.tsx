@@ -9,8 +9,9 @@ import { renderApp } from '../test/renderApp';
 import { createMemoryRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { App } from './App';
+import { Layout } from './Layout';
 import { Providers } from './Providers';
-import { routes } from './routes';
+import { preloadScreens, routes } from './routes';
 
 const heading = () => screen.getByRole('heading', { level: 1 });
 const nav = () => screen.getByRole('navigation', { name: 'Principal' });
@@ -77,7 +78,55 @@ describe('app shell', () => {
     await waitFor(() => {
       expect(heading()).toHaveTextContent(title);
     });
-    expect(document.title).toBe(`${title} · Certavi`);
+    // The tab title is set by an effect right after the heading is drawn: wait for it too.
+    await waitFor(() => {
+      expect(document.title).toBe(`${title} · Certavi`);
+    });
+  });
+
+  it('shows a progress line while the next screen is still loading, so a tap never looks ignored', async () => {
+    const user = userEvent.setup();
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/',
+          element: <Layout />,
+          children: [
+            { index: true, element: <p>inicio</p>, handle: { titleKey: 'nav.today' } },
+            {
+              path: 'calendar',
+              handle: { titleKey: 'nav.calendar' },
+              lazy: async () => {
+                await gate;
+                return { Component: () => <p>pantalla del calendario</p> };
+              },
+            },
+          ],
+        },
+      ],
+      { initialEntries: ['/'] },
+    );
+    renderWithProviders(<RouterProvider router={router} />);
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+
+    await user.click(within(nav()).getByRole('link', { name: 'Calendario' }));
+    expect(
+      await screen.findByRole('progressbar', { name: 'Abriendo la pantalla' }),
+    ).toBeInTheDocument();
+
+    release();
+    expect(await screen.findByText('pantalla del calendario')).toBeInTheDocument();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+  });
+
+  it('can download every screen ahead of time without throwing', () => {
+    expect(() => {
+      preloadScreens();
+    }).not.toThrow();
   });
 
   it('navigates with the tab bar and moves focus to the new title', async () => {
@@ -93,6 +142,29 @@ describe('app shell', () => {
       'page',
     );
     expect(within(nav()).getByRole('link', { name: 'Hoy' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('shows the logo as decoration, to the left of the title', () => {
+    renderApp('/');
+    const header = heading().closest('header');
+    const logo = header?.querySelector('svg');
+    expect(logo).toHaveAttribute('aria-hidden', 'true');
+    // Before the title in reading order, and it adds no name of its own to the header.
+    expect(logo?.compareDocumentPosition(heading())).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(within(header as HTMLElement).queryByRole('img')).not.toBeInTheDocument();
+    expect(within(header as HTMLElement).queryByRole('link', { name: /certavi/i })).toBeNull();
+  });
+
+  it('fades a section in when it opens, but not the first page', async () => {
+    const user = userEvent.setup();
+    renderApp('/');
+    const main = () => screen.getByRole('main');
+    expect(main().className).not.toMatch(/arriving/);
+
+    await user.click(within(nav()).getByRole('link', { name: 'Calendario' }));
+
+    expect(main().className).toMatch(/arriving/);
+    expect(heading()).toHaveTextContent('Calendario');
   });
 
   it('does not link the component catalog from the tab bar', () => {
@@ -182,5 +254,27 @@ describe('theme', () => {
       screen.getByRole('button', { name: 'Tema oscuro. Cambiar a automático' }),
     ).toBeInTheDocument();
     expect(localStorage.getItem('certavi.theme')).toBe('dark');
+  });
+
+  it('turns the whole app to greys from a switch in Settings, and keeps the theme button', async () => {
+    const user = userEvent.setup();
+    renderApp('/settings');
+    const html = document.documentElement;
+    const mono = screen.getByRole('switch', { name: 'Sin color (modo 0 dopamina)' });
+    expect(mono).not.toBeChecked();
+    expect(mono).toHaveAccessibleDescription(
+      'Todo en blanco, negro y gris, sobre el tema claro u oscuro.',
+    );
+
+    await user.click(mono);
+    expect(mono).toBeChecked();
+    expect(html).toHaveAttribute('data-mono');
+    expect(localStorage.getItem('certavi.mono')).toBe('on');
+    // The theme still cycles on top of it.
+    await user.click(screen.getByRole('button', { name: /^Tema .*Cambiar a/ }));
+    expect(html).toHaveAttribute('data-mono');
+
+    await user.click(mono);
+    expect(html).not.toHaveAttribute('data-mono');
   });
 });

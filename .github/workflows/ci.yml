@@ -1,5 +1,7 @@
 name: CI
 
+# Quick checks on every pull request to dev or main. The slow end-to-end tests are in e2e.yml and
+# only run on pull requests to main.
 on:
   pull_request:
     branches: [dev, main]
@@ -39,6 +41,11 @@ jobs:
       - name: Unused code
         run: npm run knip
 
+      # Known vulnerabilities (high or critical) in the runtime dependencies that ship to users.
+      # Dev-only packages are skipped: they never reach the browser or the function.
+      - name: Audit runtime dependencies
+        run: npm audit --audit-level=high --omit=dev
+
       # Runs every unit and component test once, and fails if src/domain coverage drops below
       # 90 % (thresholds in vite.config.ts).
       - name: Unit and component tests, with domain coverage
@@ -46,85 +53,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
-  e2e:
-    name: End-to-end (${{ matrix.project }} ${{ matrix.shard }})
-    # Only on PRs to main (releases): it is the slow job. PRs to dev run the checks above.
-    if: github.base_ref == 'main'
-    # needs: checks
-    runs-on: ubuntu-latest
-    # Install + build take a few minutes and the suite's own cap is 20 min (`e2e:all`);
-    # this only catches a hang.
-    timeout-minutes: 25
-    strategy:
-      # A failure in one browser must not hide the result of the others.
-      fail-fast: false
-      # One job at a time, in the order of `include` (chromium, webkit 1/2, webkit 2/2); a
-      # failure does not stop the next ones.
-      # max-parallel: 1
-      matrix:
-        include:
-          # Chromium runs every test; WebKit only the ones tagged @all-engines (see
-          # playwright.config.ts), split in two shards to stay well under the cap on a
-          # 2-vCPU runner (one worker).
-          - project: chromium
-            shard: 1/1
-          - project: webkit
-            shard: 1/2
-          - project: webkit
-            shard: 2/2
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Set up Node (version from .nvmrc)
-        uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      # Each job installs only its own browser, cached per Playwright version (pinned exact in
-      # package.json), so a new version downloads it once. System libraries are not cached:
-      # install-deps adds them.
-      - name: Read the Playwright version
-        id: playwright
-        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
-
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-${{ matrix.project }}
-
-      - name: Install the Playwright browser and its system libraries
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps ${{ matrix.project }}
-
-      - name: Install the system libraries of the cached browser
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps ${{ matrix.project }}
-
-      # playwright.config.ts records a trace on the first retry (CI retries twice).
-      # --project and --shard are used only here, never locally.
-      - name: End-to-end tests
-        run: npm run e2e:all -- --project=${{ matrix.project }} --shard=${{ matrix.shard }}
-
-      # The HTML report embeds the traces and screenshots; test-results/ also keeps the raw
-      # trace.zip and error-context.md of every failed test.
-      - name: Set the report artifact name
-        if: failure()
-        run: echo "shard_name=$(echo '${{ matrix.shard }}' | tr '/' '-')" >> "$GITHUB_ENV"
-
-      - name: Upload Playwright report and traces
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: playwright-report-${{ matrix.project }}-${{ env.shard_name }}
-          path: |
-            playwright-report/
-            test-results/
-          retention-days: 7

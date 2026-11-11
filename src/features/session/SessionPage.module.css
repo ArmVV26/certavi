@@ -27,23 +27,6 @@
   font-size: var(--fs-sm);
 }
 
-.totals {
-  display: flex;
-  gap: var(--space-6);
-}
-
-.totals dt {
-  color: var(--text-muted);
-  font-size: var(--fs-sm);
-}
-
-.totals dd {
-  font-family: var(--font-numeric);
-  font-size: var(--fs-xl);
-  font-weight: var(--fw-bold);
-  font-variant-numeric: var(--numeric-features);
-}
-
 .actions {
   display: flex;
   flex-direction: column;

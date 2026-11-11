@@ -1,5 +1,6 @@
 import { linearScale, niceTicks } from './chartScale';
 import styles from './Chart.module.css';
+import { useChartWidth } from './useChartWidth';
 
 export interface Column {
   /** Short label under the column. */
@@ -19,21 +20,22 @@ interface ColumnChartProps {
   height?: number;
 }
 
-const WIDTH = 360;
 const MARGIN = { top: 10, right: 8, bottom: 24, left: 36 };
 
 /** Columns from zero with an optional plan mark on each. Hand-written SVG. */
 export function ColumnChart({ columns, description, formatY, height = 180 }: ColumnChartProps) {
+  const [svgRef, width] = useChartWidth();
   const top = Math.max(0, ...columns.flatMap((c) => [c.value, c.target ?? 0]));
   const ticks = niceTicks(0, top);
   const y = linearScale(0, ticks.max, height - MARGIN.bottom, MARGIN.top);
-  const slot = (WIDTH - MARGIN.left - MARGIN.right) / Math.max(columns.length, 1);
+  const slot = (width - MARGIN.left - MARGIN.right) / Math.max(columns.length, 1);
   const barWidth = Math.min(slot * 0.62, 28);
 
   return (
     <svg
+      ref={svgRef}
       className={styles.svg}
-      viewBox={`0 0 ${String(WIDTH)} ${String(height)}`}
+      viewBox={`0 0 ${String(width)} ${String(height)}`}
       role="img"
       aria-label={description}
     >
@@ -42,7 +44,7 @@ export function ColumnChart({ columns, description, formatY, height = 180 }: Col
           <line
             className={styles.grid}
             x1={MARGIN.left}
-            x2={WIDTH - MARGIN.right}
+            x2={width - MARGIN.right}
             y1={y(value)}
             y2={y(value)}
           />

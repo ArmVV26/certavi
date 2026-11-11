@@ -1,0 +1,33 @@
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Name (wider) and value side by side, with the remove button at the end. */
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto;
+  align-items: start;
+  gap: var(--space-2);
+}
+
+/* The trash button lines up with the inputs, not with their labels. */
+.row > button {
+  margin-block-start: var(--space-5);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

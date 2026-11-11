@@ -242,6 +242,85 @@ export async function boxOf(locator: Locator): Promise<Box> {
   return box;
 }
 
+export interface TileMetrics {
+  /** Left edge (px) of the first text node of each requested part, NaN when it is not found. */
+  parts: number[];
+  /** Left edge (px) of every line of text of the tile, top to bottom. */
+  lines: number[];
+  /** Largest rendered font size (px) in the tile. */
+  maxFont: number;
+}
+
+/**
+ * Measures the summary tiles of a screen from what a user sees: for each tile named by its label
+ * (the first element of `main` whose whole text is the label) it returns the left edge of the
+ * text lines and of the requested parts (`parts[0]` is the label; the others are the start of
+ * the number and the note). The tile is the largest ancestor of the label that does not hold the
+ * label of another tile in `tiles`.
+ */
+export async function tileMetrics(
+  page: Page,
+  tiles: Record<string, string[]>,
+): Promise<Record<string, TileMetrics>> {
+  return page.evaluate((spec) => {
+    const root = document.querySelector('main') ?? document.body;
+    const leafText = (el: Element): string => el.textContent.trim();
+    const leaves = Array.from(root.querySelectorAll('*')).filter((el) => el.children.length === 0);
+    const out: Record<string, TileMetrics> = {};
+    for (const [label, parts] of Object.entries(spec)) {
+      const others = Object.keys(spec).filter((l) => l !== label);
+      const labelEl = leaves.find((el) => leafText(el) === label);
+      if (!labelEl) {
+        out[label] = { parts: parts.map(() => NaN), lines: [], maxFont: NaN };
+        continue;
+      }
+      let tile: Element = labelEl;
+      for (let p = labelEl.parentElement; p && p !== root; p = p.parentElement) {
+        const hasOther = Array.from(p.querySelectorAll('*')).some(
+          (el) => el.children.length === 0 && others.includes(leafText(el)),
+        );
+        if (hasOther) break;
+        tile = p;
+      }
+      const walker = document.createTreeWalker(tile, NodeFilter.SHOW_TEXT);
+      const nodes: { text: string; left: number; top: number; bottom: number; font: number }[] = [];
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        const text = (n.textContent ?? '').trim();
+        if (!text) continue;
+        const range = document.createRange();
+        range.selectNodeContents(n);
+        const rects = Array.from(range.getClientRects()).filter((r) => r.width > 0);
+        if (rects.length === 0) continue;
+        const font = n.parentElement ? parseFloat(getComputedStyle(n.parentElement).fontSize) : 0;
+        nodes.push({
+          text,
+          left: Math.min(...rects.map((r) => r.left)),
+          top: Math.min(...rects.map((r) => r.top)),
+          bottom: Math.max(...rects.map((r) => r.bottom)),
+          font,
+        });
+      }
+      const sorted = [...nodes].sort((a, b) => a.top - b.top);
+      const lines: { left: number; bottom: number }[] = [];
+      for (const r of sorted) {
+        const cur = lines.at(-1);
+        if (cur && r.top < cur.bottom - 2) {
+          cur.left = Math.min(cur.left, r.left);
+          cur.bottom = Math.max(cur.bottom, r.bottom);
+        } else {
+          lines.push({ left: r.left, bottom: r.bottom });
+        }
+      }
+      out[label] = {
+        parts: parts.map((part) => nodes.find((n) => n.text.startsWith(part))?.left ?? NaN),
+        lines: lines.map((l) => l.left),
+        maxFont: Math.max(...nodes.map((n) => n.font)),
+      };
+    }
+    return out;
+  }, tiles);
+}
+
 export function viewportOf(page: Page): { width: number; height: number } {
   const vp = page.viewportSize();
   if (!vp) throw new Error('No viewport');
@@ -252,7 +331,7 @@ export function viewportOf(page: Page): { width: number; height: number } {
  * Resolves after two animation frames: whatever the page reacts to has been rendered. For checks
  * that "nothing happens" after an action. It only covers what the page does synchronously or in
  * the next frames; if the thing that must not happen would come from an app timer, move that
- * timer with `page.clock` instead. Never a real-time wait (see .claude/rules.md).
+ * timer with `page.clock` instead. Never a real-time wait (see .claude/rules/*).
  */
 export async function settle(page: Page): Promise<void> {
   await page.evaluate(

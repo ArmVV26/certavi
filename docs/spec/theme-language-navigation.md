@@ -17,6 +17,8 @@ since Phase 6 ([routines.md](routines.md), [exercises.md](exercises.md)).
 
 ### Header (every page)
 
+- The **Certavi logo** (a weight plate shaped like a "C"), about 28 px, to the left of the title.
+  It is only decoration: it has no accessible name and is not a link.
 - The **page title** as the main heading (level 1).
 - A **theme button** on the right. Its accessible name says the current theme and the next one:
 
@@ -67,6 +69,10 @@ Card **"Apariencia" / "Appearance"** with two groups of options (radio buttons):
 
 - **"Tema" / "Theme":** "Automático" / "Automatic", "Claro" / "Light", "Oscuro" / "Dark".
 - **"Idioma" / "Language":** "Español", "English" (each in its own language).
+- Switch **"Sin color (modo 0 dopamina)" / "No colour (zero-dopamine mode)"** with the description
+  **"Todo en blanco, negro y gris, sobre el tema claro u oscuro." / "Everything in black, white
+  and grey, on top of the light or dark theme."** (off at first). It belongs to this device only
+  (it is not synced) and does not change the theme button.
 
 Card **"Descanso" / "Rest"** (between "Apariencia" and the data cards), for the rest timer of the
 session (see [session.md](session.md) §2.6):
@@ -85,6 +91,11 @@ catalog"** to `/dev/ui`.
 > The catalog and this card exist only in development builds (and in the build the e2e suite
 > serves). In the production build (what users get) there is no card and `/dev/ui` shows
 > "Página no encontrada" / "Page not found".
+
+Card **"Acerca de" / "About"**, the last card of the page (below "Desarrollo" when that one
+exists), with the logo, the name **Certavi**, the version (**"Versión 0.9.0"** / "Version 0.9.0":
+the one in `package.json`) and a link **"Código fuente en GitHub"** / "Source code on GitHub"
+that opens the repository in a new tab.
 
 ### Component catalog (`/dev/ui`)
 
@@ -163,6 +174,27 @@ When I tap "Catálogo de componentes"
 Then I am on `/dev/ui` with the heading "Componentes"
 And the navigation bar has no link to it.
 
+**AC-NAV-11 · Logo in the header**
+Given I am on any of the five sections, at 390×844 and at 1024 px wide
+Then the header shows the Certavi logo to the left of the title
+And the logo is not announced by screen readers (no name, not a link)
+And it is the same in the light and the dark theme except for the accent colour.
+
+**AC-NAV-12 · Changing section**
+Given I am on Hoy
+When I tap "Calendario"
+Then the heading "Calendario" is shown and focused, and the address is `/calendar`
+And no page is ever left blank, covered or half-faded once the change has finished
+(a short fade of about 150 ms between the two pages is allowed where the browser supports it).
+
+### About (Ajustes)
+
+**AC-ABOUT-01 · About card**
+Given I am on Ajustes
+Then the last card is "Acerca de", with the name "Certavi", the version "Versión 0.9.0" (the one in
+`package.json`) and a link "Código fuente en GitHub"
+And the link opens the repository in a new tab (`target="_blank"`, `rel` with `noopener`).
+
 ### Theme
 
 **AC-THEME-01 · Follows the phone on first use**
@@ -204,6 +236,30 @@ The page's `theme-color` matches the background: `#f4f5f7` in light, `#0b0f14` i
 **AC-THEME-08 · Readable in both themes**
 Every page passes an automatic accessibility check (axe) with no serious or critical issues,
 including colour contrast, in light and in dark.
+
+**AC-THEME-09 · Zero-dopamine mode (no colour)**
+Given I am on Ajustes
+When I turn on "Sin color (modo 0 dopamina)"
+Then every colour of the app turns into a grey (no hue anywhere: header, tabs, buttons, tags,
+charts, set rows), at once and without reloading
+And the theme keeps working: light stays light-grey, dark stays dark-grey, and the theme button
+still cycles automatic / light / dark
+And a done set, a pending set and a warm-up set can still be told apart (by brightness and
+shape, not by hue), and the "plan met" bars of Progreso too
+When I turn it off, the colours come back.
+
+**AC-THEME-10 · Remembered, no flash**
+Given the mode is on
+When I reload the app or close and open it
+Then it is still on, from the first paint (the page never shows its colours first), also on a
+phone in dark mode
+And it is a device setting: it does not travel with the sync, and importing or restoring a backup
+does not change it.
+
+**AC-THEME-11 · Readable in no-colour mode**
+In no-colour mode, in light and in dark, every page passes the automatic accessibility check
+(axe) with no serious or critical issues, including colour contrast
+And the browser colour (`theme-color`) matches the page background of the mode.
 
 ### Rest settings
 
@@ -311,8 +367,8 @@ The field asks for the decimal keyboard (`inputmode="decimal"`).
   the app still works with the defaults (automatic theme, Spanish); the choice is simply not
   remembered. If the browser blocks the local **database** instead, the app shows a message (see
   [states.md](states.md), AC-STATE-02).
-- **Reduced motion:** with "reduce motion" on, dialogs, sheets and notifications appear without
-  animation.
+- **Reduced motion:** with "reduce motion" on, dialogs, sheets, notifications and the change
+  between sections appear and disappear without animation.
 - **Small screens:** at 390×844 the five navigation labels fit without overlapping and nothing
   scrolls horizontally, in both languages.
 - **Dark mode + English** together work as each one alone.

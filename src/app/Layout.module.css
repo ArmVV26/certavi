@@ -42,6 +42,52 @@
   background: var(--bg);
 }
 
+.logo {
+  flex: none;
+}
+
+/* A thin line under the header while the next screen loads. It waits 200 ms, so a quick change
+   shows nothing, and it stands still with reduced motion (the duration tokens are 0 ms). */
+.pending {
+  position: relative;
+  height: 3px;
+  overflow: hidden;
+  background: var(--accent-tint);
+  animation: pending-in 0ms linear 200ms backwards;
+}
+
+.pending::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  width: 40%;
+  background: var(--accent);
+  animation: pending-run 1200ms var(--ease-standard) infinite;
+}
+
+@keyframes pending-in {
+  from {
+    visibility: hidden;
+  }
+}
+
+@keyframes pending-run {
+  from {
+    left: -40%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pending::after {
+    left: 0;
+    width: 100%;
+    animation: none;
+  }
+}
+
 .title {
   flex: 1;
   min-width: 0;
@@ -105,6 +151,17 @@
 
 .main:focus {
   outline: none;
+}
+
+/* A short fade when a section opens (0 ms with reduced motion: the durations are tokens). */
+.arriving {
+  animation: arrive var(--duration-normal) var(--ease-standard);
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+  }
 }
 
 /* Wide screens: navigation in the header, no bottom bar. */

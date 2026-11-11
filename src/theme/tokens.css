@@ -148,3 +148,41 @@
   --shadow-2: 0 8px 24px rgb(0 0 0 / 50%), 0 2px 6px rgb(0 0 0 / 40%);
   --overlay: rgb(0 0 0 / 60%);
 }
+
+/* ---------- No colour ("zero dopamine"): data-mono on <html>, on top of light or dark ----------
+   Greys only. The meanings that used to be a hue are told apart by brightness (and, in the
+   components, by shape: the tick, the "C" of a warm-up, the "faltan" text). The system-dark block
+   above is not repeated: data-mono is only set by the script, which always sets data-theme too. */
+:root[data-mono][data-theme='light'] {
+  --bg: #f2f2f2;
+  --surface: #ffffff;
+  --surface-2: #e5e5e5;
+  --border: #bdbdbd;
+  --text: #0a0a0a;
+  --text-muted: #595959;
+  --accent: #1a1a1a;
+  --on-accent: #ffffff;
+  --success: #6e6e6e;
+  --warning: #4d4d4d;
+  --danger: #333333;
+  --warmup: #595959;
+
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 6%), 0 1px 3px rgb(0 0 0 / 5%);
+  --shadow-2: 0 4px 12px rgb(0 0 0 / 10%), 0 2px 4px rgb(0 0 0 / 6%);
+  --overlay: rgb(0 0 0 / 40%);
+}
+
+:root[data-mono][data-theme='dark'] {
+  --bg: #0d0d0d;
+  --surface: #171717;
+  --surface-2: #232323;
+  --border: #3a3a3a;
+  --text: #ededed;
+  --text-muted: #a3a3a3;
+  --accent: #f2f2f2;
+  --on-accent: #0d0d0d;
+  --success: #9e9e9e;
+  --warning: #c4c4c4;
+  --danger: #dedede;
+  --warmup: #b0b0b0;
+}

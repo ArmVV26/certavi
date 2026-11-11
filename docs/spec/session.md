@@ -11,7 +11,7 @@ re-draws **and reloads**.
 
 The sets of an exercise are a list of **rows**, as in Hevy: the routine gives the first rows,
 and for that day only the user can **add a row** ("+ Serie extra", "+ Calentamiento"), **remove
-a row** (swipe) and **change the type of a row** (warm-up, effective, dropset) without the row
+a row** (from the row's menu, or by swiping it) and **change the type of a row** (warm-up, effective, dropset) without the row
 moving. None of this changes the routine.
 
 How a session is started is described in [today.md](today.md). The rules behind "last time", the
@@ -74,6 +74,13 @@ down: those buttons are disabled). They stay visible when the card is folded (§
 - **Plan line:** "3 series · 6-8 reps · RIR 1-2" / "3 sets · 6-8 reps · RIR 1-2": the working
   rows of the exercise that day (it follows the rows removed or changed), their rep targets and
   the routine's RIR.
+- **Routine note** (only when the routine has a note for that exercise, for example "Banda morada
+  por defecto" on "Sentadilla hack con banda"): the note text, in muted italics, right under the
+  plan line. It is the note written in the routine (routines.md), different from the **"Nota"**
+  button of the card, which is the user's note of that session. Exercises added by hand have none.
+- **Machine settings** (only when the exercise has settings, exercises.md §2.7): one line with
+  them as "<name> <value>" separated by " · ", for example **"Respaldo 3 · Asiento 5"**, under
+  the routine note. They are the settings of the exercise, the same in every session.
 - **Progression hint** (only when there is a last time; texts for the rule results of
   [rules.md](rules.md) §3):
   - go up: "Sube a 65 kg" / "Go up to 65 kg";
@@ -111,27 +118,40 @@ down: those buttons are disabled). They stay visible when the card is folded (§
   - **✓** is labelled "Marcar serie hecha" / "Mark set done" (empty row) or "Serie hecha
     (pulsa para quitar)" / "Set done (tap to remove)" (saved row). On a row with **no kg and no
     reps typed**, ✓ saves the values of **Anterior**.
-  - **Type choice:** a sheet titled "Tipo de serie" / "Set type" with three options:
-    **"Calentamiento" / "Warm-up"**, **"Efectiva" / "Effective"** and **"Dropset"**; the
+  - **Type choice (the row's menu):** a sheet titled "Tipo de serie" / "Set type" with three
+    options: **"Calentamiento" / "Warm-up"**, **"Efectiva" / "Effective"** and **"Dropset"**; the
     current one is marked. Choosing one changes the row at once, saved or not, and the row stays
     where it is. Choosing "Efectiva" on a warm-up or dropset row gives it the role "Serie" /
-    "Set" (the roles Top and Back-off only come from the routine).
-  - **Removing a row:** swiping the row to the left shows a red **"Quitar" / "Remove"** button;
-    tapping it removes the row. The same button is also reachable with the keyboard and screen
-    readers (it is named "Quitar serie 2" / "Remove set 2" and shows when it gets the focus), so
-    removing never depends on swiping. An empty row goes away at once; a saved row asks first
-    (§2.5). The rows below move up and the saved sets in them keep their data.
+    "Set" (the roles Top and Back-off only come from the routine). Below the options the sheet
+    has a danger button **"Quitar serie" / "Remove set"** (named "Quitar serie 2" / "Remove set
+    2"): see "Removing a row".
+  - **Removing a row:** from the row's menu (button "Quitar serie" at the bottom of the sheet),
+    which works with a plain tap on a phone. Swiping the row to the left is a shortcut: it shows
+    a red **"Quitar" / "Remove"** button. Both do the same. The swipe button is also reachable
+    with the keyboard and screen readers (it shows when it gets the focus), so removing never
+    depends on swiping. An empty row goes away at once; a saved row asks first (§2.5). The rows
+    below move up and the saved sets in them keep their data. On the **last row** of an exercise
+    the menu button is disabled and says **"Es la última serie. Para quitarla, quita el
+    ejercicio." / "This is the last set. To remove it, remove the exercise."**, and swiping does
+    nothing.
 - **Suggested back-off:** when the exercise has a top set and its weight is known (typed or
   saved), "Back-off sugerido: 57,5 kg (−10 % del top)" / "Suggested back-off: 57.5 kg (−10 % of
   top)". It updates while the top weight is typed. It is only a text: it does not fill any field.
 - **Buttons:** "+ Calentamiento" / "+ Warm-up", "+ Serie extra" / "+ Extra set", "Nota" /
-  "Note" (reads "Nota ✎" / "Note ✎" when the exercise has a note) and **"Quitar ejercicio" /
+  "Note" (reads "Nota ✎" / "Note ✎" when the exercise has a note), **"Ajustes" / "Settings"**
+  (reads "Ajustes ✎" / "Settings ✎" when the exercise has machine settings; it opens the sheet
+  below) and **"Quitar ejercicio" /
   "Remove exercise"** (danger; §2.7). An extra set is an effective row with the caption "Extra"
   that is added at the bottom.
 - **Note area** (opened by "Nota"): a text area **"Nota del ejercicio" / "Exercise note"**, a
   checkbox **"No cuenta para la progresión" / "Does not count for progression"** and, when it
   is checked, a choice of reason: "Máquina ocupada" / "Machine busy", "Faltan discos" / "Missing
   plates", "Otra banda" / "Other band", "Otro" / "Other".
+- **Machine settings sheet:** a sheet titled **"Ajustes de la máquina" / "Machine settings"**
+  with the editor of exercises.md §2.7 (rows "Nombre del ajuste <n>" / "Valor del ajuste <n>",
+  "Añadir ajuste", "Quitar ajuste <n>", "Guardar ajustes"). Saving closes the sheet, shows
+  "Ajustes guardados" / "Settings saved" and updates the line of the card; the typed sets of the
+  session are not touched.
 - **Folding:** a card with all its working rows saved folds by itself when the last one is saved
   and shows the one-line summary of its effective sets ("62,5 × 8 · 57,5 × 10"). Tapping the
   heading unfolds it. When the session opens, completed cards are folded and the others
@@ -423,7 +443,8 @@ And finishing or deleting the session discards all typed values that were not sa
 **AC-SESSION-17 · Finish and reopen**
 Given an in-progress session of today with sets saved
 When I tap "Terminar sesión"
-Then it reads "Terminada", the figures "Series efectivas" and "Volumen" appear, a toast says
+Then it reads "Terminada", the figures "Series efectivas" and "Volumen" appear (each one a tile
+whose label and number start at the same left edge, with no indent on the number), a toast says
 "Sesión guardada" (with "· n récord(s)" when the session set records, never in a deload week)
 and the button becomes "Marcar como en curso"
 When I tap "Marcar como en curso", it reads "En curso" again
@@ -602,6 +623,55 @@ And at 390×844 there is no horizontal scroll, the rest bar does not cover the l
 actions (the page can be scrolled until they show), and the sheets fit with their buttons
 reachable.
 
+**AC-SESSION-37 · The routine note shows in the session**
+Given a "Lower Full" session
+Then the card of "Sentadilla hack con banda" shows its routine note ("Banda morada por defecto. Si usas
+otra, apunta el color: …") under its plan line
+And the card of an exercise without a routine note shows no such line.
+
+**AC-SESSION-38 · Machine settings in the session**
+Given a session with "Press de pecho en máquina" and no settings for it
+Then its card has the button "Ajustes" and no settings line
+When I press "Ajustes", type "Respaldo" / "3" and "Asiento" / "5" and press "Guardar ajustes"
+Then the sheet closes, I see "Ajustes guardados", the card shows "Respaldo 3 · Asiento 5" and the
+button reads "Ajustes ✎"
+And the detail page of that exercise lists "Respaldo: 3" and "Asiento: 5"
+And a typed, unsaved weight in that card is still there.
+
+**AC-SESSION-39 · Machine settings are the same in every session**
+Given "Respaldo 3 · Asiento 5" saved for an exercise
+When I open another session that has that exercise
+Then its card shows the same line.
+
+**AC-SESSION-40 · Leaving the session without coverage**
+Given a session in progress with two rows, I saved the first one (the rest bar is showing) and a
+weight field of the second row has the focus
+And the phone has no network (offline), or it reports being online but the sync server never
+answers
+When I tap each tab of the navigation bar (Calendario, Rutinas, Progreso, Ajustes, then Hoy)
+Then each tap opens its section at once (the URL and the title change) and nothing covers the tabs
+And from there I can go back to the session and the typed value is still in the field
+And while a section's file is still loading, a thin progress line shows under the header.
+
+**AC-SESSION-41 · Removing a set from its menu**
+Given a session with an exercise of 3 rows, the second one saved
+When I tap the type button of the third (empty) row and then "Quitar serie 3"
+Then the sheet closes, the exercise has 2 rows and I see "Serie quitada" with "Deshacer"
+When I tap the type button of the second (saved) row and "Quitar serie 2"
+Then I am asked to confirm, and after confirming the row and its set are gone
+And on the last remaining row, the "Quitar serie" button in the menu is disabled and shows "Es la
+última serie. Para quitarla, quita el ejercicio."
+And swiping an exercise's last row does nothing.
+
+**AC-SESSION-42 · Saving a set does not blank it**
+Given a row with 60 kg, 8 reps and RIR 2 typed
+When I tap ✓ (on a phone with a lot of history, or with the device slowed down)
+Then at no moment are the fields empty: 60, 8 and 2 stay visible from before the tap until the row
+is shown as done
+And the row turns to the done look right after the tap, without waiting for the screen to reload
+its data
+And the same holds when I correct a saved row (the old values never flash back).
+
 ## 4. Edge cases
 
 - **Double tap on ✓**: saves the set once.
@@ -609,8 +679,8 @@ reachable.
 - **Reload in the middle**: saved sets, rows, types, notes, readiness and finished state are
   kept; typed values are kept as drafts (AC-SESSION-16). Folded or unfolded state of the cards
   is not kept.
-- **The last row of an exercise cannot be removed** (it has no "Quitar" button); the exercise
-  itself is removed with "Quitar ejercicio".
+- **The last row of an exercise cannot be removed** (its "Quitar serie" button is disabled and
+  explains why); the exercise itself is removed with "Quitar ejercicio".
 - **Removing the last exercise** of a routine session leaves it with no exercises ("Sin
   ejercicios todavía.") and "+ Añadir ejercicio".
 - **Undo after something else changed**: "Deshacer" brings back what was removed even if other
