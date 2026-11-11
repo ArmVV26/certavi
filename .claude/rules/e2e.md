@@ -24,7 +24,7 @@ These rules keep it from happening again.
   **`@all-engines`** (`grep` in `playwright.config.ts`). Tag (`{ tag: '@all-engines' }`, on a
   test or a `describe`) what depends on the engine: IndexedDB / local data, sync, import and
   export, downloads, Today and the session, the 390 px layout. Engine-independent UI logic
-  (theme, language, navigation, components) stays Chromium-only. In CI a `build-e2e` job builds `dist-e2e` once and shares it as an artifact; then
+  (theme, language, navigation, components) stays Chromium-only. In CI (its own workflow, `.github/workflows/e2e.yml`, only on PRs to `main`, so a PR to `dev` lists no skipped checks) a `build-e2e` job builds `dist-e2e` once and shares it as an artifact; then
   the `e2e` job runs as a matrix of four jobs **in parallel** (`fail-fast: false`): `chromium 1/2`,
   `chromium 2/2`, `webkit 1/2`, `webkit 2/2` (`--project` / `--shard` are used in the workflow
   only, never locally). They set `E2E_PREBUILT=1`, so `playwright.config.ts` only serves the

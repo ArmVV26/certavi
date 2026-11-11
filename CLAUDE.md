@@ -97,7 +97,7 @@ React UI ─► hooks ─► Domain (pure TS) ─► Repositories ─► Dexie (
 
 ```
 .claude/            rules/, skills/, agents/, settings.json (permissions), BASE_VERSION
-.github/            workflows/ci.yml, dependabot.yml
+.github/            workflows/ci.yml + e2e.yml, dependabot.yml
 docs/               spec/ (functional spec — the ONLY thing the blind-tester reads), api/sync-v1.md,
                     adr/, design/, deploy-netlify.md, migration.md, history.md
 netlify/functions/  sync.ts — thin adapter over server/sync
