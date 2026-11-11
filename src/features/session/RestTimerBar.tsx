@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../ui/Button';
 import { IconButton } from '../../ui/IconButton';
@@ -14,10 +15,36 @@ interface RestTimerBarProps {
   onClose: () => void;
 }
 
-/** The bar fixed above the navigation bar while resting. */
+const TICK_MS = 250;
+
+/** The current time, refreshed four times a second and when the app comes back to the foreground. */
+function useNow(): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const tick = () => {
+      setNow(Date.now());
+    };
+    const interval = setInterval(tick, TICK_MS);
+    document.addEventListener('visibilitychange', tick);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', tick);
+    };
+  }, []);
+  return now;
+}
+
+/**
+ * The bar fixed above the navigation bar while resting. It owns the clock: only the bar re-draws
+ * while the seconds go by, not the session screen.
+ */
 export function RestTimerBar({ timer, nextName, onAdjust, onClose }: RestTimerBarProps) {
   const { t } = useTranslation();
-  const { remaining, total, finished } = timer;
+  // A restart or an adjustment shows its time at once, not up to a tick later.
+  const now = Math.max(useNow(), timer.at);
+  const { total } = timer;
+  const remaining = Math.max(0, Math.ceil((timer.endsAt - now) / 1000));
+  const finished = now >= timer.endsAt;
   const progress = finished || total <= 0 ? 1 : 1 - remaining / total;
   return (
     <section className={styles.bar} aria-label={t('session.rest.title')}>
