@@ -9,6 +9,9 @@ export interface ThemeContextValue {
   setPreference: (preference: ThemePreference) => void;
   /** Header button: automatic → light → dark → automatic. */
   cyclePreference: () => void;
+  /** No-colour ("zero dopamine") mode: everything in black, white and grey. */
+  mono: boolean;
+  setMono: (mono: boolean) => void;
 }
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null);

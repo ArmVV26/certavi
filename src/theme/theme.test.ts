@@ -1,14 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { setSystemDark } from '../test/matchMedia';
 import {
+  MONO_STORAGE_KEY,
   THEME_COLOR,
+  THEME_COLOR_MONO,
   THEME_STORAGE_KEY,
   applyTheme,
   initTheme,
   isThemePreference,
   nextThemePreference,
+  readMono,
   readThemePreference,
   resolveTheme,
+  writeMono,
   writeThemePreference,
 } from './theme';
 
@@ -73,6 +77,50 @@ describe('readThemePreference / writeThemePreference', () => {
     expect(readThemePreference(null)).toBe('system');
     expect(writeThemePreference(throwingStorage, 'light')).toBe(false);
     expect(writeThemePreference(null, 'light')).toBe(false);
+  });
+});
+
+describe('readMono / writeMono', () => {
+  it('is off when nothing is saved or the saved value is not valid', () => {
+    expect(readMono(localStorage)).toBe(false);
+    localStorage.setItem(MONO_STORAGE_KEY, 'maybe');
+    expect(readMono(localStorage)).toBe(false);
+  });
+
+  it('round-trips the mode', () => {
+    expect(writeMono(localStorage, true)).toBe(true);
+    expect(localStorage.getItem(MONO_STORAGE_KEY)).toBe('on');
+    expect(readMono(localStorage)).toBe(true);
+    writeMono(localStorage, false);
+    expect(localStorage.getItem(MONO_STORAGE_KEY)).toBe('off');
+    expect(readMono(localStorage)).toBe(false);
+  });
+
+  it('survives blocked or missing storage', () => {
+    expect(readMono(throwingStorage)).toBe(false);
+    expect(readMono(null)).toBe(false);
+    expect(writeMono(throwingStorage, true)).toBe(false);
+    expect(writeMono(null, true)).toBe(false);
+  });
+});
+
+describe('applyTheme with the no-colour mode', () => {
+  it('sets and removes data-mono, and uses the grey background as theme-color', () => {
+    applyTheme(document, 'dark', true);
+    expect(document.documentElement).toHaveAttribute('data-mono');
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    const meta = () => document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    expect(meta()?.content).toBe(THEME_COLOR_MONO.dark);
+
+    applyTheme(document, 'light');
+    expect(document.documentElement).not.toHaveAttribute('data-mono');
+    expect(meta()?.content).toBe(THEME_COLOR.light);
+  });
+
+  it('is applied from the saved setting before the first render', () => {
+    localStorage.setItem(MONO_STORAGE_KEY, 'on');
+    initTheme(window);
+    expect(document.documentElement).toHaveAttribute('data-mono');
   });
 });
 

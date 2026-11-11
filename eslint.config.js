@@ -86,6 +86,14 @@ export default defineConfig([
     },
   },
 
+  // Scripts the page loads as they are (public/): they run in the browser, not in Node.
+  {
+    files: ['public/**/*.js'],
+    languageOptions: {
+      globals: globals.browser,
+    },
+  },
+
   // Must be last: turns off rules that conflict with Prettier.
   prettier,
 ]);

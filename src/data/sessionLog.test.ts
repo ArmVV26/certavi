@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import sampleBackup from '../../tests/fixtures/certavi-backup-sample.json?raw';
 import { makeSession, makeSet } from '../domain/testing/builders';
 import { schemeRows, type SetEntry } from '../domain';
 import { openTestDatabase } from '../test/render';
-import type { CertaviDb } from './db';
+import { readBackup } from './backup';
+import { isLive, type CertaviDb } from './db';
+import { applyImport } from './importRecords';
 import { createRepositories } from './repository';
 import { ensureSeed } from './seed';
 import {
@@ -164,6 +167,25 @@ describe('rows', () => {
     expect(routine && 'items' in routine && routine.items[0]?.scheme).toEqual(
       session.items[0]?.scheme,
     );
+  });
+
+  it('removes a row from every session of a backup, not only from fresh ones', async () => {
+    const db = openTestDatabase();
+    await ensureSeed(db);
+    const backup = readBackup(sampleBackup);
+    if (!backup.ok) throw new Error('the sample backup does not read');
+    await applyImport(db, backup.records);
+
+    let removed = 0;
+    for (const session of (await db.sessions.toArray()).filter((s) => isLive(s))) {
+      for (const item of session.items) {
+        const rows = schemeRows(item.scheme);
+        if (rows.length < 2) continue;
+        await removeSessionRow(db, session.id, item.exerciseId, rows.length - 1, { now });
+        removed += 1;
+      }
+    }
+    expect(removed).toBeGreaterThan(0);
   });
 
   it('removes a logged set whose row is already gone, and refuses when there is nothing', async () => {

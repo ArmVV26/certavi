@@ -1,6 +1,7 @@
 {
   "app": {
     "skipToContent": "Saltar al contenido",
+    "loading": "Abriendo la pantalla",
     "documentTitle": "{{page}} · Certavi"
   },
   "nav": {
@@ -149,6 +150,9 @@
       "row_other": "{{group}}: {{done}} de {{count}} series",
       "met": "plan cumplido",
       "value": "{{done}} / {{planned}}",
+      "remaining_one": "falta {{missing}}",
+      "remaining_other": "faltan {{missing}}",
+      "remainingMet": "✓",
       "legendDone": "Series hechas",
       "legendMet": "Plan cumplido",
       "legendPlan": "Plan"
@@ -247,6 +251,8 @@
     "appearance": "Apariencia",
     "theme": "Tema",
     "language": "Idioma",
+    "mono": "Sin color (modo 0 dopamina)",
+    "monoHint": "Todo en blanco, negro y gris, sobre el tema claro u oscuro.",
     "languageNames": {
       "es": "Español",
       "en": "English"
@@ -1157,7 +1163,9 @@
         "dropset": "Dropset"
       },
       "remove": "Quitar",
-      "removeOf": "Quitar serie {{name}}"
+      "removeOf": "Quitar serie {{name}}",
+      "removeSet": "Quitar serie",
+      "lastSet": "Es la última serie. Para quitarla, quita el ejercicio."
     },
     "notes": {
       "exercise": "Nota del ejercicio",

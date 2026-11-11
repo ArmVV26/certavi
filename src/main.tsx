@@ -6,6 +6,7 @@ import './theme/global.css';
 import { App } from './app/App';
 import { DatabaseGate } from './app/DatabaseGate';
 import { Providers } from './app/Providers';
+import { preloadScreens } from './app/routes';
 import { openDatabase } from './data/db';
 import { getLocalStorage } from './data/deviceStorage';
 import { startDatabase } from './data/startup';
@@ -56,4 +57,13 @@ createRoot(rootElement).render(
       </DatabaseGate>
     </Providers>
   </StrictMode>,
+);
+
+// Once the app is up, download the other sections in the background (see preloadScreens).
+window.addEventListener(
+  'load',
+  () => {
+    window.setTimeout(preloadScreens, 2_000);
+  },
+  { once: true },
 );

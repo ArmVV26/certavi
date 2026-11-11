@@ -174,6 +174,61 @@ describe('BarRows', () => {
     // A mark for the two rows that have a plan.
     expect(container.querySelectorAll('[class*="targetMark"]')).toHaveLength(2);
   });
+
+  const row = (key: string, value: number, target: number, remainingText?: string) => ({
+    key,
+    label: key,
+    value,
+    target,
+    valueText: `${String(value)} / ${String(target)}`,
+    ...(remainingText && { remainingText }),
+    name: `${key}: ${String(value)} de ${String(target)} series`,
+  });
+
+  it('puts what is missing after the numbers, for the narrow layout', () => {
+    renderWithProviders(
+      <BarRows
+        rows={[row('Pecho', 8, 12, 'faltan 4'), row('Espalda', 14, 14, '✓'), row('Core', 0, 0)]}
+      />,
+    );
+    expect(screen.getByText('8 / 12')).toHaveTextContent('8 / 12 · faltan 4');
+    expect(screen.getByText('14 / 14')).toHaveTextContent('14 / 14 · ✓');
+    expect(screen.getByText('0 / 0')).toHaveTextContent(/^0 \/ 0$/);
+  });
+
+  const geometry = (item: HTMLElement) =>
+    ['--value', '--target', '--span', '--scale'].map((name) => item.style.getPropertyValue(name));
+
+  it('sets the cells of each row (its plan or its sets, if more) on one shared scale', () => {
+    const { container } = renderWithProviders(
+      <BarRows rows={[row('Pecho', 8, 12), row('Triceps', 6, 6), row('Hombro', 9, 7)]} />,
+    );
+    const items = [...container.querySelectorAll<HTMLElement>('li')];
+    // value, plan, cells of the row, scale: the scale is the biggest row, so every row has the
+    // same cell width and a row with half the sets has half the bar.
+    expect(items.map(geometry)).toEqual([
+      ['8', '12', '12', '12'],
+      ['6', '6', '6', '12'],
+      ['9', '7', '9', '12'],
+    ]);
+    expect(container.querySelectorAll('[data-cells]')).toHaveLength(3);
+  });
+
+  it('keeps a continuous bar when there are too many sets for cells', () => {
+    const { container } = renderWithProviders(<BarRows rows={[row('Pecho', 20, 31)]} />);
+    expect(container.querySelector('[data-cells]')).toBeNull();
+  });
+
+  it('draws the sets beyond the plan apart, only for rows that went over it', () => {
+    const { container } = renderWithProviders(
+      <BarRows rows={[row('Pecho', 15, 12), row('Espalda', 12, 12), row('Core', 3, 0)]} />,
+    );
+    // Only Pecho went over its plan; its extra part is drawn from the plan to the value.
+    const extra = container.querySelectorAll('[class*="fillExtra"]');
+    expect(extra).toHaveLength(1);
+    expect(extra[0]?.closest('li')?.style.getPropertyValue('--target')).toBe('12');
+    expect(extra[0]?.closest('li')?.style.getPropertyValue('--value')).toBe('15');
+  });
 });
 
 describe('ChartFrame', () => {

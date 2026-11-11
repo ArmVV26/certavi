@@ -15,13 +15,17 @@ afterEach(() => {
 
 function setup() {
   const onFinish = vi.fn();
-  const hook = renderHook(() => useRestTimer(onFinish));
+  let renders = 0;
+  const hook = renderHook(() => {
+    renders += 1;
+    return useRestTimer(onFinish);
+  });
   const pass = (seconds: number) => {
     act(() => {
       vi.advanceTimersByTime(seconds * 1000);
     });
   };
-  return { ...hook, onFinish, pass };
+  return { ...hook, onFinish, pass, renders: () => renders };
 }
 
 describe('useRestTimer', () => {
@@ -30,18 +34,26 @@ describe('useRestTimer', () => {
     expect(result.current.timer).toBeNull();
   });
 
-  it('counts down from the start and remembers the row it came from', () => {
-    const { result, pass } = setup();
+  it('keeps when the rest ends and the row it came from', () => {
+    const { result } = setup();
     const from = { exerciseId: 'remo-t', slot: 0 };
     act(() => {
       result.current.start(60, from);
     });
-    expect(result.current.timer).toMatchObject({ remaining: 60, total: 60, finished: false, from });
-    pass(10);
-    expect(result.current.timer?.remaining).toBe(50);
+    expect(result.current.timer).toEqual({ endsAt: START + 60_000, total: 60, from, at: START });
   });
 
-  it('runs the alert once when the time is up and keeps showing it', () => {
+  it('does not re-draw while the seconds go by', () => {
+    const { result, pass, renders } = setup();
+    act(() => {
+      result.current.start(60, null);
+    });
+    const before = renders();
+    pass(30);
+    expect(renders()).toBe(before);
+  });
+
+  it('runs the alert once when the time is up and keeps the timer', () => {
     const { result, onFinish, pass } = setup();
     act(() => {
       result.current.start(30, null);
@@ -50,10 +62,10 @@ describe('useRestTimer', () => {
     expect(onFinish).not.toHaveBeenCalled();
     pass(1);
     expect(onFinish).toHaveBeenCalledTimes(1);
-    expect(result.current.timer).toMatchObject({ remaining: 0, finished: true });
+    expect(result.current.timer).not.toBeNull();
     pass(20);
     expect(onFinish).toHaveBeenCalledTimes(1);
-    expect(result.current.timer?.finished).toBe(true);
+    expect(result.current.timer).not.toBeNull();
   });
 
   it('closes by itself 30 s after the time is up', () => {
@@ -75,18 +87,18 @@ describe('useRestTimer', () => {
     act(() => {
       result.current.adjust(15);
     });
-    expect(result.current.timer).toMatchObject({ remaining: 75, total: 75 });
+    expect(result.current.timer).toMatchObject({ endsAt: START + 75_000, total: 75 });
     pass(30);
     act(() => {
       result.current.adjust(-15);
     });
-    expect(result.current.timer?.remaining).toBe(30);
+    expect(result.current.timer?.endsAt).toBe(START + 30_000 + 30_000);
     for (let i = 0; i < 5; i += 1) {
       act(() => {
         result.current.adjust(-15);
       });
     }
-    expect(result.current.timer?.remaining).toBe(15);
+    expect(result.current.timer?.endsAt).toBe(START + 30_000 + 15_000);
   });
 
   it('starts a new rest of 15 s, and a new alert, when +15 s is pressed after the end', () => {
@@ -99,7 +111,7 @@ describe('useRestTimer', () => {
     act(() => {
       result.current.adjust(15);
     });
-    expect(result.current.timer).toMatchObject({ remaining: 15, total: 15, finished: false });
+    expect(result.current.timer).toMatchObject({ endsAt: START + 40_000 + 15_000, total: 15 });
     pass(15);
     expect(onFinish).toHaveBeenCalledTimes(2);
   });
@@ -132,20 +144,27 @@ describe('useRestTimer', () => {
     act(() => {
       result.current.start(120, null);
     });
-    expect(result.current.timer).toMatchObject({ remaining: 120, total: 120 });
+    expect(result.current.timer).toMatchObject({ endsAt: START + 20_000 + 120_000, total: 120 });
   });
 
-  it('re-reads the clock when the app comes back to the foreground', () => {
-    const { result } = setup();
+  it('checks the clock when the app comes back to the foreground', () => {
+    const { result, onFinish } = setup();
     act(() => {
       result.current.start(60, null);
     });
-    // The phone was locked: no timer ran, but the clock moved on.
-    vi.setSystemTime(START + 45_000);
+    // The phone was locked: no timer ran, but the clock moved on past the end.
+    vi.setSystemTime(START + 75_000);
     act(() => {
       document.dispatchEvent(new Event('visibilitychange'));
     });
-    expect(result.current.timer?.remaining).toBe(15);
+    expect(onFinish).toHaveBeenCalledTimes(1);
+    expect(result.current.timer).not.toBeNull();
+    // ... and past the automatic close.
+    vi.setSystemTime(START + 95_000);
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(result.current.timer).toBeNull();
   });
 
   it('stops listening once it has closed', () => {

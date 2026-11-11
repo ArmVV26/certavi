@@ -51,6 +51,15 @@ group, legend "Periodo" / "Period"): **"Esta semana" / "This week"** (default), 
   "12 / 16". Averages have one decimal ("10,5 / 12").
 - The **accessible name** of each row: "Pecho: 12 de 16 series" / "Chest: 12 of 16 sets".
 - Legend: "Series hechas" / "Sets done", "Plan cumplido" / "Plan met", "Plan" / "Plan".
+- **On a phone** (a card narrower than about 30 rem, so 390 px included) each group takes **two
+  lines**: the name on the left and, on the right, the numbers with what is missing ("8 / 12 ·
+  faltan 4" / "8 / 12 · 4 to go"; "14 / 14 · ✓" when the plan is met; no "faltan" when there is
+  no plan). Under it, the bar takes the **whole width of the card** and is drawn as **one cell
+  per set**: filled cells are the sets done, empty cells the sets still missing, and the sets
+  beyond the plan have a different tone. A half set (averages) is a half-filled cell. All
+  groups use the same cell size, so a longer bar means more sets. Cells keep the "plan met"
+  colour. When the biggest value or plan is over 30 sets, the bar is continuous (no cells). On a
+  wide screen nothing changes: one line per group with the continuous bar.
 - The planned sets of a **closed** week are the ones frozen when it closed; those of an open week
   come from the current routines and the week options (see calendar.md §2.5). The average uses
   the same rule for each of its four weeks.
@@ -305,6 +314,20 @@ Given the summary figures of Progreso ("Semana", "Series", "Sesiones", "Récords
 Then in every tile the label, the number and the note start at the same left edge
 And no tile has its number shifted to the right of its label
 And the numbers are not larger than the page title
+```
+
+```
+AC-PRO-18 · Sets per muscle group are readable on a phone
+Given "Pecho" is the group with the most planned sets (12) and 8 are done this week, on a 390 px
+  screen
+When I open Progreso
+Then the "Pecho" group shows its name and "8 / 12 · faltan 4" on one line
+And under it a bar as wide as the card (more than 250 px) with 12 cells, 8 filled and 4 empty
+And a group that reached its plan shows "✓" instead of "faltan" and its cells in the "plan met" colour
+And a group with more sets than planned shows the extra cells in another tone
+And the bar of every group uses the same cell width (a group with 6 planned sets has a bar half as long)
+And on a 1024 px screen each group is a single line with a continuous bar
+And the accessible name of each group is the same as before ("Pecho: 8 de 12 series")
 ```
 
 ## 5. Edge cases
