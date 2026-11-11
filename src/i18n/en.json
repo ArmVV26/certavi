@@ -1,6 +1,7 @@
 {
   "app": {
     "skipToContent": "Skip to content",
+    "loading": "Opening the screen",
     "documentTitle": "{{page}} · Certavi"
   },
   "nav": {
@@ -149,6 +150,9 @@
       "row_other": "{{group}}: {{done}} of {{count}} sets",
       "met": "plan met",
       "value": "{{done}} / {{planned}}",
+      "remaining_one": "{{missing}} to go",
+      "remaining_other": "{{missing}} to go",
+      "remainingMet": "✓",
       "legendDone": "Sets done",
       "legendMet": "Plan met",
       "legendPlan": "Plan"
@@ -247,6 +251,8 @@
     "appearance": "Appearance",
     "theme": "Theme",
     "language": "Language",
+    "mono": "No colour (zero-dopamine mode)",
+    "monoHint": "Everything in black, white and grey, on top of the light or dark theme.",
     "languageNames": {
       "es": "Español",
       "en": "English"
@@ -1157,7 +1163,9 @@
         "dropset": "Dropset"
       },
       "remove": "Remove",
-      "removeOf": "Remove set {{name}}"
+      "removeOf": "Remove set {{name}}",
+      "removeSet": "Remove set",
+      "lastSet": "This is the last set. To remove it, remove the exercise."
     },
     "notes": {
       "exercise": "Exercise note",
