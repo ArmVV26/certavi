@@ -537,79 +537,6 @@ test.describe('optional blocks', { tag: '@all-engines' }, () => {
     await expect(field(await card(page, 'Test de la pared'), 'Derecha (cm)')).toHaveValue('12');
   });
 
-  test('AC-BLK-11 · English and dark mode; axe on the list, tracking and editor in light and dark', async ({
-    page,
-  }) => {
-    await gotoAt(page, MON, '/', 'Hoy');
-    await logStairs(page, 5);
-    const trackingUrl = await openTracking(page, REHAB);
-    const editUrl = `${trackingUrl}/edit`;
-    const screens: [string, string, string][] = [
-      ['list', '/settings/blocks', 'Bloques opcionales'],
-      ['tracking', trackingUrl, REHAB],
-      ['editor', editUrl, 'Editar bloque'],
-    ];
-
-    // Light, Spanish.
-    await page.emulateMedia({ colorScheme: 'light' });
-    for (const [label, url, screenTitle] of screens) {
-      await page.clock.setFixedTime(MON);
-      await page.goto(url);
-      if (label === 'editor') await expect(field(page, 'Nombre').first()).toHaveValue(REHAB);
-      else await expect(title(page, screenTitle)).toBeVisible();
-      await expectTheme(page, 'light');
-      await axe(page, `${label} · light`);
-    }
-
-    // Dark, English.
-    await setLanguage(page, 'en');
-    await page.emulateMedia({ colorScheme: 'dark' });
-    await page.clock.setFixedTime(MON);
-    await page.goto('/settings');
-    await expectTheme(page, 'dark');
-    await expect(page.getByRole('heading', { name: 'Optional blocks', exact: true })).toBeVisible();
-    await page.getByRole('link', { name: 'Manage blocks', exact: true }).click();
-    await expect(title(page, 'Optional blocks')).toBeVisible();
-    await expect(action(page, 'New block')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Active', exact: true })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Inactive', exact: true })).toBeVisible();
-    await expect(page.getByRole('link', { name: /^Ankle rehab/ })).toContainText(
-      '8 exercises · every day',
-    );
-    await expect(page.getByRole('link', { name: /^Stretching/ })).toContainText('No exercises');
-    await axe(page, 'list · dark · en');
-
-    await page.clock.setFixedTime(MON);
-    await page.goto(trackingUrl);
-    await expect(title(page, 'Ankle rehab')).toBeVisible();
-    await expect(action(page, 'Edit block')).toBeVisible();
-    await expect(page.getByText('Limit 3/10', { exact: true }).first()).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Wall test', exact: true })).toBeVisible();
-    await expect(
-      page
-        .getByRole('group', { name: 'Period', exact: true })
-        .or(page.getByRole('radiogroup', { name: 'Period', exact: true })),
-    ).toBeVisible();
-    await expectTheme(page, 'dark');
-    await axe(page, 'tracking · dark · en');
-
-    await page.clock.setFixedTime(MON);
-    await page.goto(editUrl);
-    await expect(field(page, 'Name').first()).toHaveValue('Ankle rehab');
-    await expect(button(page, 'Add exercise')).toBeVisible();
-    await expect(
-      page.getByText('Weekly values: Wall test (cm): Left, Right', { exact: true }),
-    ).toBeVisible();
-    await expectTheme(page, 'dark');
-    await axe(page, 'editor · dark · en');
-
-    // Today in English: the card link.
-    await page.clock.setFixedTime(MON);
-    await page.goto('/');
-    await expect(title(page, 'Today')).toBeVisible();
-    await expect(action(page, 'See tracking')).toBeVisible();
-  });
-
   test('AC-BLK-12 · offline: create a block, log a value and save the wall test; all survive a reload and wait as pending', async ({
     page,
     context,
@@ -690,6 +617,82 @@ test.describe('optional blocks', { tag: '@all-engines' }, () => {
     await page.goto('/settings/blocks');
     await expect(page.getByRole('link', { name: /^Bloque sin red/ })).toBeVisible();
     await context.unroute('**/api/v1/**', unreachable);
+  });
+});
+
+// Language, theme and axe do not depend on the engine: Chromium only (.claude/rules/e2e.md).
+test.describe('optional blocks · language and theme', () => {
+  test('AC-BLK-11 · English and dark mode; axe on the list, tracking and editor in light and dark', async ({
+    page,
+  }) => {
+    await gotoAt(page, MON, '/', 'Hoy');
+    await logStairs(page, 5);
+    const trackingUrl = await openTracking(page, REHAB);
+    const editUrl = `${trackingUrl}/edit`;
+    const screens: [string, string, string][] = [
+      ['list', '/settings/blocks', 'Bloques opcionales'],
+      ['tracking', trackingUrl, REHAB],
+      ['editor', editUrl, 'Editar bloque'],
+    ];
+
+    // Light, Spanish.
+    await page.emulateMedia({ colorScheme: 'light' });
+    for (const [label, url, screenTitle] of screens) {
+      await page.clock.setFixedTime(MON);
+      await page.goto(url);
+      if (label === 'editor') await expect(field(page, 'Nombre').first()).toHaveValue(REHAB);
+      else await expect(title(page, screenTitle)).toBeVisible();
+      await expectTheme(page, 'light');
+      await axe(page, `${label} · light`);
+    }
+
+    // Dark, English.
+    await setLanguage(page, 'en');
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.clock.setFixedTime(MON);
+    await page.goto('/settings');
+    await expectTheme(page, 'dark');
+    await expect(page.getByRole('heading', { name: 'Optional blocks', exact: true })).toBeVisible();
+    await page.getByRole('link', { name: 'Manage blocks', exact: true }).click();
+    await expect(title(page, 'Optional blocks')).toBeVisible();
+    await expect(action(page, 'New block')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Active', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Inactive', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: /^Ankle rehab/ })).toContainText(
+      '8 exercises · every day',
+    );
+    await expect(page.getByRole('link', { name: /^Stretching/ })).toContainText('No exercises');
+    await axe(page, 'list · dark · en');
+
+    await page.clock.setFixedTime(MON);
+    await page.goto(trackingUrl);
+    await expect(title(page, 'Ankle rehab')).toBeVisible();
+    await expect(action(page, 'Edit block')).toBeVisible();
+    await expect(page.getByText('Limit 3/10', { exact: true }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Wall test', exact: true })).toBeVisible();
+    await expect(
+      page
+        .getByRole('group', { name: 'Period', exact: true })
+        .or(page.getByRole('radiogroup', { name: 'Period', exact: true })),
+    ).toBeVisible();
+    await expectTheme(page, 'dark');
+    await axe(page, 'tracking · dark · en');
+
+    await page.clock.setFixedTime(MON);
+    await page.goto(editUrl);
+    await expect(field(page, 'Name').first()).toHaveValue('Ankle rehab');
+    await expect(button(page, 'Add exercise')).toBeVisible();
+    await expect(
+      page.getByText('Weekly values: Wall test (cm): Left, Right', { exact: true }),
+    ).toBeVisible();
+    await expectTheme(page, 'dark');
+    await axe(page, 'editor · dark · en');
+
+    // Today in English: the card link.
+    await page.clock.setFixedTime(MON);
+    await page.goto('/');
+    await expect(title(page, 'Today')).toBeVisible();
+    await expect(action(page, 'See tracking')).toBeVisible();
   });
 });
 

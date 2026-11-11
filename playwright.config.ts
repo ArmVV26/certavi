@@ -28,8 +28,8 @@ const WEBKIT_EXPECT_TIMEOUT = 15_000;
 //                       CI) the WebKit tests alone take ~19 min, and the cap hit whichever test was
 //                       running. In CI each job runs a shard, so the cap does not apply there.
 // - CI                → a `build-e2e` job builds `dist-e2e` once and shares it as an artifact; then
-//                       a matrix of four jobs runs in parallel (chromium shard 1/2 and 2/2, webkit
-//                       shard 1/2 and 2/2), each with Playwright's default workers (1 on a 2-vCPU
+//                       a matrix of five jobs runs in parallel (chromium shard 1/2 and 2/2, webkit
+//                       shard 1/3, 2/3 and 3/3), each with Playwright's default workers (1 on a 2-vCPU
 //                       runner) and 1 retry (a test that needs two is flaky: fix it).
 // WebKit only runs the tests whose behaviour depends on the engine (IndexedDB, sync, import /
 // export, downloads, Today, 390 px layout). UI logic that is engine-independent (theme,

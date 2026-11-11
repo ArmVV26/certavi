@@ -25,12 +25,13 @@ These rules keep it from happening again.
   test or a `describe`) what depends on the engine: IndexedDB / local data, sync, import and
   export, downloads, Today and the session, the 390 px layout. Engine-independent UI logic
   (theme, language, navigation, components) stays Chromium-only. In CI (its own workflow, `.github/workflows/e2e.yml`, only on PRs to `main`, so a PR to `dev` lists no skipped checks) a `build-e2e` job builds `dist-e2e` once and shares it as an artifact; then
-  the `e2e` job runs as a matrix of four jobs **in parallel** (`fail-fast: false`): `chromium 1/2`,
-  `chromium 2/2`, `webkit 1/2`, `webkit 2/2` (`--project` / `--shard` are used in the workflow
-  only, never locally). They set `E2E_PREBUILT=1`, so `playwright.config.ts` only serves the
+  the `e2e` job runs as a matrix of five jobs **in parallel** (`fail-fast: false`): `chromium 1/2`,
+  `chromium 2/2`, `webkit 1/3`, `webkit 2/3`, `webkit 3/3` (`--project` / `--shard` are used in
+  the workflow only, never locally). They set `E2E_PREBUILT=1`, so `playwright.config.ts` only serves the
   downloaded bundle (never set it locally: a stale `dist-e2e` would hide changes). Each job
   installs and caches its own browser and uploads its own report; `timeout-minutes` is 10 for
-  `build-e2e` and 15 for each e2e job (they only catch a hang). Locally **2 workers**, no retries,
+  `build-e2e` and 25 for each e2e job (they only catch a hang; with 15 min the two WebKit shards
+  were cut on the first PR to `main`, because WebKit's ~19 min of tests plus ~3 min of install did not fit). Locally **2 workers**, no retries,
   `maxFailures` 3; CI uses default workers (1 on a 2-vCPU runner, the size of private repos) +
   **1 retry**: a test that needs two is flaky, fix it.
   30 s per test (60 s in WebKit: the project's `timeout` in `playwright.config.ts`; no
@@ -100,7 +101,7 @@ no times. So the **user** runs it, in their own terminal, and Claude only reads 
    **slow** (half the time limit: 15 s Chromium, 30 s WebKit) and **NEAR** (three quarters: 22 s
    and 45 s) and the tests that needed a retry. It reads nothing but that JSON.
 3. CI uploads the JSON of every job as `e2e-timings-<project>-<shard>` (14 days). Download the
-   four artifacts and run `npm run e2e:timings -- chromium-1.json chromium-2.json …` to see the
+   five artifacts and run `npm run e2e:timings -- chromium-1.json webkit-1.json …` to see the
    real CI times, which are what decide whether a WebKit test goes over 60 s.
 4. Split each test marked slow in WebKit **by acceptance criterion** (one `test` per AC, the
    shared setup in a helper) or cut steps that belong to unit tests.
