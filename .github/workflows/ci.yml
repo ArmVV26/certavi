@@ -160,8 +160,19 @@ jobs:
       # The HTML report embeds the traces and screenshots; test-results/ also keeps the raw
       # trace.zip and error-context.md of every failed test.
       - name: Set the report artifact name
-        if: failure()
+        if: always()
         run: echo "shard_name=$(echo '${{ matrix.shard }}' | tr '/' '-')" >> "$GITHUB_ENV"
+
+      # The time of every test, always (not only on failure): download the four artifacts and run
+      # `npm run e2e:timings -- <the .json files>` to see which tests drift towards the limit.
+      - name: Upload the time of every test
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-timings-${{ matrix.project }}-${{ env.shard_name }}
+          path: e2e-timings/last-run.json
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Upload Playwright report and traces
         if: failure()
