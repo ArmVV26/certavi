@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - Unreleased
+
 ### Added
 
 - Monochrome mode («0 dopamine»): a device-only switch in Settings > Appearance that removes all color (grey tokens in both themes, AA contrast kept). Applied before the first paint through `public/theme-init.js`.
