@@ -16,7 +16,20 @@ function lazyPage<M extends Record<string, ComponentType>>(
   load: () => Promise<M>,
   name: keyof M,
 ): Pick<RouteObject, 'lazy'> {
+  screenLoaders.push(load);
   return { lazy: async () => ({ Component: (await load())[name] }) };
+}
+
+const screenLoaders: (() => Promise<unknown>)[] = [];
+
+/**
+ * Downloads every screen that is not in the main file, in the background. After this, moving
+ * between sections never waits for the network (or for the service worker): in the gym, with no
+ * coverage, a tap on a tab must not depend on a file that has not arrived yet. A failed download
+ * is ignored here; opening that screen tries again and shows the error if it still fails.
+ */
+export function preloadScreens(): void {
+  for (const load of screenLoaders) load().catch(() => undefined);
 }
 
 const handle = (titleKey: RouteHandle['titleKey']): RouteHandle => ({ titleKey });

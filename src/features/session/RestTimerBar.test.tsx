@@ -1,11 +1,24 @@
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../../test/render';
 import { RestTimerBar } from './RestTimerBar';
 import type { RestTimer } from './useRestTimer';
 
-const running: RestTimer = { remaining: 125, total: 180, finished: false, from: null };
+const START = new Date(2026, 10, 5, 18, 0, 0).getTime();
+
+// Only the date is faked: the bar's own interval and the user events keep running for real.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(START);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+/** A rest of 3:00 that started 55 s ago: 2:05 left. */
+const running: RestTimer = { endsAt: START + 125_000, total: 180, from: null, at: START - 55_000 };
 
 function setup(timer: RestTimer, nextName: string | null = 'Remo en T', locale?: 'en') {
   const onAdjust = vi.fn();
@@ -26,13 +39,27 @@ describe('RestTimerBar', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Descanso de 3:00');
   });
 
+  it('counts down by itself', async () => {
+    setup(running);
+    vi.setSystemTime(START + 10_000);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+    });
+    expect(screen.getByText('1:55')).toBeInTheDocument();
+  });
+
+  it('shows a restart or an adjustment at once, not a tick later', () => {
+    setup({ endsAt: START + 180_000, total: 180, from: null, at: START });
+    expect(screen.getByText('3:00')).toBeInTheDocument();
+  });
+
   it('shows no "next" when there is no open row left', () => {
     setup(running, null);
     expect(screen.queryByText(/Siguiente/)).not.toBeInTheDocument();
   });
 
   it('tells you to go on when the time is up', () => {
-    setup({ remaining: 0, total: 180, finished: true, from: null });
+    setup({ endsAt: START, total: 180, from: null, at: START - 180_000 });
     expect(screen.getByText('0:00')).toBeInTheDocument();
     expect(screen.getAllByText('¡A por la siguiente serie!').length).toBeGreaterThan(0);
     expect(screen.queryByText(/Siguiente/)).not.toBeInTheDocument();

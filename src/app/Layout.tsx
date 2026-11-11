@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, Outlet, useLocation, useMatches } from 'react-router';
+import { Link, Outlet, useLocation, useMatches, useNavigation } from 'react-router';
 import { useCloseFinishedWeeks } from '../data/useCloseFinishedWeeks';
 import { useToday } from '../features/today/useToday';
 import { SyncIndicator } from '../features/settings/SyncIndicator';
@@ -19,6 +19,7 @@ import { UpdatePrompt } from './pwa/UpdatePrompt';
 export function Layout() {
   const { t } = useTranslation();
   const matches = useMatches();
+  const navigation = useNavigation();
   const { pathname, key } = useLocation();
   const title = t(titleKeyOf(matches));
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -71,6 +72,10 @@ export function Layout() {
           <ThemeToggle />
         </header>
         <UpdatePrompt />
+        {/* A tap on a tab never looks ignored: while the next screen's file loads, a line runs. */}
+        {navigation.state !== 'idle' && (
+          <div role="progressbar" aria-label={t('app.loading')} className={styles.pending} />
+        )}
       </div>
       {/* Keyed by path: each section fades in on arrival. The first page does not (its key is
           "default"), so the app opens without an animation. */}

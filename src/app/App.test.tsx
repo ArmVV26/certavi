@@ -9,8 +9,9 @@ import { renderApp } from '../test/renderApp';
 import { createMemoryRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { App } from './App';
+import { Layout } from './Layout';
 import { Providers } from './Providers';
-import { routes } from './routes';
+import { preloadScreens, routes } from './routes';
 
 const heading = () => screen.getByRole('heading', { level: 1 });
 const nav = () => screen.getByRole('navigation', { name: 'Principal' });
@@ -81,6 +82,51 @@ describe('app shell', () => {
     await waitFor(() => {
       expect(document.title).toBe(`${title} · Certavi`);
     });
+  });
+
+  it('shows a progress line while the next screen is still loading, so a tap never looks ignored', async () => {
+    const user = userEvent.setup();
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/',
+          element: <Layout />,
+          children: [
+            { index: true, element: <p>inicio</p>, handle: { titleKey: 'nav.today' } },
+            {
+              path: 'calendar',
+              handle: { titleKey: 'nav.calendar' },
+              lazy: async () => {
+                await gate;
+                return { Component: () => <p>pantalla del calendario</p> };
+              },
+            },
+          ],
+        },
+      ],
+      { initialEntries: ['/'] },
+    );
+    renderWithProviders(<RouterProvider router={router} />);
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+
+    await user.click(within(nav()).getByRole('link', { name: 'Calendario' }));
+    expect(
+      await screen.findByRole('progressbar', { name: 'Abriendo la pantalla' }),
+    ).toBeInTheDocument();
+
+    release();
+    expect(await screen.findByText('pantalla del calendario')).toBeInTheDocument();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+  });
+
+  it('can download every screen ahead of time without throwing', () => {
+    expect(() => {
+      preloadScreens();
+    }).not.toThrow();
   });
 
   it('navigates with the tab bar and moves focus to the new title', async () => {
@@ -208,5 +254,27 @@ describe('theme', () => {
       screen.getByRole('button', { name: 'Tema oscuro. Cambiar a automático' }),
     ).toBeInTheDocument();
     expect(localStorage.getItem('certavi.theme')).toBe('dark');
+  });
+
+  it('turns the whole app to greys from a switch in Settings, and keeps the theme button', async () => {
+    const user = userEvent.setup();
+    renderApp('/settings');
+    const html = document.documentElement;
+    const mono = screen.getByRole('switch', { name: 'Sin color (modo 0 dopamina)' });
+    expect(mono).not.toBeChecked();
+    expect(mono).toHaveAccessibleDescription(
+      'Todo en blanco, negro y gris, sobre el tema claro u oscuro.',
+    );
+
+    await user.click(mono);
+    expect(mono).toBeChecked();
+    expect(html).toHaveAttribute('data-mono');
+    expect(localStorage.getItem('certavi.mono')).toBe('on');
+    // The theme still cycles on top of it.
+    await user.click(screen.getByRole('button', { name: /^Tema .*Cambiar a/ }));
+    expect(html).toHaveAttribute('data-mono');
+
+    await user.click(mono);
+    expect(html).not.toHaveAttribute('data-mono');
   });
 });
