@@ -55,8 +55,14 @@ export function useAppUpdate(): AppUpdate {
     };
   }, []);
 
+  // Activating takes a moment: a second tap must not ask again. If it fails, tapping works again.
+  const activating = useRef(false);
   const update = useCallback(() => {
-    void updateServiceWorker(true);
+    if (activating.current) return;
+    activating.current = true;
+    updateServiceWorker(true).then(undefined, () => {
+      activating.current = false;
+    });
   }, [updateServiceWorker]);
   const dismiss = useCallback(() => {
     setNeedRefresh(false);
