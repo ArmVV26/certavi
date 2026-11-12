@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  isInProgress,
   sessionTimes,
   timeOfDay,
   type Routine,
@@ -50,6 +51,15 @@ const DEFAULT_START = '18:00';
 const startTimeOf = (session: WorkoutSession) =>
   session.startedAt === null ? DEFAULT_START : timeOfDay(session.startedAt);
 
+/**
+ * Where the form is: typing (with the error of the last try), waiting for the "change routine"
+ * confirmation, or saving (nothing can be sent twice).
+ */
+type Phase =
+  | { kind: 'editing'; error: SessionTimesError | null }
+  | { kind: 'confirmingRoutine' }
+  | { kind: 'saving' };
+
 /** The routine select uses '' for "free session". */
 const FREE = '';
 
@@ -61,13 +71,13 @@ function Form({
   onSave,
 }: Omit<SessionDetailsSheetProps, 'open'>) {
   const { t } = useTranslation();
-  const finished = session.endedAt !== null;
+  const finished = !isInProgress(session);
   const [date, setDate] = useState(session.date);
   const [start, setStart] = useState(startTimeOf(session));
   const [end, setEnd] = useState(timeOfDay(session.endedAt ?? 0));
   const [routineId, setRoutineId] = useState(session.routineId ?? FREE);
-  const [error, setError] = useState<SessionTimesError | null>(null);
-  const [confirming, setConfirming] = useState(false);
+  const [phase, setPhase] = useState<Phase>({ kind: 'editing', error: null });
+  const error = phase.kind === 'editing' ? phase.error : null;
 
   const routineChanged = routineId !== (session.routineId ?? FREE);
   const routineName =
@@ -81,11 +91,10 @@ function Form({
   const save = async () => {
     const result = sessionTimes({ date, today, start, end: finished ? end : null });
     if (!result.ok) {
-      setError(result.error);
+      setPhase({ kind: 'editing', error: result.error });
       return;
     }
-    setError(null);
-    if (routineChanged) setConfirming(true);
+    if (routineChanged) setPhase({ kind: 'confirmingRoutine' });
     else await commit();
   };
 
@@ -102,7 +111,15 @@ function Form({
       onClose();
       return;
     }
-    if (await onSave(patch)) onClose();
+    setPhase({ kind: 'saving' });
+    let saved = false;
+    try {
+      saved = await onSave(patch);
+    } catch {
+      saved = false; // a failed save is not a crash: the sheet stays as typed
+    }
+    if (saved) onClose();
+    else setPhase({ kind: 'editing', error: null });
   };
 
   const message = error ? t(`session.details.errors.${error}`) : undefined;
@@ -156,27 +173,27 @@ function Form({
       />
       <div className={styles.buttons}>
         <Button
+          disabled={phase.kind !== 'editing'}
           onClick={() => {
             void save();
           }}
         >
           {t('session.details.save')}
         </Button>
-        <Button variant="secondary" onClick={onClose}>
+        <Button variant="secondary" disabled={phase.kind === 'saving'} onClick={onClose}>
           {t('session.dialog.cancel')}
         </Button>
       </div>
       <ConfirmDialog
-        open={confirming}
+        open={phase.kind === 'confirmingRoutine'}
         title={t('session.dialog.routineTitle', { name: routineName })}
         message={t('session.dialog.routineMessage')}
         confirmLabel={t('session.dialog.routineConfirm')}
         cancelLabel={t('session.dialog.cancel')}
         onCancel={() => {
-          setConfirming(false);
+          setPhase({ kind: 'editing', error: null });
         }}
         onConfirm={() => {
-          setConfirming(false);
           void commit();
         }}
       />

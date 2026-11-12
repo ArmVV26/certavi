@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import {
+  isInProgress,
   resolveRowInput,
   restSeconds,
   schemeRows,
@@ -178,7 +179,7 @@ export function useSessionActions(
     pending.add(saved.value);
     store.set(exerciseId, row.slot, null);
     // The rest timer only runs for a new set of today's session that is still in progress.
-    if (view.session.date === today && view.session.endedAt === null) {
+    if (view.session.date === today && isInProgress(view.session)) {
       const times = await readRestTimes(db);
       const kind = view.exercises.get(exerciseId)?.kind ?? 'compound';
       rest.start(restSeconds(row.kind, kind, times), { exerciseId, slot: row.slot });
@@ -341,30 +342,39 @@ export function useSessionActions(
     const current = dialog;
     setDialog(null);
     if (!current) return;
-    if (current.kind === 'unsave') {
-      pending.forgetSlot(current.exerciseId, current.slot);
-      await guard(() => unlogSet(db, sessionId, current.exerciseId, current.slot));
-    } else if (current.kind === 'remove') {
-      await removeNow(current.exerciseId, current.slot);
-    } else if (current.kind === 'removeExercise') {
-      await removeExerciseNow(current.exerciseId);
-    } else if (current.kind === 'straps') {
-      await guard(() => applyStrapsBand(db, sessionId, current.exerciseId, current.patch));
-    } else {
-      const done = await guard(() => deleteSession(db, sessionId));
-      if (!done) return;
-      store.clear();
-      rest.close();
-      const undo = done.value;
-      if (undo) {
-        offerUndo(t('session.toast.deleted'), async () => {
-          await restoreSession(db, undo);
-          return t('session.toast.restored');
-        });
-      } else {
-        toast.show({ message: t('session.toast.deleted'), tone: 'success' });
+    // One case per kind, no fallback: a new dialog kind fails to compile until it is handled here
+    // (the last `else` used to be "delete the session").
+    switch (current.kind) {
+      case 'unsave':
+        pending.forgetSlot(current.exerciseId, current.slot);
+        await guard(() => unlogSet(db, sessionId, current.exerciseId, current.slot));
+        return;
+      case 'remove':
+        await removeNow(current.exerciseId, current.slot);
+        return;
+      case 'removeExercise':
+        await removeExerciseNow(current.exerciseId);
+        return;
+      case 'straps':
+        await guard(() => applyStrapsBand(db, sessionId, current.exerciseId, current.patch));
+        return;
+      case 'delete': {
+        const done = await guard(() => deleteSession(db, sessionId));
+        if (!done) return;
+        store.clear();
+        rest.close();
+        const undo = done.value;
+        if (undo) {
+          offerUndo(t('session.toast.deleted'), async () => {
+            await restoreSession(db, undo);
+            return t('session.toast.restored');
+          });
+        } else {
+          toast.show({ message: t('session.toast.deleted'), tone: 'success' });
+        }
+        void navigate('/', { replace: true });
+        return;
       }
-      void navigate('/', { replace: true });
     }
   };
 
