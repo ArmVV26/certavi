@@ -157,6 +157,74 @@ describe('import from the previous app', () => {
     expect(await db.sessions.count()).toBe(0);
   });
 
+  it('keeps the dialog open on Escape while the records are being written', async () => {
+    const { db, user } = await setup();
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    // A native promise stands in for Dexie's (the code under test only awaits it).
+    vi.spyOn(db.pending, 'bulkPut').mockImplementation(
+      () =>
+        gate.then(() => {
+          throw new Error('disk full');
+        }) as unknown as ReturnType<typeof db.pending.bulkPut>,
+    );
+    choose('legacy', sample);
+    await user.click(await screen.findByRole('button', { name: 'Importar' }));
+
+    const dialog = screen.getByRole('alertdialog');
+    await user.keyboard('{Escape}');
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Cancelar' })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Importar' })).toBeDisabled();
+
+    release();
+    expect(
+      await screen.findByText('No se pudo importar. No se ha guardado nada.'),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    });
+  });
+
+  it('ignores a second file while the first one is still being read', async () => {
+    await setup();
+    let release: (text: string) => void = () => undefined;
+    const slow = new File([sample], 'lenta.json');
+    Object.defineProperty(slow, 'text', {
+      value: () =>
+        new Promise<string>((resolve) => {
+          release = resolve;
+        }),
+    });
+    const input = document.querySelector<HTMLInputElement>('input[name="legacy-file"]');
+    if (!input) throw new Error('no input');
+    fireEvent.change(input, { target: { files: [slow] } });
+
+    expect(screen.getByRole('button', { name: 'Importar desde la app anterior' })).toBeDisabled();
+    choose('backup', 'no es una copia'); // ignored: nothing is read, nothing is reported
+    expect(screen.queryByText('Este archivo no es una copia de Certavi.')).not.toBeInTheDocument();
+
+    release(sample);
+    expect(await screen.findByRole('alertdialog')).toBeInTheDocument();
+  });
+
+  it('reports a file that cannot be read and allows choosing again', async () => {
+    await setup();
+    const broken = new File([sample], 'rota.json');
+    Object.defineProperty(broken, 'text', { value: () => Promise.reject(new Error('unreadable')) });
+    const input = document.querySelector<HTMLInputElement>('input[name="legacy-file"]');
+    if (!input) throw new Error('no input');
+    fireEvent.change(input, { target: { files: [broken] } });
+
+    expect(
+      await screen.findByText('No se pudo importar. No se ha guardado nada.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Importar desde la app anterior' })).toBeEnabled();
+  });
+
   it('does nothing when the file picker is cancelled', async () => {
     await setup();
     const input = document.querySelector<HTMLInputElement>('input[name="legacy-file"]');
