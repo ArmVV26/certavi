@@ -312,6 +312,19 @@ describe('finishing, reopening and deleting', () => {
     await expect(reopenSession(db, 'nope')).rejects.toBeInstanceOf(SessionNotFoundError);
   });
 
+  it('leaves a session alone when it is already in the requested state', async () => {
+    const { db, session } = await setup();
+    const open = await reopenSession(db, session.id, { now });
+    expect(open.updatedAt).toBe(session.updatedAt);
+
+    const done = await finishSession(db, session.id, '2026-11-04', { now });
+    const later = () => now() + 60_000;
+    const again = await finishSession(db, session.id, '2026-11-04', { now: later });
+    expect(again.session.endedAt).toBe(done.session.endedAt);
+    expect(again.session.updatedAt).toBe(done.session.updatedAt);
+    expect(await db.pending.count()).toBe(1); // one queue entry: the session, written once
+  });
+
   it('counts the records the session set', async () => {
     const { db, repos, session, exerciseId, log } = await setup();
     await repos.session.put(makeSession({ id: 'before', date: '2026-11-02', routineId: null }));

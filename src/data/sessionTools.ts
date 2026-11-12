@@ -7,6 +7,7 @@ import {
   deloadWeeks,
   exerciseNoteId,
   isDeloadDate,
+  isInProgress,
   moveExerciseItem,
   removeExerciseItem,
   restoreExerciseItem,
@@ -208,7 +209,7 @@ export function updateSessionTimes(
   const sessions = createRepository(db, 'session', options);
   return db.transaction('rw', sessionTables(db), async () => {
     const session = await liveSession(db, sessionId);
-    const finished = session.endedAt !== null;
+    const finished = !isInProgress(session);
     if (finished && patch.end === null) throw new InvalidSessionTimesError('invalid');
     const result = sessionTimes({
       date: patch.date,
