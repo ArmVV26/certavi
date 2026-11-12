@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { needsDeloadReminder, parseIsoDate, weeklyStreak, type ActivityKind } from '../../domain';
 import { useDatabase } from '../../data/DatabaseContext';
 import { readStreakLog } from '../../data/progress';
+import { hasSyncKey } from '../../data/sync/engine';
 import { useSyncState } from '../../data/sync/SyncContext';
 import {
   readToday,
@@ -80,7 +81,7 @@ function TodayContent({ model }: { model: TodayModel }) {
 
   return (
     <>
-      {!sync.hasKey && (
+      {!hasSyncKey(sync) && (
         <Notice>
           <span>{t('today.notices.noKey')}</span>
           <Link to="/settings">{t('today.notices.setKey')}</Link>

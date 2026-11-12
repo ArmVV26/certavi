@@ -7,6 +7,7 @@ import { useDatabase } from '../../data/DatabaseContext';
 import type { ExportFile } from '../../data/exportFile';
 import { readAttempts } from '../../data/sync/attemptLog';
 import { serverBackupFile } from '../../data/sync/serverBackup';
+import { hasSyncKey } from '../../data/sync/engine';
 import { useSyncEngine, useSyncState } from '../../data/sync/SyncContext';
 import { toSyncError } from '../../data/sync/transport';
 import { formatDate, formatNumber } from '../../i18n/format';
@@ -36,6 +37,7 @@ interface SyncPageProps {
 /** `/settings/sync`: the attempt log and the server backups. */
 export function SyncPage({ download = downloadFile }: SyncPageProps) {
   const { t } = useTranslation();
+  const hasKey = hasSyncKey(useSyncState());
 
   return (
     <div className={styles.page}>
@@ -44,7 +46,8 @@ export function SyncPage({ download = downloadFile }: SyncPageProps) {
         <span>{t('settings.sync.back')}</span>
       </Link>
       <AttemptLog />
-      <ServerBackups download={download} />
+      {/* A new key (or none) starts from "loading": no backups of the previous key stay on screen. */}
+      <ServerBackups key={String(hasKey)} hasKey={hasKey} download={download} />
     </div>
   );
 }
@@ -73,9 +76,7 @@ function AttemptLog() {
                   })}
                 </span>
                 <span className={cx(styles.result, attempt.ok ? styles.ok : styles.failed)}>
-                  {attempt.ok
-                    ? t('settings.sync.ok')
-                    : t(errorKeyOf(attempt.error ?? 'client-error'))}
+                  {attempt.ok ? t('settings.sync.ok') : t(errorKeyOf(attempt.error))}
                 </span>
               </div>
               <span className={styles.muted}>
@@ -101,17 +102,26 @@ type BackupsState =
   | { kind: 'ready'; backups: BackupSummary[] }
   | { kind: 'failed'; messageKey: ReturnType<typeof errorKeyOf> };
 
-function ServerBackups({ download }: { download: (file: ExportFile) => void }) {
+/** Restoring a backup: nothing, asking "are you sure?", or writing it to the device. */
+type RestoreState =
+  { kind: 'idle' } | { kind: 'confirming'; date: string } | { kind: 'restoring'; date: string };
+
+function ServerBackups({
+  hasKey,
+  download,
+}: {
+  hasKey: boolean;
+  download: (file: ExportFile) => void;
+}) {
   const { t } = useTranslation();
   const { locale } = useLocale();
   const engine = useSyncEngine();
-  const { hasKey } = useSyncState();
   const toast = useToast();
   const [list, setList] = useState<BackupsState>({ kind: 'loading' });
   /** Bumped by "Refresh" to load the list again. */
   const [version, setVersion] = useState(0);
-  const [restoring, setRestoring] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [restoreState, setRestoreState] = useState<RestoreState>({ kind: 'idle' });
+  const restoring = restoreState.kind === 'restoring';
 
   useEffect(() => {
     if (!hasKey) return;
@@ -143,8 +153,7 @@ function ServerBackups({ download }: { download: (file: ExportFile) => void }) {
   }
 
   async function restore(date: string) {
-    setRestoring(null);
-    setBusy(true);
+    setRestoreState({ kind: 'restoring', date });
     try {
       const changed = await engine.restore(date);
       toast.show({
@@ -154,7 +163,7 @@ function ServerBackups({ download }: { download: (file: ExportFile) => void }) {
     } catch {
       toast.show({ message: t('settings.sync.restoreFailed'), tone: 'danger' });
     } finally {
-      setBusy(false);
+      setRestoreState({ kind: 'idle' });
     }
   }
 
@@ -192,6 +201,7 @@ function ServerBackups({ download }: { download: (file: ExportFile) => void }) {
                       <Button
                         variant="secondary"
                         icon="download"
+                        disabled={restoring}
                         aria-label={t('settings.sync.downloadLabel', { date })}
                         onClick={() => {
                           void downloadBackup(backup.date);
@@ -202,10 +212,10 @@ function ServerBackups({ download }: { download: (file: ExportFile) => void }) {
                       <Button
                         variant="secondary"
                         icon="refresh"
-                        disabled={busy}
+                        disabled={restoring}
                         aria-label={t('settings.sync.restoreLabel', { date })}
                         onClick={() => {
-                          setRestoring(backup.date);
+                          setRestoreState({ kind: 'confirming', date: backup.date });
                         }}
                       >
                         {t('settings.sync.restore')}
@@ -217,7 +227,11 @@ function ServerBackups({ download }: { download: (file: ExportFile) => void }) {
             </ul>
           )}
           <div>
-            <Button variant="secondary" disabled={list.kind === 'loading'} onClick={refresh}>
+            <Button
+              variant="secondary"
+              disabled={list.kind === 'loading' || restoring}
+              onClick={refresh}
+            >
               {t('settings.sync.refresh')}
             </Button>
           </div>
@@ -225,19 +239,19 @@ function ServerBackups({ download }: { download: (file: ExportFile) => void }) {
       )}
 
       <ConfirmDialog
-        open={restoring !== null}
+        open={restoreState.kind === 'confirming'}
         title={t('settings.sync.restoreTitle', {
-          date: restoring === null ? '' : longDate(restoring, locale),
+          date: restoreState.kind === 'idle' ? '' : longDate(restoreState.date, locale),
         })}
         message={t('settings.sync.restoreMessage')}
         confirmLabel={t('settings.sync.restore')}
         cancelLabel={t('settings.sync.cancel')}
         destructive
         onConfirm={() => {
-          if (restoring !== null) void restore(restoring);
+          if (restoreState.kind === 'confirming') void restore(restoreState.date);
         }}
         onCancel={() => {
-          setRestoring(null);
+          setRestoreState({ kind: 'idle' });
         }}
       />
     </Card>
