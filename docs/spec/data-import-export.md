@@ -220,6 +220,15 @@ Then the message "Este archivo no es una copia completa de la app anterior." app
 dialog opens and every count is unchanged. The same with a file that is not a Certavi backup
 in "Importar copia de Certavi" ("Este archivo no es una copia de Certavi.").
 
+**AC-IMPORT-03b · Unreadable file and importing in progress**
+Given I choose a file that cannot be read (or read as a Certavi/gym_app copy fails midway)
+Then the message "No se pudo importar. No se ha guardado nada." appears, no dialog opens and
+every count is unchanged.
+Given I tapped "Importar" and the import is running
+Then Escape does not close the dialog, "Cancelar" and "Importar" are disabled, and choosing
+another file has no effect until the import ends
+And when it ends the dialog closes and the message with the number of imported records appears.
+
 **AC-IMPORT-04 · Importing twice**
 Given I imported the sample file
 When I import it again
