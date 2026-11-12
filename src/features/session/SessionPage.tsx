@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 import {
@@ -90,6 +90,12 @@ function SessionScreen({ view }: { view: SessionView }) {
   const today = useToday();
 
   const inProgress = isInProgress(session);
+  // A rest only exists on a session in progress: when it ends (here or, through sync, on another
+  // device) the bar goes with it.
+  const { close: closeRest } = rest;
+  useEffect(() => {
+    if (!inProgress) closeRest();
+  }, [inProgress, closeRest]);
   const counts = planCounts(session.items);
   const progress = sessionProgress(session.items, sets);
   const date = formatDate(parseIsoDate(session.date), locale, {
