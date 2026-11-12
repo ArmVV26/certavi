@@ -281,6 +281,8 @@ The sheet **"Datos de la sesión" / "Session details"** (opened from the actions
   **"La fecha no puede ser futura" / "The date cannot be in the future"** and **"El fin no puede
   ser anterior al inicio" / "The end cannot be earlier than the start"**; nothing is saved
   while there is an error.
+- While it is saving, **"Guardar"** is disabled: tapping it twice saves once. If saving fails the
+  sheet stays open with the typed values.
 
 Saving moves the session in Today, in the week and in the figures of the week. Changing the
 routine first asks for confirmation (§2.5) and then works like this: the exercise list becomes
@@ -604,6 +606,13 @@ another day; the session is finished
 And finishing or deleting the session closes the bar if it is open
 And changing the date of the session to another day closes it
 And after a reload the bar is not there.
+
+**AC-SESSION-34b · The bar closes when the session ends on another device**
+Given the rest bar is open on a session of today that is in progress
+When the other device finishes that session and the change reaches this one
+Then the bar closes by itself, without any tap
+And the same happens if the session is finished by any other means. The bar is never shown on a
+session that is not in progress.
 
 **AC-SESSION-35 · Changes from another device**
 Given the session is open on this device and on another one with the same key
