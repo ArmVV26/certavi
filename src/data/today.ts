@@ -9,6 +9,7 @@ import {
   closeWeek,
   defaultWeekPlan,
   emptyBlockLog,
+  isWeekFrozen,
   livePlan,
   mondayOf,
   weekPlanId,
@@ -112,7 +113,7 @@ export function updateWeek(
     async () => {
       const row = await db.weekPlans.get(weekPlanId(monday));
       const base = row && isLive(row) ? row : defaultWeekPlan(monday, 0);
-      if (!base.plannedSetsByGroup) return weeks.put({ ...base, ...patch });
+      if (!isWeekFrozen(base)) return weeks.put({ ...base, ...patch });
 
       const { deload = base.deload, hiking = base.hiking } = patch;
       const next = { ...base, deload, hiking };
