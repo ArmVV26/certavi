@@ -3,7 +3,7 @@
 > Documento de arranque del proyecto **Certavi**, la reescritura de la app de registro de gimnasio (antes «Winter Arc · registro», repositorio `gym_app`).
 > Al crear el repositorio, este archivo se copia como `context.md` en la raíz. Desde ese momento es la **fuente de verdad del estado del proyecto**: qué está decidido, qué está hecho, qué falta y con qué prompt se arranca cada fase. Lo mantiene al día el agente de contexto.
 >
-> Última actualización: 10 nov 2026 · Estado: **Fases 0 a 8 cerradas (`v0.1.0` a `v0.9.0`; la 4 desplegada en Netlify, el resto sin publicar) · Fase 9 ⏳ planificada (`v0.10.0`, ajustes tras el uso real, decidida el 10 nov) · Fase 10 ⏳ (`v1.0.0`, QA final y migración)**
+> Última actualización: 12 nov 2026 · Estado: **Fases 0 a 9 cerradas (`v0.1.0` a `v0.10.0`; la 4 desplegada en Netlify, el resto sin publicar) · Fase 9 ✅ (ajustes tras el uso real, cerrada el 12 nov) · Fase 10 ⏳ (`v1.0.0`, QA final y migración)**
 
 ---
 
@@ -207,6 +207,11 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Lighthouse | Escritorio en `dev`: 100 / 100 / 96 / 54 (SEO bajo a propósito: `noindex`); móvil pendiente | Insignias de la Fase 10; la categoría PWA ya no existe |
 | Instalabilidad | Comprobada a mano en el iPhone (standalone, cinco pestañas) y en el panel Aplicación | Lighthouse ya no la mide |
 | Paquetes | vite-plugin-pwa 2.0.0, workbox-window 7.4.1, @vite-pwa/assets-generator 2.0.0, knip 6.44.2 | Versiones fijadas en `package.json` |
+
+### 2.10 Decisiones de la Fase 9 (2026-11-12)
+
+- **Estados explícitos** (ADR-0006, `fix/explicit-state`): ciclos de vida en memoria y UI como uniones discriminadas con `switch` exhaustivo (regla `switch-exhaustiveness-check`). Registros guardados y sincronizados **sin cambios** (sync v1 solo admite cambios aditivos); lo derivado se calcula (`isInProgress`, `isWeekFrozen`, `heroOf`). Sin dependencias nuevas.
+- **Pendiente, no hecho** (backlog): formularios con error y guardando (BlockForm, ExerciseForm, SetupEditor, BodyWeight, ActivityCard); patrón «borrador frente a valor externo» (6 sitios); gesto de deslizar en SetRow; RoutineEditorPage; unión de overlays de sesión; mostrar en la UI el bloqueo tras error fatal del motor de sync; modo de SyncCard al olvidar la clave y lista de copias al reemplazarla.
 
 ---
 
@@ -574,7 +579,7 @@ Formato: `tipo(ámbito): descripción en inglés, imperativo, minúsculas`.
 | `v0.7.0` | Fase 6: catálogo con filtros, ejercicios propios y editor de rutinas |
 | `v0.8.0` | Fase 7: calendario, progreso, fichas y bloques opcionales |
 | `v0.9.0` | Fase 8: pulido PWA, accesibilidad y rendimiento |
-| `v0.10.0` | Fase 9: ajustes tras el uso real (planificada) |
+| `v0.10.0` | Fase 9: ajustes tras el uso real |
 | **`v1.0.0`** | Fase 10: QA completo, migración real y despliegue definitivo |
 
 - **Tag anotado**, por ejemplo: `git tag -a v0.3.0 -m "v0.3.0 · domain model and catalog"` y `git push origin v0.3.0`.
@@ -709,11 +714,11 @@ Cada fase sigue el mismo ciclo:
 
 ---
 
-### Fase 9 · Ajustes tras el uso real → `v0.10.0` ⏳
+### Fase 9 · Ajustes tras el uso real → `v0.10.0` ✅
 
-**Ramas**: `docs/phase-9-polish`, `chore/dependabot`, `fix/ui-polish`, `feature/routine-week-edits`, `feature/machine-setup`, `chore/e2e-speed` y `fix/gym-feedback`.
+**Ramas**: `docs/phase-9-polish`, `chore/dependabot`, `fix/ui-polish`, `feature/routine-week-edits`, `feature/machine-setup`, `chore/e2e-speed`, `fix/gym-feedback` y `fix/explicit-state`.
 
-**Estado (2026-11-11)**: **cerrada** 
+**Estado (2026-11-12)**: **cerrada** (la rama `fix/explicit-state` es la última; ver 2.10)
 
 **Log (History)**: [Fase 9](docs/history.md#fase9)
 
@@ -779,7 +784,7 @@ con versión y tag.
 
 [Tabla Registro](docs/history.md#seccion12)
 
-**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ✅ (`v0.7.0`, sin publicar) · 7 ✅ (`v0.8.0`, sin publicar) · 8 ✅ (`v0.9.0`, sin publicar) · 9 ⏳ (`v0.10.0`, en curso: ramas 5 y 6 🚧) · 10 ⏳ (`v1.0.0`)
+**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ✅ (`v0.7.0`, sin publicar) · 7 ✅ (`v0.8.0`, sin publicar) · 8 ✅ (`v0.9.0`, sin publicar) · 9 ✅ (`v0.10.0`, sin publicar) · 10 ⏳ (`v1.0.0`)
 
 **Preguntas abiertas**:
 - Qué estiramientos van en el bloque «Estiramientos» (antes de la Fase 7).
