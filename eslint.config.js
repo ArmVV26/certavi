@@ -30,6 +30,14 @@ export default defineConfig([
         tsconfigRootDir: import.meta.dirname,
       },
     },
+    rules: {
+      // A switch over a union lists every member: adding a state breaks the build until each
+      // switch decides what to do with it (.claude/rules/code-style.md, "Modelling state").
+      '@typescript-eslint/switch-exhaustiveness-check': [
+        'error',
+        { considerDefaultExhaustiveForUnions: true, requireDefaultForNonUnion: false },
+      ],
+    },
   },
 
   // React app code.
