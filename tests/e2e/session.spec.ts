@@ -761,68 +761,69 @@ test.describe('active session', () => {
     await expect(main).not.toContainText('Banda morada por defecto');
   });
 
-  test('AC-SESSION-22 · English and dark mode at 390 px: no Spanish, no sideways scroll, every row control visible, axe in both themes', async ({
-    page,
-    browserName,
-  }) => {
-    await page.emulateMedia({ colorScheme: 'dark' });
-    await openToday(page, 'en');
-    await expectTheme(page, 'dark');
-    await page.getByRole('button', { name: 'Start Push', exact: true }).click();
-    await expectSession(page, 'Push', 'Session');
-    const main = page.getByRole('main');
-    await expect(main.getByText('In progress', { exact: true })).toBeVisible();
-    await expect(main.getByText('0 of 19 done', { exact: true })).toBeVisible();
-    await expect(main.getByText('How do you feel?', { exact: true })).toBeVisible();
-    await expect(main.getByText('1 awful · 5 great', { exact: true })).toBeVisible();
+  test(
+    'AC-SESSION-22 · English and dark mode at 390 px: no Spanish, no sideways scroll, every row control visible, axe in both themes',
+    { tag: '@all-engines' },
+    async ({ page, browserName }) => {
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await openToday(page, 'en');
+      await expectTheme(page, 'dark');
+      await page.getByRole('button', { name: 'Start Push', exact: true }).click();
+      await expectSession(page, 'Push', 'Session');
+      const main = page.getByRole('main');
+      await expect(main.getByText('In progress', { exact: true })).toBeVisible();
+      await expect(main.getByText('0 of 19 done', { exact: true })).toBeVisible();
+      await expect(main.getByText('How do you feel?', { exact: true })).toBeVisible();
+      await expect(main.getByText('1 awful · 5 great', { exact: true })).toBeVisible();
 
-    const banca = await exCard(page, 'Seated machine chest press');
-    await expect(banca.getByText('No previous records', { exact: true })).toBeVisible();
-    await banca.getByRole('button', { name: '+ Warm-up', exact: true }).click();
-    const r = rows(banca);
-    await expect(r.type(0)).toHaveText(/^\s*W\b/);
-    await expect(banca.getByText(/doesn.t count/).first()).toBeVisible();
-    await r.kg(0).fill('20.5');
-    await r.reps(0).fill('10');
-    await r.done(0).click();
-    await expect(r.done(0)).toHaveAccessibleName('Set done (tap to remove)');
-    await expect(r.kg(0)).toHaveValue('20.5');
-    await expect(main.getByText('0 of 19 done', { exact: true })).toBeVisible();
-    await expect(banca.getByRole('button', { name: '+ Extra set', exact: true })).toBeVisible();
-    await expect(banca.getByRole('button', { name: 'Note', exact: true })).toBeVisible();
-    await expect(main.getByRole('button', { name: 'Finish session', exact: true })).toBeVisible();
-    await expect(main.getByRole('button', { name: 'Delete session', exact: true })).toBeVisible();
+      const banca = await exCard(page, 'Seated machine chest press');
+      await expect(banca.getByText('No previous records', { exact: true })).toBeVisible();
+      await banca.getByRole('button', { name: '+ Warm-up', exact: true }).click();
+      const r = rows(banca);
+      await expect(r.type(0)).toHaveText(/^\s*W\b/);
+      await expect(banca.getByText(/doesn.t count/).first()).toBeVisible();
+      await r.kg(0).fill('20.5');
+      await r.reps(0).fill('10');
+      await r.done(0).click();
+      await expect(r.done(0)).toHaveAccessibleName('Set done (tap to remove)');
+      await expect(r.kg(0)).toHaveValue('20.5');
+      await expect(main.getByText('0 of 19 done', { exact: true })).toBeVisible();
+      await expect(banca.getByRole('button', { name: '+ Extra set', exact: true })).toBeVisible();
+      await expect(banca.getByRole('button', { name: 'Note', exact: true })).toBeVisible();
+      await expect(main.getByRole('button', { name: 'Finish session', exact: true })).toBeVisible();
+      await expect(main.getByRole('button', { name: 'Delete session', exact: true })).toBeVisible();
 
-    // Every control of every row sits inside the 390 px width.
-    const width = viewportOf(page).width;
-    const count = await r.count();
-    for (let i = 0; i < count; i++) {
-      for (const control of [r.type(i), r.kg(i), r.reps(i), r.rir(i), r.done(i)]) {
-        const box = await boxOf(control);
-        expect(box.width, `row ${String(i)} control has a width`).toBeGreaterThan(0);
-        expect(box.x, `row ${String(i)} control starts inside the screen`).toBeGreaterThanOrEqual(
-          0,
-        );
-        expect(
-          box.x + box.width,
-          `row ${String(i)} control ends inside the screen`,
-        ).toBeLessThanOrEqual(width);
+      // Every control of every row sits inside the 390 px width.
+      const width = viewportOf(page).width;
+      const count = await r.count();
+      for (let i = 0; i < count; i++) {
+        for (const control of [r.type(i), r.kg(i), r.reps(i), r.rir(i), r.done(i)]) {
+          const box = await boxOf(control);
+          expect(box.width, `row ${String(i)} control has a width`).toBeGreaterThan(0);
+          expect(box.x, `row ${String(i)} control starts inside the screen`).toBeGreaterThanOrEqual(
+            0,
+          );
+          expect(
+            box.x + box.width,
+            `row ${String(i)} control ends inside the screen`,
+          ).toBeLessThanOrEqual(width);
+        }
       }
-    }
-    expect(await hasHorizontalScroll(page), 'horizontal scroll on the session').toBe(false);
+      expect(await hasHorizontalScroll(page), 'horizontal scroll on the session').toBe(false);
 
-    const leftovers = findSpanishWords(await allUiText(page));
-    expect(leftovers, `Spanish text left on the session: ${leftovers.join(', ')}`).toEqual([]);
+      const leftovers = findSpanishWords(await allUiText(page));
+      expect(leftovers, `Spanish text left on the session: ${leftovers.join(', ')}`).toEqual([]);
 
-    if (browserName === 'chromium') {
-      await axe(page, 'Session with sets (en, dark)');
-      await page.emulateMedia({ colorScheme: 'light' });
-      await expectTheme(page, 'light');
-      // Colours may still be transitioning: wait for the CSS transitions to finish.
-      await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
-      await axe(page, 'Session with sets (en, light)');
-    }
-  });
+      if (browserName === 'chromium') {
+        await axe(page, 'Session with sets (en, dark)');
+        await page.emulateMedia({ colorScheme: 'light' });
+        await expectTheme(page, 'light');
+        // Colours may still be transitioning: wait for the CSS transitions to finish.
+        await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
+        await axe(page, 'Session with sets (en, light)');
+      }
+    },
+  );
 
   // AC-SESSION-40 · two ways of having no coverage. The sections are opened once before going
   // offline: the tests run without a service worker, which on a phone keeps the app's files.

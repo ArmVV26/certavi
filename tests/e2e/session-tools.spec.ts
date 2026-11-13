@@ -1096,118 +1096,120 @@ test.describe('session tools', () => {
     },
   );
 
-  test('AC-SESSION-36 · English, dark and 390 px: sheets, rest bar and notifications are translated, fit the screen and have no serious axe issues', async ({
-    page,
-    browserName,
-  }) => {
-    await page.emulateMedia({ colorScheme: 'dark' });
-    await openToday(page, 'en');
-    await expectTheme(page, 'dark');
-    await page.getByRole('button', { name: 'Start Push', exact: true }).click();
-    await expectSession(page, 'Push', 'Session');
-    const main = page.getByRole('main');
-    const width = viewportOf(page).width;
-    const spanish = [
-      'Descanso',
-      'Siguiente',
-      'Cerrar descanso',
-      'Datos de la sesión',
-      'Inicio',
-      'Fecha',
-      'Rutina',
-      'Guardar',
-      'Buscar ejercicio',
-      'Ya está en la sesión',
-      'Fuera de la rutina',
-      'Deshacer',
-      'Ejercicio quitado',
-      'recuperado',
-    ];
-    const noSpanish = async (label: string) => {
-      const text = await allUiText(page);
-      const found = [
-        ...findSpanishWords(text),
-        ...spanish.filter((w) => new RegExp(`(?<!\\p{L})${w}(?!\\p{L})`, 'u').test(text)),
+  test(
+    'AC-SESSION-36 · English, dark and 390 px: sheets, rest bar and notifications are translated, fit the screen and have no serious axe issues',
+    { tag: '@all-engines' },
+    async ({ page, browserName }) => {
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await openToday(page, 'en');
+      await expectTheme(page, 'dark');
+      await page.getByRole('button', { name: 'Start Push', exact: true }).click();
+      await expectSession(page, 'Push', 'Session');
+      const main = page.getByRole('main');
+      const width = viewportOf(page).width;
+      const spanish = [
+        'Descanso',
+        'Siguiente',
+        'Cerrar descanso',
+        'Datos de la sesión',
+        'Inicio',
+        'Fecha',
+        'Rutina',
+        'Guardar',
+        'Buscar ejercicio',
+        'Ya está en la sesión',
+        'Fuera de la rutina',
+        'Deshacer',
+        'Ejercicio quitado',
+        'recuperado',
       ];
-      expect(found, `Spanish text left (${label}): ${found.join(', ')}`).toEqual([]);
-    };
-    const fits = async (sheet: Locator, label: string) => {
-      // The sheet slides in: measure it once the CSS transitions are over.
-      await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
-      const box = await boxOf(sheet);
-      expect(box.x, `${label} starts inside`).toBeGreaterThanOrEqual(0);
-      expect(box.x + box.width, `${label} ends inside`).toBeLessThanOrEqual(width + 1);
-      expect(box.y + box.height, `${label} bottom inside`).toBeLessThanOrEqual(
-        viewportOf(page).height + 1,
-      );
-    };
+      const noSpanish = async (label: string) => {
+        const text = await allUiText(page);
+        const found = [
+          ...findSpanishWords(text),
+          ...spanish.filter((w) => new RegExp(`(?<!\\p{L})${w}(?!\\p{L})`, 'u').test(text)),
+        ];
+        expect(found, `Spanish text left (${label}): ${found.join(', ')}`).toEqual([]);
+      };
+      const fits = async (sheet: Locator, label: string) => {
+        // The sheet slides in: measure it once the CSS transitions are over.
+        await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
+        const box = await boxOf(sheet);
+        expect(box.x, `${label} starts inside`).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width, `${label} ends inside`).toBeLessThanOrEqual(width + 1);
+        expect(box.y + box.height, `${label} bottom inside`).toBeLessThanOrEqual(
+          viewportOf(page).height + 1,
+        );
+      };
 
-    // Add-exercise sheet.
-    const add = await openSheet(page, '+ Add exercise', 'Add exercise');
-    await expect(add.getByLabel('Search exercise', { exact: true })).toBeVisible();
-    for (const name of ['Basic', 'Isolation', 'Straps', 'Created by me', 'In a routine']) {
-      await expect(button(add, name)).toBeVisible();
-    }
-    await add.getByLabel('Search exercise', { exact: true }).fill('chest press');
-    await expect(add.getByText('Already in the session', { exact: true }).first()).toBeVisible();
-    await button(add, 'Created by me').click();
-    await expect(add.getByText('No exercise matches', { exact: true })).toBeVisible();
-    await noSpanish('add sheet');
-    await fits(add, 'add sheet');
-    expect(await hasHorizontalScroll(page), 'horizontal scroll with the add sheet').toBe(false);
-    if (browserName === 'chromium') await axe(page, 'Add exercise sheet (en, dark)');
-    await page.keyboard.press('Escape');
-    await expect(add).toBeHidden();
+      // Add-exercise sheet.
+      const add = await openSheet(page, '+ Add exercise', 'Add exercise');
+      await expect(add.getByLabel('Search exercise', { exact: true })).toBeVisible();
+      for (const name of ['Basic', 'Isolation', 'Straps', 'Created by me', 'In a routine']) {
+        await expect(button(add, name)).toBeVisible();
+      }
+      await add.getByLabel('Search exercise', { exact: true }).fill('chest press');
+      await expect(add.getByText('Already in the session', { exact: true }).first()).toBeVisible();
+      await button(add, 'Created by me').click();
+      await expect(add.getByText('No exercise matches', { exact: true })).toBeVisible();
+      await noSpanish('add sheet');
+      await fits(add, 'add sheet');
+      expect(await hasHorizontalScroll(page), 'horizontal scroll with the add sheet').toBe(false);
+      if (browserName === 'chromium') await axe(page, 'Add exercise sheet (en, dark)');
+      await page.keyboard.press('Escape');
+      await expect(add).toBeHidden();
 
-    // Notifications: remove an exercise with nothing saved, undo.
-    const banca = await exCard(page, 'Seated machine chest press');
-    await button(banca, 'Remove exercise').click();
-    await expect(toast(page, 'Exercise removed')).toBeVisible();
-    await expect(page.getByRole('alertdialog')).toHaveCount(0);
-    await button(page, 'Undo').click();
-    await expect(toast(page, 'Exercise restored')).toBeVisible();
+      // Notifications: remove an exercise with nothing saved, undo.
+      const banca = await exCard(page, 'Seated machine chest press');
+      await button(banca, 'Remove exercise').click();
+      await expect(toast(page, 'Exercise removed')).toBeVisible();
+      await expect(page.getByRole('alertdialog')).toHaveCount(0);
+      await button(page, 'Undo').click();
+      await expect(toast(page, 'Exercise restored')).toBeVisible();
 
-    // Rest bar.
-    const card = await exCard(page, 'Seated machine chest press');
-    await logSet(card, 0, '60', '8');
-    await expect(closeRest(page)).toBeVisible();
-    const bar = restBar(page);
-    await expect(bar).toContainText('Rest');
-    await expect(bar).toContainText(/Next: .+/);
-    await expect(button(page, '−15 s')).toBeVisible();
-    await expect(button(page, '+15 s')).toBeVisible();
-    await expect(closeRest(page)).toHaveAccessibleName('Close rest');
-    await noSpanish('rest bar');
-    expect(await hasHorizontalScroll(page), 'horizontal scroll with the rest bar').toBe(false);
-    // The bar does not hide the last actions: the page scrolls until they show above it.
-    await page.evaluate(() => {
-      window.scrollTo(0, document.documentElement.scrollHeight);
-    });
-    const del = button(main, 'Delete session');
-    await expect(del).toBeVisible();
-    const barBox = await boxOf(bar);
-    const delBox = await boxOf(del);
-    expect(delBox.y + delBox.height, 'Delete session ends above the rest bar').toBeLessThanOrEqual(
-      barBox.y + 1,
-    );
+      // Rest bar.
+      const card = await exCard(page, 'Seated machine chest press');
+      await logSet(card, 0, '60', '8');
+      await expect(closeRest(page)).toBeVisible();
+      const bar = restBar(page);
+      await expect(bar).toContainText('Rest');
+      await expect(bar).toContainText(/Next: .+/);
+      await expect(button(page, '−15 s')).toBeVisible();
+      await expect(button(page, '+15 s')).toBeVisible();
+      await expect(closeRest(page)).toHaveAccessibleName('Close rest');
+      await noSpanish('rest bar');
+      expect(await hasHorizontalScroll(page), 'horizontal scroll with the rest bar').toBe(false);
+      // The bar does not hide the last actions: the page scrolls until they show above it.
+      await page.evaluate(() => {
+        window.scrollTo(0, document.documentElement.scrollHeight);
+      });
+      const del = button(main, 'Delete session');
+      await expect(del).toBeVisible();
+      const barBox = await boxOf(bar);
+      const delBox = await boxOf(del);
+      expect(
+        delBox.y + delBox.height,
+        'Delete session ends above the rest bar',
+      ).toBeLessThanOrEqual(barBox.y + 1);
 
-    // Session details sheet.
-    const details = await openSheet(page, 'Session details', 'Session details');
-    for (const label of ['Date', 'Start', 'Routine']) {
-      await expect(details.getByLabel(label, { exact: true })).toBeVisible();
-    }
-    await expect(button(details, 'Save')).toBeInViewport();
-    await expect(button(details, 'Cancel')).toBeInViewport();
-    await fits(details, 'details sheet');
-    await noSpanish('details sheet');
-    if (browserName === 'chromium') {
-      await axe(page, 'Session details sheet (en, dark)');
-      await button(details, 'Cancel').click();
-      await expect(details).toBeHidden();
-      await page.emulateMedia({ colorScheme: 'light' });
-      await expectTheme(page, 'light');
-      await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
-      await axe(page, 'Session with rest bar (en, light)');
-    }
-  });
+      // Session details sheet.
+      const details = await openSheet(page, 'Session details', 'Session details');
+      for (const label of ['Date', 'Start', 'Routine']) {
+        await expect(details.getByLabel(label, { exact: true })).toBeVisible();
+      }
+      await expect(button(details, 'Save')).toBeInViewport();
+      await expect(button(details, 'Cancel')).toBeInViewport();
+      await fits(details, 'details sheet');
+      await noSpanish('details sheet');
+      if (browserName === 'chromium') {
+        await axe(page, 'Session details sheet (en, dark)');
+        await button(details, 'Cancel').click();
+        await expect(details).toBeHidden();
+        await page.emulateMedia({ colorScheme: 'light' });
+        await expectTheme(page, 'light');
+        await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
+        await axe(page, 'Session with rest bar (en, light)');
+      }
+    },
+  );
 });

@@ -741,75 +741,78 @@ test.describe('today', () => {
     },
   );
 
-  test('AC-TODAY-17 · English, dark and light: texts, decimal point, no Spanish left, no serious axe issues on Today and the session', async ({
-    page,
-    browserName,
-  }) => {
-    await page.clock.setFixedTime(MON);
-    await page.emulateMedia({ colorScheme: 'dark' });
-    await setLanguage(page, 'en');
-    await gotoReady(page, '/', 'Today');
-    await expectTheme(page, 'dark');
-    await expect(page.getByText('Monday 2 November', { exact: true })).toBeVisible();
-    for (const heading of [
-      "Today's session",
-      'Another session or day',
-      'Activity',
-      'Average weekly weight',
-      'Ankle rehab',
-    ]) {
-      await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
-    }
-    await expect(page.getByRole('heading', { name: /^This week/ })).toBeVisible();
-    const week = await card(page, /^This week/);
-    await expect(week).toContainText(/2\s*–\s*8 Nov/);
-    await expect(week).toContainText('0 of 5');
-    await expect(
-      page.getByText('This device has no sync key yet: what you log stays only here.', {
-        exact: true,
-      }),
-    ).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Set it in Settings', exact: true })).toBeVisible();
-    const today = await card(page, "Today's session");
-    await expect(today.getByText('7 exercises · 19 sets', { exact: true })).toBeVisible();
-    await expect(button(today, 'Start Push')).toBeVisible();
+  test(
+    'AC-TODAY-17 · English, dark and light: texts, decimal point, no Spanish left, no serious axe issues on Today and the session',
+    { tag: '@all-engines' },
+    async ({ page, browserName }) => {
+      await page.clock.setFixedTime(MON);
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await setLanguage(page, 'en');
+      await gotoReady(page, '/', 'Today');
+      await expectTheme(page, 'dark');
+      await expect(page.getByText('Monday 2 November', { exact: true })).toBeVisible();
+      for (const heading of [
+        "Today's session",
+        'Another session or day',
+        'Activity',
+        'Average weekly weight',
+        'Ankle rehab',
+      ]) {
+        await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
+      }
+      await expect(page.getByRole('heading', { name: /^This week/ })).toBeVisible();
+      const week = await card(page, /^This week/);
+      await expect(week).toContainText(/2\s*–\s*8 Nov/);
+      await expect(week).toContainText('0 of 5');
+      await expect(
+        page.getByText('This device has no sync key yet: what you log stays only here.', {
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('link', { name: 'Set it in Settings', exact: true }),
+      ).toBeVisible();
+      const today = await card(page, "Today's session");
+      await expect(today.getByText('7 exercises · 19 sets', { exact: true })).toBeVisible();
+      await expect(button(today, 'Start Push')).toBeVisible();
 
-    // Decimal point in English.
-    await field(page, /^Average weight/).fill('76.4');
-    await button(page, 'Save weight').click();
-    await expect(toast(page, /^Weight saved · 2\s*–\s*8 Nov$/)).toBeVisible();
-    await expect(field(page, /^Average weight/)).toHaveValue('76.4');
+      // Decimal point in English.
+      await field(page, /^Average weight/).fill('76.4');
+      await button(page, 'Save weight').click();
+      await expect(toast(page, /^Weight saved · 2\s*–\s*8 Nov$/)).toBeVisible();
+      await expect(field(page, /^Average weight/)).toHaveValue('76.4');
 
-    // The block warning, in English.
-    const rehab = await card(page, 'Ankle rehab');
-    await expect(rehab).toContainText('Exercises · 0/8');
-    await scaleValue(group(rehab, 'Pain going down stairs'), 4).click();
-    await expect(
-      rehab.getByText('Above 3/10: go easier on whatever loads that area.', { exact: true }),
-    ).toBeVisible();
+      // The block warning, in English.
+      const rehab = await card(page, 'Ankle rehab');
+      await expect(rehab).toContainText('Exercises · 0/8');
+      await scaleValue(group(rehab, 'Pain going down stairs'), 4).click();
+      await expect(
+        rehab.getByText('Above 3/10: go easier on whatever loads that area.', { exact: true }),
+      ).toBeVisible();
 
-    let leftovers = findSpanishWords(await allUiText(page));
-    expect(leftovers, `Spanish text left on Today: ${leftovers.join(', ')}`).toEqual([]);
+      let leftovers = findSpanishWords(await allUiText(page));
+      expect(leftovers, `Spanish text left on Today: ${leftovers.join(', ')}`).toEqual([]);
 
-    const runAxe = browserName === 'chromium';
-    if (runAxe) await axe(page, 'Today (en, dark)');
-    await page.emulateMedia({ colorScheme: 'light' });
-    await expectTheme(page, 'light');
-    if (runAxe) await axe(page, 'Today (en, light)');
+      const runAxe = browserName === 'chromium';
+      if (runAxe) await axe(page, 'Today (en, dark)');
+      await page.emulateMedia({ colorScheme: 'light' });
+      await expectTheme(page, 'light');
+      if (runAxe) await axe(page, 'Today (en, light)');
 
-    await button(today, 'Start Push').click();
-    await expect(page).toHaveURL(/\/session\/[^/]+$/);
-    await expect(h1(page, 'Session')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Push', exact: true })).toBeVisible();
-    const main = page.getByRole('main');
-    await expect(main.getByText('In progress', { exact: true })).toBeVisible();
-    await expect(main.getByText('7 exercises · 19 sets', { exact: true })).toBeVisible();
-    await expect(main.getByText('0 of 19 done', { exact: true })).toBeVisible();
-    leftovers = findSpanishWords(await allUiText(page));
-    expect(leftovers, `Spanish text left on the session: ${leftovers.join(', ')}`).toEqual([]);
-    if (runAxe) await axe(page, 'Session (en, light)');
-    await page.emulateMedia({ colorScheme: 'dark' });
-    await expectTheme(page, 'dark');
-    if (runAxe) await axe(page, 'Session (en, dark)');
-  });
+      await button(today, 'Start Push').click();
+      await expect(page).toHaveURL(/\/session\/[^/]+$/);
+      await expect(h1(page, 'Session')).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Push', exact: true })).toBeVisible();
+      const main = page.getByRole('main');
+      await expect(main.getByText('In progress', { exact: true })).toBeVisible();
+      await expect(main.getByText('7 exercises · 19 sets', { exact: true })).toBeVisible();
+      await expect(main.getByText('0 of 19 done', { exact: true })).toBeVisible();
+      leftovers = findSpanishWords(await allUiText(page));
+      expect(leftovers, `Spanish text left on the session: ${leftovers.join(', ')}`).toEqual([]);
+      if (runAxe) await axe(page, 'Session (en, light)');
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await expectTheme(page, 'dark');
+      if (runAxe) await axe(page, 'Session (en, dark)');
+    },
+  );
 });
