@@ -29,6 +29,8 @@ export const deviceSettingsSchema = z.object({
   locale: z.enum(['es', 'en']),
   sound: z.boolean(),
   vibration: z.boolean(),
+  /** Performance timers (Settings → Diagnostics): measure and keep the last timings on this device. */
+  diagnostics: z.boolean(),
   /** The sync key (CLAVE_SYNC) typed on this device; never logged or synced. */
   syncKey: z.string().optional(),
 });
