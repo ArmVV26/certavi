@@ -12,6 +12,7 @@ import { Segmented } from '../../ui/Segmented';
 import { Switch } from '../../ui/Switch';
 import { AboutCard } from './AboutCard';
 import { DataCard } from './DataCard';
+import { DiagnosticsCard } from './DiagnosticsCard';
 import { RestCard } from './RestCard';
 import { SyncCard } from './SyncCard';
 import styles from './SettingsPage.module.css';
@@ -65,6 +66,8 @@ export function SettingsPage() {
       </Card>
 
       <DataCard />
+
+      <DiagnosticsCard />
 
       {DEV_UI_ENABLED && (
         <Card element="section">

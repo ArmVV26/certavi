@@ -409,6 +409,32 @@
       "vibration": "Vibración",
       "vibrationHint": "No funciona en iPhone.",
       "failed": "No se pudo guardar el descanso. Inténtalo de nuevo."
+    },
+    "diagnostics": {
+      "title": "Diagnóstico",
+      "switch": "Medir el rendimiento",
+      "switchHint": "Guarda en este dispositivo el tiempo de cuatro acciones. No se sincroniza ni se envía a ningún sitio.",
+      "empty": "Todavía no hay mediciones. Activa el interruptor y usa la app con normalidad.",
+      "reference": "Referencia: menos de 300 ms va bien; más de 1 s es un problema.",
+      "listLabel": "Mediciones",
+      "metrics": {
+        "dbOpen": "Apertura de la base de datos",
+        "todayLoad": "Carga de Hoy",
+        "setVisible": "De ✓ a serie visible",
+        "progressLoad": "Carga de Progreso"
+      },
+      "ratings": {
+        "good": "Bien",
+        "fair": "Aceptable",
+        "problem": "Problema"
+      },
+      "summary_one": "Última: {{last}} ms · Mediana: {{median}} ms · Máx.: {{max}} ms · {{count}} medición",
+      "summary_other": "Última: {{last}} ms · Mediana: {{median}} ms · Máx.: {{max}} ms · {{count}} mediciones",
+      "copy": "Copiar mediciones",
+      "clear": "Borrar mediciones",
+      "copied": "Mediciones copiadas",
+      "copyFailed": "No se pudo copiar. Selecciona el texto de abajo y cópialo a mano.",
+      "copyText": "Texto de las mediciones"
     }
   },
   "sync": {
