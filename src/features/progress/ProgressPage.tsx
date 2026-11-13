@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDatabase } from '../../data/DatabaseContext';
 import { readProgress } from '../../data/progress';
+import { useMeasureLoad } from '../../data/useMeasureLoad';
 import { useLocale } from '../../i18n/LocaleContext';
 import { EmptyState } from '../../ui/EmptyState';
 import { Stat, StatGrid } from '../../ui/Stat';
@@ -21,6 +22,7 @@ export function ProgressPage() {
   const today = useToday();
   const data = useLiveQuery(() => readProgress(db), [db]);
   const model = useMemo(() => (data ? buildProgressModel(data, today) : undefined), [data, today]);
+  useMeasureLoad('progressLoad', model !== undefined);
   if (!model) return null;
 
   if (model.sessionsTotal === 0) {

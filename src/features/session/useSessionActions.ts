@@ -10,6 +10,7 @@ import {
   type ExclusionReason,
 } from '../../domain';
 import { useDatabase } from '../../data/DatabaseContext';
+import { afterPaint, startMeasure } from '../../data/diagnostics';
 import { readRestTimes } from '../../data/restSettings';
 import type { RowDraft } from '../../data/sessionDrafts';
 import {
@@ -151,6 +152,9 @@ export function useSessionActions(
   ) => {
     // Sound can only start after a tap: this is the tap.
     unlockAudio();
+    // Timed for Settings → Diagnostics: from the tap until the saved set is on screen. A tap that
+    // does not save never stops its timer, so it records nothing.
+    const stopTimer = startMeasure('setVisible');
     const resolved = resolveRowInput(
       { weight: draft?.weight ?? null, reps: draft?.reps ?? null },
       row.previous,
@@ -178,6 +182,7 @@ export function useSessionActions(
     // The saved set shows at once; the typed values can go because the row reads it instead.
     pending.add(saved.value);
     store.set(exerciseId, row.slot, null);
+    afterPaint(stopTimer);
     // The rest timer only runs for a new set of today's session that is still in progress.
     if (view.session.date === today && isInProgress(view.session)) {
       const times = await readRestTimes(db);

@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { needsDeloadReminder, parseIsoDate, weeklyStreak, type ActivityKind } from '../../domain';
 import { useDatabase } from '../../data/DatabaseContext';
 import { readStreakLog } from '../../data/progress';
+import { useMeasureLoad } from '../../data/useMeasureLoad';
 import { hasSyncKey } from '../../data/sync/engine';
 import { useSyncState } from '../../data/sync/SyncContext';
 import {
@@ -36,6 +37,7 @@ export function TodayPage() {
   const today = useToday();
   const data = useLiveQuery(() => readToday(db, today), [db, today]);
   const model = useMemo(() => (data ? buildTodayModel(data, today) : undefined), [data, today]);
+  useMeasureLoad('todayLoad', model !== undefined);
   const dateLine = formatDate(parseIsoDate(today), locale, {
     weekday: 'long',
     day: 'numeric',
