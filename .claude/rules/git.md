@@ -16,6 +16,7 @@
   Scopes: `domain data sync api session today calendar routines exercises progress blocks
 settings ui theme i18n pwa claude release deps` (optional). Breaking: `feat!:` or a
   `BREAKING CHANGE:` footer. commitlint (husky `commit-msg` hook) rejects anything else.
-- **Versions:** SemVer. `0.x` per phase (`v0.1.0` = Phase 0 … `v0.10.0` = Phase 9),
-  **`v1.0.0`** = Phase 10 at parity with gym_app. `package.json` version is bumped in the
-  `chore(release): vX.Y.Z` commit. `CHANGELOG.md` follows Keep a Changelog.
+- **Versions:** SemVer. `0.x` per phase (`v0.1.0` = Phase 0 … `v0.10.1` = Phase 9,
+  `v0.11.0` = Phase 10 …), **`v1.0.0`** = Phase 13 at parity with gym_app (table in `context.md`
+  §10). `package.json` version is bumped in the `chore(release): vX.Y.Z` commit, which also turns
+  the `Unreleased` heading of `CHANGELOG.md` into `## [X.Y.Z] - YYYY-MM-DD` (Keep a Changelog).

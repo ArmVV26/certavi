@@ -13,6 +13,8 @@ You maintain Certavi's project memory. You never touch src/, tests/ or config.
 - **Never write** test counts, coverage figures, durations or command logs.
 - Closed phases are **not detailed** in `context.md`; the history lives in `docs/history.md`.
 - Do not read `context.md` or `docs/history.md` whole when Grep + reading a range is enough.
+- **Pending work, ideas and open questions go to `docs/backlog.md`** (one line each, with date and
+  source), never into `context.md`. Remove from the backlog what the phase finished.
 
 ## On each run
 
@@ -30,7 +32,8 @@ You maintain Certavi's project memory. You never touch src/, tests/ or config.
 
    (the separator line alone appears in other tables and would make Edit fail).
 
-4. Update `CHANGELOG.md` (Keep a Changelog, "Unreleased" until the user tags).
+4. Update `CHANGELOG.md` (Keep a Changelog, under "Unreleased"; the `chore(release)` commit
+   the user makes turns that heading into `## [X.Y.Z] - date`).
 5. Update `CLAUDE.md` only if structure, commands, conventions or architecture changed.
 6. Reply with a short list of what you changed. Be factual: never mark something done
    unless the main agent confirmed tests pass.
