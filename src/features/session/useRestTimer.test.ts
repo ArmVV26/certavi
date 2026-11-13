@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useRestTimer } from './useRestTimer';
+import { REST_AUTO_CLOSE } from '../../domain';
+import { restPhase, useRestTimer } from './useRestTimer';
 
 const START = new Date(2026, 10, 5, 18, 0, 0).getTime();
 
@@ -27,6 +28,19 @@ function setup() {
   };
   return { ...hook, onFinish, pass, renders: () => renders };
 }
+
+describe('restPhase', () => {
+  const timer = { endsAt: 10_000 };
+  const close = REST_AUTO_CLOSE * 1000;
+
+  it('runs until the time is up, waits to close, then is gone', () => {
+    expect(restPhase(null, 0)).toBe('none');
+    expect(restPhase(timer, 9_999)).toBe('running');
+    expect(restPhase(timer, 10_000)).toBe('overtime');
+    expect(restPhase(timer, 10_000 + close - 1)).toBe('overtime');
+    expect(restPhase(timer, 10_000 + close)).toBe('none');
+  });
+});
 
 describe('useRestTimer', () => {
   it('has no timer until it is started', () => {

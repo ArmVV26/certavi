@@ -2,6 +2,7 @@ import { useId, useState } from 'react';
 import type { SyntheticEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { hasSyncKey } from '../../data/sync/engine';
 import { useSyncEngine, useSyncState } from '../../data/sync/SyncContext';
 import { isValidKey, normalizeKey } from '../../data/sync/syncKey';
 import { formatDate, formatNumber } from '../../i18n/format';
@@ -15,6 +16,9 @@ import { useToast } from '../../ui/ToastContext';
 import styles from './SyncCard.module.css';
 import { errorKeyOf, syncLabelOf } from './syncText';
 
+/** What the card is doing with the key: showing it, being asked for a new one, or confirming. */
+type CardMode = 'view' | 'changingKey' | 'confirmingForget';
+
 /** Settings card: sync state, the key, "Sync now" and the link to the log and backups. */
 export function SyncCard() {
   const { t } = useTranslation();
@@ -22,23 +26,25 @@ export function SyncCard() {
   const engine = useSyncEngine();
   const state = useSyncState();
   const toast = useToast();
-  const [editing, setEditing] = useState(false);
-  const [confirmForget, setConfirmForget] = useState(false);
+  const [mode, setMode] = useState<CardMode>('view');
   const label = syncLabelOf(state);
-  const showForm = !state.hasKey || editing;
+  const keySaved = hasSyncKey(state);
+  // Without a key the form is always there, whatever the mode says; "Cancel" only makes sense
+  // when there is a saved key to go back to.
+  const changingKey = keySaved && mode === 'changingKey';
+  const showForm = !keySaved || changingKey;
 
   async function syncNow() {
     const result = await engine.syncNow();
     if (result.status === 'idle')
       toast.show({ message: t('settings.sync.synced'), tone: 'success' });
-    else if (result.error !== null || result.status === 'offline') {
+    else if (result.status === 'error' || result.status === 'offline') {
       toast.show({ message: t(errorKeyOf(result.error ?? 'network')), tone: 'danger' });
     }
   }
 
   function forget() {
-    setConfirmForget(false);
-    setEditing(false);
+    setMode('view');
     engine.forgetKey();
     toast.show({ message: t('settings.sync.keyForgotten') });
   }
@@ -70,7 +76,7 @@ export function SyncCard() {
           <dd className={cx(styles.value, styles.number)}>{formatNumber(state.pending, locale)}</dd>
         </div>
       </dl>
-      {state.status === 'error' && state.error !== null && (
+      {state.status === 'error' && (
         <p className={styles.error}>
           <Icon name="warning" size={20} />
           <span>{t(errorKeyOf(state.error))}</span>
@@ -80,12 +86,12 @@ export function SyncCard() {
       {showForm ? (
         <KeyForm
           onSaved={() => {
-            setEditing(false);
+            setMode('view');
           }}
-          {...(editing
+          {...(changingKey
             ? {
                 onCancel: () => {
-                  setEditing(false);
+                  setMode('view');
                 },
               }
             : {})}
@@ -106,7 +112,7 @@ export function SyncCard() {
             <Button
               variant="secondary"
               onClick={() => {
-                setEditing(true);
+                setMode('changingKey');
               }}
             >
               {t('settings.sync.changeKey')}
@@ -114,7 +120,7 @@ export function SyncCard() {
             <Button
               variant="secondary"
               onClick={() => {
-                setConfirmForget(true);
+                setMode('confirmingForget');
               }}
             >
               {t('settings.sync.forgetKey')}
@@ -129,7 +135,7 @@ export function SyncCard() {
       </Link>
 
       <ConfirmDialog
-        open={confirmForget}
+        open={keySaved && mode === 'confirmingForget'}
         title={t('settings.sync.forgetTitle')}
         message={t('settings.sync.forgetMessage')}
         confirmLabel={t('settings.sync.forgetConfirm')}
@@ -137,7 +143,7 @@ export function SyncCard() {
         destructive
         onConfirm={forget}
         onCancel={() => {
-          setConfirmForget(false);
+          setMode('view');
         }}
       />
     </Card>

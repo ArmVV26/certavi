@@ -198,6 +198,13 @@ function button(scope: Page | Locator, name: string): Locator {
   return scope.getByRole('button', { name, exact: true });
 }
 
+/** The main action of Today when it opens an existing session: a button or a link. */
+function sessionAction(scope: Page | Locator, name: string): Locator {
+  return scope
+    .getByRole('button', { name, exact: true })
+    .or(scope.getByRole('link', { name, exact: true }));
+}
+
 /** Names of the exercise cards, top to bottom, read from their "Subir …" buttons. */
 async function exerciseOrder(page: Page): Promise<string[]> {
   const ups = page.getByRole('button', { name: /^Subir / });
@@ -909,6 +916,134 @@ test.describe('session tools', { tag: '@all-engines' }, () => {
     } finally {
       await b.context.close();
     }
+  });
+
+  test('AC-SESSION-34b · the rest bar closes by itself when the other device finishes the session, and it does not come back', async ({
+    page,
+    context,
+    browser,
+  }, testInfo) => {
+    const server = createFakeSyncServer();
+    await server.attach(context);
+    await page.clock.install({ time: MON });
+
+    // A long rest (900 s + 30 s for a top row) so the bar cannot end on its own while the test
+    // moves the page clock to make the sync run.
+    await gotoReady(page, '/settings', 'Ajustes');
+    const basic = page
+      .getByRole('spinbutton', { name: 'Descanso en ejercicios básicos (s)', exact: true })
+      .or(page.getByRole('textbox', { name: 'Descanso en ejercicios básicos (s)', exact: true }));
+    await basic.fill('900');
+    await basic.blur();
+    await expectStoredRest(page, { compound: 900, isolation: 120 });
+
+    await saveKeyAndSync(page, server);
+    await backToToday(page);
+    await startRoutine(page, 'Push');
+    await page.clock.runFor(3_000);
+    await expect
+      .poll(async () => (await server.records()).some((x) => x.type === 'session'), {
+        timeout: WAIT,
+      })
+      .toBe(true);
+
+    const b = await newDevice(browser, testInfo, server);
+    try {
+      await saveKeyAndSync(b.page, server);
+      await backToToday(b.page);
+      const resume = b.page
+        .getByRole('button', { name: /^Continuar/ })
+        .or(b.page.getByRole('link', { name: /^Continuar/ }));
+      await expect(resume.first()).toBeVisible({ timeout: WAIT });
+      await resume.first().click();
+      await expect(b.page).toHaveURL(/\/session\/[^/]+$/);
+
+      // Device A saves a set: the rest bar opens.
+      const banca = await exCard(page, BENCH);
+      await logSet(banca, 0, '60', '8');
+      await expect(closeRest(page)).toBeVisible();
+      await expectSecs(page, 850, 935);
+
+      // Device B finishes the session and syncs.
+      const before = server.requestCount(SYNC_PATH);
+      await button(b.page, 'Terminar sesión').click();
+      await expect(b.page.getByRole('main').getByText('Terminada', { exact: true })).toBeVisible();
+      await b.page.clock.runFor(3_000);
+      await expect
+        .poll(() => server.requestCount(SYNC_PATH), { timeout: WAIT })
+        .toBeGreaterThan(before);
+
+      // Device A: the session shows as finished and the bar is gone, without any tap.
+      await expect
+        .poll(
+          async () => {
+            await returnToApp(page);
+            return closeRest(page).count();
+          },
+          { timeout: 30_000, intervals: [250] },
+        )
+        .toBe(0);
+      await expect(page.getByRole('main').getByText('Terminada', { exact: true })).toBeVisible({
+        timeout: WAIT,
+      });
+
+      // A set saved now, on a finished session, does not bring the bar back.
+      const inc = await exCard(page, INCLINE);
+      await ensureOpen(inc, INCLINE);
+      await logSet(inc, 0, '40', '10');
+      await page.clock.runFor(500);
+      await expect(closeRest(page)).toHaveCount(0);
+    } finally {
+      await b.context.close();
+    }
+  });
+
+  test('§2.8 · "Guardar" in the session details: an error leaves it usable; tapping it twice saves once and closes', async ({
+    page,
+  }) => {
+    await openToday(page);
+    await startRoutine(page, 'Push');
+    let sheet = await openSheet(page, 'Datos de la sesión', 'Datos de la sesión');
+    const save = button(sheet, 'Guardar');
+    await expect(save).toBeEnabled();
+
+    // An error does not leave it stuck in "saving": still open, "Guardar" enabled again.
+    await sheet.getByLabel('Fecha', { exact: true }).fill('2026-11-03');
+    await save.click();
+    await expect(page.getByText('La fecha no puede ser futura', { exact: true })).toBeVisible();
+    await expect(sheet).toBeVisible();
+    await expect(save).toBeEnabled();
+
+    // Two taps in the same instant (two clicks in one task, before the screen can redraw).
+    await sheet.getByLabel('Fecha', { exact: true }).fill('2026-11-02');
+    await sheet.getByLabel('Inicio', { exact: true }).fill('08:15');
+    await save.evaluate((el) => {
+      (el as HTMLElement).click();
+      (el as HTMLElement).click();
+    });
+    await expect(sheet).toBeHidden();
+    await expect(page.getByText('La fecha no puede ser futura', { exact: true })).toHaveCount(0);
+    const main = page.getByRole('main');
+    await expect(main).toContainText(/0?8:15/);
+
+    // Saved once: one session, still Push, and it survives a reload.
+    await page.clock.runFor(DEBOUNCE);
+    await page.reload();
+    await expect(h1(page, 'Sesión')).toBeVisible();
+    await expect(page.getByRole('main')).toContainText(/0?8:15/);
+    await expect(page.getByRole('heading', { name: 'Push', exact: true })).toBeVisible();
+    await backToToday(page);
+    await expect(sessionAction(page, 'Continuar Push')).toBeVisible();
+    await expect(page.getByText('También hoy', { exact: false })).toHaveCount(0);
+
+    // And the sheet can be opened and saved again afterwards.
+    await sessionAction(page, 'Continuar Push').click();
+    await expect(h1(page, 'Sesión')).toBeVisible();
+    sheet = await openSheet(page, 'Datos de la sesión', 'Datos de la sesión');
+    await expect(sheet.getByLabel('Inicio', { exact: true })).toHaveValue('08:15');
+    await expect(button(sheet, 'Guardar')).toBeEnabled();
+    await button(sheet, 'Cancelar').click();
+    await expect(sheet).toBeHidden();
   });
 
   test('AC-SESSION-31 · Descargar JSON gives certavi-session-<date>-<id>.json with saved data only, also offline', async ({

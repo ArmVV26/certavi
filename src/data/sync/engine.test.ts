@@ -3,7 +3,7 @@ import { makeSession } from '../../domain/testing/builders';
 import { openTestDatabase } from '../../test/render';
 import { createRepositories } from '../repository';
 import { readAttempts } from './attemptLog';
-import { backoffMs, createSyncEngine, SYNC_DEBOUNCE_MS } from './engine';
+import { backoffMs, createSyncEngine, hasSyncKey, syncErrorOf, SYNC_DEBOUNCE_MS } from './engine';
 import { readSince } from './queue';
 import { memoryKeyStore } from './syncKey';
 import { createFakeServer, createTestEngine, TEST_KEY } from './testing';
@@ -38,7 +38,7 @@ describe('sync engine', () => {
     await repos.session.put(makeSession({ id: 'a', date: '2026-11-02' }));
 
     engine.start();
-    expect(await engine.syncNow()).toMatchObject({ status: 'disabled', hasKey: false });
+    expect(await engine.syncNow()).toMatchObject({ status: 'disabled' });
     expect(server.requests).toHaveLength(0);
     engine.flush();
     engine.wentOffline();
@@ -54,7 +54,7 @@ describe('sync engine', () => {
 
     const state = await engine.syncNow();
 
-    expect(state).toMatchObject({ status: 'idle', error: null, lastSuccessAt: 5000 });
+    expect(state).toMatchObject({ status: 'idle', lastSuccessAt: 5000 });
     expect(await db.pending.count()).toBe(0);
     expect(await db.sessions.get('remote')).toMatchObject({ date: '2026-11-03' });
     expect(
@@ -221,7 +221,7 @@ describe('sync engine', () => {
       });
       timers.fire();
       await vi.waitFor(() => {
-        expect(engine.getState()).toMatchObject({ status: 'idle', error: null });
+        expect(engine.getState()).toMatchObject({ status: 'idle' });
       });
       expect(await db.pending.count()).toBe(0);
       const attempts = await readAttempts(db);
@@ -381,7 +381,8 @@ describe('sync engine', () => {
       expect(await engine.setKey(`  ${TEST_KEY}  `)).toBe('saved');
       expect(keyStore.read()).toBe(TEST_KEY);
       await vi.waitFor(() => {
-        expect(engine.getState()).toMatchObject({ status: 'idle', hasKey: true });
+        expect(engine.getState()).toMatchObject({ status: 'idle' });
+        expect(hasSyncKey(engine.getState())).toBe(true);
       });
       expect(server.requests).toHaveLength(1);
     });
@@ -454,12 +455,31 @@ describe('sync engine', () => {
         expect(seen).not.toContain('idle');
       });
 
+      it('carries no error while it syncs again after a failure', async () => {
+        const { engine, server } = setup({ key: null });
+        server.failNext('network');
+        await engine.setKey(TEST_KEY);
+        await vi.waitFor(() => {
+          expect(syncErrorOf(engine.getState())).toBe('network');
+        });
+
+        const gate = server.hold();
+        void engine.syncNow();
+        await vi.waitFor(() => {
+          expect(engine.getState().status).toBe('syncing');
+        });
+        expect(syncErrorOf(engine.getState())).toBeNull();
+        expect(engine.getState()).not.toHaveProperty('error');
+        gate.release();
+      });
+
       it('shows offline, not idle, when the key is saved without network', async () => {
         const { engine, server, online } = setup({ key: null });
         online.value = false;
 
         expect(await engine.setKey(TEST_KEY)).toBe('saved');
-        expect(engine.getState()).toMatchObject({ status: 'offline', hasKey: true });
+        expect(engine.getState()).toMatchObject({ status: 'offline' });
+        expect(hasSyncKey(engine.getState())).toBe(true);
         expect(server.requests).toHaveLength(0);
       });
 
@@ -505,7 +525,7 @@ describe('sync engine', () => {
       const { engine, keyStore } = setup({ key: null });
       vi.spyOn(keyStore, 'write').mockReturnValue(false);
       expect(await engine.setKey(TEST_KEY)).toBe('storage-error');
-      expect(engine.getState().hasKey).toBe(false);
+      expect(hasSyncKey(engine.getState())).toBe(false);
     });
 
     it('drops an answer that arrives after the key was forgotten', async () => {
@@ -522,7 +542,9 @@ describe('sync engine', () => {
       await done;
 
       expect(keyStore.read()).toBeNull();
-      expect(engine.getState()).toMatchObject({ status: 'disabled', hasKey: false });
+      expect(engine.getState()).toMatchObject({ status: 'disabled' });
+      expect(hasSyncKey(engine.getState())).toBe(false);
+      expect(syncErrorOf(engine.getState())).toBeNull();
       expect(await db.pending.count()).toBe(1);
       expect(await readSince(db)).toBe(0);
     });
@@ -556,7 +578,7 @@ describe('sync engine', () => {
       engine.forgetKey();
       gate.release();
       await done;
-      expect(engine.getState()).toMatchObject({ status: 'disabled', error: null });
+      expect(engine.getState()).toMatchObject({ status: 'disabled' });
       expect(timers.delays()).toEqual([]);
     });
   });

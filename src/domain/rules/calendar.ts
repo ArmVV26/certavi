@@ -4,7 +4,7 @@ import type { Activity } from '../model/activity';
 import type { WeekSize } from '../model/enums';
 import type { WorkoutSession } from '../model/session';
 import type { WeekPlan } from '../model/weekPlan';
-import { closeWeek, defaultWeekPlan, livePlan, type RoutineLookup } from './weekPlan';
+import { closeWeek, defaultWeekPlan, isWeekFrozen, livePlan, type RoutineLookup } from './weekPlan';
 import type { ExerciseLookup } from './weeklySets';
 
 /** First day of the month of `date` ('2026-11-04' → '2026-11-01'). */
@@ -123,7 +123,7 @@ export function pendingWeekClosings(input: ClosingInput): WeekPlan[] {
     .sort()
     .flatMap((monday) => {
       const record = records.get(monday) ?? defaultWeekPlan(monday, 0);
-      if (record.plannedSetsByGroup) return [];
+      if (isWeekFrozen(record)) return [];
       const plan = livePlan(record, routines, exercises);
       return [closeWeek(record, plan, now)];
     });

@@ -4,6 +4,7 @@ import { makeSession, makeSet, makeWeekPlan } from '../testing/builders';
 import {
   closeWeek,
   defaultWeekPlan,
+  isWeekFrozen,
   livePlan,
   weekPlanSummary,
   weekRoutines,
@@ -157,6 +158,15 @@ describe('week plan', () => {
     expect(closed).toMatchObject({ id: 'week_2026-11-02', closedAt: 100, updatedAt: 100, size: 5 });
     expect(closed.plannedSetsByGroup && totalSets(closed.plannedSetsByGroup)).toBe(15);
     expect(closeWeek(closed, plan, 200).closedAt).toBe(100);
+  });
+
+  it('tells a frozen week by its saved plan, not by the closing time', () => {
+    expect(isWeekFrozen(undefined)).toBe(false);
+    expect(isWeekFrozen(makeWeekPlan({ week: '2026-11-02' }))).toBe(false);
+    expect(isWeekFrozen(makeWeekPlan({ week: '2026-11-02', closedAt: 5 }))).toBe(false);
+    expect(
+      isWeekFrozen(makeWeekPlan({ week: '2026-11-02', plannedSetsByGroup: emptyGroupCounts() })),
+    ).toBe(true);
   });
 
   it('lists past weeks that still need closing', () => {

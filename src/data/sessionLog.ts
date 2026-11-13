@@ -9,6 +9,7 @@ import {
   exerciseHistory,
   exerciseNoteId,
   insertRow,
+  isInProgress,
   normalizeLegacyRows,
   PAST_SESSION_MINUTES,
   recordEvents,
@@ -394,7 +395,7 @@ export interface FinishResult {
 
 /**
  * Finishes the session: today's ends now, a session of another day ends 75 minutes after it
- * started. Returns how many records it set.
+ * started. Returns how many records it set. Finishing a finished session changes nothing.
  */
 export function finishSession(
   db: CertaviDb,
@@ -406,6 +407,10 @@ export function finishSession(
   return db.transaction('rw', [...sessionTables(db), db.exercises, db.weekPlans], async () => {
     const current = await sessions.get(sessionId);
     if (!current) throw new SessionNotFoundError(sessionId);
+    // Already finished (a double tap, or the other device got there first): writing again would
+    // only move `endedAt` and win last-write-wins over the real end.
+    if (!isInProgress(current))
+      return { session: current, records: await countRecords(db, current) };
     const endedAt =
       current.date === today ? now() : (current.startedAt ?? now()) + PAST_SESSION_MINUTES * 60_000;
     const session = await sessions.put({ ...current, endedAt });
@@ -430,7 +435,7 @@ async function countRecords(db: CertaviDb, session: WorkoutSession): Promise<num
   return records;
 }
 
-/** Marks a finished session as in progress again. */
+/** Marks a finished session as in progress again. An open session is left as it is. */
 export function reopenSession(
   db: CertaviDb,
   sessionId: string,
@@ -440,6 +445,7 @@ export function reopenSession(
   return db.transaction('rw', sessionTables(db), async () => {
     const session = await sessions.get(sessionId);
     if (!session) throw new SessionNotFoundError(sessionId);
+    if (isInProgress(session)) return session; // already open: nothing to write
     return sessions.put({ ...session, endedAt: null });
   });
 }

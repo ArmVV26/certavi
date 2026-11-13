@@ -1,8 +1,11 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { straightSets, toIsoDate } from '../../domain';
-import { openTestDatabase } from '../../test/render';
+import { makeSession } from '../../domain/testing/builders';
+import { openTestDatabase, renderWithProviders } from '../../test/render';
 import { ensureSeed } from '../../data/seed';
+import { SessionDetailsSheet, type DetailsPatch } from './SessionDetailsSheet';
 import { logRow, openSession, plan, todayIso } from './testing';
 
 const download = vi.hoisted(() => ({ downloadFile: vi.fn() }));
@@ -221,5 +224,67 @@ describe('downloading the session as JSON', () => {
     expect(parsed.kind).toBe('session');
     expect(parsed.records.filter((r) => r.type === 'session')).toHaveLength(1);
     expect(parsed.records.filter((r) => r.type === 'set')).toHaveLength(1);
+  });
+});
+
+describe('saving the session details', () => {
+  const renderSheet = (onSave: (patch: DetailsPatch) => Promise<boolean>) => {
+    const onClose = vi.fn();
+    const session = makeSession({ id: 's1', date: todayIso(), routineId: null });
+    renderWithProviders(
+      <SessionDetailsSheet
+        open
+        onClose={onClose}
+        session={session}
+        routines={[]}
+        today={todayIso()}
+        onSave={onSave}
+      />,
+    );
+    return { onClose, user: userEvent.setup() };
+  };
+
+  it('saves once when Save is tapped twice while it is saving', async () => {
+    let finish: (saved: boolean) => void = () => undefined;
+    const onSave = vi.fn<(patch: DetailsPatch) => Promise<boolean>>(
+      () =>
+        new Promise<boolean>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const { onClose, user } = renderSheet(onSave);
+    change('Inicio', '09:30');
+
+    await user.click(sheet().getByRole('button', { name: 'Guardar' }));
+    expect(sheet().getByRole('button', { name: 'Guardar' })).toBeDisabled();
+    await user.click(sheet().getByRole('button', { name: 'Guardar' }));
+    expect(onSave).toHaveBeenCalledTimes(1);
+
+    finish(true);
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('stays open with what was typed, and can save again, when saving fails', async () => {
+    const onSave = vi
+      .fn<(patch: DetailsPatch) => Promise<boolean>>()
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+    const { onClose, user } = renderSheet(onSave);
+    change('Inicio', '09:30');
+
+    await user.click(sheet().getByRole('button', { name: 'Guardar' }));
+    await waitFor(() => {
+      expect(sheet().getByRole('button', { name: 'Guardar' })).toBeEnabled();
+    });
+    expect(onClose).not.toHaveBeenCalled();
+    expect(sheet().getByLabelText('Inicio')).toHaveValue('09:30');
+
+    await user.click(sheet().getByRole('button', { name: 'Guardar' }));
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+    expect(onSave).toHaveBeenCalledTimes(2);
   });
 });
