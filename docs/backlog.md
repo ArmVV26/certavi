@@ -13,15 +13,10 @@ The «Out of scope» sections of `docs/spec/*.md` are deliberate limits of each 
 
 ## 1. Manual checks (on the iPhone or in production)
 
-Phase 10 closes the first two with `docs/device-checklist.md` and the Diagnostics card.
+Phase 10 ran `docs/device-checklist.md` on the iPhone (2026-11-13): IndexedDB speed, the offline
+flow, leaving the session screen and the sync key indicator are answered there (results table in
+that file). What failed is in §5.
 
-- Measure IndexedDB speed on the real iPhone: in desktop WebKit, steps with IndexedDB took seconds
-  (import preview 2–3 s, first read of Data > 7 s). (2026-11-04 · Phase 5)
-- Timer sound with the screen locked, and the offline session flow, on the real iPhone. (2026-11-06 · Phase 5)
-- Confirm on the iPhone, without coverage, with the rest timer running and a field open, that the
-  session screen can be left (cause of the report not confirmed; preventive changes shipped in 0.10.0).
-  Also run `tests/e2e/session.spec.ts` in WebKit for AC-SESSION-40/41/42. (2026-11-11 · Phase 9 `fix/gym-feedback`)
-- Check on the iPhone that saving a sync key goes «Sincronizando…» → «Sincronizado». (2026-11-04 · Phase 4)
 - Lighthouse on mobile, on the deployed site, for the README badges. (2026-11-08 · Phase 8)
 - Check with `curl -I` how the deployed site answers a missing `/assets/*` (now `index.html` with an
   immutable cache header). (2026-11-08 · Phase 8)
@@ -53,9 +48,9 @@ Phase 10 closes the first two with `docs/device-checklist.md` and the Diagnostic
 - e2e: specs that reload after an import should fix the date with `page.clock`. (2026-11-07 · Phase 7)
 - e2e: AC-SYNC-03 must finish within the 2 s the fake server holds the response (`setDelay(2000)`);
   it may turn flaky on a slow machine. (2026-11-04 · Phase 4)
-- e2e: trim `components.spec.ts`; review the `@all-engines` tags (Phase 10 delivers a proposal; the
-  rest of the trimming, if any, goes here). Candidates noted: AC-BLK-11 (engine independent),
-  AC-SYNC-12/13/08/07/04/05, AC-EXPORT-01. (2026-11-11 · Phase 9)
+- e2e: trim `components.spec.ts`. The `@all-engines` tags were reviewed in Phase 10 (111 → 48 tests
+  in WebKit); measure the new WebKit time with the next `npm run e2e:all` and check the 25 min limit
+  of the CI shards. (2026-11-11 · Phase 9)
 - If `test:coverage` again reports 57/58 files with no visible failure, save the full output and find
   the file that does not finish; it happened once in Phase 4 and was never reproduced. (2026-11-03 · Phase 4)
 - iOS keyboard: readjust the layout after the keyboard closes, only if that is confirmed as the cause
@@ -103,3 +98,27 @@ Order by dependencies (added 2026-11-13). Details to be decided in ADRs before a
 Also: machine photos taken with the phone, compressed on the client and stored in Netlify Blobs, with
 a thumbnail in the exercise sheet and in the session; shown next to the «machine settings» of Phase 9
 (2026-11-10). The sync contract of v2 needs an ADR and a security review.
+
+## 5. Findings to review (iPhone run, 2026-11-13)
+
+Found by the manual run of `docs/device-checklist.md` on a real iPhone (Safari 26.6.1, the home-screen
+app, app 0.10.1). They did not block Phase 10 (the user decided so). **Whoever analyses the project
+next: read these two, check the code and leave each one as a suggestion** (a `fix/*` branch with its
+own spec and test). Not confirmed in the code yet; the places to look are only a starting point.
+
+- **The rest timer never sounds on the iPhone** (checks D-5.1 to D-5.4). With the app open in the
+  foreground, ringer switch on and volume up, the rest bar counts down and ends, but nothing plays. On
+  desktop the same sound plays. Not a Vibration API issue: vibration does not work on iOS Safari and the
+  app already says so (D-5.5). So the screen-locked, other-app and ringer-off cases (D-5.2 to D-5.4)
+  could not be judged either. To look at: `src/features/session/restAlerts.ts` (how the sound is made
+  and when it is unlocked), `unlockAudio()` called from `markDone` in
+  `src/features/session/useSessionActions.ts` (it must run inside the tap that starts the audio
+  context), and whether the audio context stays `suspended` on iOS. Needs the phone connected to
+  Safari's Web Inspector to confirm. (2026-11-13 · Phase 10)
+- **The rest counter disappears when changing section** (check D-3.4). With the rest timer running, tapping
+  another tab of the bottom bar leaves the session screen as it should, but the counter is gone. What
+  the user expects: when the user comes back to the session, the rest bar is there again and keeps counting
+  the time that passed, and it does not vanish for good. Probably the timer state lives in the
+  session screen and is lost when it unmounts. To look at: `src/features/session/useRestTimer.ts`,
+  `RestTimerBar.tsx` and `SessionPage.tsx`. Keep AC-SESSION-40 (leaving with the rest bar open) green:
+  every tab must still open. (2026-11-13 · Phase 10)
