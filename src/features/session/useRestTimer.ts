@@ -16,6 +16,17 @@ export interface RestTimer {
   at: number;
 }
 
+/**
+ * Where a rest is at `now`: `running` until its time is up, `overtime` (the alert has gone off and
+ * the bar waits to close) for `REST_AUTO_CLOSE` seconds, then `none`, as when there is no rest.
+ */
+export type RestPhase = 'none' | 'running' | 'overtime';
+
+export function restPhase(timer: Pick<RestTimer, 'endsAt'> | null, now: number): RestPhase {
+  if (!timer || now >= timer.endsAt + REST_AUTO_CLOSE * 1000) return 'none';
+  return now < timer.endsAt ? 'running' : 'overtime';
+}
+
 export interface RestTimerApi {
   timer: RestTimer | null;
   /** Starts (or restarts) the rest. */
@@ -43,16 +54,17 @@ export function useRestTimer(onFinish: () => void): RestTimerApi {
     const check = () => {
       clearTimeout(timeout);
       const now = Date.now();
-      if (now >= closeAt) {
+      const phase = restPhase({ endsAt }, now);
+      if (phase === 'none') {
         setTimer(null);
         return;
       }
       // The end alert goes off once per end time (+15 s after the end gives a new end time).
-      if (now >= endsAt && alertedFor.current !== endsAt) {
+      if (phase === 'overtime' && alertedFor.current !== endsAt) {
         alertedFor.current = endsAt;
         finish();
       }
-      timeout = setTimeout(check, (now < endsAt ? endsAt : closeAt) - now);
+      timeout = setTimeout(check, (phase === 'running' ? endsAt : closeAt) - now);
     };
     check();
     document.addEventListener('visibilitychange', check);

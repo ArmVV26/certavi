@@ -64,6 +64,23 @@ describe('useAppUpdate', () => {
     expect(sw.updateServiceWorker).toHaveBeenCalledWith(true);
   });
 
+  it('asks to activate the new version once, even if update is tapped again', async () => {
+    const { result } = renderHook(() => useAppUpdate());
+    sw.updateServiceWorker.mockClear();
+    result.current.update();
+    result.current.update();
+    expect(sw.updateServiceWorker).toHaveBeenCalledTimes(1);
+
+    // A failed activation can be tried again.
+    sw.updateServiceWorker.mockClear();
+    sw.updateServiceWorker.mockImplementationOnce(() => Promise.reject(new Error('failed')));
+    const second = renderHook(() => useAppUpdate());
+    second.result.current.update();
+    await vi.advanceTimersByTimeAsync(0);
+    second.result.current.update();
+    expect(sw.updateServiceWorker).toHaveBeenCalledTimes(2);
+  });
+
   it('looks for a new version every hour', () => {
     renderHook(() => useAppUpdate());
     const { registration, update } = fakeRegistration();

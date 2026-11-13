@@ -19,22 +19,43 @@ import { restoreBackup } from './restore';
 import { isValidKey, normalizeKey, type KeyStore } from './syncKey';
 import { SyncError, toSyncError, type SyncErrorCode, type SyncTransport } from './transport';
 
-export type SyncStatus = 'disabled' | 'idle' | 'syncing' | 'offline' | 'error';
-
-export interface SyncState {
-  /**
-   * `disabled`: no key on this device. `idle`: the last attempt worked. With a key and no
-   * attempt finished yet (just saved, or app start-up) it is `syncing`, never `idle`: "Synced"
-   * must not show before the server has answered (docs/spec/sync.md §2.1).
-   */
-  status: SyncStatus;
-  hasKey: boolean;
+/** What is true whatever the status is. */
+interface SyncCounters {
   /** Records waiting to be sent. */
   pending: number;
   /** Time of the last attempt that worked. */
   lastSuccessAt: number | null;
-  /** Why the last attempt failed (`status` is `error` or `offline`). */
-  error: SyncErrorCode | null;
+}
+
+/**
+ * Where the engine is. Each status carries only what belongs to it, so a state such as "idle with
+ * an old error" or "disabled with a key" cannot be built.
+ *
+ * - `disabled`: no key on this device.
+ * - `syncing`: an attempt is running. With a key and no attempt finished yet (just saved, or
+ *   app start-up) it is `syncing`, never `idle`: "Synced" must not show before the server has
+ *   answered (docs/spec/sync.md §2.1).
+ * - `idle`: the last attempt worked.
+ * - `offline`: the browser has no network (`error` null) or the last attempt hit a network error.
+ * - `error`: the last attempt failed for `error`.
+ */
+export type SyncPhase =
+  | { status: 'disabled' }
+  | { status: 'syncing' }
+  | { status: 'idle' }
+  | { status: 'offline'; error: SyncErrorCode | null }
+  | { status: 'error'; error: SyncErrorCode };
+
+export type SyncState = SyncCounters & SyncPhase;
+
+/** Whether this device has a sync key (every status but `disabled`). */
+export function hasSyncKey(state: SyncState): boolean {
+  return state.status !== 'disabled';
+}
+
+/** Why the last attempt failed, or null when it did not (or the failure is just "no network"). */
+export function syncErrorOf(state: SyncState): SyncErrorCode | null {
+  return state.status === 'error' || state.status === 'offline' ? state.error : null;
 }
 
 /** Timers, injectable so tests control time. */
@@ -124,10 +145,8 @@ export function createSyncEngine({
   let state: SyncState = {
     // With a key, `start()` runs the first attempt; until it ends nothing is known to be synced.
     status: key === null ? 'disabled' : 'syncing',
-    hasKey: key !== null,
     pending: 0,
     lastSuccessAt: null,
-    error: null,
   };
   const listeners = new Set<() => void>();
   const remoteListeners = new Set<(changes: AppliedChange[]) => void>();
@@ -141,9 +160,19 @@ export function createSyncEngine({
   /** Null until the first count: the queue as found at start-up is not a new edit. */
   let lastPending: number | null = null;
 
-  function update(patch: Partial<SyncState>) {
-    state = { ...state, ...patch };
+  function notify() {
     for (const listener of listeners) listener();
+  }
+
+  /** Moves to another status; the counters stay. The new status brings all of its own data. */
+  function enter(next: SyncPhase) {
+    state = { pending: state.pending, lastSuccessAt: state.lastSuccessAt, ...next };
+    notify();
+  }
+
+  function setCounters(patch: Partial<SyncCounters>) {
+    state = { ...state, ...patch };
+    notify();
   }
 
   function clearTimer() {
@@ -163,7 +192,7 @@ export function createSyncEngine({
   function onQueueCount(count: number) {
     const grew = lastPending !== null && count > lastPending;
     lastPending = count;
-    if (count !== state.pending) update({ pending: count });
+    if (count !== state.pending) setCounters({ pending: count });
     if (!grew || key === null || blocked) return;
     if (running) {
       rerun ??= 'write';
@@ -194,7 +223,7 @@ export function createSyncEngine({
     const startedAt = now();
     let sent = 0;
     let received = 0;
-    if (!exit) update({ status: 'syncing' });
+    if (!exit) enter({ status: 'syncing' });
     try {
       let remaining = 0;
       let batchSize = MAX_BATCH_RECORDS;
@@ -231,7 +260,8 @@ export function createSyncEngine({
       failures = 0;
       await log(reason, startedAt, { ok: true, sent, received });
       if (key !== activeKey) return;
-      update({ status: 'idle', error: null, lastSuccessAt: startedAt });
+      state = { status: 'idle', pending: state.pending, lastSuccessAt: startedAt };
+      notify();
       if (remaining > 0 && !rerun) schedule('interval', PENDING_SYNC_INTERVAL_MS);
     } catch (cause) {
       const error = toSyncError(cause);
@@ -239,7 +269,9 @@ export function createSyncEngine({
       if (key !== activeKey) return;
       if (error.kind === 'fatal') blocked = true;
       const offline = error.code === 'network' && !isOnline();
-      update({ status: offline ? 'offline' : 'error', error: error.code });
+      enter(
+        offline ? { status: 'offline', error: error.code } : { status: 'error', error: error.code },
+      );
       if (error.kind === 'retryable' && !offline && !exit) {
         failures += 1;
         schedule('retry', backoffMs(failures));
@@ -270,7 +302,7 @@ export function createSyncEngine({
     }
     if (!isOnline()) {
       clearTimer();
-      update({ status: 'offline', error: null });
+      enter({ status: 'offline', error: null });
       return;
     }
     void run(reason);
@@ -310,7 +342,7 @@ export function createSyncEngine({
       });
       void lastSuccessAt(db)
         .then((at) => {
-          if (at !== null && state.lastSuccessAt === null) update({ lastSuccessAt: at });
+          if (at !== null && state.lastSuccessAt === null) setCounters({ lastSuccessAt: at });
         })
         .catch(() => undefined);
       trigger('start');
@@ -339,7 +371,7 @@ export function createSyncEngine({
     wentOffline() {
       if (key === null) return;
       clearTimer();
-      if (!running) update({ status: 'offline', error: null });
+      if (!running) enter({ status: 'offline', error: null });
     },
 
     async setKey(input) {
@@ -357,7 +389,7 @@ export function createSyncEngine({
       rerun = null;
       clearTimer();
       // The first attempt with this key is about to run; it ends in idle, error or offline.
-      update({ hasKey: true, status: 'syncing', error: null });
+      enter({ status: 'syncing' });
       try {
         await settle(); // a stale attempt drops its answer; let it finish before re-queueing
         await queueEverything(db);
@@ -376,7 +408,7 @@ export function createSyncEngine({
       failures = 0;
       rerun = null;
       clearTimer();
-      update({ hasKey: false, status: 'disabled', error: null });
+      enter({ status: 'disabled' });
     },
 
     listBackups: async () => (await requireTransport()).listBackups(),

@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { createRepositories } from '../../data/repository';
@@ -178,6 +178,19 @@ describe('Sync card', () => {
     await user.click(within(card()).getByRole('button', { name: 'Guardar clave' }));
     expect(await screen.findByText('Clave guardada.')).toBeInTheDocument();
     expect(keyStore.read()).toBe(other);
+  });
+
+  it('shows the key form without a useless Cancel when the key goes away mid-change', async () => {
+    const { user, card, engine } = setup();
+    await user.click(within(card()).getByRole('button', { name: 'Cambiar clave' }));
+    expect(within(card()).getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
+
+    act(() => {
+      engine.forgetKey();
+    });
+
+    expect(within(card()).getByLabelText('Clave de sincronización')).toBeInTheDocument();
+    expect(within(card()).queryByRole('button', { name: 'Cancelar' })).not.toBeInTheDocument();
   });
 
   it('forgets the key after confirming', async () => {

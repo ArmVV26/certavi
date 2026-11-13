@@ -155,6 +155,26 @@ describe('the rest timer', () => {
     expect(bar()).not.toBeInTheDocument();
   });
 
+  it('closes when the session is finished on another device', async () => {
+    const db = openTestDatabase();
+    await ensureSeed(db);
+    const { engine, server } = createTestEngine(db);
+    const { user } = await openSession({ db, items: ITEMS, sync: engine });
+    await logRow(user, 'Aperturas en máquina', 1);
+    await screen.findByText('2:00');
+    await engine.syncNow(); // send what is local, so the next change is "remote"
+
+    const current = await db.sessions.get('s1');
+    if (!current || current.deleted) throw new Error('no session');
+    server.push([{ ...current, endedAt: Date.now(), updatedAt: Date.now() + 60_000 }]);
+    await engine.syncNow();
+
+    await screen.findByText('Terminada');
+    await waitFor(() => {
+      expect(bar()).not.toBeInTheDocument();
+    });
+  });
+
   it('reads in English', async () => {
     const { user } = await openSession({ items: ITEMS, locale: 'en' });
     const scope = cardOf('Machine chest fly');

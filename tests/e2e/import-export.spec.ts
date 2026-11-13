@@ -164,7 +164,11 @@ function anyDialog(page: Page): Locator {
 }
 
 /** Taps an import button and chooses a file in the picker. */
-async function chooseFile(page: Page, button: string, file: string): Promise<void> {
+async function chooseFile(
+  page: Page,
+  button: string,
+  file: string | { name: string; mimeType: string; buffer: Buffer },
+): Promise<void> {
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: button, exact: true }).click();
   await (await chooser).setFiles(file);
@@ -366,6 +370,94 @@ test.describe('import and export', { tag: '@all-engines' }, () => {
       await expect(anyDialog(page)).toHaveCount(0);
       await expectCounts(page, 'es', countsFor('es', 'new'));
     }
+  });
+
+  test('AC-IMPORT-03b · empty and binary files give the wrong-file message and the picker still works afterwards', async ({
+    page,
+  }) => {
+    await gotoReady(page, '/settings', 'Ajustes');
+    await expectCounts(page, 'es', countsFor('es', 'new'));
+
+    const empty = { name: 'vacio.json', mimeType: 'application/json', buffer: Buffer.alloc(0) };
+    const binary = {
+      name: 'binario.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from([0xff, 0xfe, 0x00, 0x01, 0x80, 0x81, 0xc3, 0x28, 0x00, 0xff]),
+    };
+    const cases: [button: string, file: typeof empty, message: string][] = [
+      [T.es.importGym, empty, T.es.notGym],
+      [T.es.importGym, binary, T.es.notGym],
+      [T.es.importCertavi, empty, T.es.notCertavi],
+      [T.es.importCertavi, binary, T.es.notCertavi],
+    ];
+    for (const [button, file, message] of cases) {
+      await page.reload();
+      await expect(h1(page, 'Ajustes')).toBeVisible();
+      await expectCounts(page, 'es', countsFor('es', 'new'));
+      await chooseFile(page, button, file);
+      await expect(toast(page, message), `${button} + ${file.name}`).toBeVisible();
+      await expect(anyDialog(page)).toHaveCount(0);
+      await expectCounts(page, 'es', countsFor('es', 'new'));
+    }
+
+    // After an error the picker is usable: a valid file opens the preview, and Cancel saves nothing.
+    await chooseFile(page, T.es.importGym, GYM_SAMPLE);
+    const dialog = dialogOf(page, T.es.importGym);
+    await expect(dialog).toBeVisible();
+    await expect.poll(() => readSummary(dialog, 'es')).toEqual(previewFor('es'));
+    await dialog.getByRole('button', { name: T.es.cancel, exact: true }).click();
+    await expect(dialog).toBeHidden();
+    await expectCounts(page, 'es', countsFor('es', 'new'));
+  });
+
+  test('AC-IMPORT-03b · while the import runs, Escape does not close the dialog and "Cancelar" / "Importar" are disabled; then it closes with the message', async ({
+    page,
+  }) => {
+    await gotoReady(page, '/settings', 'Ajustes');
+    await expectCounts(page, 'es', countsFor('es', 'new'));
+    await chooseFile(page, T.es.importGym, GYM_SAMPLE);
+    const dialog = dialogOf(page, T.es.importGym);
+    await expect(dialog).toBeVisible();
+    await expect.poll(() => readSummary(dialog, 'es')).toEqual(previewFor('es'));
+
+    // The import writes to IndexedDB (asynchronous), so in the same task as the tap the dialog is
+    // still open and "importing". Everything is read and an Escape is sent inside that one task,
+    // because a Playwright call between them would take longer than the import itself.
+    const state = await dialog
+      .getByRole('button', { name: T.es.confirm, exact: true })
+      .evaluate(async (btn) => {
+        const root = btn.closest('[role="dialog"], [role="alertdialog"], dialog');
+        if (!root) throw new Error('no dialog around the Importar button');
+        const isOpen = () =>
+          root.isConnected && (!(root instanceof HTMLDialogElement) || root.open);
+        const buttons = () =>
+          Array.from(root.querySelectorAll('button')).map((b) => ({
+            text: (b.getAttribute('aria-label') ?? b.textContent).trim(),
+            disabled: b.disabled || b.getAttribute('aria-disabled') === 'true',
+          }));
+        (btn as HTMLElement).click();
+        // React redraws in a microtask; the IndexedDB write needs a later task, so it still runs.
+        for (let i = 0; i < 5; i++) await Promise.resolve();
+        const afterTap = buttons();
+        const keydown = new KeyboardEvent('keydown', {
+          key: 'Escape',
+          code: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        });
+        (document.activeElement ?? root).dispatchEvent(keydown);
+        root.dispatchEvent(new Event('cancel', { cancelable: true }));
+        return { afterTap, openAfterEscape: isOpen() };
+      });
+    const named = (re: RegExp) => state.afterTap.find((b) => re.test(b.text));
+    expect(named(/^Cancelar/), JSON.stringify(state.afterTap)).toMatchObject({ disabled: true });
+    expect(named(/^Importa/), JSON.stringify(state.afterTap)).toMatchObject({ disabled: true });
+    expect(state.openAfterEscape, 'Escape while importing').toBe(true);
+
+    // It ends: message with the number, dialog closed, counts updated.
+    await expect(toast(page, T.es.imported(29))).toBeVisible();
+    await expect(dialog).toBeHidden();
+    await expectCounts(page, 'es', countsFor('es', 'after'));
   });
 
   test('AC-IMPORT-04 · importing the same file twice: nothing new, "Sin cambios (ya estaban) 29", "Cerrar"', async ({

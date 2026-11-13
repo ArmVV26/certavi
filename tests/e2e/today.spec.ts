@@ -318,6 +318,41 @@ test.describe('today', { tag: '@all-engines' }, () => {
     await expect(await card(page, ES.week)).toContainText('3 de 5');
   });
 
+  test('AC-TODAY-03 · the hero goes Empezar -> Continuar -> "Sesión hecha · ver o corregir" -> Continuar, also after a reload', async ({
+    page,
+  }) => {
+    await openTodayAt(page, MON);
+    await button(page, 'Empezar Push').click();
+    const url = await expectSessionScreen(page, 'Push');
+
+    await backToToday(page);
+    await expect(sessionAction(page, 'Continuar Push')).toBeVisible();
+
+    // Finish it: the hero says it is done and still opens the same session.
+    await sessionAction(page, 'Continuar Push').click();
+    await expectSessionScreen(page, 'Push');
+    await button(page, 'Terminar sesión').click();
+    await expect(page.getByRole('main').getByText('Terminada', { exact: true })).toBeVisible();
+    await backToToday(page);
+    const done = sessionAction(page, 'Sesión hecha · ver o corregir');
+    await expect(done).toBeVisible();
+    await expect(sessionAction(page, 'Continuar Push')).toHaveCount(0);
+    await expect(button(page, 'Empezar Push')).toHaveCount(0);
+    await page.reload();
+    await expect(h1(page, 'Hoy')).toBeVisible();
+    await expect(done).toBeVisible();
+    await done.click();
+    await expectSessionScreen(page, 'Push');
+    expect(page.url(), 'the same session').toBe(url);
+
+    // Back in progress: the hero is "Continuar" again.
+    await button(page, 'Marcar como en curso').click();
+    await expect(page.getByRole('main').getByText('En curso', { exact: true })).toBeVisible();
+    await backToToday(page);
+    await expect(sessionAction(page, 'Continuar Push')).toBeVisible();
+    await expect(sessionAction(page, 'Sesión hecha · ver o corregir')).toHaveCount(0);
+  });
+
   test('AC-TODAY-06 / 07 · a future date is refused; a past day is logged finished and reopened', async ({
     page,
   }) => {
