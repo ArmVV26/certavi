@@ -170,76 +170,80 @@ async function expectBelow(upper: Locator, lower: Locator): Promise<void> {
 // Tests
 // ---------------------------------------------------------------------------------------------
 
-test.describe('optional blocks', { tag: '@all-engines' }, () => {
-  test('AC-BLK-01 / 02 · the 0-10 scale is on one row at 390 px; the entry points reach the list and the tracking page', async ({
-    page,
-  }) => {
-    await gotoAt(page, MON, '/', 'Hoy');
-    const rehab = await card(page, REHAB);
-    const scale = group(rehab, STAIRS);
-    await expect(scale.getByRole('button')).toHaveCount(11);
-    await scale.scrollIntoViewIfNeeded();
+test.describe('optional blocks', () => {
+  test(
+    'AC-BLK-01 / 02 · the 0-10 scale is on one row at 390 px; the entry points reach the list and the tracking page',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await gotoAt(page, MON, '/', 'Hoy');
+      const rehab = await card(page, REHAB);
+      const scale = group(rehab, STAIRS);
+      await expect(scale.getByRole('button')).toHaveCount(11);
+      await scale.scrollIntoViewIfNeeded();
 
-    // AC-01: one row, nothing cut off, no sideways scroll.
-    const zero = await boxOf(scaleValue(scale, 0));
-    const ten = await boxOf(scaleValue(scale, 10));
-    expect(Math.abs(ten.y - zero.y), '"10" is level with "0"').toBeLessThanOrEqual(1);
-    for (let n = 0; n <= 10; n++) {
-      const box = await boxOf(scaleValue(scale, n));
-      expect(box.x, `box ${String(n)} starts inside the screen`).toBeGreaterThanOrEqual(0);
-      expect(box.x + box.width, `box ${String(n)} ends inside the screen`).toBeLessThanOrEqual(390);
-      expect(box.height, `box ${String(n)} is at least 44 px high`).toBeGreaterThanOrEqual(43.5);
-      expect(Math.abs(box.y - zero.y), `box ${String(n)} is on the same row`).toBeLessThanOrEqual(
-        1,
-      );
-    }
-    expect(zero.width).toBeGreaterThan(20);
-    expect(zero.width).toBeLessThan(40);
-    expect(await hasHorizontalScroll(page), 'no horizontal page scroll').toBe(false);
+      // AC-01: one row, nothing cut off, no sideways scroll.
+      const zero = await boxOf(scaleValue(scale, 0));
+      const ten = await boxOf(scaleValue(scale, 10));
+      expect(Math.abs(ten.y - zero.y), '"10" is level with "0"').toBeLessThanOrEqual(1);
+      for (let n = 0; n <= 10; n++) {
+        const box = await boxOf(scaleValue(scale, n));
+        expect(box.x, `box ${String(n)} starts inside the screen`).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width, `box ${String(n)} ends inside the screen`).toBeLessThanOrEqual(
+          390,
+        );
+        expect(box.height, `box ${String(n)} is at least 44 px high`).toBeGreaterThanOrEqual(43.5);
+        expect(Math.abs(box.y - zero.y), `box ${String(n)} is on the same row`).toBeLessThanOrEqual(
+          1,
+        );
+      }
+      expect(zero.width).toBeGreaterThan(20);
+      expect(zero.width).toBeLessThan(40);
+      expect(await hasHorizontalScroll(page), 'no horizontal page scroll').toBe(false);
 
-    // AC-02: Today -> tracking page.
-    await action(rehab, 'Ver seguimiento').click();
-    await expect(title(page, REHAB)).toBeVisible();
-    await expect(action(page, 'Editar bloque')).toBeVisible();
+      // AC-02: Today -> tracking page.
+      await action(rehab, 'Ver seguimiento').click();
+      await expect(title(page, REHAB)).toBeVisible();
+      await expect(action(page, 'Editar bloque')).toBeVisible();
 
-    // AC-02: Settings -> card "Bloques opcionales" -> "Gestionar bloques" -> list.
-    await mainNav(page).getByRole('link', { name: 'Ajustes', exact: true }).click();
-    await expect(title(page, 'Ajustes')).toBeVisible();
-    await expect(
-      page.getByRole('heading', { name: 'Bloques opcionales', exact: true }),
-    ).toBeVisible();
-    await page.getByRole('link', { name: 'Gestionar bloques', exact: true }).click();
-    await expect(page).toHaveURL(/\/settings\/blocks$/);
-    await expect(title(page, 'Bloques opcionales')).toBeVisible();
-    await expect(action(page, 'Nuevo bloque')).toBeVisible();
-    const active = page.getByRole('heading', { name: 'Activos', exact: true });
-    const inactive = page.getByRole('heading', { name: 'Inactivos', exact: true });
-    const ankle = page.getByRole('link', { name: new RegExp(`^${REHAB}`) });
-    const stretching = page.getByRole('link', { name: /^Estiramientos/ });
-    await expect(ankle).toContainText('8 ejercicios · todos los días');
-    await expect(ankle).toContainText('Rehabilitación');
-    await expect(stretching).toContainText('Sin ejercicios');
-    await expectBelow(active, ankle);
-    await expectBelow(ankle, inactive);
-    await expectBelow(inactive, stretching);
-    expect(await hasHorizontalScroll(page)).toBe(false);
+      // AC-02: Settings -> card "Bloques opcionales" -> "Gestionar bloques" -> list.
+      await mainNav(page).getByRole('link', { name: 'Ajustes', exact: true }).click();
+      await expect(title(page, 'Ajustes')).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: 'Bloques opcionales', exact: true }),
+      ).toBeVisible();
+      await page.getByRole('link', { name: 'Gestionar bloques', exact: true }).click();
+      await expect(page).toHaveURL(/\/settings\/blocks$/);
+      await expect(title(page, 'Bloques opcionales')).toBeVisible();
+      await expect(action(page, 'Nuevo bloque')).toBeVisible();
+      const active = page.getByRole('heading', { name: 'Activos', exact: true });
+      const inactive = page.getByRole('heading', { name: 'Inactivos', exact: true });
+      const ankle = page.getByRole('link', { name: new RegExp(`^${REHAB}`) });
+      const stretching = page.getByRole('link', { name: /^Estiramientos/ });
+      await expect(ankle).toContainText('8 ejercicios · todos los días');
+      await expect(ankle).toContainText('Rehabilitación');
+      await expect(stretching).toContainText('Sin ejercicios');
+      await expectBelow(active, ankle);
+      await expectBelow(ankle, inactive);
+      await expectBelow(inactive, stretching);
+      expect(await hasHorizontalScroll(page)).toBe(false);
 
-    // The list link opens the tracking page.
-    await ankle.click();
-    await expect(title(page, REHAB)).toBeVisible();
+      // The list link opens the tracking page.
+      await ankle.click();
+      await expect(title(page, REHAB)).toBeVisible();
 
-    // AC-01 (session): the five buttons 1..5 of "¿Cómo llegas?" are on one row too.
-    await goToday(page);
-    await button(page, 'Empezar Push').click();
-    await expect(page).toHaveURL(/\/session\/[^/]+$/);
-    const readiness = group(page, '¿Cómo llegas?');
-    await expect(readiness.getByRole('button')).toHaveCount(5);
-    const first = await boxOf(scaleValue(readiness, 1));
-    const last = await boxOf(scaleValue(readiness, 5));
-    expect(Math.abs(first.y - last.y)).toBeLessThanOrEqual(1);
-    expect(last.x + last.width).toBeLessThanOrEqual(390);
-    expect(await hasHorizontalScroll(page)).toBe(false);
-  });
+      // AC-01 (session): the five buttons 1..5 of "¿Cómo llegas?" are on one row too.
+      await goToday(page);
+      await button(page, 'Empezar Push').click();
+      await expect(page).toHaveURL(/\/session\/[^/]+$/);
+      const readiness = group(page, '¿Cómo llegas?');
+      await expect(readiness.getByRole('button')).toHaveCount(5);
+      const first = await boxOf(scaleValue(readiness, 1));
+      const last = await boxOf(scaleValue(readiness, 5));
+      expect(Math.abs(first.y - last.y)).toBeLessThanOrEqual(1);
+      expect(last.x + last.width).toBeLessThanOrEqual(390);
+      expect(await hasHorizontalScroll(page)).toBe(false);
+    },
+  );
 
   test('AC-BLK-03 / 04 · create a block; fill in the empty "Estiramientos" block with days; it shows on a Monday and not on a Tuesday', async ({
     page,
@@ -501,123 +505,128 @@ test.describe('optional blocks', { tag: '@all-engines' }, () => {
     expect(await hasHorizontalScroll(page)).toBe(false);
   });
 
-  test('AC-BLK-09 · weekly wall test: save, reload, replace the same week', async ({ page }) => {
-    await gotoAt(page, MON, '/', 'Hoy');
-    await openTracking(page, REHAB);
-    const wall = await card(page, 'Test de la pared');
-    await expect(wall).toContainText(/2\s*–\s*8 nov/);
-    await expect(wall.getByText('Aún no hay registros.')).toHaveCount(2);
+  test(
+    'AC-BLK-09 · weekly wall test: save, reload, replace the same week',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await gotoAt(page, MON, '/', 'Hoy');
+      await openTracking(page, REHAB);
+      const wall = await card(page, 'Test de la pared');
+      await expect(wall).toContainText(/2\s*–\s*8 nov/);
+      await expect(wall.getByText('Aún no hay registros.')).toHaveCount(2);
 
-    await field(wall, 'Izquierda (cm)').fill('9,5');
-    await field(wall, 'Derecha (cm)').fill('11');
-    await button(wall, 'Guardar').click();
-    await expect(toast(page, /^Test de la pared guardado · 2\s*–\s*8 nov\.?$/)).toBeVisible();
+      await field(wall, 'Izquierda (cm)').fill('9,5');
+      await field(wall, 'Derecha (cm)').fill('11');
+      await button(wall, 'Guardar').click();
+      await expect(toast(page, /^Test de la pared guardado · 2\s*–\s*8 nov\.?$/)).toBeVisible();
 
-    await page.reload();
-    await expect(title(page, REHAB)).toBeVisible();
-    const wallAgain = await card(page, 'Test de la pared');
-    await expect(field(wallAgain, 'Izquierda (cm)')).toHaveValue('9,5');
-    await expect(field(wallAgain, 'Derecha (cm)')).toHaveValue('11');
-    await expect(wallAgain.getByText('Aún no hay registros.')).toHaveCount(0);
-    await expect(description(wallAgain, /Izquierda.*1 punto/)).toBeAttached();
-    await expect(description(wallAgain, /Derecha.*1 punto/)).toBeAttached();
+      await page.reload();
+      await expect(title(page, REHAB)).toBeVisible();
+      const wallAgain = await card(page, 'Test de la pared');
+      await expect(field(wallAgain, 'Izquierda (cm)')).toHaveValue('9,5');
+      await expect(field(wallAgain, 'Derecha (cm)')).toHaveValue('11');
+      await expect(wallAgain.getByText('Aún no hay registros.')).toHaveCount(0);
+      await expect(description(wallAgain, /Izquierda.*1 punto/)).toBeAttached();
+      await expect(description(wallAgain, /Derecha.*1 punto/)).toBeAttached();
 
-    // Replace: "Derecha" = 12 for the same week.
-    await field(wallAgain, 'Derecha (cm)').fill('12');
-    await button(wallAgain, 'Guardar').click();
-    await expect(toast(page, /^Test de la pared guardado · /)).toBeVisible();
-    await expect(description(wallAgain, /Derecha.*1 punto/)).toBeAttached();
-    const views = wallAgain.getByText('Ver datos', { exact: true });
-    const total = await views.count();
-    expect(total).toBe(2);
-    for (let i = 0; i < total; i++) await views.nth(i).click();
-    await expect(wallAgain.getByText('12', { exact: true }).first()).toBeVisible();
-    await expect(wallAgain.getByRole('cell', { name: /^11(,0)? ?(cm)?$/ })).toHaveCount(0);
-    await page.reload();
-    await expect(field(await card(page, 'Test de la pared'), 'Derecha (cm)')).toHaveValue('12');
-  });
+      // Replace: "Derecha" = 12 for the same week.
+      await field(wallAgain, 'Derecha (cm)').fill('12');
+      await button(wallAgain, 'Guardar').click();
+      await expect(toast(page, /^Test de la pared guardado · /)).toBeVisible();
+      await expect(description(wallAgain, /Derecha.*1 punto/)).toBeAttached();
+      const views = wallAgain.getByText('Ver datos', { exact: true });
+      const total = await views.count();
+      expect(total).toBe(2);
+      for (let i = 0; i < total; i++) await views.nth(i).click();
+      await expect(wallAgain.getByText('12', { exact: true }).first()).toBeVisible();
+      await expect(wallAgain.getByRole('cell', { name: /^11(,0)? ?(cm)?$/ })).toHaveCount(0);
+      await page.reload();
+      await expect(field(await card(page, 'Test de la pared'), 'Derecha (cm)')).toHaveValue('12');
+    },
+  );
 
-  test('AC-BLK-12 · offline: create a block, log a value and save the wall test; all survive a reload and wait as pending', async ({
-    page,
-    context,
-  }) => {
-    const server = createFakeSyncServer();
-    await server.attach(context);
-    await gotoAt(page, MON, '/settings', 'Ajustes');
-    await page.getByLabel('Clave de sincronización', { exact: true }).fill(E2E_SYNC_KEY);
-    await button(page, 'Guardar clave').click();
-    await expect(toast(page, 'Clave guardada.')).toBeVisible();
-    await expect
-      .poll(() => server.requestCount('/api/v1/sync'), { timeout: WAIT })
-      .toBeGreaterThan(0);
-    await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sincronizado', {
-      timeout: WAIT,
-    });
-    // The block screens are lazy routes (separate files, downloaded when opened; the service
-    // worker would have them stored, but it is blocked in this spec): open the ones used below
-    // while online, so the offline part only navigates inside what is already loaded.
-    await page.getByRole('link', { name: 'Gestionar bloques', exact: true }).click();
-    await action(page, 'Nuevo bloque').click();
-    await expect(title(page, 'Nuevo bloque')).toBeVisible();
-    await goToday(page);
-    await openTracking(page, REHAB);
-    await mainNav(page).getByRole('link', { name: 'Ajustes', exact: true }).click();
-    await expect(title(page, 'Ajustes')).toBeVisible();
+  test(
+    'AC-BLK-12 · offline: create a block, log a value and save the wall test; all survive a reload and wait as pending',
+    { tag: '@all-engines' },
+    async ({ page, context }) => {
+      const server = createFakeSyncServer();
+      await server.attach(context);
+      await gotoAt(page, MON, '/settings', 'Ajustes');
+      await page.getByLabel('Clave de sincronización', { exact: true }).fill(E2E_SYNC_KEY);
+      await button(page, 'Guardar clave').click();
+      await expect(toast(page, 'Clave guardada.')).toBeVisible();
+      await expect
+        .poll(() => server.requestCount('/api/v1/sync'), { timeout: WAIT })
+        .toBeGreaterThan(0);
+      await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sincronizado', {
+        timeout: WAIT,
+      });
+      // The block screens are lazy routes (separate files, downloaded when opened; the service
+      // worker would have them stored, but it is blocked in this spec): open the ones used below
+      // while online, so the offline part only navigates inside what is already loaded.
+      await page.getByRole('link', { name: 'Gestionar bloques', exact: true }).click();
+      await action(page, 'Nuevo bloque').click();
+      await expect(title(page, 'Nuevo bloque')).toBeVisible();
+      await goToday(page);
+      await openTracking(page, REHAB);
+      await mainNav(page).getByRole('link', { name: 'Ajustes', exact: true }).click();
+      await expect(title(page, 'Ajustes')).toBeVisible();
 
-    const before = server.requestCount();
-    await context.setOffline(true);
-    await expect(indicator(page)).toHaveAccessibleName(/^Sincronización: Sin conexión/, {
-      timeout: WAIT,
-    });
+      const before = server.requestCount();
+      await context.setOffline(true);
+      await expect(indicator(page)).toHaveAccessibleName(/^Sincronización: Sin conexión/, {
+        timeout: WAIT,
+      });
 
-    // Create a block (no page load: navigate inside the app).
-    await page.getByRole('link', { name: 'Gestionar bloques', exact: true }).click();
-    await action(page, 'Nuevo bloque').click();
-    await field(page, 'Nombre').fill('Bloque sin red');
-    await button(page, 'Añadir ejercicio').click();
-    await field(page, 'Nombre').last().fill('Gemelo sin red');
-    await button(page, 'Guardar').click();
-    await expect(toast(page, 'Bloque guardado')).toBeVisible();
+      // Create a block (no page load: navigate inside the app).
+      await page.getByRole('link', { name: 'Gestionar bloques', exact: true }).click();
+      await action(page, 'Nuevo bloque').click();
+      await field(page, 'Nombre').fill('Bloque sin red');
+      await button(page, 'Añadir ejercicio').click();
+      await field(page, 'Nombre').last().fill('Gemelo sin red');
+      await button(page, 'Guardar').click();
+      await expect(toast(page, 'Bloque guardado')).toBeVisible();
 
-    // Log a value on Today.
-    await goToday(page);
-    await logStairs(page, 4);
+      // Log a value on Today.
+      await goToday(page);
+      await logStairs(page, 4);
 
-    // Save the wall test.
-    await openTracking(page, REHAB);
-    const wall = await card(page, 'Test de la pared');
-    await field(wall, 'Izquierda (cm)').fill('8');
-    await field(wall, 'Derecha (cm)').fill('10,5');
-    await button(wall, 'Guardar').click();
-    await expect(toast(page, /^Test de la pared guardado · /)).toBeVisible();
+      // Save the wall test.
+      await openTracking(page, REHAB);
+      const wall = await card(page, 'Test de la pared');
+      await field(wall, 'Izquierda (cm)').fill('8');
+      await field(wall, 'Derecha (cm)').fill('10,5');
+      await button(wall, 'Guardar').click();
+      await expect(toast(page, /^Test de la pared guardado · /)).toBeVisible();
 
-    await expect(indicator(page)).toHaveAccessibleName(
-      /^Sincronización: Sin conexión · \d+ pendientes?$/,
-      { timeout: WAIT },
-    );
-    expect(server.requestCount(), 'no request while offline').toBe(before);
+      await expect(indicator(page)).toHaveAccessibleName(
+        /^Sincronización: Sin conexión · \d+ pendientes?$/,
+        { timeout: WAIT },
+      );
+      expect(server.requestCount(), 'no request while offline').toBe(before);
 
-    // Reload with only the API cut (the page itself needs the network: no service worker yet).
-    const unreachable = (route: Route) => route.abort('internetdisconnected');
-    await context.route('**/api/v1/**', unreachable);
-    await context.setOffline(false);
-    await page.clock.setFixedTime(MON);
-    await page.reload();
-    await expect(title(page, REHAB)).toBeVisible();
-    const wallAgain = await card(page, 'Test de la pared');
-    await expect(field(wallAgain, 'Izquierda (cm)')).toHaveValue('8');
-    await expect(field(wallAgain, 'Derecha (cm)')).toHaveValue('10,5');
-    await expect(indicator(page)).toHaveAccessibleName(/ · \d+ pendientes?$/, { timeout: WAIT });
+      // Reload with only the API cut (the page itself needs the network: no service worker yet).
+      const unreachable = (route: Route) => route.abort('internetdisconnected');
+      await context.route('**/api/v1/**', unreachable);
+      await context.setOffline(false);
+      await page.clock.setFixedTime(MON);
+      await page.reload();
+      await expect(title(page, REHAB)).toBeVisible();
+      const wallAgain = await card(page, 'Test de la pared');
+      await expect(field(wallAgain, 'Izquierda (cm)')).toHaveValue('8');
+      await expect(field(wallAgain, 'Derecha (cm)')).toHaveValue('10,5');
+      await expect(indicator(page)).toHaveAccessibleName(/ · \d+ pendientes?$/, { timeout: WAIT });
 
-    await goToday(page);
-    const rehab = await card(page, REHAB);
-    await expect(scaleValue(group(rehab, STAIRS), 4)).toHaveAttribute('aria-pressed', 'true');
-    const mine = await card(page, 'Bloque sin red');
-    await expect(mine.getByRole('checkbox', { name: /^Gemelo sin red/ })).toBeVisible();
-    await page.goto('/settings/blocks');
-    await expect(page.getByRole('link', { name: /^Bloque sin red/ })).toBeVisible();
-    await context.unroute('**/api/v1/**', unreachable);
-  });
+      await goToday(page);
+      const rehab = await card(page, REHAB);
+      await expect(scaleValue(group(rehab, STAIRS), 4)).toHaveAttribute('aria-pressed', 'true');
+      const mine = await card(page, 'Bloque sin red');
+      await expect(mine.getByRole('checkbox', { name: /^Gemelo sin red/ })).toBeVisible();
+      await page.goto('/settings/blocks');
+      await expect(page.getByRole('link', { name: /^Bloque sin red/ })).toBeVisible();
+      await context.unroute('**/api/v1/**', unreachable);
+    },
+  );
 });
 
 // Language, theme and axe do not depend on the engine: Chromium only (.claude/rules/e2e.md).

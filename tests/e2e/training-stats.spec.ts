@@ -250,91 +250,87 @@ async function axe(page: Page, label: string): Promise<void> {
 // ---------------------------------------------------------------------------------------------
 
 test.describe('training statistics', () => {
-  test(
-    'AC-STA-01 · three active weeks in a row: card position, "3 semanas", best streak, same figure in Hoy; a week without session breaks it and future sessions do not count',
-    { tag: '@all-engines' },
-    async ({ page }) => {
-      // Active weeks: 14 Sep, 21 Sep, 28 Sep, 5 Oct | (12 Oct has no session) | 19 Oct, 26 Oct, 2 Nov.
-      // Two sessions in the week of 26 Oct (count once for the streak). Two sessions dated in the
-      // weeks after the current one (planned ahead) must not lengthen anything.
-      await seedAndOpen(page, [
-        light('2026-09-16'),
-        light('2026-09-24'),
-        light('2026-09-29'),
-        light('2026-10-07'),
-        light('2026-10-22'),
-        light('2026-10-30'),
-        light('2026-10-31', 'b'),
-        light('2026-11-03'),
-        light('2026-11-10'),
-        light('2026-11-18'),
-      ]);
-      const card = statsCard(page);
-      await expect(card).toBeVisible();
-      await expect(card).toContainText(/Racha\s*3 semanas/);
-      await expect(card.getByText('Mejor racha: 4 semanas', { exact: true })).toBeVisible();
-      await expect(card.getByText('Entrena esta semana', { exact: false })).toHaveCount(0);
+  test('AC-STA-01 · three active weeks in a row: card position, "3 semanas", best streak, same figure in Hoy; a week without session breaks it and future sessions do not count', async ({
+    page,
+  }) => {
+    // Active weeks: 14 Sep, 21 Sep, 28 Sep, 5 Oct | (12 Oct has no session) | 19 Oct, 26 Oct, 2 Nov.
+    // Two sessions in the week of 26 Oct (count once for the streak). Two sessions dated in the
+    // weeks after the current one (planned ahead) must not lengthen anything.
+    await seedAndOpen(page, [
+      light('2026-09-16'),
+      light('2026-09-24'),
+      light('2026-09-29'),
+      light('2026-10-07'),
+      light('2026-10-22'),
+      light('2026-10-30'),
+      light('2026-10-31', 'b'),
+      light('2026-11-03'),
+      light('2026-11-10'),
+      light('2026-11-18'),
+    ]);
+    const card = statsCard(page);
+    await expect(card).toBeVisible();
+    await expect(card).toContainText(/Racha\s*3 semanas/);
+    await expect(card.getByText('Mejor racha: 4 semanas', { exact: true })).toBeVisible();
+    await expect(card.getByText('Entrena esta semana', { exact: false })).toHaveCount(0);
 
-      // The card sits right after the summary and before "Series por grupo muscular".
-      const heading = page.getByRole('heading', { name: 'Entrenamiento', exact: true });
-      const next = page.getByRole('heading', { name: /^Series por grupo muscular/ });
-      const summary = page.getByRole('main').getByText('Sesiones', { exact: true }).first();
-      const y = async (l: Locator): Promise<number> => (await l.boundingBox())?.y ?? NaN;
-      expect(await y(summary)).toBeLessThan(await y(heading));
-      expect(await y(heading)).toBeLessThan(await y(next));
+    // The card sits right after the summary and before "Series por grupo muscular".
+    const heading = page.getByRole('heading', { name: 'Entrenamiento', exact: true });
+    const next = page.getByRole('heading', { name: /^Series por grupo muscular/ });
+    const summary = page.getByRole('main').getByText('Sesiones', { exact: true }).first();
+    const y = async (l: Locator): Promise<number> => (await l.boundingBox())?.y ?? NaN;
+    expect(await y(summary)).toBeLessThan(await y(heading));
+    expect(await y(heading)).toBeLessThan(await y(next));
 
-      // Reload mid-session: computed again from the device.
-      await page.reload();
-      await expect(h1(page, 'Progreso')).toBeVisible();
-      await expect(statsCard(page)).toContainText(/Racha\s*3 semanas/);
+    // Reload mid-session: computed again from the device.
+    await page.reload();
+    await expect(h1(page, 'Progreso')).toBeVisible();
+    await expect(statsCard(page)).toContainText(/Racha\s*3 semanas/);
 
-      // Hoy shows the same figure in "Esta semana"; it is not a link.
-      await toToday(page);
-      await expect(page.getByRole('main')).toContainText(/Racha\s*3 semanas/);
-      await expect(page.getByRole('link', { name: /Racha/ })).toHaveCount(0);
-    },
-  );
+    // Hoy shows the same figure in "Esta semana"; it is not a link.
+    await toToday(page);
+    await expect(page.getByRole('main')).toContainText(/Racha\s*3 semanas/);
+    await expect(page.getByRole('link', { name: /Racha/ })).toHaveCount(0);
+  });
 
-  test(
-    'AC-STA-02 / 03 · the current week without a (counting) session keeps the streak at "2 semanas"; warm-ups and an activity alone do not make it active',
-    { tag: '@all-engines' },
-    async ({ page }) => {
-      // Active weeks: 21 Sep, 28 Sep, 5 Oct (a run of 3) | 12 Oct missing | 19 Oct, 26 Oct.
-      // The current week only has a session with a warm-up: it does not count.
-      await seedAndOpen(page, [
-        light('2026-09-23'),
-        light('2026-09-30'),
-        light('2026-10-06'),
-        light('2026-10-21'),
-        light('2026-10-28'),
-        session('2026-11-02', [{ ex: 'remo-t', slot: 'w1', kind: 'warmup', w: 40, r: 10 }]),
-      ]);
-      const card = statsCard(page);
-      await expect(card).toContainText(/Racha\s*2 semanas/);
-      await expect(
-        card.getByText('Entrena esta semana para mantenerla', { exact: true }),
-      ).toBeVisible();
-      await expect(card.getByText(/^Mejor racha/)).toHaveCount(0);
+  test('AC-STA-02 / 03 · the current week without a (counting) session keeps the streak at "2 semanas"; warm-ups and an activity alone do not make it active', async ({
+    page,
+  }) => {
+    // Active weeks: 21 Sep, 28 Sep, 5 Oct (a run of 3) | 12 Oct missing | 19 Oct, 26 Oct.
+    // The current week only has a session with a warm-up: it does not count.
+    await seedAndOpen(page, [
+      light('2026-09-23'),
+      light('2026-09-30'),
+      light('2026-10-06'),
+      light('2026-10-21'),
+      light('2026-10-28'),
+      session('2026-11-02', [{ ex: 'remo-t', slot: 'w1', kind: 'warmup', w: 40, r: 10 }]),
+    ]);
+    const card = statsCard(page);
+    await expect(card).toContainText(/Racha\s*2 semanas/);
+    await expect(
+      card.getByText('Entrena esta semana para mantenerla', { exact: true }),
+    ).toBeVisible();
+    await expect(card.getByText(/^Mejor racha/)).toHaveCount(0);
 
-      // Hoy shows the same; saving an activity (swimming) does not make the week active.
-      await toToday(page);
-      await expect(page.getByRole('main')).toContainText(/Racha\s*2 semanas/);
-      await option(page.getByRole('main'), 'Natación').first().click();
-      await page
-        .getByRole('textbox', { name: 'Minutos', exact: true })
-        .or(page.getByRole('spinbutton', { name: 'Minutos', exact: true }))
-        .fill('45');
-      await page.getByRole('button', { name: 'Guardar actividad de hoy', exact: true }).click();
-      await expect(page.getByText('Hoy: Natación 45 min', { exact: true })).toBeVisible();
-      await expect(page.getByRole('main')).toContainText(/Racha\s*2 semanas/);
+    // Hoy shows the same; saving an activity (swimming) does not make the week active.
+    await toToday(page);
+    await expect(page.getByRole('main')).toContainText(/Racha\s*2 semanas/);
+    await option(page.getByRole('main'), 'Natación').first().click();
+    await page
+      .getByRole('textbox', { name: 'Minutos', exact: true })
+      .or(page.getByRole('spinbutton', { name: 'Minutos', exact: true }))
+      .fill('45');
+    await page.getByRole('button', { name: 'Guardar actividad de hoy', exact: true }).click();
+    await expect(page.getByText('Hoy: Natación 45 min', { exact: true })).toBeVisible();
+    await expect(page.getByRole('main')).toContainText(/Racha\s*2 semanas/);
 
-      await toProgress(page);
-      await expect(statsCard(page)).toContainText(/Racha\s*2 semanas/);
-      await expect(
-        statsCard(page).getByText('Entrena esta semana para mantenerla', { exact: true }),
-      ).toBeVisible();
-    },
-  );
+    await toProgress(page);
+    await expect(statsCard(page)).toContainText(/Racha\s*2 semanas/);
+    await expect(
+      statsCard(page).getByText('Entrena esta semana para mantenerla', { exact: true }),
+    ).toBeVisible();
+  });
 
   test(
     'AC-STA-04 / 07 · week figures (2.400 kg, 2 exercises, 5 sets), the 12-week chart and its "Ver datos" table',
@@ -383,214 +379,203 @@ test.describe('training statistics', () => {
     },
   );
 
-  test(
-    'AC-STA-05 · "Mes" adds the weeks of November (3.800 kg, 3 exercises, 7 sets) and the chart shows 6 months',
-    { tag: '@all-engines' },
-    async ({ page }) => {
-      await seedAndOpen(page, FIGURES);
-      const card = statsCard(page);
-      await expect(card).toContainText(/Peso levantado\s*2\.400\s*kg/);
+  test('AC-STA-05 · "Mes" adds the weeks of November (3.800 kg, 3 exercises, 7 sets) and the chart shows 6 months', async ({
+    page,
+  }) => {
+    await seedAndOpen(page, FIGURES);
+    const card = statsCard(page);
+    await expect(card).toContainText(/Peso levantado\s*2\.400\s*kg/);
 
-      await option(card, 'Mes').click();
-      await expect(selected(card, 'Mes')).toBeVisible();
-      await expect(card.getByText('noviembre de 2026', { exact: true })).toBeVisible();
-      await expectFigures(card, ['Peso levantado', 'Ejercicios', 'Series'], ['3.800 kg', '3', '7']);
-      await expect(card.getByRole('img', { name: /6 meses/ })).toBeVisible();
-      await expect(card).toContainText('nov');
-      await expect(card).not.toContainText('2/11');
+    await option(card, 'Mes').click();
+    await expect(selected(card, 'Mes')).toBeVisible();
+    await expect(card.getByText('noviembre de 2026', { exact: true })).toBeVisible();
+    await expectFigures(card, ['Peso levantado', 'Ejercicios', 'Series'], ['3.800 kg', '3', '7']);
+    await expect(card.getByRole('img', { name: /6 meses/ })).toBeVisible();
+    await expect(card).toContainText('nov');
+    await expect(card).not.toContainText('2/11');
 
-      const table = await openData(card);
-      await expect(dataRows(table)).toHaveCount(6);
-      const cells = (text: RegExp): Locator =>
-        dataRows(table).filter({ hasText: text }).getByRole('cell');
-      await expect(cells(/nov/i)).toHaveText([/^3\.800(\s*kg)?$/, '3', '7', '2']);
-      await expect(cells(/oct/i)).toHaveText([/^500(\s*kg)?$/, '1', '1', '1']);
-      await expect(cells(/sep/i)).toHaveText([/^1\.200(\s*kg)?$/, '1', '2', '1']);
+    const table = await openData(card);
+    await expect(dataRows(table)).toHaveCount(6);
+    const cells = (text: RegExp): Locator =>
+      dataRows(table).filter({ hasText: text }).getByRole('cell');
+    await expect(cells(/nov/i)).toHaveText([/^3\.800(\s*kg)?$/, '3', '7', '2']);
+    await expect(cells(/oct/i)).toHaveText([/^500(\s*kg)?$/, '1', '1', '1']);
+    await expect(cells(/sep/i)).toHaveText([/^1\.200(\s*kg)?$/, '1', '2', '1']);
 
-      // Back to "Semana": the week figures and 12 rows again.
-      await option(card, 'Semana').click();
-      await expect(card).toContainText(/Peso levantado\s*2\.400\s*kg/);
-      await expect(card.getByRole('img', { name: /12 semanas/ })).toBeVisible();
-    },
-  );
+    // Back to "Semana": the week figures and 12 rows again.
+    await option(card, 'Semana').click();
+    await expect(card).toContainText(/Peso levantado\s*2\.400\s*kg/);
+    await expect(card.getByRole('img', { name: /12 semanas/ })).toBeVisible();
+  });
 
-  test(
-    'AC-STA-06 · warm-ups, empty sets and bodyweight add no weight; an exercise marked "No cuenta" keeps its exercise and sets but loses its weight',
-    { tag: '@all-engines' },
-    async ({ page }) => {
-      // Monday 2 Nov: remo (warm-up 40x10 + 2 x 80x5), pull-ups 0 kg x 8 (bodyweight),
-      // aperturas (2 x 40x10 + a set with 0 repetitions).
-      await seedAndOpen(page, [
-        {
-          ...session('2026-11-02', [
-            { ex: 'remo-t', slot: 'w1', kind: 'warmup', w: 40, r: 10 },
-            ...work('remo-t', 80, 5, 2),
-            { ex: 'dominadas', slot: 'x1', kind: 'extra', w: 0, r: 8, band: 'morada' },
-            ...work('aperturas-maquina', 40, 10, 2),
-            { ex: 'aperturas-maquina', slot: 'x1', kind: 'extra', w: 40, r: 0 },
-          ]),
-          items: [
-            { ex: 'remo-t', plan: [['work', '8-10', 2]], rir: '1-2' },
-            { ex: 'aperturas-maquina', plan: [['work', '10-12', 2]], rir: '1-2' },
-          ],
-        },
-      ]);
-      // 800 (remo) + 800 (aperturas); warm-up, 0 reps and bodyweight add nothing.
-      // Exercises: 3. Sets: 2 + 1 + 2 = 5 (neither the warm-up nor the empty set).
-      await expectFigures(
-        statsCard(page),
-        ['Peso levantado', 'Ejercicios', 'Series'],
-        ['1.600 kg', '3', '5'],
-      );
-
-      // Mark Aperturas as "No cuenta para la progresión" in its session (opened from Hoy).
-      await toToday(page);
-      await page.getByRole('link', { name: /^lunes 2:/ }).click();
-      await expect(page).toHaveURL(/\/session\/[^/]+$/);
-      const heading = page.getByRole('heading', { name: 'Aperturas en máquina', exact: true });
-      await expect(heading).toBeVisible();
-      const exCard = page.locator('article').filter({ has: heading });
-      // The cards of a finished session are closed: open the exercise first.
-      await heading.getByRole('button').click();
-      await exCard.getByRole('button', { name: 'Nota', exact: true }).click();
-      const skip = exCard.getByRole('checkbox', {
-        name: 'No cuenta para la progresión',
-        exact: true,
-      });
-      await skip.click();
-      await expect(skip).toBeChecked();
-      await page.clock.runFor(DEBOUNCE);
-      await expect(exCard.getByRole('button', { name: 'Nota ✎', exact: true })).toBeVisible();
-
-      // The figures update by themselves: the weight of Aperturas is gone, but not the exercise
-      // nor its sets.
-      await toProgress(page);
-      await expectFigures(
-        statsCard(page),
-        ['Peso levantado', 'Ejercicios', 'Series'],
-        ['800 kg', '3', '5'],
-      );
-
-      // It survives a reload.
-      await page.reload();
-      await expect(h1(page, 'Progreso')).toBeVisible();
-      await expect(statsCard(page)).toContainText(/Peso levantado\s*800\s*kg/);
-    },
-  );
-
-  test(
-    'AC-STA-01 edge · no sessions: no card; only an old 0 kg session: streak 0 with its note, 0 kg figures, "Resumen por" forgotten after reload, Hoy shows 0',
-    { tag: '@all-engines' },
-    async ({ page }) => {
-      await page.clock.install({ time: TODAY });
-      await gotoReady(page, '/progress', 'Progreso');
-      await expect(page.getByText('Todavía no hay datos', { exact: true })).toBeVisible();
-      await expect(page.getByRole('heading', { name: 'Entrenamiento', exact: true })).toHaveCount(
-        0,
-      );
-
-      // Only a bodyweight session (0 kg) five weeks ago.
-      await importBackup(
-        page,
-        gymBackup([
-          session('2026-10-05', [
-            { ex: 'dominadas', slot: 'x1', kind: 'extra', w: 0, r: 8, band: 'morada' },
-          ]),
+  test('AC-STA-06 · warm-ups, empty sets and bodyweight add no weight; an exercise marked "No cuenta" keeps its exercise and sets but loses its weight', async ({
+    page,
+  }) => {
+    // Monday 2 Nov: remo (warm-up 40x10 + 2 x 80x5), pull-ups 0 kg x 8 (bodyweight),
+    // aperturas (2 x 40x10 + a set with 0 repetitions).
+    await seedAndOpen(page, [
+      {
+        ...session('2026-11-02', [
+          { ex: 'remo-t', slot: 'w1', kind: 'warmup', w: 40, r: 10 },
+          ...work('remo-t', 80, 5, 2),
+          { ex: 'dominadas', slot: 'x1', kind: 'extra', w: 0, r: 8, band: 'morada' },
+          ...work('aperturas-maquina', 40, 10, 2),
+          { ex: 'aperturas-maquina', slot: 'x1', kind: 'extra', w: 40, r: 0 },
         ]),
-      );
-      await toProgress(page);
-      const card = statsCard(page);
-      await expect(card).toBeVisible();
-      await expect(card).toContainText(/Racha\s*0/);
-      await expect(
-        card.getByText('Entrena esta semana para empezar una', { exact: true }),
-      ).toBeVisible();
-      await expectFigures(card, ['Peso levantado', 'Ejercicios', 'Series'], ['0 kg', '0', '0']);
-      await expect(card.getByRole('img', { name: /12 semanas/ })).toBeVisible();
+        items: [
+          { ex: 'remo-t', plan: [['work', '8-10', 2]], rir: '1-2' },
+          { ex: 'aperturas-maquina', plan: [['work', '10-12', 2]], rir: '1-2' },
+        ],
+      },
+    ]);
+    // 800 (remo) + 800 (aperturas); warm-up, 0 reps and bodyweight add nothing.
+    // Exercises: 3. Sets: 2 + 1 + 2 = 5 (neither the warm-up nor the empty set).
+    await expectFigures(
+      statsCard(page),
+      ['Peso levantado', 'Ejercicios', 'Series'],
+      ['1.600 kg', '3', '5'],
+    );
 
-      // The choice is only remembered while the screen is open.
-      await option(card, 'Mes').click();
-      await expect(selected(card, 'Mes')).toBeVisible();
-      await page.reload();
-      await expect(h1(page, 'Progreso')).toBeVisible();
-      await expect(selected(statsCard(page), 'Semana')).toBeVisible();
+    // Mark Aperturas as "No cuenta para la progresión" in its session (opened from Hoy).
+    await toToday(page);
+    await page.getByRole('link', { name: /^lunes 2:/ }).click();
+    await expect(page).toHaveURL(/\/session\/[^/]+$/);
+    const heading = page.getByRole('heading', { name: 'Aperturas en máquina', exact: true });
+    await expect(heading).toBeVisible();
+    const exCard = page.locator('article').filter({ has: heading });
+    // The cards of a finished session are closed: open the exercise first.
+    await heading.getByRole('button').click();
+    await exCard.getByRole('button', { name: 'Nota', exact: true }).click();
+    const skip = exCard.getByRole('checkbox', {
+      name: 'No cuenta para la progresión',
+      exact: true,
+    });
+    await skip.click();
+    await expect(skip).toBeChecked();
+    await page.clock.runFor(DEBOUNCE);
+    await expect(exCard.getByRole('button', { name: 'Nota ✎', exact: true })).toBeVisible();
 
-      await toToday(page);
-      await expect(page.getByRole('main')).toContainText(/Racha\s*0(?!\d)/);
-    },
-  );
+    // The figures update by themselves: the weight of Aperturas is gone, but not the exercise
+    // nor its sets.
+    await toProgress(page);
+    await expectFigures(
+      statsCard(page),
+      ['Peso levantado', 'Ejercicios', 'Series'],
+      ['800 kg', '3', '5'],
+    );
 
-  test(
-    'AC-STA-08 · English, dark then light at 390 px: every text in English, no horizontal scroll (also with the table open), no serious axe issue in Progress and Today',
-    { tag: '@all-engines' },
-    async ({ page, browserName }) => {
-      await page.emulateMedia({ colorScheme: 'dark' });
-      await page.clock.install({ time: TODAY });
-      // Streak: 26 Oct and 2 Nov are active, 19 Oct is not -> 2 weeks, best 2.
-      await importBackup(page, gymBackup(FIGURES));
-      await setLanguage(page, 'en');
-      await toProgress(page, 'en');
-      await expectTheme(page, 'dark');
-      expect(page.viewportSize()?.width).toBe(390);
+    // It survives a reload.
+    await page.reload();
+    await expect(h1(page, 'Progreso')).toBeVisible();
+    await expect(statsCard(page)).toContainText(/Peso levantado\s*800\s*kg/);
+  });
 
-      const card = statsCard(page, 'en');
-      await expect(card.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
-      await expect(card).toContainText(/Streak\s*2 weeks/);
-      await expect(card.getByText('Best streak: 2 weeks', { exact: true })).toBeVisible();
-      await expect(
-        card
-          .getByRole('radiogroup', { name: 'Summary by', exact: true })
-          .or(card.getByRole('group', { name: 'Summary by', exact: true })),
-      ).toBeVisible();
-      await expect(selected(card, 'Week')).toBeVisible();
-      await expect(card.getByText(/^Week\s*2\s*–\s*8 Nov$/)).toBeVisible();
-      await expectFigures(card, ['Weight lifted', 'Exercises', 'Sets'], ['2,400 kg', '2', '5']);
-      await expect(card.getByRole('img', { name: /12 weeks/ })).toBeVisible();
-      await expect(card).toContainText(/2\s*–\s*8 Nov: 2,400 kg, 2 exercises, 5 sets/);
+  test('AC-STA-01 edge · no sessions: no card; only an old 0 kg session: streak 0 with its note, 0 kg figures, "Resumen por" forgotten after reload, Hoy shows 0', async ({
+    page,
+  }) => {
+    await page.clock.install({ time: TODAY });
+    await gotoReady(page, '/progress', 'Progreso');
+    await expect(page.getByText('Todavía no hay datos', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Entrenamiento', exact: true })).toHaveCount(0);
 
-      const table = await openData(card, 'en');
-      await expect(dataRows(table)).toHaveCount(12);
-      expect(await hasHorizontalScroll(page), 'horizontal scroll (Progress, table open)').toBe(
-        false,
-      );
+    // Only a bodyweight session (0 kg) five weeks ago.
+    await importBackup(
+      page,
+      gymBackup([
+        session('2026-10-05', [
+          { ex: 'dominadas', slot: 'x1', kind: 'extra', w: 0, r: 8, band: 'morada' },
+        ]),
+      ]),
+    );
+    await toProgress(page);
+    const card = statsCard(page);
+    await expect(card).toBeVisible();
+    await expect(card).toContainText(/Racha\s*0/);
+    await expect(
+      card.getByText('Entrena esta semana para empezar una', { exact: true }),
+    ).toBeVisible();
+    await expectFigures(card, ['Peso levantado', 'Ejercicios', 'Series'], ['0 kg', '0', '0']);
+    await expect(card.getByRole('img', { name: /12 semanas/ })).toBeVisible();
 
-      await option(card, 'Month').click();
-      await expect(card.getByText('November 2026', { exact: true })).toBeVisible();
-      await expectFigures(card, ['Weight lifted', 'Exercises', 'Sets'], ['3,800 kg', '3', '7']);
-      await expect(card.getByRole('img', { name: /6 months/ })).toBeVisible();
-      expect(await hasHorizontalScroll(page), 'horizontal scroll (Progress, month)').toBe(false);
+    // The choice is only remembered while the screen is open.
+    await option(card, 'Mes').click();
+    await expect(selected(card, 'Mes')).toBeVisible();
+    await page.reload();
+    await expect(h1(page, 'Progreso')).toBeVisible();
+    await expect(selected(statsCard(page), 'Semana')).toBeVisible();
 
-      // No Spanish left in the card.
-      const text =
-        (await card.evaluate((el) => (el as HTMLElement).innerText)) +
-        '\n' +
-        (await card.evaluate((el) =>
-          Array.from(el.querySelectorAll('[aria-label],[title]'))
-            .map((e) => `${e.getAttribute('aria-label') ?? ''} ${e.getAttribute('title') ?? ''}`)
-            .join('\n'),
-        ));
-      expect(text).not.toMatch(
-        /\b(Racha|Entrenamiento|Peso levantado|Ejercicios|Series|Resumen|Semana|Ver datos|Mejor|semanas|noviembre)\b/,
-      );
+    await toToday(page);
+    await expect(page.getByRole('main')).toContainText(/Racha\s*0(?!\d)/);
+  });
 
-      if (browserName === 'chromium') await axe(page, 'Progress (en, dark)');
+  test('AC-STA-08 · English, dark then light at 390 px: every text in English, no horizontal scroll (also with the table open), no serious axe issue in Progress and Today', async ({
+    page,
+    browserName,
+  }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.clock.install({ time: TODAY });
+    // Streak: 26 Oct and 2 Nov are active, 19 Oct is not -> 2 weeks, best 2.
+    await importBackup(page, gymBackup(FIGURES));
+    await setLanguage(page, 'en');
+    await toProgress(page, 'en');
+    await expectTheme(page, 'dark');
+    expect(page.viewportSize()?.width).toBe(390);
 
-      // Today, English, dark.
-      await toToday(page, 'en');
-      await expect(page.getByRole('main')).toContainText(/Streak\s*2 weeks/);
-      expect(await hasHorizontalScroll(page), 'horizontal scroll (Today, dark)').toBe(false);
-      expect(await page.getByRole('main').innerText()).not.toMatch(/\bRacha\b/);
-      if (browserName === 'chromium') await axe(page, 'Today (en, dark)');
+    const card = statsCard(page, 'en');
+    await expect(card.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+    await expect(card).toContainText(/Streak\s*2 weeks/);
+    await expect(card.getByText('Best streak: 2 weeks', { exact: true })).toBeVisible();
+    await expect(
+      card
+        .getByRole('radiogroup', { name: 'Summary by', exact: true })
+        .or(card.getByRole('group', { name: 'Summary by', exact: true })),
+    ).toBeVisible();
+    await expect(selected(card, 'Week')).toBeVisible();
+    await expect(card.getByText(/^Week\s*2\s*–\s*8 Nov$/)).toBeVisible();
+    await expectFigures(card, ['Weight lifted', 'Exercises', 'Sets'], ['2,400 kg', '2', '5']);
+    await expect(card.getByRole('img', { name: /12 weeks/ })).toBeVisible();
+    await expect(card).toContainText(/2\s*–\s*8 Nov: 2,400 kg, 2 exercises, 5 sets/);
 
-      // Light theme, both screens.
-      await page.emulateMedia({ colorScheme: 'light' });
-      await expectTheme(page, 'light');
-      expect(await hasHorizontalScroll(page), 'horizontal scroll (Today, light)').toBe(false);
-      if (browserName === 'chromium') await axe(page, 'Today (en, light)');
-      await toProgress(page, 'en');
-      await expect(statsCard(page, 'en')).toContainText(/Streak\s*2 weeks/);
-      expect(await hasHorizontalScroll(page), 'horizontal scroll (Progress, light)').toBe(false);
-      if (browserName === 'chromium') await axe(page, 'Progress (en, light)');
-    },
-  );
+    const table = await openData(card, 'en');
+    await expect(dataRows(table)).toHaveCount(12);
+    expect(await hasHorizontalScroll(page), 'horizontal scroll (Progress, table open)').toBe(false);
+
+    await option(card, 'Month').click();
+    await expect(card.getByText('November 2026', { exact: true })).toBeVisible();
+    await expectFigures(card, ['Weight lifted', 'Exercises', 'Sets'], ['3,800 kg', '3', '7']);
+    await expect(card.getByRole('img', { name: /6 months/ })).toBeVisible();
+    expect(await hasHorizontalScroll(page), 'horizontal scroll (Progress, month)').toBe(false);
+
+    // No Spanish left in the card.
+    const text =
+      (await card.evaluate((el) => (el as HTMLElement).innerText)) +
+      '\n' +
+      (await card.evaluate((el) =>
+        Array.from(el.querySelectorAll('[aria-label],[title]'))
+          .map((e) => `${e.getAttribute('aria-label') ?? ''} ${e.getAttribute('title') ?? ''}`)
+          .join('\n'),
+      ));
+    expect(text).not.toMatch(
+      /\b(Racha|Entrenamiento|Peso levantado|Ejercicios|Series|Resumen|Semana|Ver datos|Mejor|semanas|noviembre)\b/,
+    );
+
+    if (browserName === 'chromium') await axe(page, 'Progress (en, dark)');
+
+    // Today, English, dark.
+    await toToday(page, 'en');
+    await expect(page.getByRole('main')).toContainText(/Streak\s*2 weeks/);
+    expect(await hasHorizontalScroll(page), 'horizontal scroll (Today, dark)').toBe(false);
+    expect(await page.getByRole('main').innerText()).not.toMatch(/\bRacha\b/);
+    if (browserName === 'chromium') await axe(page, 'Today (en, dark)');
+
+    // Light theme, both screens.
+    await page.emulateMedia({ colorScheme: 'light' });
+    await expectTheme(page, 'light');
+    expect(await hasHorizontalScroll(page), 'horizontal scroll (Today, light)').toBe(false);
+    if (browserName === 'chromium') await axe(page, 'Today (en, light)');
+    await toProgress(page, 'en');
+    await expect(statsCard(page, 'en')).toContainText(/Streak\s*2 weeks/);
+    expect(await hasHorizontalScroll(page), 'horizontal scroll (Progress, light)').toBe(false);
+    if (browserName === 'chromium') await axe(page, 'Progress (en, light)');
+  });
 });

@@ -98,54 +98,61 @@ async function storageValue(page: Page, term: string): Promise<string> {
   return (await dd.innerText()).trim();
 }
 
-test.describe('data card', { tag: '@all-engines' }, () => {
-  test('AC-DATA-01 · a new device shows the built-in data, in order, between Apariencia and Desarrollo', async ({
-    page,
-  }) => {
-    await gotoReady(page, '/settings', 'Ajustes');
-    const heading = page.getByRole('heading', { name: 'Datos', exact: true });
-    await expect(heading).toBeVisible();
-    await expect(
-      page.getByText('Todo se guarda primero en este dispositivo.', { exact: true }),
-    ).toBeVisible();
+test.describe('data card', () => {
+  test(
+    'AC-DATA-01 · a new device shows the built-in data, in order, between Apariencia and Desarrollo',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await gotoReady(page, '/settings', 'Ajustes');
+      const heading = page.getByRole('heading', { name: 'Datos', exact: true });
+      await expect(heading).toBeVisible();
+      await expect(
+        page.getByText('Todo se guarda primero en este dispositivo.', { exact: true }),
+      ).toBeVisible();
 
-    await expectNewDeviceCounts(page, 'es');
+      await expectNewDeviceCounts(page, 'es');
 
-    // Placed after "Apariencia" and before "Desarrollo".
-    const appearance = await boxOf(page.getByText('Apariencia', { exact: true }).first());
-    const data = await boxOf(heading);
-    const developer = await boxOf(page.getByText('Desarrollo', { exact: true }).first());
-    expect(data.y).toBeGreaterThan(appearance.y);
-    expect(data.y).toBeLessThan(developer.y);
-  });
+      // Placed after "Apariencia" and before "Desarrollo".
+      const appearance = await boxOf(page.getByText('Apariencia', { exact: true }).first());
+      const data = await boxOf(heading);
+      const developer = await boxOf(page.getByText('Desarrollo', { exact: true }).first());
+      expect(data.y).toBeGreaterThan(appearance.y);
+      expect(data.y).toBeLessThan(developer.y);
+    },
+  );
 
-  test('AC-DATA-02 · reloading and reopening keeps the counts (no duplicated built-in data)', async ({
-    page,
-    context,
-  }) => {
-    await gotoReady(page, '/settings', 'Ajustes');
-    await expectNewDeviceCounts(page, 'es');
+  test(
+    'AC-DATA-02 · reloading and reopening keeps the counts (no duplicated built-in data)',
+    { tag: '@all-engines' },
+    async ({ page, context }) => {
+      await gotoReady(page, '/settings', 'Ajustes');
+      await expectNewDeviceCounts(page, 'es');
 
-    await page.reload();
-    await expect(h1(page, 'Ajustes')).toBeVisible();
-    await expectNewDeviceCounts(page, 'es');
+      await page.reload();
+      await expect(h1(page, 'Ajustes')).toBeVisible();
+      await expectNewDeviceCounts(page, 'es');
 
-    // Close the tab and open the app again (same browser profile).
-    await page.close();
-    const again = await context.newPage();
-    await gotoReady(again, '/', 'Hoy');
-    await mainNav(again).getByRole('link', { name: 'Ajustes', exact: true }).click();
-    await expect(h1(again, 'Ajustes')).toBeVisible();
-    await expectNewDeviceCounts(again, 'es');
-  });
+      // Close the tab and open the app again (same browser profile).
+      await page.close();
+      const again = await context.newPage();
+      await gotoReady(again, '/', 'Hoy');
+      await mainNav(again).getByRole('link', { name: 'Ajustes', exact: true }).click();
+      await expect(h1(again, 'Ajustes')).toBeVisible();
+      await expectNewDeviceCounts(again, 'es');
+    },
+  );
 
-  test('AC-DATA-03 · the storage row shows one of the three texts', async ({ page }) => {
-    await gotoReady(page, '/settings', 'Ajustes');
-    await expectNewDeviceCounts(page, 'es');
-    await expect
-      .poll(() => storageValue(page, STORAGE_ES.term))
-      .toMatch(new RegExp(`^(${STORAGE_ES.values.join('|')})$`));
-  });
+  test(
+    'AC-DATA-03 · the storage row shows one of the three texts',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await gotoReady(page, '/settings', 'Ajustes');
+      await expectNewDeviceCounts(page, 'es');
+      await expect
+        .poll(() => storageValue(page, STORAGE_ES.term))
+        .toMatch(new RegExp(`^(${STORAGE_ES.values.join('|')})$`));
+    },
+  );
 
   test('AC-DATA-04 · in English the card is "Data" with the English labels', async ({ page }) => {
     await setLanguage(page, 'en');
@@ -215,24 +222,25 @@ test.describe('data card', { tag: '@all-engines' }, () => {
     });
   }
 
-  test('edge · two tabs show the same counts, and the card still works offline', async ({
-    page,
-    context,
-  }) => {
-    await gotoReady(page, '/settings', 'Ajustes');
-    const second = await context.newPage();
-    await gotoReady(second, '/settings', 'Ajustes');
-    await expectNewDeviceCounts(page, 'es');
-    await expectNewDeviceCounts(second, 'es');
-    await second.close();
+  test(
+    'edge · two tabs show the same counts, and the card still works offline',
+    { tag: '@all-engines' },
+    async ({ page, context }) => {
+      await gotoReady(page, '/settings', 'Ajustes');
+      const second = await context.newPage();
+      await gotoReady(second, '/settings', 'Ajustes');
+      await expectNewDeviceCounts(page, 'es');
+      await expectNewDeviceCounts(second, 'es');
+      await second.close();
 
-    // Offline: nothing comes from the network, so leaving and coming back shows the same card.
-    await context.setOffline(true);
-    await mainNav(page).getByRole('link', { name: 'Hoy', exact: true }).click();
-    await expect(h1(page, 'Hoy')).toBeVisible();
-    await mainNav(page).getByRole('link', { name: 'Ajustes', exact: true }).click();
-    await expect(h1(page, 'Ajustes')).toBeVisible();
-    await expectNewDeviceCounts(page, 'es');
-    await context.setOffline(false);
-  });
+      // Offline: nothing comes from the network, so leaving and coming back shows the same card.
+      await context.setOffline(true);
+      await mainNav(page).getByRole('link', { name: 'Hoy', exact: true }).click();
+      await expect(h1(page, 'Hoy')).toBeVisible();
+      await mainNav(page).getByRole('link', { name: 'Ajustes', exact: true }).click();
+      await expect(h1(page, 'Ajustes')).toBeVisible();
+      await expectNewDeviceCounts(page, 'es');
+      await context.setOffline(false);
+    },
+  );
 });

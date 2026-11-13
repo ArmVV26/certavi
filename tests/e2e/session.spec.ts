@@ -214,67 +214,69 @@ async function openTypeSheet(page: Page, card: Locator, i: number): Promise<void
 // Tests
 // ---------------------------------------------------------------------------------------------
 
-test.describe('active session', { tag: '@all-engines' }, () => {
-  test('AC-SESSION-01 / 02 / 04 / 05 / 06 · cards, nothing to save, reps must be positive, 0 kg, bodyweight and a reload', async ({
-    page,
-  }) => {
-    await openToday(page);
-    await startRoutine(page, 'Push');
-    const main = page.getByRole('main');
-    await expect(main.getByText('En curso', { exact: true })).toBeVisible();
-    await expect(main.getByText('7 ejercicios · 19 series', { exact: true })).toBeVisible();
-    await expect(progress(page, 0, 19)).toBeVisible();
-    await expect(main.getByText('Sin registros previos', { exact: true })).toHaveCount(7);
+test.describe('active session', () => {
+  test(
+    'AC-SESSION-01 / 02 / 04 / 05 / 06 · cards, nothing to save, reps must be positive, 0 kg, bodyweight and a reload',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await openToday(page);
+      await startRoutine(page, 'Push');
+      const main = page.getByRole('main');
+      await expect(main.getByText('En curso', { exact: true })).toBeVisible();
+      await expect(main.getByText('7 ejercicios · 19 series', { exact: true })).toBeVisible();
+      await expect(progress(page, 0, 19)).toBeVisible();
+      await expect(main.getByText('Sin registros previos', { exact: true })).toHaveCount(7);
 
-    const banca = await exCard(page, BENCH);
-    await expect(banca).toContainText(/\d+ series · .*reps · RIR/);
-    const r = rows(banca);
-    expect(await r.count()).toBeGreaterThan(1);
-    await expect(r.done(0)).toHaveAccessibleName(/^Marcar serie hecha/);
+      const banca = await exCard(page, BENCH);
+      await expect(banca).toContainText(/\d+ series · .*reps · RIR/);
+      const r = rows(banca);
+      expect(await r.count()).toBeGreaterThan(1);
+      await expect(r.done(0)).toHaveAccessibleName(/^Marcar serie hecha/);
 
-    // AC-04: ✓ on an empty row with no "Anterior" saves nothing.
-    await r.done(0).click();
-    await expect(r.kg(0)).toHaveAttribute('aria-invalid', 'true');
-    await expect(r.kg(0)).toBeFocused();
-    await expect(progress(page, 0, 19)).toBeVisible();
-    await expect(r.done(0)).toHaveAccessibleName(/^Marcar serie hecha/);
+      // AC-04: ✓ on an empty row with no "Anterior" saves nothing.
+      await r.done(0).click();
+      await expect(r.kg(0)).toHaveAttribute('aria-invalid', 'true');
+      await expect(r.kg(0)).toBeFocused();
+      await expect(progress(page, 0, 19)).toBeVisible();
+      await expect(r.done(0)).toHaveAccessibleName(/^Marcar serie hecha/);
 
-    // AC-06: 60 kg and no reps.
-    await r.kg(0).fill('60');
-    await r.done(0).click();
-    await expect(r.reps(0)).toHaveAttribute('aria-invalid', 'true');
-    await r.reps(0).fill('0');
-    await r.done(0).click();
-    await expect(r.reps(0)).toHaveAttribute('aria-invalid', 'true');
-    await expect(progress(page, 0, 19)).toBeVisible();
+      // AC-06: 60 kg and no reps.
+      await r.kg(0).fill('60');
+      await r.done(0).click();
+      await expect(r.reps(0)).toHaveAttribute('aria-invalid', 'true');
+      await r.reps(0).fill('0');
+      await r.done(0).click();
+      await expect(r.reps(0)).toHaveAttribute('aria-invalid', 'true');
+      await expect(progress(page, 0, 19)).toBeVisible();
 
-    // AC-02: a valid set.
-    await r.reps(0).fill('8');
-    await r.rir(0).selectOption({ label: '2' });
-    await r.done(0).click();
-    await expect(r.done(0)).toHaveAccessibleName(/^Serie hecha/);
-    await expect(r.kg(0)).toHaveValue('60');
-    await expect(r.reps(0)).toHaveValue('8');
-    await expect(r.rir(0)).toHaveValue('2');
-    await expect(progress(page, 1, 19)).toBeVisible();
+      // AC-02: a valid set.
+      await r.reps(0).fill('8');
+      await r.rir(0).selectOption({ label: '2' });
+      await r.done(0).click();
+      await expect(r.done(0)).toHaveAccessibleName(/^Serie hecha/);
+      await expect(r.kg(0)).toHaveValue('60');
+      await expect(r.reps(0)).toHaveValue('8');
+      await expect(r.rir(0)).toHaveValue('2');
+      await expect(progress(page, 1, 19)).toBeVisible();
 
-    // AC-05: 0 kg is a valid weight.
-    await logSet(banca, 1, '0', '10');
-    await expect(progress(page, 2, 19)).toBeVisible();
+      // AC-05: 0 kg is a valid weight.
+      await logSet(banca, 1, '0', '10');
+      await expect(progress(page, 2, 19)).toBeVisible();
 
-    await page.reload();
-    await expect(h1(page, 'Sesión')).toBeVisible();
-    await expect(progress(page, 2, 19)).toBeVisible();
-    const again = rows(await exCard(page, BENCH));
-    await expect(again.kg(0)).toHaveValue('60');
-    await expect(again.reps(0)).toHaveValue('8');
-    await expect(again.rir(0)).toHaveValue('2');
-    await expect(again.kg(1)).toHaveValue('0');
-    await expect(again.reps(1)).toHaveValue('10');
+      await page.reload();
+      await expect(h1(page, 'Sesión')).toBeVisible();
+      await expect(progress(page, 2, 19)).toBeVisible();
+      const again = rows(await exCard(page, BENCH));
+      await expect(again.kg(0)).toHaveValue('60');
+      await expect(again.reps(0)).toHaveValue('8');
+      await expect(again.rir(0)).toHaveValue('2');
+      await expect(again.kg(1)).toHaveValue('0');
+      await expect(again.reps(1)).toHaveValue('10');
 
-    // The bodyweight part of AC-05 ("Lastre" / "Banda", pull-ups) cannot be reached from the
-    // seed routines (no "Dominadas" in Upper, rules.md §7) nor from a free session yet.
-  });
+      // The bodyweight part of AC-05 ("Lastre" / "Banda", pull-ups) cannot be reached from the
+      // seed routines (no "Dominadas" in Upper, rules.md §7) nor from a free session yet.
+    },
+  );
 
   test('AC-SESSION-03 / 12 · a session logged on a past day is editable and gives "Anterior", "Última vez" and the hint next time; ✓ saves "Anterior"', async ({
     page,
@@ -384,253 +386,265 @@ test.describe('active session', { tag: '@all-engines' }, () => {
     await expect(main).toContainText(/Volumen\s*1\.?150(?!\d)/);
   });
 
-  test('AC-SESSION-09 / 10 · remove a row (keyboard and swipe), un-save and edit a saved set', async ({
-    page,
-  }) => {
-    await openToday(page);
-    await startOther(page, 'Pull');
-    const summary = page.getByRole('main').getByText(/^\d+ ejercicios · \d+ series$/);
-    const total = Number(/(\d+) series$/.exec((await summary.innerText()).trim())?.[1]);
-    const remo = await exCard(page, 'Remo en T');
-    const r = rows(remo);
-    await expect.poll(() => r.count()).toBe(3);
+  test(
+    'AC-SESSION-09 / 10 · remove a row (keyboard and swipe), un-save and edit a saved set',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await openToday(page);
+      await startOther(page, 'Pull');
+      const summary = page.getByRole('main').getByText(/^\d+ ejercicios · \d+ series$/);
+      const total = Number(/(\d+) series$/.exec((await summary.innerText()).trim())?.[1]);
+      const remo = await exCard(page, 'Remo en T');
+      const r = rows(remo);
+      await expect.poll(() => r.count()).toBe(3);
 
-    await logSet(remo, 0, '40', '10');
-    await logSet(remo, 1, '45', '8');
-    await expect(progress(page, 2, total)).toBeVisible();
+      await logSet(remo, 0, '40', '10');
+      await logSet(remo, 1, '45', '8');
+      await expect(progress(page, 2, total)).toBeVisible();
 
-    // Keyboard: focus "Quitar serie 2" and activate it. Cancel first.
-    const remove = remo.getByRole('button', { name: 'Quitar serie 2', exact: true });
-    await remove.focus();
-    await page.keyboard.press('Enter');
-    await expect(dialog(page)).toBeVisible();
-    await expect(dialog(page).getByText('¿Quitar la serie 2?', { exact: true })).toBeVisible();
-    await expect(dialog(page)).toContainText('45 kg × 8');
-    await expect(dialog(page)).toContainText('La rutina no cambia.');
-    await dialogButton(page, 'Cancelar').click();
-    await expect(dialog(page)).toHaveCount(0);
-    expect(await r.count()).toBe(3);
+      // Keyboard: focus "Quitar serie 2" and activate it. Cancel first.
+      const remove = remo.getByRole('button', { name: 'Quitar serie 2', exact: true });
+      await remove.focus();
+      await page.keyboard.press('Enter');
+      await expect(dialog(page)).toBeVisible();
+      await expect(dialog(page).getByText('¿Quitar la serie 2?', { exact: true })).toBeVisible();
+      await expect(dialog(page)).toContainText('45 kg × 8');
+      await expect(dialog(page)).toContainText('La rutina no cambia.');
+      await dialogButton(page, 'Cancelar').click();
+      await expect(dialog(page)).toHaveCount(0);
+      expect(await r.count()).toBe(3);
 
-    await remove.focus();
-    await page.keyboard.press('Enter');
-    await dialogButton(page, 'Quitar').click();
-    await expect.poll(() => r.count()).toBe(2);
-    await expect(page.getByRole('main').getByText(`${String(total - 1)} series`)).toBeVisible();
-    await expect(r.kg(0)).toHaveValue('40');
-    await expect(progress(page, 1, total - 1)).toBeVisible();
+      await remove.focus();
+      await page.keyboard.press('Enter');
+      await dialogButton(page, 'Quitar').click();
+      await expect.poll(() => r.count()).toBe(2);
+      await expect(page.getByRole('main').getByText(`${String(total - 1)} series`)).toBeVisible();
+      await expect(r.kg(0)).toHaveValue('40');
+      await expect(progress(page, 1, total - 1)).toBeVisible();
 
-    // AC-10: un-save row 1 (✓ then confirm), cancelling once.
-    await r.done(0).click();
-    await expect(dialog(page).getByText('¿Quitar esta serie del registro?')).toBeVisible();
-    await dialogButton(page, 'Cancelar').click();
-    await expect(progress(page, 1, total - 1)).toBeVisible();
-    await r.done(0).click();
-    await dialogButton(page, 'Quitar').click();
-    await expect(r.done(0)).toHaveAccessibleName(/^Marcar serie hecha/);
-    await expect(progress(page, 0, total - 1)).toBeVisible();
-    await expect(r.kg(0)).toHaveValue('');
+      // AC-10: un-save row 1 (✓ then confirm), cancelling once.
+      await r.done(0).click();
+      await expect(dialog(page).getByText('¿Quitar esta serie del registro?')).toBeVisible();
+      await dialogButton(page, 'Cancelar').click();
+      await expect(progress(page, 1, total - 1)).toBeVisible();
+      await r.done(0).click();
+      await dialogButton(page, 'Quitar').click();
+      await expect(r.done(0)).toHaveAccessibleName(/^Marcar serie hecha/);
+      await expect(progress(page, 0, total - 1)).toBeVisible();
+      await expect(r.kg(0)).toHaveValue('');
 
-    // Save again and edit a saved value: saved when the field is left, kept after a reload.
-    await logSet(remo, 0, '40', '10');
-    await r.reps(0).fill('9');
-    await r.reps(0).blur();
-    await expect(r.done(0)).toHaveAccessibleName(/^Serie hecha/);
-    await flushAndReload(page);
-    const afterReload = rows(await exCard(page, 'Remo en T'));
-    await expect(afterReload.reps(0)).toHaveValue('9');
-    await expect(progress(page, 1, total - 1)).toBeVisible();
+      // Save again and edit a saved value: saved when the field is left, kept after a reload.
+      await logSet(remo, 0, '40', '10');
+      await r.reps(0).fill('9');
+      await r.reps(0).blur();
+      await expect(r.done(0)).toHaveAccessibleName(/^Serie hecha/);
+      await flushAndReload(page);
+      const afterReload = rows(await exCard(page, 'Remo en T'));
+      await expect(afterReload.reps(0)).toHaveValue('9');
+      await expect(progress(page, 1, total - 1)).toBeVisible();
 
-    // The routine is unchanged: Pull on another day still has 3 rows for Remo en T.
-    await backToToday(page);
-    await startOther(page, 'Pull', '2026-10-26');
-    await expect.poll(async () => rows(await exCard(page, 'Remo en T')).count()).toBe(3);
+      // The routine is unchanged: Pull on another day still has 3 rows for Remo en T.
+      await backToToday(page);
+      await startOther(page, 'Pull', '2026-10-26');
+      await expect.poll(async () => rows(await exCard(page, 'Remo en T')).count()).toBe(3);
 
-    // A real swipe on an empty row; the keyboard path above is the fallback for the rest.
-    await page.goBack();
-    await expect(h1(page, 'Hoy')).toBeVisible();
-    await page.goBack();
-    await expect(h1(page, 'Sesión')).toBeVisible();
-    const remo2 = await exCard(page, 'Remo en T');
-    const r2 = rows(remo2);
-    await expect.poll(() => r2.count()).toBe(2);
-    const quitar = remo2.getByRole('button', { name: 'Quitar serie 2', exact: true });
-    const box = await boxOf(r2.type(1));
-    const y = box.y + box.height / 2;
-    const x = box.x + box.width / 2;
-    await page.mouse.move(x, y);
-    await page.mouse.down();
-    await page.mouse.move(x - 60, y, { steps: 5 });
-    await page.mouse.move(x - 160, y, { steps: 5 });
-    await page.mouse.up();
-    // A mouse drag may not be what the app listens to (touch): recorded, not failed.
-    const swiped = await expect(quitar)
-      .toBeInViewport({ timeout: 1_000 })
-      .then(
-        () => true,
-        () => false,
-      );
-    test.info().annotations.push({
-      type: 'swipe',
-      description: swiped
-        ? 'a mouse drag to the left revealed "Quitar"'
-        : 'a mouse drag to the left did NOT reveal "Quitar" (keyboard path used)',
-    });
-    await quitar.focus();
-    await page.keyboard.press('Enter');
-    // An empty row goes away at once, without a dialog. The remaining row is saved, so the card
-    // folds; unfold it: the last row cannot be removed (no "Quitar" button).
-    const remoHeading = remo2.getByRole('button', { name: 'Remo en T', exact: true });
-    await expect(remo2.getByText('Completo', { exact: true })).toBeVisible();
-    if ((await remoHeading.getAttribute('aria-expanded')) === 'false') await remoHeading.click();
-    await expect.poll(() => r2.count()).toBe(1);
-    await expect(dialog(page)).toHaveCount(0);
-    await expect(remo2.getByRole('button', { name: /^Quitar serie/ })).toHaveCount(0);
-  });
+      // A real swipe on an empty row; the keyboard path above is the fallback for the rest.
+      await page.goBack();
+      await expect(h1(page, 'Hoy')).toBeVisible();
+      await page.goBack();
+      await expect(h1(page, 'Sesión')).toBeVisible();
+      const remo2 = await exCard(page, 'Remo en T');
+      const r2 = rows(remo2);
+      await expect.poll(() => r2.count()).toBe(2);
+      const quitar = remo2.getByRole('button', { name: 'Quitar serie 2', exact: true });
+      const box = await boxOf(r2.type(1));
+      const y = box.y + box.height / 2;
+      const x = box.x + box.width / 2;
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(x - 60, y, { steps: 5 });
+      await page.mouse.move(x - 160, y, { steps: 5 });
+      await page.mouse.up();
+      // A mouse drag may not be what the app listens to (touch): recorded, not failed.
+      const swiped = await expect(quitar)
+        .toBeInViewport({ timeout: 1_000 })
+        .then(
+          () => true,
+          () => false,
+        );
+      test.info().annotations.push({
+        type: 'swipe',
+        description: swiped
+          ? 'a mouse drag to the left revealed "Quitar"'
+          : 'a mouse drag to the left did NOT reveal "Quitar" (keyboard path used)',
+      });
+      await quitar.focus();
+      await page.keyboard.press('Enter');
+      // An empty row goes away at once, without a dialog. The remaining row is saved, so the card
+      // folds; unfold it: the last row cannot be removed (no "Quitar" button).
+      const remoHeading = remo2.getByRole('button', { name: 'Remo en T', exact: true });
+      await expect(remo2.getByText('Completo', { exact: true })).toBeVisible();
+      if ((await remoHeading.getAttribute('aria-expanded')) === 'false') await remoHeading.click();
+      await expect.poll(() => r2.count()).toBe(1);
+      await expect(dialog(page)).toHaveCount(0);
+      await expect(remo2.getByRole('button', { name: /^Quitar serie/ })).toHaveCount(0);
+    },
+  );
 
-  test('AC-SESSION-13 / 14 / 15 · straps, exercise note, session note and readiness survive a reload', async ({
-    page,
-  }) => {
-    await openToday(page);
-    await startOther(page, 'Pull');
-    const remo = await exCard(page, 'Remo en T');
-    await logSet(remo, 0, '40', '10');
-    await logSet(remo, 1, '45', '8');
+  test(
+    'AC-SESSION-13 / 14 / 15 · straps, exercise note, session note and readiness survive a reload',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await openToday(page);
+      await startOther(page, 'Pull');
+      const remo = await exCard(page, 'Remo en T');
+      await logSet(remo, 0, '40', '10');
+      await logSet(remo, 1, '45', '8');
 
-    // AC-13: straps on, two saved sets.
-    const straps = remo.getByRole('switch', { name: 'Con straps', exact: true });
-    await expect(straps).toBeChecked();
-    await straps.click();
-    await expect(
-      dialog(page).getByText('¿Corregir también las 2 series ya guardadas?', { exact: true }),
-    ).toBeVisible();
-    await dialogButton(page, 'Corregir las 2 guardadas').click();
-    await expect(straps).not.toBeChecked();
-    // (Nothing on the saved rows shows "sin straps": the spec's per-set wording is not visible.)
-    // "Solo las próximas": the saved sets keep what they have.
-    await straps.click();
-    await dialogButton(page, 'Solo las próximas').click();
-    await expect(straps).toBeChecked();
+      // AC-13: straps on, two saved sets.
+      const straps = remo.getByRole('switch', { name: 'Con straps', exact: true });
+      await expect(straps).toBeChecked();
+      await straps.click();
+      await expect(
+        dialog(page).getByText('¿Corregir también las 2 series ya guardadas?', { exact: true }),
+      ).toBeVisible();
+      await dialogButton(page, 'Corregir las 2 guardadas').click();
+      await expect(straps).not.toBeChecked();
+      // (Nothing on the saved rows shows "sin straps": the spec's per-set wording is not visible.)
+      // "Solo las próximas": the saved sets keep what they have.
+      await straps.click();
+      await dialogButton(page, 'Solo las próximas').click();
+      await expect(straps).toBeChecked();
 
-    // An exercise without saved sets: no dialog.
-    const allStraps = page.getByRole('switch', { name: 'Con straps', exact: true });
-    const mine = await straps.elementHandle();
-    const total = await allStraps.count();
-    let other: Locator | undefined;
-    for (let k = 0; k < total; k++) {
-      const same = await allStraps.nth(k).evaluate((el, h) => el === h, mine);
-      if (!same) {
-        other = allStraps.nth(k);
-        break;
+      // An exercise without saved sets: no dialog.
+      const allStraps = page.getByRole('switch', { name: 'Con straps', exact: true });
+      const mine = await straps.elementHandle();
+      const total = await allStraps.count();
+      let other: Locator | undefined;
+      for (let k = 0; k < total; k++) {
+        const same = await allStraps.nth(k).evaluate((el, h) => el === h, mine);
+        if (!same) {
+          other = allStraps.nth(k);
+          break;
+        }
       }
-    }
-    if (!other) throw new Error('Pull has another exercise with straps');
-    await other.click();
-    await expect(other).not.toBeChecked();
-    await expect(dialog(page)).toHaveCount(0);
+      if (!other) throw new Error('Pull has another exercise with straps');
+      await other.click();
+      await expect(other).not.toBeChecked();
+      await expect(dialog(page)).toHaveCount(0);
 
-    // AC-14: exercise note and "does not count".
-    await remo.getByRole('button', { name: 'Nota', exact: true }).click();
-    await remo.getByLabel('Nota del ejercicio', { exact: true }).fill('Máquina distinta');
-    const skip = remo.getByRole('checkbox', { name: 'No cuenta para la progresión', exact: true });
-    await skip.click();
-    await expect(skip).toBeChecked();
-    const reason = remo.getByRole('combobox', { name: 'Motivo', exact: true });
-    await expect(reason).toHaveValue(/.+/);
-    await reason.selectOption({ label: 'Faltan discos' });
-    await reason.selectOption({ label: 'Máquina ocupada' });
-    await expect(remo.getByRole('button', { name: 'Nota ✎', exact: true })).toBeVisible();
+      // AC-14: exercise note and "does not count".
+      await remo.getByRole('button', { name: 'Nota', exact: true }).click();
+      await remo.getByLabel('Nota del ejercicio', { exact: true }).fill('Máquina distinta');
+      const skip = remo.getByRole('checkbox', {
+        name: 'No cuenta para la progresión',
+        exact: true,
+      });
+      await skip.click();
+      await expect(skip).toBeChecked();
+      const reason = remo.getByRole('combobox', { name: 'Motivo', exact: true });
+      await expect(reason).toHaveValue(/.+/);
+      await reason.selectOption({ label: 'Faltan discos' });
+      await reason.selectOption({ label: 'Máquina ocupada' });
+      await expect(remo.getByRole('button', { name: 'Nota ✎', exact: true })).toBeVisible();
 
-    // AC-15: session note and readiness.
-    const notes = page.getByLabel('Notas de la sesión', { exact: true });
-    await notes.fill('Buena sesión E2E');
-    const main = page.getByRole('main');
-    await expect(main.getByText('1 fatal · 5 a tope', { exact: true })).toBeVisible();
-    const four = main.getByRole('button', { name: '4', exact: true });
-    await four.click();
-    await expect(four).toHaveAttribute('aria-pressed', 'true');
+      // AC-15: session note and readiness.
+      const notes = page.getByLabel('Notas de la sesión', { exact: true });
+      await notes.fill('Buena sesión E2E');
+      const main = page.getByRole('main');
+      await expect(main.getByText('1 fatal · 5 a tope', { exact: true })).toBeVisible();
+      const four = main.getByRole('button', { name: '4', exact: true });
+      await four.click();
+      await expect(four).toHaveAttribute('aria-pressed', 'true');
 
-    await flushAndReload(page);
-    const remo2 = await exCard(page, 'Remo en T');
-    await expect(remo2.getByRole('button', { name: 'Nota ✎', exact: true })).toBeVisible();
-    await expect(page.getByLabel('Notas de la sesión', { exact: true })).toHaveValue(
-      'Buena sesión E2E',
-    );
-    await expect(main.getByRole('button', { name: '4', exact: true })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    await expect(rows(remo2).done(0)).toHaveAccessibleName(/^Serie hecha/);
+      await flushAndReload(page);
+      const remo2 = await exCard(page, 'Remo en T');
+      await expect(remo2.getByRole('button', { name: 'Nota ✎', exact: true })).toBeVisible();
+      await expect(page.getByLabel('Notas de la sesión', { exact: true })).toHaveValue(
+        'Buena sesión E2E',
+      );
+      await expect(main.getByRole('button', { name: '4', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+      await expect(rows(remo2).done(0)).toHaveAccessibleName(/^Serie hecha/);
 
-    // The note is still there when opened; clearing it and the box removes it.
-    await remo2.getByRole('button', { name: 'Nota ✎', exact: true }).click();
-    const text = remo2.getByLabel('Nota del ejercicio', { exact: true });
-    await expect(text).toHaveValue('Máquina distinta');
-    const box = remo2.getByRole('checkbox', { name: 'No cuenta para la progresión', exact: true });
-    await expect(box).toBeChecked();
-    await text.fill('');
-    await box.click();
-    await expect(box).not.toBeChecked();
-    await page.clock.runFor(DEBOUNCE);
-    await expect(remo2.getByRole('button', { name: 'Nota', exact: true })).toBeVisible();
+      // The note is still there when opened; clearing it and the box removes it.
+      await remo2.getByRole('button', { name: 'Nota ✎', exact: true }).click();
+      const text = remo2.getByLabel('Nota del ejercicio', { exact: true });
+      await expect(text).toHaveValue('Máquina distinta');
+      const box = remo2.getByRole('checkbox', {
+        name: 'No cuenta para la progresión',
+        exact: true,
+      });
+      await expect(box).toBeChecked();
+      await text.fill('');
+      await box.click();
+      await expect(box).not.toBeChecked();
+      await page.clock.runFor(DEBOUNCE);
+      await expect(remo2.getByRole('button', { name: 'Nota', exact: true })).toBeVisible();
 
-    // Tapping "4" again clears the answer.
-    await main.getByRole('button', { name: '4', exact: true }).click();
-    await expect(main.getByRole('button', { name: '4', exact: true })).toHaveAttribute(
-      'aria-pressed',
-      'false',
-    );
-  });
+      // Tapping "4" again clears the answer.
+      await main.getByRole('button', { name: '4', exact: true }).click();
+      await expect(main.getByRole('button', { name: '4', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'false',
+      );
+    },
+  );
 
-  test('AC-SESSION-16 · typed values and an extra row survive a redraw and a reload, and finishing discards them', async ({
-    page,
-  }) => {
-    await openToday(page);
-    await startRoutine(page, 'Push');
-    const banca = await exCard(page, BENCH);
-    const r = rows(banca);
-    const n = await r.count();
+  test(
+    'AC-SESSION-16 · typed values and an extra row survive a redraw and a reload, and finishing discards them',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await openToday(page);
+      await startRoutine(page, 'Push');
+      const banca = await exCard(page, BENCH);
+      const r = rows(banca);
+      const n = await r.count();
 
-    await r.kg(1).fill('60');
-    await r.reps(1).fill('8');
-    await banca.getByRole('button', { name: '+ Serie extra', exact: true }).click();
-    await expect.poll(() => r.count()).toBe(n + 1);
-    // The row is drawn as soon as it is saved, but the app moves the typed values to follow the
-    // new row a moment later and then focuses it: typing before that loses the value (WebKit on
-    // CI, 2026-11-06).
-    await expect(r.kg(n)).toBeFocused();
-    await r.reps(n).fill('10');
+      await r.kg(1).fill('60');
+      await r.reps(1).fill('8');
+      await banca.getByRole('button', { name: '+ Serie extra', exact: true }).click();
+      await expect.poll(() => r.count()).toBe(n + 1);
+      // The row is drawn as soon as it is saved, but the app moves the typed values to follow the
+      // new row a moment later and then focuses it: typing before that loses the value (WebKit on
+      // CI, 2026-11-06).
+      await expect(r.kg(n)).toBeFocused();
+      await r.reps(n).fill('10');
 
-    // Something redraws the screen: fold another card.
-    const other = page.getByRole('heading', {
-      name: 'Press inclinado con mancuernas',
-      exact: true,
-    });
-    await other.click();
-    await expect(r.kg(1)).toHaveValue('60');
-    await expect(r.reps(1)).toHaveValue('8');
-    await expect(r.reps(n)).toHaveValue('10');
-    await expect(progress(page, 0, 19)).toBeVisible();
+      // Something redraws the screen: fold another card.
+      const other = page.getByRole('heading', {
+        name: 'Press inclinado con mancuernas',
+        exact: true,
+      });
+      await other.click();
+      await expect(r.kg(1)).toHaveValue('60');
+      await expect(r.reps(1)).toHaveValue('8');
+      await expect(r.reps(n)).toHaveValue('10');
+      await expect(progress(page, 0, 19)).toBeVisible();
 
-    await flushAndReload(page);
-    const again = await exCard(page, BENCH);
-    const a = rows(again);
-    await expect.poll(() => a.count()).toBe(n + 1);
-    await expect(a.kg(1)).toHaveValue('60');
-    await expect(a.reps(1)).toHaveValue('8');
-    await expect(a.reps(n)).toHaveValue('10');
-    await expect(progress(page, 0, 19)).toBeVisible();
+      await flushAndReload(page);
+      const again = await exCard(page, BENCH);
+      const a = rows(again);
+      await expect.poll(() => a.count()).toBe(n + 1);
+      await expect(a.kg(1)).toHaveValue('60');
+      await expect(a.reps(1)).toHaveValue('8');
+      await expect(a.reps(n)).toHaveValue('10');
+      await expect(progress(page, 0, 19)).toBeVisible();
 
-    // ✓ saves the typed row.
-    await a.done(1).click();
-    await expect(a.done(1)).toHaveAccessibleName(/^Serie hecha/);
-    await expect(progress(page, 1, 19)).toBeVisible();
+      // ✓ saves the typed row.
+      await a.done(1).click();
+      await expect(a.done(1)).toHaveAccessibleName(/^Serie hecha/);
+      await expect(progress(page, 1, 19)).toBeVisible();
 
-    // Finishing discards the typed values that were not saved.
-    await page.getByRole('button', { name: 'Terminar sesión', exact: true }).click();
-    await expect(page.getByRole('main').getByText('Terminada', { exact: true })).toBeVisible();
-    await expect(a.reps(n)).toHaveValue('');
-    await expect(a.kg(1)).toHaveValue('60');
-  });
+      // Finishing discards the typed values that were not saved.
+      await page.getByRole('button', { name: 'Terminar sesión', exact: true }).click();
+      await expect(page.getByRole('main').getByText('Terminada', { exact: true })).toBeVisible();
+      await expect(a.reps(n)).toHaveValue('');
+      await expect(a.kg(1)).toHaveValue('60');
+    },
+  );
 
   test('AC-SESSION-17 / 18 / 19 · a completed exercise folds; finish, reopen and delete the session', async ({
     page,

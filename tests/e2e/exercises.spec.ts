@@ -326,7 +326,7 @@ test.describe('exercise catalog', () => {
 // Everything below saves data
 // ---------------------------------------------------------------------------------------------
 
-test.describe('exercises · data', { tag: '@all-engines' }, () => {
+test.describe('exercises · data', () => {
   test('AC-EXERCISES-06 / 07 / 08 · never-logged message, change the weight step, invalid steps', async ({
     page,
   }) => {
@@ -365,55 +365,55 @@ test.describe('exercises · data', { tag: '@all-engines' }, () => {
     await expect(page.getByText(MSG.step, { exact: true })).toHaveCount(0);
   });
 
-  test('AC-EXERCISES-09 / 13 · create "Press landmine", find it with "Creados por mí", survives a reload; axe on the form and the detail page', async ({
-    page,
-    browserName,
-  }) => {
-    await openCatalog(page);
-    const before = await items(page).count();
-    await page.getByRole('link', { name: 'Crear ejercicio', exact: true }).click();
-    await expectForm(page);
-    await expect(page).toHaveURL(/\/exercises\/new$/);
-    await expect(mainNav(page).getByRole('link', { name: 'Rutinas', exact: true })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
-    if (browserName === 'chromium') await axe(page, 'exercise form (light)');
-    expect(await hasHorizontalScroll(page)).toBe(false);
+  test(
+    'AC-EXERCISES-09 / 13 · create "Press landmine", find it with "Creados por mí", survives a reload; axe on the form and the detail page',
+    { tag: '@all-engines' },
+    async ({ page, browserName }) => {
+      await openCatalog(page);
+      const before = await items(page).count();
+      await page.getByRole('link', { name: 'Crear ejercicio', exact: true }).click();
+      await expectForm(page);
+      await expect(page).toHaveURL(/\/exercises\/new$/);
+      await expect(
+        mainNav(page).getByRole('link', { name: 'Rutinas', exact: true }),
+      ).toHaveAttribute('aria-current', 'page');
+      if (browserName === 'chromium') await axe(page, 'exercise form (light)');
+      expect(await hasHorizontalScroll(page)).toBe(false);
 
-    await fillForm(page, { name: 'Press landmine', group: 'Hombro', equipment: 'Barra' });
-    await button(page, 'Guardar').click();
+      await fillForm(page, { name: 'Press landmine', group: 'Hombro', equipment: 'Barra' });
+      await button(page, 'Guardar').click();
 
-    await expect(toast(page, 'Ejercicio creado')).toBeVisible();
-    await expect(detailTitle(page, 'Press landmine')).toBeVisible();
-    await expect(h1(page, 'Ejercicio')).toBeVisible();
-    await expect(page.getByRole('main').getByText('Propio', { exact: true })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Editar', exact: true })).toBeVisible();
-    await expect(button(page, 'Archivar')).toBeVisible();
-    await expect(page.getByText('En ninguna rutina', { exact: true })).toBeVisible();
-    await expect(page.getByText('Aún no has registrado este ejercicio')).toBeVisible();
-    if (browserName === 'chromium') await axe(page, 'exercise detail (light)');
+      await expect(toast(page, 'Ejercicio creado')).toBeVisible();
+      await expect(detailTitle(page, 'Press landmine')).toBeVisible();
+      await expect(h1(page, 'Ejercicio')).toBeVisible();
+      await expect(page.getByRole('main').getByText('Propio', { exact: true })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Editar', exact: true })).toBeVisible();
+      await expect(button(page, 'Archivar')).toBeVisible();
+      await expect(page.getByText('En ninguna rutina', { exact: true })).toBeVisible();
+      await expect(page.getByText('Aún no has registrado este ejercicio')).toBeVisible();
+      if (browserName === 'chromium') await axe(page, 'exercise detail (light)');
 
-    await page.getByRole('link', { name: 'Volver a Ejercicios', exact: true }).click();
-    await expect(h1(page, 'Ejercicios')).toBeVisible();
-    await expect(items(page)).toHaveCount(before + 1);
-    const mine = item(page, 'Press landmine');
-    await expect(mine).toContainText('Hombro · Barra');
-    await expect(mine.getByText('Propio', { exact: true })).toBeVisible();
+      await page.getByRole('link', { name: 'Volver a Ejercicios', exact: true }).click();
+      await expect(h1(page, 'Ejercicios')).toBeVisible();
+      await expect(items(page)).toHaveCount(before + 1);
+      const mine = item(page, 'Press landmine');
+      await expect(mine).toContainText('Hombro · Barra');
+      await expect(mine.getByText('Propio', { exact: true })).toBeVisible();
 
-    await button(page, 'Creados por mí').click();
-    await expect(button(page, 'Creados por mí')).toHaveAttribute('aria-pressed', 'true');
-    await expect(items(page)).toHaveCount(1);
-    await expect(countLine(page)).toHaveText('1 ejercicio');
-    await expect(item(page, 'Press landmine')).toBeVisible();
+      await button(page, 'Creados por mí').click();
+      await expect(button(page, 'Creados por mí')).toHaveAttribute('aria-pressed', 'true');
+      await expect(items(page)).toHaveCount(1);
+      await expect(countLine(page)).toHaveText('1 ejercicio');
+      await expect(item(page, 'Press landmine')).toBeVisible();
 
-    // AC-13
-    await page.reload();
-    await expect(h1(page, 'Ejercicios')).toBeVisible();
-    await expect(items(page)).toHaveCount(before + 1);
-    await search(page).fill('landmine');
-    await expect(item(page, 'Press landmine')).toContainText('Hombro · Barra');
-  });
+      // AC-13
+      await page.reload();
+      await expect(h1(page, 'Ejercicios')).toBeVisible();
+      await expect(items(page)).toHaveCount(before + 1);
+      await search(page).fill('landmine');
+      await expect(item(page, 'Press landmine')).toContainText('Hombro · Barra');
+    },
+  );
 
   test('AC-EXERCISES-10 / 11 · empty, duplicate and wrong values are refused and nothing is saved', async ({
     page,
