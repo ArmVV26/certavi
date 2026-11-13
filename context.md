@@ -3,7 +3,7 @@
 > Documento de arranque del proyecto **Certavi**, la reescritura de la app de registro de gimnasio (antes «Winter Arc · registro», repositorio `gym_app`).
 > Al crear el repositorio, este archivo se copia como `context.md` en la raíz. Desde ese momento es la **fuente de verdad del estado del proyecto**: qué está decidido, qué está hecho, qué falta y con qué prompt se arranca cada fase. Lo mantiene al día el agente de contexto.
 >
-> Última actualización: 12 nov 2026 · Estado: **Fases 0 a 9 cerradas (`v0.1.0` a `v0.10.0`; la 4 desplegada en Netlify, el resto sin publicar) · Fase 9 ✅ (ajustes tras el uso real, cerrada el 12 nov) · Fase 10 ⏳ (`v1.0.0`, QA final y migración)**
+> Última actualización: 13 nov 2026 · Estado: **Fases 0 a 9 cerradas (`v0.1.0` a `v0.10.1`; la 4 desplegada en Netlify, el resto sin publicar) · Fase 9 ✅ (ajustes tras el uso real, cerrada con `v0.10.1`) · Fase 10 ⏳ (consistencia y dispositivo, `v0.11.0`)**
 
 ---
 
@@ -18,7 +18,7 @@
 7. [Flujo de trabajo: ramas, commits, versiones y tags](#7-flujo-de-trabajo)
 8. [Claude Code: reglas, agentes y comandos](#8-claude-code-reglas-agentes-y-comandos)
 9. [Preparación antes de la Fase 0 (manual, en tu PC)](#9-preparación-antes-de-la-fase-0)
-10. [Hoja de ruta por fases con sus prompts](#10-hoja-de-ruta-por-fases) (Fase 9 ajustes y Fase 10 QA/v1.0.0 planificadas)
+10. [Hoja de ruta por fases con sus prompts](#10-hoja-de-ruta-por-fases) (Fases 10 a 13 planificadas)
 11. [Backlog v2 y más allá](#11-backlog-v2)
 12. [Registro de progreso](#12-registro-de-progreso)
 
@@ -43,7 +43,7 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 2. Un proyecto presentable en portfolio: arquitectura limpia, tests, CI, documentación y historial de commits ordenado.
 3. Un backend sustituible: hoy en Netlify y mañana en Java, Python o Firebase sin tocar el frontend.
 
-**Lo que NO es (por ahora)**: una app nativa de la App Store (sin Mac ni cuenta de pago no es viable), multiusuario ni con red social.
+**Lo que NO es (por ahora)**: una app nativa de la App Store (sin Mac ni cuenta de pago no es viable) ni una red social. El **multiusuario y las tiendas (Android primero, iOS después) son la v2** (sección 11).
 
 ---
 
@@ -204,7 +204,7 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Carga | Todas las pantallas salvo Hoy y la sesión son `lazy`; los tests de pantallas precargan las rutas | Principal de 890 a 372 kB; Hoy y la sesión son la ruta diaria |
 | Service worker | `registerType: 'prompt'`, solo precache; `/api/**` y `/.netlify/**` nunca en caché (ADR-0005) | Datos siempre del servidor; el usuario elige cuándo actualizar |
 | Herramientas | `/dev/ui` solo en desarrollo, Vitest y build e2e; knip en CI | Galería fuera de producción; sin código muerto |
-| Lighthouse | Escritorio en `dev`: 100 / 100 / 96 / 54 (SEO bajo a propósito: `noindex`); móvil pendiente | Insignias de la Fase 10; la categoría PWA ya no existe |
+| Lighthouse | Escritorio en `dev`: 100 / 100 / 96 / 54 (SEO bajo a propósito: `noindex`); móvil pendiente | Insignias de la Fase 13; la categoría PWA ya no existe |
 | Instalabilidad | Comprobada a mano en el iPhone (standalone, cinco pestañas) y en el panel Aplicación | Lighthouse ya no la mide |
 | Paquetes | vite-plugin-pwa 2.0.0, workbox-window 7.4.1, @vite-pwa/assets-generator 2.0.0, knip 6.44.2 | Versiones fijadas en `package.json` |
 
@@ -579,8 +579,11 @@ Formato: `tipo(ámbito): descripción en inglés, imperativo, minúsculas`.
 | `v0.7.0` | Fase 6: catálogo con filtros, ejercicios propios y editor de rutinas |
 | `v0.8.0` | Fase 7: calendario, progreso, fichas y bloques opcionales |
 | `v0.9.0` | Fase 8: pulido PWA, accesibilidad y rendimiento |
-| `v0.10.0` | Fase 9: ajustes tras el uso real |
-| **`v1.0.0`** | Fase 10: QA completo, migración real y despliegue definitivo |
+| `v0.10.1` | Fase 9: ajustes tras el uso real |
+| `v0.11.0` | Fase 10: consistencia de la documentación y diagnóstico en el dispositivo |
+| `v0.12.0` | Fase 11: auditoría con Fable |
+| `v0.13.0` | Fase 12: renovación del diseño con Fable |
+| **`v1.0.0`** | Fase 13: QA completo, migración real y despliegue definitivo |
 
 - **Tag anotado**, por ejemplo: `git tag -a v0.3.0 -m "v0.3.0 · domain model and catalog"` y `git push origin v0.3.0`.
 - `CHANGELOG.md` en formato *Keep a Changelog*, mantenido por el agente de contexto.
@@ -714,17 +717,119 @@ Cada fase sigue el mismo ciclo:
 
 ---
 
-### Fase 9 · Ajustes tras el uso real → `v0.10.0` ✅
+### Fase 9 · Ajustes tras el uso real → `v0.10.1` ✅
 
 **Ramas**: `docs/phase-9-polish`, `chore/dependabot`, `fix/ui-polish`, `feature/routine-week-edits`, `feature/machine-setup`, `chore/e2e-speed`, `fix/gym-feedback` y `fix/explicit-state`.
 
-**Estado (2026-11-12)**: **cerrada** (la rama `fix/explicit-state` es la última; ver 2.10)
+**Estado (2026-11-13)**: **cerrada** con `v0.10.1` (la rama `fix/explicit-state` es la última, PR #53; PR de release `dev → main` #54; ver 2.10)
 
 **Log (History)**: [Fase 9](docs/history.md#fase9)
 
 ---
 
-### Fase 10 · QA final, migración real y v1.0.0 ⏳
+### Fase 10 · Consistencia y dispositivo → `v0.11.0` ⏳
+
+**Ramas**: `docs/consistency` → `feature/diagnostics`.
+
+**Objetivo**: una sola verdad en la documentación y comprobar con datos que la app funciona en el iPhone.
+
+**Entregables**:
+- Informe `docs/audit/consistency-2026-11.md` y documentación corregida.
+- `docs/backlog.md`: ÚNICO sitio de sugerencias, ideas y pendientes (deuda técnica, comprobaciones manuales, mejoras v1.x, producto v2), sacados de todos los documentos, sin duplicados ni lo ya hecho.
+- `context.md` con solo el estado actual y las decisiones vigentes; lo superado, a `docs/history.md`.
+- Regla en `CLAUDE.md`: una fase se cierra al cumplir sus criterios de salida; lo nuevo va a `docs/backlog.md`.
+- Tarjeta «Diagnóstico» en Ajustes (interruptor, ajuste del dispositivo): mide con `performance.now()` la apertura de la base de datos, la primera carga de Hoy, de ✓ a serie visible y la carga de Progreso; guarda las últimas 20 mediciones de cada una; botón para copiarlas.
+- `docs/device-checklist.md`: pruebas manuales en el iPhone (sin conexión con cierre forzado, borradores, sync al recuperar la red, sonido con pantalla bloqueada, instalación y actualización de la PWA) y una tabla de resultados por fecha y versión.
+- Propuesta (sin aplicar sin OK del usuario) de qué tests mantienen `@all-engines`: WebKit de Playwright no es Safari de iOS; solo sirve para diferencias del motor.
+
+**Criterios de salida**: informe sin contradicciones abiertas; checklist del iPhone superada y apuntada; mediciones de Diagnóstico registradas (referencia: < 300 ms bien, > 1 s problema).
+
+**Prompt**:
+
+```text
+Lee context.md, CLAUDE.md y docs/history.md. FASE 10: consistencia y dispositivo.
+Rama 1, docs/consistency (solo lectura hasta mi OK):
+1. Busca contradicciones entre documentos y con el repo real (package.json, playwright.config.ts,
+   vite.config.ts, .github/workflows, netlify.toml, .claude/**, docs/adr, tests/fixtures, `git tag`,
+   `git log --oneline main`): estados de fases y ramas, versiones y tags, timeouts y jobs de CI, reglas de e2e,
+   flujo de /close-phase, estructura, ADRs, stack, pendientes ya hechos, preguntas abiertas caducadas,
+   decisiones superadas que siguen como vigentes.
+2. Informe en docs/audit/consistency-2026-11.md: id, qué dice A (archivo:línea), qué dice B, verdad y motivo,
+   y tipo «hecho» (manda el repo) o «decisión» (decido yo).
+3. Pregúntame solo las «decisión», de 3 en 3 como mucho, con opciones y tu recomendación. Espera.
+4. Propón la reorganización (context.md corto, history.md histórico, docs/backlog.md único, regla de cierre
+   en CLAUDE.md) y espera mi OK. Aplícala. /close-phase.
+Rama 2, feature/diagnostics: spec primero (docs/spec/diagnostics.md), después la tarjeta Diagnóstico y
+docs/device-checklist.md según los entregables de la Fase 10; propón los cambios de @all-engines sin
+aplicarlos. Tests unitarios y de componente. /close-phase final.
+```
+
+---
+
+### Fase 11 · Auditoría con Fable → `v0.12.0` ⏳
+
+**Ramas**: `docs/audit-fable` y después las `fix/*` que salgan de ella.
+
+**Modelo**: el usuario cambia a Fable 5.2 con `/model` antes de empezar.
+
+**Objetivo**: encontrar los defectos que quedan antes del diseño y de la v1.0.0.
+
+**Severidad**:
+- **bloqueante**: puede perder o corromper datos, rompe el uso en el gimnasio o es un fallo de seguridad;
+- **importante**: fallo visible o deuda que encarece algo ya planificado;
+- **backlog**: lo demás.
+
+`server/` y `netlify/` se sustituyen en la v2: allí solo cuentan seguridad y pérdida de datos.
+
+**Criterios de salida**: ningún bloqueante ni importante abierto; el resto, en `docs/backlog.md`.
+
+**Prompt**:
+
+```text
+Lee context.md, CLAUDE.md, docs/backlog.md y docs/spec/**. FASE 11: auditoría completa de Certavi.
+Rama docs/audit-fable, solo lectura salvo el informe. Revisa: arquitectura y capas, dominio y reglas, datos y
+sync (transacciones, cola, LWW, concurrencia, pérdida de datos), seguridad (servidor, CSP, clave, datos
+exportados), accesibilidad, rendimiento, calidad de los tests (no la cobertura), mantenibilidad y documentación.
+Informe en docs/audit/fable-2026-11.md: id, área, archivo:línea, problema, por qué importa, propuesta y
+severidad según la Fase 11. Después pídeme que valide la clasificación, propón ramas fix/* agrupadas por
+tema y espera mi OK. Lo de severidad backlog va a docs/backlog.md. Cada rama fix/*: /close-phase; la última,
+/close-phase final.
+```
+
+---
+
+### Fase 12 · Diseño con Fable → `v0.13.0` ⏳
+
+**Rama**: `feature/design-refresh` (dividir si es grande).
+
+**Modelo**: Fable 5.2 (el usuario lo cambia con `/model` antes de empezar).
+
+**Objetivo**: estilo, transiciones y aspecto profesional, solo frontend.
+
+**Entregables**:
+- Referencias del usuario (capturas y qué le gusta de cada una; se toman ideas, no se copia ninguna app).
+- Selector de 2-3 direcciones aplicado a Hoy, sesión activa y Progreso, en claro, oscuro y «0 dopamina».
+- Decisión en `docs/design/decision.md`.
+- Tokens y movimiento documentados.
+- Aplicación pantalla a pantalla.
+
+**Criterios de salida**: diseño aprobado por el usuario en el iPhone; contraste AA y axe sin violaciones; `prefers-reduced-motion` respetado; es/en sin textos cortados a 390 px.
+
+**Prompt**:
+
+```text
+Lee context.md, CLAUDE.md, docs/design/** y src/theme/**. FASE 12: renovación del diseño. Primero pídeme
+referencias (capturas y qué me gusta de cada una). Propón 2-3 direcciones en una página autónoma
+(docs/design/selector-v2.html) sobre Hoy, sesión activa y Progreso, en claro, oscuro y 0 dopamina, con
+interruptores y contraste AA visible. Espera mi elección y apúntala en docs/design/decision.md. Después:
+tokens, movimiento y componentes de src/ui, y pantalla a pantalla, dividiendo en ramas si hace falta (dime
+cuáles crear). Sin colores ni tamaños sueltos, i18n en todo y reduced motion. /close-phase en cada rama; la
+última, /close-phase final.
+```
+
+---
+
+### Fase 13 · QA final, migración real y v1.0.0 ⏳
 
 **Rama**: `release/1.0.0`, o directamente un PR de `dev` a `main`.
 
@@ -740,6 +845,7 @@ Cada fase sigue el mismo ciclo:
    - **Banner** arriba en los dos: nombre del proyecto y un visual (un teléfono con Hoy o una gráfica de progreso). Claude puede generar un SVG; si prefieres hacerlo tú, la plantilla es 1280 × 320 px, texto dentro de los 960 px centrales, logo a la izquierda, «Certavi» en Archivo Bold, subtítulo, fondo `--bg` y acento `#1d4ed8`, versión clara y oscura (`banner-light` / `banner-dark` en `docs/assets/`, con `<picture>` y `prefers-color-scheme`).
    - **Capturas** reales (Hoy, sesión activa, progreso, ficha de ejercicio; claro y oscuro) que tú pasas.
    - **Insignias**: estado de CI (GitHub Actions; solo se ve bien con el repo público), cobertura (Codecov o insignia estática de shields.io actualizada en cada release) y notas de Lighthouse de la Fase 8 (rendimiento, accesibilidad, buenas prácticas; la categoría PWA ya no existe).
+   - **CI presentable** (añadido el 2026-11-13): nombres claros de jobs, resumen en `$GITHUB_STEP_SUMMARY` (tests, cobertura y tiempos de e2e) e insignias.
 8. **¿Puede usarlo otra persona?** (añadido el 2026-11-06) Dejar la respuesta en el README: sin sync, sí, todo funciona en el dispositivo; con sync, no tal cual, porque el servidor guarda **un solo conjunto de datos** tras una sola `CLAVE_SYNC` (dos personas con la misma clave mezclarían datos), así que cada persona necesita su propio despliegue en Netlify (guía en `docs/deploy-netlify.md`). La semilla es la tuya (rutinas, catálogo y bloque de rehabilitación del tobillo activo en `src/domain/seed/blocks.ts`): decidir si se deja como «plantilla de ejemplo», se desactiva el bloque por defecto, o ambas. Lo que falta para multiusuario está en el backlog v2.
 9. **Antes de hacer público el repo** (añadido el 2026-11-06; haces público cuando quieras y activas la protección de ramas):
    - **Escaneo de secretos** con `gitleaks` sobre **todo el historial** (`gitleaks git`), no solo el estado actual, por si hubo una `CLAVE_SYNC`, un token o un export real. Buscar también a mano exports reales de gym_app (`"app": "winter-arc"`) y datos personales en los documentos (`context.md`, `docs/history.md`, specs). Si algo apareció, rotar la clave primero y después reescribir el historial; reescribir ramas lo haces tú.
@@ -749,11 +855,11 @@ Cada fase sigue el mismo ciclo:
 **Prompt**:
 
 ```text
-Lee context.md. FASE 10: preparación de la v1.0.0. Lanza al blind-tester para una regresión completa
+Lee context.md. FASE 13: preparación de la v1.0.0. Lanza al blind-tester para una regresión completa
 (es/en, claro/oscuro, offline, 390x844). Prepara una checklist de migración real para que la ejecute yo
 (exportar de gym_app, importar, verificar recuentos por tipo de registro). Después, quita el rastro de gym_app
 (importador, alias, migración) y deja README en español e inglés con banner, capturas reales que yo te pase e
-insignias (CI, cobertura, Lighthouse), más la evaluación de si otra persona puede usarlo. Prepara el escaneo
+insignias (CI, cobertura, Lighthouse) y una CI presentable (nombres de jobs y resumen en $GITHUB_STEP_SUMMARY), más la evaluación de si otra persona puede usarlo. Prepara el escaneo
 de secretos con gitleaks sobre todo el historial y el cambio de licencia a MIT. Dame el plan de release a main
 con versión y tag.
 ```
@@ -761,6 +867,18 @@ con versión y tag.
 ---
 
 ## 11. Backlog v2
+
+**Hoja de ruta v2 (orden por dependencias)** (añadida el 2026-11-13):
+
+1. **Definición de la v2 (solo ADRs)**: backend, hosting, autenticación, modelo multiusuario, contrato sync v2 y privacidad. El peso, las métricas corporales y la comida son datos de salud según el RGPD: consentimiento, política de privacidad y borrar la cuenta.
+2. **Backend v2**: Java + Spring Boot, DDD y vertical slices, Postgres; login con verificación de correo vía proveedor de identidad; web en Cloudflare (comprobar dónde corre la API Java).
+3. **Cliente multiusuario**: registro e inicio de sesión, introducción con métricas del cuerpo, crear y borrar rutinas, progreso por usuario.
+4. **Beta cerrada** con amigos.
+5. **Catálogo común ampliado con imágenes** (fotos propias o con licencia).
+6. **Registro de alimentación.**
+7. **Tiendas**: Android primero; iOS después (Mac o compilación en la nube, cuenta de pago y algo nativo).
+
+Las entradas siguientes son anteriores a esta hoja y se mantienen; algunas (backend serio, app nativa, uso por otras personas) quedan cubiertas por ella.
 
 - **Fotos de las máquinas**: hechas con el móvil, comprimidas en el cliente y guardadas en Netlify Blobs, con miniatura en la ficha y en la sesión. (Añadido el 2026-11-10) Se mostrarían junto a los «Ajustes de la máquina» de la Fase 9 (`feature/machine-setup`).
 - **Reordenar ejercicios arrastrando** en el editor de rutinas (añadido el 2026-11-10), reutilizando la fila de chips numerados de la Fase 9 (`feature/routine-week-edits`).
@@ -772,8 +890,8 @@ con versión y tag.
   - comparación entre ciclos;
   - superseries.
 - **App nativa**: con Capacitor, si algún día hay Mac y cuenta de desarrollador.
-- **Importar desde otras apps (Hevy, Strong…)** (añadido el 2026-11-06): importar su CSV con un paso para asignar cada ejercicio al catálogo de Certavi (o crearlo como ejercicio propio), porque los ids no coinciden. Un menú selector de «app de origen» sustituiría al importador de gym_app, que sale en la Fase 10. Enlazar las apps por API solo si existe una API oficial.
-- **Uso por otras personas**: una clave de sync por persona con su propio espacio de datos en el servidor (cambia el contrato `sync-v1`, lleva ADR y revisión de seguridad); primera vez guiada (empezar vacío o con plantillas) y bloques personales desactivados por defecto. Ver Fase 10.
+- **Importar desde otras apps (Hevy, Strong…)** (añadido el 2026-11-06): importar su CSV con un paso para asignar cada ejercicio al catálogo de Certavi (o crearlo como ejercicio propio), porque los ids no coinciden. Un menú selector de «app de origen» sustituiría al importador de gym_app, que sale en la Fase 13. Enlazar las apps por API solo si existe una API oficial.
+- **Uso por otras personas**: ver la «Hoja de ruta v2», puntos 1 a 3 (**login** en lugar de una clave de sync por persona; el contrato sync v2 lleva ADR y revisión de seguridad). Se mantiene de esta entrada: primera vez guiada (empezar vacío o con plantillas) y bloques personales desactivados por defecto. Para la v1.0.0, ver la Fase 13.
 - **Peso levantado por rutina**, si no cabe en la Fase 7.
 - **Tests de WebKit: medir en CI real tras la rama 6** (añadido el 2026-11-11): los tiempos locales con 1 worker no son los de CI; con el medidor por test de la rama 6 y el primer PR a `main`, decidir si hace falta recortar más `@all-engines`.
 - **Modo básico** (añadido el 2026-11-11, idea del usuario): opción que reduce cada pantalla a lo esencial (menos secciones, tarjetas y datos visibles) para entrenar con el mínimo de distracción. Se construiría sobre el interruptor «Sin color (modo 0 dopamina)» de la Fase 9 (rama 6, `fix/gym-feedback`): mismo sitio en Ajustes → Apariencia y mismo tipo de ajuste (de dispositivo, no sincronizado). Por definir: qué se considera «lo esencial» en Hoy, sesión, Progreso, Calendario y Rutinas. Fuera del alcance de la Fase 9.
@@ -784,7 +902,7 @@ con versión y tag.
 
 [Tabla Registro](docs/history.md#seccion12)
 
-**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ✅ (`v0.7.0`, sin publicar) · 7 ✅ (`v0.8.0`, sin publicar) · 8 ✅ (`v0.9.0`, sin publicar) · 9 ✅ (`v0.10.0`, sin publicar) · 10 ⏳ (`v1.0.0`)
+**Estado de fases**: 0 ✅ (`v0.1.0`) · 1 ✅ (`v0.2.0`) · 2 ✅ (`v0.3.0`) · 3 ✅ (`v0.4.0`) · 4 ✅ (`v0.5.0`, desplegada en Netlify) · 5 ✅ (`v0.6.0`, sin publicar) · 6 ✅ (`v0.7.0`, sin publicar) · 7 ✅ (`v0.8.0`, sin publicar) · 8 ✅ (`v0.9.0`, sin publicar) · 9 ✅ (`v0.10.1`) · 10 ⏳ (`v0.11.0`) · 11 ⏳ (`v0.12.0`) · 12 ⏳ (`v0.13.0`) · 13 ⏳ (`v1.0.0`)
 
 **Preguntas abiertas**:
 - Qué estiramientos van en el bloque «Estiramientos» (antes de la Fase 7).
@@ -798,7 +916,7 @@ con versión y tag.
 - Fase 7: regla del gemelo durante la rehabilitación (60 kg en la semana 1, +5 kg/semana sin dolor al día siguiente hasta 80 kg, y solo si bajar escaleras no duele), con cambios aditivos en el modelo de progresión (ver la Fase 7).
 - Fase 7: revisión del ciclo (`sixWeekReview` de gym_app) en las pantallas de progreso.
 - Fase 7 (añadido el 2026-11-06): racha semanal; peso levantado, ejercicios y series por semana / mes con selector; peso levantado por rutina (`feature/training-stats`); escala 0-10 en una fila en móvil (`feature/optional-blocks`).
-- Fase 10 (añadido el 2026-11-06): quitar el rastro de gym_app tras la migración; README es/en con banner, capturas e insignias; evaluación de uso por otras personas; gitleaks sobre el historial y licencia MIT antes de hacerlo público.
+- Fase 13 (añadido el 2026-11-06; antes Fase 10): quitar el rastro de gym_app tras la migración; README es/en con banner, capturas e insignias; evaluación de uso por otras personas; gitleaks sobre el historial y licencia MIT antes de hacerlo público.
 - ~~Fase 3 (`feature/import-export`): corregir la tabla de la sección 6 y `docs/migration.md` con los nombres reales de gym_app (2.4).~~ Hecho el 2026-11-03.
 - ~~Fase 5: UI para exportar el JSON de una sesión~~ Hecho el 2026-11-06 (`v0.6.0`). Fase 7: UI para exportar el JSON de una semana (`exportWeek`).
 - Sugerencia (no hecha, 2026-11-03) para la Fase 8: con un `Dialog` abierto, la página de fondo sigue en el árbol de accesibilidad (solo `aria-modal`); valorar `inert` en el fondo (afecta al `Dialog` compartido).
