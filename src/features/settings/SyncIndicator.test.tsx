@@ -76,19 +76,16 @@ describe('Sync indicator', () => {
 });
 
 describe('sync text', () => {
-  const state = (patch: Partial<SyncState>): SyncState => ({
-    status: 'idle',
-    hasKey: true,
-    pending: 0,
+  const state = (status: 'idle' | 'syncing', pending = 0): SyncState => ({
+    status,
+    pending,
     lastSuccessAt: null,
-    error: null,
-    ...patch,
   });
 
   it('tells "waiting" from "synced" when idle', () => {
-    expect(syncLabelOf(state({}))).toBe('synced');
-    expect(syncLabelOf(state({ pending: 1 }))).toBe('waiting');
-    expect(syncLabelOf(state({ status: 'syncing', pending: 1 }))).toBe('syncing');
+    expect(syncLabelOf(state('idle'))).toBe('synced');
+    expect(syncLabelOf(state('idle', 1))).toBe('waiting');
+    expect(syncLabelOf(state('syncing', 1))).toBe('syncing');
     expect(SYNC_ICON.error).toBe('warning');
   });
 

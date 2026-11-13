@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.1] - Unreleased
+
+### Changed
+
+- Import: the dialog stays open while a file is being read or imported, and picking a second file no longer replaces the preview.
+- Session: the set details sheet cannot save twice on a double tap; Save and Cancel are disabled while saving.
+- Session: finishing or reopening a session writes only when its state actually changes, and the rest bar closes when the session is no longer in progress.
+- Internal: lifecycles in memory and in the UI are modelled as explicit states with exhaustive switches (ADR-0006). Stored and synced data shapes are unchanged.
+
+### Fixed
+
+- Import: an unreadable file shows an error instead of failing silently.
+- Session: a confirmation branch that fell through could delete the session; every case is now explicit.
+- Sync: the backups list reloads when a sync key is added or forgotten.
+- Updates: a second tap on «Update» is ignored.
+
 ## [0.10.0] - Unreleased
 
 ### Added

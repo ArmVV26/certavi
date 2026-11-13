@@ -35,19 +35,26 @@ export type SyncTrigger =
   | 'restore'
   | 'exit';
 
-/** One sync attempt, for the attempt log in Settings (ADR-0004). */
-export interface SyncLogEntry {
-  /** Auto-increment key; absent until stored. */
-  id?: number;
+/** What every attempt of the log records. */
+interface SyncLogBase {
   at: number;
-  ok: boolean;
-  /** Error code when `ok` is false (see `SyncErrorCode`). */
-  error?: string;
   sent: number;
   received: number;
   durationMs: number;
   trigger: SyncTrigger;
 }
+
+/** How an attempt ended: it worked, or it failed with an error code (see `SyncErrorCode`). */
+export type SyncLogOutcome = { ok: true } | { ok: false; error: string };
+
+/** An attempt about to be stored. */
+export type NewSyncLogEntry = SyncLogBase & SyncLogOutcome;
+
+/** One sync attempt, for the attempt log in Settings (ADR-0004). */
+export type SyncLogEntry = NewSyncLogEntry & {
+  /** Auto-increment key; absent until stored. */
+  id?: number;
+};
 
 export const TABLES = {
   exercise: 'exercises',

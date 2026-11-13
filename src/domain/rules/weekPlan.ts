@@ -71,6 +71,16 @@ export function defaultWeekPlan(monday: string, updatedAt: number): WeekPlan {
   };
 }
 
+/**
+ * A week is frozen once its plan was saved: `plannedSetsByGroup` decides (`closedAt` only says
+ * when). The stored shape does not change (sync-v1), so this is the one place that reads it.
+ */
+export function isWeekFrozen(
+  record: WeekPlan | undefined,
+): record is WeekPlan & { plannedSetsByGroup: GroupCounts } {
+  return record?.plannedSetsByGroup !== undefined;
+}
+
 /** The plan of the week starting `monday`, seen on `today`. */
 export function weekPlanSummary(
   monday: string,
@@ -81,7 +91,7 @@ export function weekPlanSummary(
 ): PlanSummary {
   const size = record?.size ?? 5;
   const deload = record?.deload ?? false;
-  if (record?.plannedSetsByGroup && monday < mondayOf(today)) {
+  if (isWeekFrozen(record) && monday < mondayOf(today)) {
     const groups = record.plannedSetsByGroup;
     return { size, deload, groups, total: totalSets(groups), closed: true };
   }
@@ -104,7 +114,7 @@ export function weeksToClose(
   today: string,
   records: readonly WeekPlan[],
 ): string[] {
-  const frozen = new Set(records.filter((r) => r.plannedSetsByGroup).map((r) => r.week));
+  const frozen = new Set(records.filter((r) => isWeekFrozen(r)).map((r) => r.week));
   const current = mondayOf(today);
   const out: string[] = [];
   for (let monday = mondayOf(firstMonday); monday < current; monday = addDays(monday, 7)) {

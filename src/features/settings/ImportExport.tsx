@@ -29,6 +29,16 @@ interface Preview {
   invalid: number;
 }
 
+/**
+ * Where the import is. Only `idle` accepts a file; the dialog is open in `preview` and
+ * `importing`, and in `importing` nothing can close it (the records are being written).
+ */
+type ImportState =
+  | { kind: 'idle' }
+  | { kind: 'reading' }
+  | { kind: 'preview'; preview: Preview }
+  | { kind: 'importing'; preview: Preview };
+
 const SETS_COLUMNS = [
   'date',
   'session',
@@ -86,28 +96,36 @@ export function ImportExport({ download = downloadFile }: ImportExportProps) {
   const toast = useToast();
   const inputs = { legacy: useRef<HTMLInputElement>(null), backup: useRef<HTMLInputElement>(null) };
   const cancelRef = useRef<HTMLButtonElement>(null);
-  const [preview, setPreview] = useState<Preview | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [state, setState] = useState<ImportState>({ kind: 'idle' });
+  const preview = state.kind === 'preview' || state.kind === 'importing' ? state.preview : null;
+  const busy = state.kind === 'importing';
 
   async function onFile(source: Source, event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = ''; // so choosing the same file again fires a change
-    if (!file) return;
-    const text = await file.text();
-    const read = source === 'legacy' ? readGymAppExport(text) : readBackup(text);
-    if (!read.ok) {
-      toast.show({ message: t(ERROR_KEY[source]), tone: 'danger' });
-      return;
+    if (!file || state.kind !== 'idle') return;
+    setState({ kind: 'reading' });
+    try {
+      const text = await file.text();
+      const read = source === 'legacy' ? readGymAppExport(text) : readBackup(text);
+      if (!read.ok) {
+        toast.show({ message: t(ERROR_KEY[source]), tone: 'danger' });
+        setState({ kind: 'idle' });
+        return;
+      }
+      const plan = await planImport(db, read.records);
+      setState({ kind: 'preview', preview: { source, ...read, plan } });
+    } catch {
+      toast.show({ message: t('settings.data.errors.importFailed'), tone: 'danger' });
+      setState({ kind: 'idle' });
     }
-    const plan = await planImport(db, read.records);
-    setPreview({ source, ...read, plan });
   }
 
   async function confirmImport() {
-    if (!preview) return;
-    setBusy(true);
+    if (state.kind !== 'preview') return;
+    setState({ kind: 'importing', preview: state.preview });
     try {
-      const result = await applyImport(db, preview.records);
+      const result = await applyImport(db, state.preview.records);
       toast.show({
         message: t('settings.data.imported', {
           total: formatNumber(result.toWrite.length, locale),
@@ -117,8 +135,7 @@ export function ImportExport({ download = downloadFile }: ImportExportProps) {
     } catch {
       toast.show({ message: t('settings.data.errors.importFailed'), tone: 'danger' });
     } finally {
-      setBusy(false);
-      setPreview(null);
+      setState({ kind: 'idle' });
     }
   }
 
@@ -131,7 +148,8 @@ export function ImportExport({ download = downloadFile }: ImportExportProps) {
   }
 
   const close = () => {
-    setPreview(null);
+    // Escape also lands here: while the records are being written it must do nothing.
+    if (state.kind === 'preview') setState({ kind: 'idle' });
   };
   const nothingNew = preview?.plan.toWrite.length === 0;
   const extraRows = preview
@@ -148,7 +166,12 @@ export function ImportExport({ download = downloadFile }: ImportExportProps) {
       <div className={styles.actions}>
         {(['legacy', 'backup'] as const).map((source) => (
           <div key={source}>
-            <Button variant="secondary" fullWidth onClick={() => inputs[source].current?.click()}>
+            <Button
+              variant="secondary"
+              fullWidth
+              disabled={state.kind !== 'idle'}
+              onClick={() => inputs[source].current?.click()}
+            >
               {t(TITLE_KEY[source])}
             </Button>
             <input

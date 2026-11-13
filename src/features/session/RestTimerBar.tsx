@@ -5,7 +5,7 @@ import { IconButton } from '../../ui/IconButton';
 import { VisuallyHidden } from '../../ui/VisuallyHidden';
 import { formatClock } from './formatClock';
 import styles from './RestTimerBar.module.css';
-import type { RestTimer } from './useRestTimer';
+import { restPhase, type RestTimer } from './useRestTimer';
 
 interface RestTimerBarProps {
   timer: RestTimer;
@@ -44,7 +44,7 @@ export function RestTimerBar({ timer, nextName, onAdjust, onClose }: RestTimerBa
   const now = Math.max(useNow(), timer.at);
   const { total } = timer;
   const remaining = Math.max(0, Math.ceil((timer.endsAt - now) / 1000));
-  const finished = now >= timer.endsAt;
+  const finished = restPhase(timer, now) !== 'running';
   const progress = finished || total <= 0 ? 1 : 1 - remaining / total;
   return (
     <section className={styles.bar} aria-label={t('session.rest.title')}>

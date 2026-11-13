@@ -6,6 +6,7 @@ import {
   compareRoutines,
   compareSessions,
   doneSetsByGroup,
+  isInProgress,
   mondayOf,
   planWeekNumber,
   sessionItems,
@@ -34,6 +35,33 @@ export interface TodayDay {
   activities: Activity[];
 }
 
+/** What the "today" card offers: start the routine, go back to it, see it done, or rest. */
+export type HeroState =
+  | { kind: 'start'; routine: Routine }
+  | { kind: 'continue'; routine: Routine; session: WorkoutSession }
+  | { kind: 'done'; routine: Routine; session: WorkoutSession }
+  | { kind: 'rest'; plan: Extract<DayPlan, { kind: 'rest' }> };
+
+const NO_ROUTINE_PLAN: Extract<DayPlan, { kind: 'rest' }> = {
+  kind: 'rest',
+  rest: 'rest',
+  activities: [],
+};
+
+/** The state of the hero card. A routine day whose routine is gone counts as a plain rest day. */
+export function heroOf(
+  plan: DayPlan,
+  routine: Routine | undefined,
+  mainSession: WorkoutSession | undefined,
+): HeroState {
+  if (plan.kind === 'rest') return { kind: 'rest', plan };
+  if (!routine) return { kind: 'rest', plan: NO_ROUTINE_PLAN };
+  if (!mainSession) return { kind: 'start', routine };
+  return isInProgress(mainSession)
+    ? { kind: 'continue', routine, session: mainSession }
+    : { kind: 'done', routine, session: mainSession };
+}
+
 export interface TodayModel {
   today: string;
   monday: string;
@@ -42,6 +70,8 @@ export interface TodayModel {
   /** Plan of today, with the routine and the items a new session would get. */
   plan: DayPlan;
   routine: Routine | undefined;
+  /** What the hero card shows (derived from `plan`, `routine` and `mainSession`). */
+  hero: HeroState;
   items: PlanItem[];
   /** The session of today's planned routine, if one exists. */
   mainSession: WorkoutSession | undefined;
@@ -112,6 +142,7 @@ export function buildTodayModel(data: TodayData, today: string): TodayModel {
     weekNumber: planWeekNumber(data.settings?.planStart ?? null, today),
     plan,
     routine,
+    hero: heroOf(plan, routine, mainSession),
     items: routine ? sessionItems(routine.items, week.deload) : [],
     mainSession,
     otherSessions: todaySessions.filter((s) => s !== mainSession),

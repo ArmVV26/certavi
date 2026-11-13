@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
@@ -166,6 +166,49 @@ describe('Sync page', () => {
 
     expect(await screen.findByText('Copia restaurada. Registros cambiados: 2')).toBeInTheDocument();
     expect(await db.sessions.get('later')).toMatchObject({ deleted: true });
+  });
+
+  it('blocks download, restore and refresh while a backup is being restored', async () => {
+    const { user, server, engine } = setup();
+    server.backups.set('2026-11-02', backup('2026-11-02', ['a']));
+    let finish: (changed: number) => void = () => undefined;
+    vi.spyOn(engine, 'restore').mockImplementation(
+      () =>
+        new Promise<number>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    await user.click(
+      await screen.findByRole('button', { name: 'Restaurar la copia del 2 de noviembre de 2026' }),
+    );
+    await user.click(screen.getByRole('button', { name: 'Restaurar' }));
+
+    expect(
+      screen.getByRole('button', { name: 'Restaurar la copia del 2 de noviembre de 2026' }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Descargar la copia del 2 de noviembre de 2026' }),
+    ).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Actualizar' })).toBeDisabled();
+
+    finish(3);
+    expect(await screen.findByText('Copia restaurada. Registros cambiados: 3')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Actualizar' })).toBeEnabled();
+  });
+
+  it('drops the list of backups when the key is forgotten', async () => {
+    const { server, engine } = setup();
+    server.backups.set('2026-11-02', backup('2026-11-02', ['a']));
+    expect(await screen.findByText('2 de noviembre de 2026')).toBeInTheDocument();
+
+    act(() => {
+      engine.forgetKey();
+    });
+
+    expect(
+      await screen.findByText('Guarda la clave de sincronización en Ajustes para ver las copias.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('2 de noviembre de 2026')).not.toBeInTheDocument();
   });
 
   it('says when a restore fails', async () => {
