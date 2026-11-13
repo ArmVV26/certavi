@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.1] - Unreleased
+
 ### Changed
 
 - Import: the dialog stays open while a file is being read or imported, and picking a second file no longer replaces the preview.
