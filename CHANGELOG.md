@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.10.1] - Unreleased
+### Changed
+
+- Docs: `docs/audit/consistency-2026-11.md` lists the contradictions between documents and the repo; `docs/backlog.md` is now the only list of ideas and pending work; `context.md` keeps only the current state and the decisions in force, and the superseded text moved to `docs/history.md`.
+
+## [0.10.1] - 2026-11-13
 
 ### Changed
 
@@ -23,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sync: the backups list reloads when a sync key is added or forgotten.
 - Updates: a second tap on «Update» is ignored.
 
-## [0.10.0] - Unreleased
+## [0.10.0] - 2026-11-11
 
 ### Added
 
@@ -38,14 +42,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Session: the rest timer ticks in its own bar, so the session screen no longer re-renders four times per second. This is a preventive change for the report that the screen was hard to leave on iPhone; the cause of that report is not confirmed.
 - E2E: the CI e2e jobs upload a per-test timing report on every run (retained 14 days). The `e2e:all` global timeout is 1600000 ms.
 - E2E: test data is loaded from a synthetic Certavi backup fixture instead of the gym_app importer (sync and PWA specs). The sync conflict test runs fewer attempts.
-- CI: the e2e job is split into parallel jobs (Chromium and WebKit, two shards each) that share one prebuilt bundle; Playwright retries once.
+- CI: the e2e job is split into parallel jobs (Chromium in two shards and WebKit in three) that share one prebuilt bundle; Playwright retries once.
 
 ### Fixed
 
 - Session: marking a set ✓ emptied its values for 1-2 seconds before the row turned green. The just-saved set now stays visible until the local query catches up.
 - Session: sets could not be removed on iPhone (the only way was a swipe over a full row). Use «Quitar serie» instead.
 
-## [0.9.0] - Unreleased
+## [0.9.0] - 2026-11-08
 
 PWA polish, accessibility and performance (Phase 8).
 
@@ -72,7 +76,7 @@ PWA polish, accessibility and performance (Phase 8).
 
 - Unused files, exports, dependencies and i18n keys found by knip.
 
-## [0.8.0] - Unreleased
+## [0.8.0] - 2026-11-07
 
 Calendar, progress, optional blocks and training statistics (Phase 7).
 

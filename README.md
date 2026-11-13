@@ -6,21 +6,23 @@ Certavi tracks routines, workout sessions and sets (weight, reps, RIR), weekly v
 group, personal records, body weight and optional mobility / rehab blocks. It installs on an
 iPhone from Safari and runs entirely on the device; a tiny backend only syncs and backs up data.
 
-> **Status:** early development — Phase 0 (project foundation). See the [roadmap](#roadmap).
+> **Status:** in development — phases 0 to 9 are done (`v0.10.1`) and the app already works day to
+> day; phases 10 to 13 (consistency and on-device checks, audit, design refresh, QA and migration)
+> lead to `v1.0.0`. See the [roadmap](#roadmap).
 
 ---
 
 ## Screenshots
 
-| Today               | Active session      | Progress            |
-| ------------------- | ------------------- | ------------------- |
-| _coming in Phase 5_ | _coming in Phase 5_ | _coming in Phase 7_ |
+| Today                | Active session       | Progress             |
+| -------------------- | -------------------- | -------------------- |
+| _coming in Phase 13_ | _coming in Phase 13_ | _coming in Phase 13_ |
 
 ---
 
 ## Features
 
-**Planned for v1.0.0** (parity with the previous app plus improvements):
+**Scope of v1.0.0** (parity with the previous app plus improvements; most of it already works):
 
 - **Today** — suggested session for the weekday, free sessions, logging on another date,
   hiking and deload weeks, activities, weekly body weight, today's optional blocks.
@@ -170,7 +172,7 @@ CI runs lint, typecheck, tests and build on every pull request to `dev` and `mai
 
 ## Deployment (Netlify)
 
-Deployment is set up in Phase 4, when the sync backend exists:
+Setup steps (the guide is [`docs/deploy-netlify.md`](docs/deploy-netlify.md); merging into `main` deploys production):
 
 1. Netlify → **Add new project** → import this repository.
 2. **Production branch:** `main`. **Branch deploys:** `dev` only. **Deploy previews:** off.
@@ -212,10 +214,13 @@ Deployment is set up in Phase 4, when the sync backend exists:
 | v0.7.0     | Catalog filters, custom exercises and routine editor     |
 | v0.8.0     | Calendar, progress, exercise details and optional blocks |
 | v0.9.0     | PWA polish, accessibility and performance                |
+| v0.10.1    | Adjustments after real use (Phase 9)                     |
+| v0.11.0    | Documentation consistency and on-device diagnostics      |
+| v0.12.0    | Full audit                                               |
+| v0.13.0    | Design refresh                                           |
 | **v1.0.0** | Full QA, real data migration and production release      |
 
-Later: machine photos, a "real" backend if ever needed, cycle templates and comparisons,
-supersets.
+Ideas and pending work, including the multi-user v2, are listed in [`docs/backlog.md`](docs/backlog.md).
 
 ---
 
