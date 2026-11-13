@@ -7,8 +7,10 @@
 
 ## Dependabot (`.github/dependabot.yml`)
 
-- Weekly PRs target `dev`: minor and patch updates grouped (dev and runtime apart), every major
-  alone. CI (`checks`, including `npm audit --audit-level=high --omit=dev`) must be green.
+- Weekly npm PRs target `dev`: minor and patch updates grouped (dev and runtime apart), `i18next`
+  and `react-i18next` together (any update type), every other major alone; a new release waits
+  3 days (`cooldown`). GitHub Actions updates come monthly (`ci(deps)`). CI (`checks`, including
+  `npm audit --audit-level=high --omit=dev`) must be green.
 - The user reviews and merges them. A major update that needs code changes goes on its own
   `chore/*` branch: do not push fixes onto the Dependabot branch.
 - Keep the ignores in sync with CLAUDE.md §2: `typescript` < 6.1, `eslint` and `@eslint/js` < 10,
