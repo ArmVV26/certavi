@@ -270,50 +270,51 @@ async function importSample(page: Page): Promise<void> {
   await expectCounts(page, 'es', countsFor('es', 'after'));
 }
 
-test.describe('import and export', { tag: '@all-engines' }, () => {
-  test('AC-IMPORT-01 · gym_app preview shows the summary, saves nothing until "Importar", then 29 records', async ({
-    page,
-    browserName,
-  }) => {
-    await gotoReady(page, '/settings', 'Ajustes');
-    await expectCounts(page, 'es', countsFor('es', 'new'));
+test.describe('import and export', () => {
+  test(
+    'AC-IMPORT-01 · gym_app preview shows the summary, saves nothing until "Importar", then 29 records',
+    { tag: '@all-engines' },
+    async ({ page, browserName }) => {
+      await gotoReady(page, '/settings', 'Ajustes');
+      await expectCounts(page, 'es', countsFor('es', 'new'));
 
-    // The two groups and their five buttons.
-    await expect(
-      page.getByRole('heading', { level: 3, name: T.es.importHeading, exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('heading', { level: 3, name: T.es.exportHeading, exact: true }),
-    ).toBeVisible();
-    for (const b of [
-      T.es.importGym,
-      T.es.importCertavi,
-      T.es.exportJson,
-      T.es.exportSets,
-      T.es.exportActivity,
-    ]) {
-      await expect(page.getByRole('button', { name: b, exact: true })).toBeVisible();
-    }
+      // The two groups and their five buttons.
+      await expect(
+        page.getByRole('heading', { level: 3, name: T.es.importHeading, exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('heading', { level: 3, name: T.es.exportHeading, exact: true }),
+      ).toBeVisible();
+      for (const b of [
+        T.es.importGym,
+        T.es.importCertavi,
+        T.es.exportJson,
+        T.es.exportSets,
+        T.es.exportActivity,
+      ]) {
+        await expect(page.getByRole('button', { name: b, exact: true })).toBeVisible();
+      }
 
-    await chooseFile(page, T.es.importGym, GYM_SAMPLE);
-    const dialog = dialogOf(page, T.es.importGym);
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByText(T.es.willSave, { exact: true })).toBeVisible();
-    await expect.poll(() => readSummary(dialog, 'es')).toEqual(previewFor('es'));
-    const cancel = dialog.getByRole('button', { name: T.es.cancel, exact: true });
-    await expect(cancel).toBeFocused();
-    await expect(dialog.getByRole('button', { name: T.es.confirm, exact: true })).toBeVisible();
+      await chooseFile(page, T.es.importGym, GYM_SAMPLE);
+      const dialog = dialogOf(page, T.es.importGym);
+      await expect(dialog).toBeVisible();
+      await expect(dialog.getByText(T.es.willSave, { exact: true })).toBeVisible();
+      await expect.poll(() => readSummary(dialog, 'es')).toEqual(previewFor('es'));
+      const cancel = dialog.getByRole('button', { name: T.es.cancel, exact: true });
+      await expect(cancel).toBeFocused();
+      await expect(dialog.getByRole('button', { name: T.es.confirm, exact: true })).toBeVisible();
 
-    // Nothing saved yet.
-    await expectCounts(page, 'es', countsFor('es', 'new'));
+      // Nothing saved yet.
+      await expectCounts(page, 'es', countsFor('es', 'new'));
 
-    if (browserName === 'chromium') await axeDialog(page, 'import preview (light)');
+      if (browserName === 'chromium') await axeDialog(page, 'import preview (light)');
 
-    await dialog.getByRole('button', { name: T.es.confirm, exact: true }).click();
-    await expect(toast(page, T.es.imported(29))).toBeVisible();
-    await expect(dialog).toBeHidden();
-    await expectCounts(page, 'es', countsFor('es', 'after'));
-  });
+      await dialog.getByRole('button', { name: T.es.confirm, exact: true }).click();
+      await expect(toast(page, T.es.imported(29))).toBeVisible();
+      await expect(dialog).toBeHidden();
+      await expectCounts(page, 'es', countsFor('es', 'after'));
+    },
+  );
 
   test('AC-IMPORT-02 · "Cancelar" and Escape close the preview and change nothing (dark)', async ({
     page,
@@ -346,69 +347,73 @@ test.describe('import and export', { tag: '@all-engines' }, () => {
     await expectCounts(page, 'es', countsFor('es', 'new'));
   });
 
-  test('AC-IMPORT-03 · wrong files in both import buttons show a message, no dialog, no change', async ({
-    page,
-  }, testInfo) => {
-    await gotoReady(page, '/settings', 'Ajustes');
-    await expectCounts(page, 'es', countsFor('es', 'new'));
-    // A real Certavi backup (of a new device) to feed to the gym_app button.
-    const backup = await download(page, T.es.exportJson, testInfo);
-
-    const cases: [button: string, file: string, message: string][] = [
-      [T.es.importGym, TEXT_FILE, T.es.notGym],
-      [T.es.importGym, backup.file, T.es.notGym],
-      [T.es.importCertavi, TEXT_FILE, T.es.notCertavi],
-      [T.es.importCertavi, GYM_SAMPLE, T.es.notCertavi],
-    ];
-    for (const [button, file, message] of cases) {
-      // A fresh page per case, so each message is the one this file produced.
-      await page.reload();
-      await expect(h1(page, 'Ajustes')).toBeVisible();
+  test(
+    'AC-IMPORT-03 · wrong files in both import buttons show a message, no dialog, no change',
+    { tag: '@all-engines' },
+    async ({ page }, testInfo) => {
+      await gotoReady(page, '/settings', 'Ajustes');
       await expectCounts(page, 'es', countsFor('es', 'new'));
-      await chooseFile(page, button, file);
-      await expect(toast(page, message), `${button} + ${path.basename(file)}`).toBeVisible();
-      await expect(anyDialog(page)).toHaveCount(0);
-      await expectCounts(page, 'es', countsFor('es', 'new'));
-    }
-  });
+      // A real Certavi backup (of a new device) to feed to the gym_app button.
+      const backup = await download(page, T.es.exportJson, testInfo);
 
-  test('AC-IMPORT-03b · empty and binary files give the wrong-file message and the picker still works afterwards', async ({
-    page,
-  }) => {
-    await gotoReady(page, '/settings', 'Ajustes');
-    await expectCounts(page, 'es', countsFor('es', 'new'));
+      const cases: [button: string, file: string, message: string][] = [
+        [T.es.importGym, TEXT_FILE, T.es.notGym],
+        [T.es.importGym, backup.file, T.es.notGym],
+        [T.es.importCertavi, TEXT_FILE, T.es.notCertavi],
+        [T.es.importCertavi, GYM_SAMPLE, T.es.notCertavi],
+      ];
+      for (const [button, file, message] of cases) {
+        // A fresh page per case, so each message is the one this file produced.
+        await page.reload();
+        await expect(h1(page, 'Ajustes')).toBeVisible();
+        await expectCounts(page, 'es', countsFor('es', 'new'));
+        await chooseFile(page, button, file);
+        await expect(toast(page, message), `${button} + ${path.basename(file)}`).toBeVisible();
+        await expect(anyDialog(page)).toHaveCount(0);
+        await expectCounts(page, 'es', countsFor('es', 'new'));
+      }
+    },
+  );
 
-    const empty = { name: 'vacio.json', mimeType: 'application/json', buffer: Buffer.alloc(0) };
-    const binary = {
-      name: 'binario.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from([0xff, 0xfe, 0x00, 0x01, 0x80, 0x81, 0xc3, 0x28, 0x00, 0xff]),
-    };
-    const cases: [button: string, file: typeof empty, message: string][] = [
-      [T.es.importGym, empty, T.es.notGym],
-      [T.es.importGym, binary, T.es.notGym],
-      [T.es.importCertavi, empty, T.es.notCertavi],
-      [T.es.importCertavi, binary, T.es.notCertavi],
-    ];
-    for (const [button, file, message] of cases) {
-      await page.reload();
-      await expect(h1(page, 'Ajustes')).toBeVisible();
+  test(
+    'AC-IMPORT-03b · empty and binary files give the wrong-file message and the picker still works afterwards',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await gotoReady(page, '/settings', 'Ajustes');
       await expectCounts(page, 'es', countsFor('es', 'new'));
-      await chooseFile(page, button, file);
-      await expect(toast(page, message), `${button} + ${file.name}`).toBeVisible();
-      await expect(anyDialog(page)).toHaveCount(0);
-      await expectCounts(page, 'es', countsFor('es', 'new'));
-    }
 
-    // After an error the picker is usable: a valid file opens the preview, and Cancel saves nothing.
-    await chooseFile(page, T.es.importGym, GYM_SAMPLE);
-    const dialog = dialogOf(page, T.es.importGym);
-    await expect(dialog).toBeVisible();
-    await expect.poll(() => readSummary(dialog, 'es')).toEqual(previewFor('es'));
-    await dialog.getByRole('button', { name: T.es.cancel, exact: true }).click();
-    await expect(dialog).toBeHidden();
-    await expectCounts(page, 'es', countsFor('es', 'new'));
-  });
+      const empty = { name: 'vacio.json', mimeType: 'application/json', buffer: Buffer.alloc(0) };
+      const binary = {
+        name: 'binario.json',
+        mimeType: 'application/json',
+        buffer: Buffer.from([0xff, 0xfe, 0x00, 0x01, 0x80, 0x81, 0xc3, 0x28, 0x00, 0xff]),
+      };
+      const cases: [button: string, file: typeof empty, message: string][] = [
+        [T.es.importGym, empty, T.es.notGym],
+        [T.es.importGym, binary, T.es.notGym],
+        [T.es.importCertavi, empty, T.es.notCertavi],
+        [T.es.importCertavi, binary, T.es.notCertavi],
+      ];
+      for (const [button, file, message] of cases) {
+        await page.reload();
+        await expect(h1(page, 'Ajustes')).toBeVisible();
+        await expectCounts(page, 'es', countsFor('es', 'new'));
+        await chooseFile(page, button, file);
+        await expect(toast(page, message), `${button} + ${file.name}`).toBeVisible();
+        await expect(anyDialog(page)).toHaveCount(0);
+        await expectCounts(page, 'es', countsFor('es', 'new'));
+      }
+
+      // After an error the picker is usable: a valid file opens the preview, and Cancel saves nothing.
+      await chooseFile(page, T.es.importGym, GYM_SAMPLE);
+      const dialog = dialogOf(page, T.es.importGym);
+      await expect(dialog).toBeVisible();
+      await expect.poll(() => readSummary(dialog, 'es')).toEqual(previewFor('es'));
+      await dialog.getByRole('button', { name: T.es.cancel, exact: true }).click();
+      await expect(dialog).toBeHidden();
+      await expectCounts(page, 'es', countsFor('es', 'new'));
+    },
+  );
 
   test('AC-IMPORT-03b · while the import runs, Escape does not close the dialog and "Cancelar" / "Importar" are disabled; then it closes with the message', async ({
     page,
@@ -484,117 +489,121 @@ test.describe('import and export', { tag: '@all-engines' }, () => {
     await expectCounts(page, 'es', countsFor('es', 'after'));
   });
 
-  test('AC-IMPORT-05 · import works offline and the counts survive a reload', async ({
-    page,
-    context,
-  }) => {
-    await gotoReady(page, '/settings', 'Ajustes');
-    await expectCounts(page, 'es', countsFor('es', 'new'));
+  test(
+    'AC-IMPORT-05 · import works offline and the counts survive a reload',
+    { tag: '@all-engines' },
+    async ({ page, context }) => {
+      await gotoReady(page, '/settings', 'Ajustes');
+      await expectCounts(page, 'es', countsFor('es', 'new'));
 
-    await context.setOffline(true);
-    await chooseFile(page, T.es.importGym, GYM_SAMPLE);
-    const dialog = dialogOf(page, T.es.importGym);
-    await expect(dialog).toBeVisible();
-    await dialog.getByRole('button', { name: T.es.confirm, exact: true }).click();
-    await expect(toast(page, T.es.imported(29))).toBeVisible();
-    await expectCounts(page, 'es', countsFor('es', 'after'));
-    await context.setOffline(false);
-
-    await page.reload();
-    await expect(h1(page, 'Ajustes')).toBeVisible();
-    // Starting the app closes the finished weeks that have data and no frozen plan yet
-    // (calendar.md): one more week, which is also one more change waiting to sync.
-    await expectCounts(
-      page,
-      'es',
-      countsFor('es', 'after').map(([label, n]) =>
-        label === 'Semanas'
-          ? [label, '3']
-          : label === 'Pendientes de sincronizar'
-            ? [label, '30']
-            : [label, n],
-      ),
-    );
-  });
-
-  test('AC-EXPORT-01 · full backup downloads as certavi-backup-<today>.json and restores on a new device', async ({
-    page,
-    browser,
-  }, testInfo) => {
-    await importSample(page);
-    const firstDevice = await readCounts(page, 'es');
-
-    const backup = await download(page, T.es.exportJson, testInfo);
-    expect(backup.name).toBe(`certavi-backup-${await today(page)}.json`);
-    expect(() => JSON.parse(readFileSync(backup.file, 'utf8')) as unknown).not.toThrow();
-
-    // A new device: a fresh browser context with its own empty storage.
-    const other = await browser.newContext({
-      baseURL: testInfo.project.use.baseURL,
-      viewport: { width: 390, height: 844 },
-    });
-    try {
-      const page2 = await other.newPage();
-      await gotoReady(page2, '/settings', 'Ajustes');
-      await expectCounts(page2, 'es', countsFor('es', 'new'));
-
-      await chooseFile(page2, T.es.importCertavi, backup.file);
-      const dialog = dialogOf(page2, T.es.importCertavi);
+      await context.setOffline(true);
+      await chooseFile(page, T.es.importGym, GYM_SAMPLE);
+      const dialog = dialogOf(page, T.es.importGym);
       await expect(dialog).toBeVisible();
-      await expect(dialog.getByText(T.es.willSave, { exact: true })).toBeVisible();
       await dialog.getByRole('button', { name: T.es.confirm, exact: true }).click();
-      await expect(
-        page2.getByText(/^Registros importados: \d+$/).filter({ visible: true }),
-      ).toBeVisible();
-      await expect(dialog).toBeHidden();
-      await expectCounts(page2, 'es', firstDevice);
-    } finally {
-      await other.close();
-    }
-  });
+      await expect(toast(page, T.es.imported(29))).toBeVisible();
+      await expectCounts(page, 'es', countsFor('es', 'after'));
+      await context.setOffline(false);
 
-  test('AC-EXPORT-02 · the sets and activity CSVs are ready for Spanish Excel', async ({
-    page,
-  }, testInfo) => {
-    await importSample(page);
-    const day = await today(page);
+      await page.reload();
+      await expect(h1(page, 'Ajustes')).toBeVisible();
+      // Starting the app closes the finished weeks that have data and no frozen plan yet
+      // (calendar.md): one more week, which is also one more change waiting to sync.
+      await expectCounts(
+        page,
+        'es',
+        countsFor('es', 'after').map(([label, n]) =>
+          label === 'Semanas'
+            ? [label, '3']
+            : label === 'Pendientes de sincronizar'
+              ? [label, '30']
+              : [label, n],
+        ),
+      );
+    },
+  );
 
-    // Sets.
-    const sets = await download(page, T.es.exportSets, testInfo);
-    expect(sets.name).toBe(`certavi-sets-${day}.csv`);
-    const setsText = readCsv(sets.file);
-    expect(setsText.startsWith(`${SETS_HEADER_ES}\r\n`), 'Spanish header + CRLF').toBe(true);
-    const [setsHeader, ...setRows] = parseCsv(setsText);
-    expect(setsHeader).toEqual(SETS_HEADER_ES.split(';'));
-    expect(setRows).toHaveLength(11);
-    for (const r of setRows) expect(r, r.join(';')).toHaveLength(14);
-    const weight = SETS_HEADER_ES.split(';').indexOf('peso_kg');
-    expect(setRows.filter((r) => r[weight] === '27,5')).toHaveLength(2);
-    expect(setsText).not.toContain('27.5');
-    // The free session and the quoted session note (it contains ";"), only on its first row.
-    expect(setRows.some((r) => r[1] === 'Sesión libre')).toBe(true);
-    expect(setRows.filter((r) => r[13] === 'Buena sesión; con energía')).toHaveLength(1);
+  test(
+    'AC-EXPORT-01 · full backup downloads as certavi-backup-<today>.json and restores on a new device',
+    { tag: '@all-engines' },
+    async ({ page, browser }, testInfo) => {
+      await importSample(page);
+      const firstDevice = await readCounts(page, 'es');
 
-    // Activity and weight.
-    const act = await download(page, T.es.exportActivity, testInfo);
-    expect(act.name).toBe(`certavi-activity-weight-${day}.csv`);
-    const actText = readCsv(act.file);
-    expect(actText.startsWith(`${ACTIVITY_HEADER_ES}\r\n`), 'Spanish header + CRLF').toBe(true);
-    const [actHeader, ...actRows] = parseCsv(actText);
-    expect(actHeader).toEqual(ACTIVITY_HEADER_ES.split(';'));
-    expect(actRows.map((r) => r[1])).toEqual([
-      'actividad',
-      'actividad',
-      'peso_medio_semana',
-      'peso_medio_semana',
-    ]);
-    expect(
-      actRows
-        .slice(2)
-        .map((r) => r[4] ?? '')
-        .sort(),
-    ).toEqual(['80,5', '81']);
-  });
+      const backup = await download(page, T.es.exportJson, testInfo);
+      expect(backup.name).toBe(`certavi-backup-${await today(page)}.json`);
+      expect(() => JSON.parse(readFileSync(backup.file, 'utf8')) as unknown).not.toThrow();
+
+      // A new device: a fresh browser context with its own empty storage.
+      const other = await browser.newContext({
+        baseURL: testInfo.project.use.baseURL,
+        viewport: { width: 390, height: 844 },
+      });
+      try {
+        const page2 = await other.newPage();
+        await gotoReady(page2, '/settings', 'Ajustes');
+        await expectCounts(page2, 'es', countsFor('es', 'new'));
+
+        await chooseFile(page2, T.es.importCertavi, backup.file);
+        const dialog = dialogOf(page2, T.es.importCertavi);
+        await expect(dialog).toBeVisible();
+        await expect(dialog.getByText(T.es.willSave, { exact: true })).toBeVisible();
+        await dialog.getByRole('button', { name: T.es.confirm, exact: true }).click();
+        await expect(
+          page2.getByText(/^Registros importados: \d+$/).filter({ visible: true }),
+        ).toBeVisible();
+        await expect(dialog).toBeHidden();
+        await expectCounts(page2, 'es', firstDevice);
+      } finally {
+        await other.close();
+      }
+    },
+  );
+
+  test(
+    'AC-EXPORT-02 · the sets and activity CSVs are ready for Spanish Excel',
+    { tag: '@all-engines' },
+    async ({ page }, testInfo) => {
+      await importSample(page);
+      const day = await today(page);
+
+      // Sets.
+      const sets = await download(page, T.es.exportSets, testInfo);
+      expect(sets.name).toBe(`certavi-sets-${day}.csv`);
+      const setsText = readCsv(sets.file);
+      expect(setsText.startsWith(`${SETS_HEADER_ES}\r\n`), 'Spanish header + CRLF').toBe(true);
+      const [setsHeader, ...setRows] = parseCsv(setsText);
+      expect(setsHeader).toEqual(SETS_HEADER_ES.split(';'));
+      expect(setRows).toHaveLength(11);
+      for (const r of setRows) expect(r, r.join(';')).toHaveLength(14);
+      const weight = SETS_HEADER_ES.split(';').indexOf('peso_kg');
+      expect(setRows.filter((r) => r[weight] === '27,5')).toHaveLength(2);
+      expect(setsText).not.toContain('27.5');
+      // The free session and the quoted session note (it contains ";"), only on its first row.
+      expect(setRows.some((r) => r[1] === 'Sesión libre')).toBe(true);
+      expect(setRows.filter((r) => r[13] === 'Buena sesión; con energía')).toHaveLength(1);
+
+      // Activity and weight.
+      const act = await download(page, T.es.exportActivity, testInfo);
+      expect(act.name).toBe(`certavi-activity-weight-${day}.csv`);
+      const actText = readCsv(act.file);
+      expect(actText.startsWith(`${ACTIVITY_HEADER_ES}\r\n`), 'Spanish header + CRLF').toBe(true);
+      const [actHeader, ...actRows] = parseCsv(actText);
+      expect(actHeader).toEqual(ACTIVITY_HEADER_ES.split(';'));
+      expect(actRows.map((r) => r[1])).toEqual([
+        'actividad',
+        'actividad',
+        'peso_medio_semana',
+        'peso_medio_semana',
+      ]);
+      expect(
+        actRows
+          .slice(2)
+          .map((r) => r[4] ?? '')
+          .sort(),
+      ).toEqual(['80,5', '81']);
+    },
+  );
 
   test('AC-IMPORT-06 · in English the buttons, the preview and the messages are English', async ({
     page,

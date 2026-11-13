@@ -352,7 +352,7 @@ async function setRecords(server: FakeSyncServer): Promise<number> {
 // Tests
 // ---------------------------------------------------------------------------------------------
 
-test.describe('session tools', { tag: '@all-engines' }, () => {
+test.describe('session tools', () => {
   test('AC-SESSION-24 / 25 / 26 · add an exercise to a free session and to Push; the filters narrow the list', async ({
     page,
   }) => {
@@ -541,282 +541,290 @@ test.describe('session tools', { tag: '@all-engines' }, () => {
     await expect(page.getByRole('heading', { name: first, exact: true })).toBeVisible();
   });
 
-  test('AC-SESSION-29 / 30 · change the routine (with confirmation) and edit date and hours', async ({
-    page,
-  }) => {
-    await openToday(page);
-    await startRoutine(page, 'Push');
-    const inc = await exCard(page, INCLINE);
-    await logSet(inc, 0, '20', '10');
+  test(
+    'AC-SESSION-29 / 30 · change the routine (with confirmation) and edit date and hours',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await openToday(page);
+      await startRoutine(page, 'Push');
+      const inc = await exCard(page, INCLINE);
+      await logSet(inc, 0, '20', '10');
 
-    // AC-30: Push → Pull. In progress: no "Fin".
-    let sheet = await openSheet(page, 'Datos de la sesión', 'Datos de la sesión');
-    await expect(sheet.getByLabel('Fin', { exact: true })).toHaveCount(0);
-    const chooseRoutine = async (name: string) => {
-      const combo = sheet.getByRole('combobox', { name: 'Rutina', exact: true });
-      if ((await combo.count()) > 0) await combo.selectOption({ label: name });
-      else
-        await sheet
-          .getByRole('radio', { name, exact: true })
-          .or(sheet.getByRole('button', { name, exact: true }))
-          .first()
-          .click();
-    };
-    await chooseRoutine('Pull');
-    await button(sheet, 'Guardar').click();
-    const confirm = dialogOf(page, '¿Cambiar la sesión a Pull?');
-    await expect(confirm).toBeVisible();
-    await expect(confirm).toContainText(
-      'La lista de ejercicios pasará a ser la de esa rutina. Las series ya apuntadas se mantienen.',
-    );
-    await button(confirm, 'Cancelar').click();
-    await expect(confirm).toBeHidden();
-    // Cancelling changes nothing: still Push, with its exercises.
-    if (await sheet.isVisible()) await button(sheet, 'Cancelar').click();
-    await expect(sheet).toBeHidden();
-    await expect(page.getByRole('heading', { name: 'Push', exact: true })).toBeVisible();
-    await expect(page.getByRole('heading', { name: BENCH, exact: true })).toBeVisible();
-
-    sheet = await openSheet(page, 'Datos de la sesión', 'Datos de la sesión');
-    await chooseRoutine('Pull');
-    await button(sheet, 'Guardar').click();
-    await button(confirm, 'Cambiar').click();
-    await expect(page.getByRole('heading', { name: 'Pull', exact: true })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Remo en T', exact: true })).toBeVisible();
-    await expect(page.getByRole('heading', { name: BENCH, exact: true })).toHaveCount(0);
-    const kept = await exCard(page, INCLINE);
-    await expect(kept.getByText('Fuera de la rutina', { exact: true })).toBeVisible();
-    await expect(rows(kept).kg(0)).toHaveValue('20');
-    await expect(page.getByRole('main').getByText(/^1 de \d+ hechas$/)).toBeVisible();
-    expect((await exerciseOrder(page)).at(-1), 'kept exercise goes to the end').toBe(INCLINE);
-
-    // Pull → Sesión libre: only the exercise with saved sets stays, without the tag.
-    sheet = await openSheet(page, 'Datos de la sesión', 'Datos de la sesión');
-    await chooseRoutine('Sesión libre');
-    await button(sheet, 'Guardar').click();
-    await button(page, 'Cambiar').click();
-    await expect(page.getByRole('heading', { name: 'Sesión libre', exact: true })).toBeVisible();
-    const free = await exCard(page, INCLINE);
-    await expect(free.getByText('Fuera de la rutina', { exact: true })).toHaveCount(0);
-    await expect(rows(free).kg(0)).toHaveValue('20');
-    await expect(page.getByRole('heading', { name: 'Remo en T', exact: true })).toHaveCount(0);
-    await expect(summary(page)).toHaveText(/^1 ejercicios? · \d+ series$/);
-
-    // AC-29: finish, then date and hours. First the two errors.
-    await button(page, 'Terminar sesión').click();
-    await expect(page.getByRole('main').getByText('Terminada', { exact: true })).toBeVisible();
-    sheet = await openSheet(page, 'Datos de la sesión', 'Datos de la sesión');
-    const start = sheet.getByLabel('Inicio', { exact: true });
-    const end = sheet.getByLabel('Fin', { exact: true });
-    await expect(end).toBeVisible();
-    await start.fill('18:00');
-    await end.fill('17:00');
-    await button(sheet, 'Guardar').click();
-    await expect(
-      page.getByText('El fin no puede ser anterior al inicio', { exact: true }),
-    ).toBeVisible();
-    await expect(sheet).toBeVisible();
-    await sheet.getByLabel('Fecha', { exact: true }).fill('2026-11-03');
-    await end.fill('19:15');
-    await button(sheet, 'Guardar').click();
-    await expect(page.getByText('La fecha no puede ser futura', { exact: true })).toBeVisible();
-    await expect(sheet).toBeVisible();
-
-    await sheet.getByLabel('Fecha', { exact: true }).fill('2026-11-01');
-    await start.fill('17:30');
-    await end.fill('18:45');
-    await button(sheet, 'Guardar').click();
-    await expect(sheet).toBeHidden();
-    const main = page.getByRole('main');
-    await expect(main).toContainText('1 de noviembre');
-    await expect(main).toContainText('17:30');
-    await page.clock.runFor(DEBOUNCE);
-    await page.reload();
-    await expect(h1(page, 'Sesión')).toBeVisible();
-    await expect(page.getByRole('main')).toContainText('1 de noviembre');
-    await expect(page.getByRole('main')).toContainText('17:30');
-
-    // Today no longer counts it as today's.
-    await backToToday(page);
-    await expect(page.getByRole('main')).not.toContainText('También hoy: Sesión libre');
-  });
-
-  test('AC-SESSION-32 / 33 / 34 · the rest timer starts after a new set, ±15 s, ends, closes and does not start when it should not', async ({
-    page,
-  }) => {
-    await openToday(page);
-    await startRoutine(page, 'Push');
-    const banca = await exCard(page, BENCH);
-    const r = rows(banca);
-    await expect(closeRest(page)).toHaveCount(0);
-
-    // AC-32: the top row of a basic exercise rests 180 s + 30 s.
-    await logSet(banca, 0, '60', '8');
-    await expect(closeRest(page)).toBeVisible();
-    const bar = restBar(page);
-    await expect(bar).toContainText(/Descanso/);
-    await expect(bar).toContainText(/Siguiente: .+/);
-    await expectSecs(page, 205, 210);
-    // A warm-up restarts it at 1:00.
-    const rowsBefore = await r.count();
-    await button(banca, '+ Calentamiento').click();
-    // The new row is drawn at the top: wait for it before typing, or row 0 is still the top set.
-    await expect.poll(() => r.count()).toBe(rowsBefore + 1);
-    await expect(
-      banca.getByRole('button', { name: /^Tipo de (la )?serie .*calentamiento/i }),
-    ).toBeVisible();
-    await logSet(banca, 0, '20', '10');
-    await expectSecs(page, 55, 60);
-
-    // AC-33: from here on the clock is still, so the time is exact.
-    await pauseClock(page);
-    const t0 = await restSecs(page);
-    expect(t0).toBeGreaterThan(50);
-    await button(page, '+15 s').click();
-    await expectSecs(page, t0 + 14, t0 + 16);
-    await button(page, '−15 s').click();
-    await button(page, '−15 s').click();
-    await expectSecs(page, t0 - 16, t0 - 14);
-    for (let i = 0; i < 5; i++) await button(page, '−15 s').click();
-    await expectSecs(page, 14, 15); // never below 0:15 while counting
-
-    await page.clock.runFor(16_000);
-    await expect(restBar(page)).toContainText('¡A por la siguiente serie!');
-    await button(page, '+15 s').click();
-    await expect(restBar(page)).not.toContainText('¡A por la siguiente serie!');
-    await expectSecs(page, 14, 15);
-    await page.clock.runFor(16_000);
-    await expect(restBar(page)).toContainText('¡A por la siguiente serie!');
-    await page.clock.runFor(31_000);
-    await expect(closeRest(page)).toHaveCount(0);
-    await page.clock.resume();
-
-    // The close button closes it at any moment.
-    await logSet(banca, 2, '55', '8');
-    await expect(closeRest(page)).toBeVisible();
-    await expectSecs(page, 150, 180); // back-off of a basic exercise: 3:00
-    await closeRest(page).click();
-    await expect(closeRest(page)).toHaveCount(0);
-
-    // AC-34: correcting a saved set does not start it.
-    await r.reps(2).fill('9');
-    await r.reps(2).blur();
-    await expect(r.done(2)).toHaveAccessibleName(/^Serie hecha/);
-    await page.clock.runFor(500);
-    await expect(closeRest(page)).toHaveCount(0);
-
-    // Finishing closes it.
-    // The last working row folds the card, so the ✓ is checked through "Completo" and the bar.
-    await r.kg(3).fill('55');
-    await r.reps(3).fill('8');
-    await r.done(3).click();
-    await expect(banca.getByText('Completo', { exact: true })).toBeVisible();
-    await expect(closeRest(page)).toBeVisible();
-    await button(page, 'Terminar sesión').click();
-    await expect(page.getByRole('main').getByText('Terminada', { exact: true })).toBeVisible();
-    await expect(closeRest(page)).toHaveCount(0);
-
-    // A set saved in a finished session does not start it.
-    await ensureOpen(banca, BENCH);
-    await button(banca, '+ Serie extra').click();
-    await expect.poll(() => r.count()).toBe(5);
-    await expect(r.kg(4)).toBeFocused(); // typed values are only safe once the row is focused
-    await logSet(banca, 4, '50', '10');
-    await page.clock.runFor(500);
-    await expect(closeRest(page)).toHaveCount(0);
-
-    // Back in progress it starts again, and a reload drops it.
-    await button(page, 'Marcar como en curso').click();
-    await expect(page.getByRole('main').getByText('En curso', { exact: true })).toBeVisible();
-    await ensureOpen(banca, BENCH);
-    await button(banca, '+ Serie extra').click();
-    await expect.poll(() => r.count()).toBe(6);
-    await expect(r.kg(5)).toBeFocused();
-    await logSet(banca, 5, '50', '10');
-    await expect(closeRest(page)).toBeVisible();
-    await page.reload();
-    await expect(h1(page, 'Sesión')).toBeVisible();
-    await expect(page.getByRole('heading', { name: BENCH, exact: true })).toBeVisible();
-    await expect(closeRest(page)).toHaveCount(0);
-  });
-
-  test('AC-REST-01 / 02 · rest times and sound / vibration are kept after a reload, and the new time is used', async ({
-    page,
-  }) => {
-    await page.clock.install({ time: MON });
-    await gotoReady(page, '/settings', 'Ajustes');
-    const basic = () =>
-      page
-        .getByRole('spinbutton', { name: 'Descanso en ejercicios básicos (s)', exact: true })
-        .or(page.getByRole('textbox', { name: 'Descanso en ejercicios básicos (s)', exact: true }));
-    const iso = () =>
-      page
-        .getByRole('spinbutton', { name: 'Descanso en aislamiento (s)', exact: true })
-        .or(page.getByRole('textbox', { name: 'Descanso en aislamiento (s)', exact: true }));
-    const sw = (name: string) =>
-      page
-        .getByRole('switch', { name, exact: true })
-        .or(page.getByRole('checkbox', { name, exact: true }));
-    await expect(page.getByRole('heading', { name: 'Descanso', exact: true })).toBeVisible();
-    await expect(basic()).toHaveValue('180');
-    await expect(iso()).toHaveValue('120');
-    await expect(sw('Sonido al acabar el descanso')).toBeChecked();
-    await expect(sw('Vibración')).not.toBeChecked();
-    await expect(page.getByText('No funciona en iPhone.', { exact: true })).toBeVisible();
-
-    await basic().fill('200');
-    await basic().blur();
-    await iso().fill('90');
-    await iso().blur();
-    await sw('Sonido al acabar el descanso').click();
-    await sw('Vibración').click();
-    await expect(sw('Sonido al acabar el descanso')).not.toBeChecked();
-    await expect(sw('Vibración')).toBeChecked();
-    // The times are written to the database when a field is left, and nothing on screen says
-    // when that is done: wait for the stored value before reloading (a reload aborts a write
-    // in flight, and WebKit is slower than Chromium while the built-in data is being created).
-    await expectStoredRest(page, { compound: 200, isolation: 90 });
-    await page.reload();
-    await expect(h1(page, 'Ajustes')).toBeVisible();
-    await expect(basic()).toHaveValue('200');
-    await expect(iso()).toHaveValue('90');
-    await expect(sw('Sonido al acabar el descanso')).not.toBeChecked();
-    await expect(sw('Vibración')).toBeChecked();
-
-    // Out of range (below 15, above 900): the spec allows the field to show the closest allowed
-    // value, so after a reload the value is the previous one or 15 / 900, never the typed one.
-    for (const [bad, closest] of [
-      ['10', '15'],
-      ['901', '900'],
-    ] as const) {
-      await basic().fill(bad);
-      await basic().blur();
-      await expectStoredRest(page, { compound: Number(closest), isolation: 90 });
-      await page.reload();
-      await expect(h1(page, 'Ajustes')).toBeVisible();
-      await expect(basic(), `${bad} s is not accepted`).toHaveValue(
-        new RegExp(`^(200|${closest})$`),
+      // AC-30: Push → Pull. In progress: no "Fin".
+      let sheet = await openSheet(page, 'Datos de la sesión', 'Datos de la sesión');
+      await expect(sheet.getByLabel('Fin', { exact: true })).toHaveCount(0);
+      const chooseRoutine = async (name: string) => {
+        const combo = sheet.getByRole('combobox', { name: 'Rutina', exact: true });
+        if ((await combo.count()) > 0) await combo.selectOption({ label: name });
+        else
+          await sheet
+            .getByRole('radio', { name, exact: true })
+            .or(sheet.getByRole('button', { name, exact: true }))
+            .first()
+            .click();
+      };
+      await chooseRoutine('Pull');
+      await button(sheet, 'Guardar').click();
+      const confirm = dialogOf(page, '¿Cambiar la sesión a Pull?');
+      await expect(confirm).toBeVisible();
+      await expect(confirm).toContainText(
+        'La lista de ejercicios pasará a ser la de esa rutina. Las series ya apuntadas se mantienen.',
       );
-      test.info().annotations.push({
-        type: 'out of range',
-        description: `${bad} -> ${await basic().inputValue()}`,
-      });
+      await button(confirm, 'Cancelar').click();
+      await expect(confirm).toBeHidden();
+      // Cancelling changes nothing: still Push, with its exercises.
+      if (await sheet.isVisible()) await button(sheet, 'Cancelar').click();
+      await expect(sheet).toBeHidden();
+      await expect(page.getByRole('heading', { name: 'Push', exact: true })).toBeVisible();
+      await expect(page.getByRole('heading', { name: BENCH, exact: true })).toBeVisible();
+
+      sheet = await openSheet(page, 'Datos de la sesión', 'Datos de la sesión');
+      await chooseRoutine('Pull');
+      await button(sheet, 'Guardar').click();
+      await button(confirm, 'Cambiar').click();
+      await expect(page.getByRole('heading', { name: 'Pull', exact: true })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Remo en T', exact: true })).toBeVisible();
+      await expect(page.getByRole('heading', { name: BENCH, exact: true })).toHaveCount(0);
+      const kept = await exCard(page, INCLINE);
+      await expect(kept.getByText('Fuera de la rutina', { exact: true })).toBeVisible();
+      await expect(rows(kept).kg(0)).toHaveValue('20');
+      await expect(page.getByRole('main').getByText(/^1 de \d+ hechas$/)).toBeVisible();
+      expect((await exerciseOrder(page)).at(-1), 'kept exercise goes to the end').toBe(INCLINE);
+
+      // Pull → Sesión libre: only the exercise with saved sets stays, without the tag.
+      sheet = await openSheet(page, 'Datos de la sesión', 'Datos de la sesión');
+      await chooseRoutine('Sesión libre');
+      await button(sheet, 'Guardar').click();
+      await button(page, 'Cambiar').click();
+      await expect(page.getByRole('heading', { name: 'Sesión libre', exact: true })).toBeVisible();
+      const free = await exCard(page, INCLINE);
+      await expect(free.getByText('Fuera de la rutina', { exact: true })).toHaveCount(0);
+      await expect(rows(free).kg(0)).toHaveValue('20');
+      await expect(page.getByRole('heading', { name: 'Remo en T', exact: true })).toHaveCount(0);
+      await expect(summary(page)).toHaveText(/^1 ejercicios? · \d+ series$/);
+
+      // AC-29: finish, then date and hours. First the two errors.
+      await button(page, 'Terminar sesión').click();
+      await expect(page.getByRole('main').getByText('Terminada', { exact: true })).toBeVisible();
+      sheet = await openSheet(page, 'Datos de la sesión', 'Datos de la sesión');
+      const start = sheet.getByLabel('Inicio', { exact: true });
+      const end = sheet.getByLabel('Fin', { exact: true });
+      await expect(end).toBeVisible();
+      await start.fill('18:00');
+      await end.fill('17:00');
+      await button(sheet, 'Guardar').click();
+      await expect(
+        page.getByText('El fin no puede ser anterior al inicio', { exact: true }),
+      ).toBeVisible();
+      await expect(sheet).toBeVisible();
+      await sheet.getByLabel('Fecha', { exact: true }).fill('2026-11-03');
+      await end.fill('19:15');
+      await button(sheet, 'Guardar').click();
+      await expect(page.getByText('La fecha no puede ser futura', { exact: true })).toBeVisible();
+      await expect(sheet).toBeVisible();
+
+      await sheet.getByLabel('Fecha', { exact: true }).fill('2026-11-01');
+      await start.fill('17:30');
+      await end.fill('18:45');
+      await button(sheet, 'Guardar').click();
+      await expect(sheet).toBeHidden();
+      const main = page.getByRole('main');
+      await expect(main).toContainText('1 de noviembre');
+      await expect(main).toContainText('17:30');
+      await page.clock.runFor(DEBOUNCE);
+      await page.reload();
+      await expect(h1(page, 'Sesión')).toBeVisible();
+      await expect(page.getByRole('main')).toContainText('1 de noviembre');
+      await expect(page.getByRole('main')).toContainText('17:30');
+
+      // Today no longer counts it as today's.
+      await backToToday(page);
+      await expect(page.getByRole('main')).not.toContainText('También hoy: Sesión libre');
+    },
+  );
+
+  test(
+    'AC-SESSION-32 / 33 / 34 · the rest timer starts after a new set, ±15 s, ends, closes and does not start when it should not',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await openToday(page);
+      await startRoutine(page, 'Push');
+      const banca = await exCard(page, BENCH);
+      const r = rows(banca);
+      await expect(closeRest(page)).toHaveCount(0);
+
+      // AC-32: the top row of a basic exercise rests 180 s + 30 s.
+      await logSet(banca, 0, '60', '8');
+      await expect(closeRest(page)).toBeVisible();
+      const bar = restBar(page);
+      await expect(bar).toContainText(/Descanso/);
+      await expect(bar).toContainText(/Siguiente: .+/);
+      await expectSecs(page, 205, 210);
+      // A warm-up restarts it at 1:00.
+      const rowsBefore = await r.count();
+      await button(banca, '+ Calentamiento').click();
+      // The new row is drawn at the top: wait for it before typing, or row 0 is still the top set.
+      await expect.poll(() => r.count()).toBe(rowsBefore + 1);
+      await expect(
+        banca.getByRole('button', { name: /^Tipo de (la )?serie .*calentamiento/i }),
+      ).toBeVisible();
+      await logSet(banca, 0, '20', '10');
+      await expectSecs(page, 55, 60);
+
+      // AC-33: from here on the clock is still, so the time is exact.
+      await pauseClock(page);
+      const t0 = await restSecs(page);
+      expect(t0).toBeGreaterThan(50);
+      await button(page, '+15 s').click();
+      await expectSecs(page, t0 + 14, t0 + 16);
+      await button(page, '−15 s').click();
+      await button(page, '−15 s').click();
+      await expectSecs(page, t0 - 16, t0 - 14);
+      for (let i = 0; i < 5; i++) await button(page, '−15 s').click();
+      await expectSecs(page, 14, 15); // never below 0:15 while counting
+
+      await page.clock.runFor(16_000);
+      await expect(restBar(page)).toContainText('¡A por la siguiente serie!');
+      await button(page, '+15 s').click();
+      await expect(restBar(page)).not.toContainText('¡A por la siguiente serie!');
+      await expectSecs(page, 14, 15);
+      await page.clock.runFor(16_000);
+      await expect(restBar(page)).toContainText('¡A por la siguiente serie!');
+      await page.clock.runFor(31_000);
+      await expect(closeRest(page)).toHaveCount(0);
+      await page.clock.resume();
+
+      // The close button closes it at any moment.
+      await logSet(banca, 2, '55', '8');
+      await expect(closeRest(page)).toBeVisible();
+      await expectSecs(page, 150, 180); // back-off of a basic exercise: 3:00
+      await closeRest(page).click();
+      await expect(closeRest(page)).toHaveCount(0);
+
+      // AC-34: correcting a saved set does not start it.
+      await r.reps(2).fill('9');
+      await r.reps(2).blur();
+      await expect(r.done(2)).toHaveAccessibleName(/^Serie hecha/);
+      await page.clock.runFor(500);
+      await expect(closeRest(page)).toHaveCount(0);
+
+      // Finishing closes it.
+      // The last working row folds the card, so the ✓ is checked through "Completo" and the bar.
+      await r.kg(3).fill('55');
+      await r.reps(3).fill('8');
+      await r.done(3).click();
+      await expect(banca.getByText('Completo', { exact: true })).toBeVisible();
+      await expect(closeRest(page)).toBeVisible();
+      await button(page, 'Terminar sesión').click();
+      await expect(page.getByRole('main').getByText('Terminada', { exact: true })).toBeVisible();
+      await expect(closeRest(page)).toHaveCount(0);
+
+      // A set saved in a finished session does not start it.
+      await ensureOpen(banca, BENCH);
+      await button(banca, '+ Serie extra').click();
+      await expect.poll(() => r.count()).toBe(5);
+      await expect(r.kg(4)).toBeFocused(); // typed values are only safe once the row is focused
+      await logSet(banca, 4, '50', '10');
+      await page.clock.runFor(500);
+      await expect(closeRest(page)).toHaveCount(0);
+
+      // Back in progress it starts again, and a reload drops it.
+      await button(page, 'Marcar como en curso').click();
+      await expect(page.getByRole('main').getByText('En curso', { exact: true })).toBeVisible();
+      await ensureOpen(banca, BENCH);
+      await button(banca, '+ Serie extra').click();
+      await expect.poll(() => r.count()).toBe(6);
+      await expect(r.kg(5)).toBeFocused();
+      await logSet(banca, 5, '50', '10');
+      await expect(closeRest(page)).toBeVisible();
+      await page.reload();
+      await expect(h1(page, 'Sesión')).toBeVisible();
+      await expect(page.getByRole('heading', { name: BENCH, exact: true })).toBeVisible();
+      await expect(closeRest(page)).toHaveCount(0);
+    },
+  );
+
+  test(
+    'AC-REST-01 / 02 · rest times and sound / vibration are kept after a reload, and the new time is used',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await page.clock.install({ time: MON });
+      await gotoReady(page, '/settings', 'Ajustes');
+      const basic = () =>
+        page
+          .getByRole('spinbutton', { name: 'Descanso en ejercicios básicos (s)', exact: true })
+          .or(
+            page.getByRole('textbox', { name: 'Descanso en ejercicios básicos (s)', exact: true }),
+          );
+      const iso = () =>
+        page
+          .getByRole('spinbutton', { name: 'Descanso en aislamiento (s)', exact: true })
+          .or(page.getByRole('textbox', { name: 'Descanso en aislamiento (s)', exact: true }));
+      const sw = (name: string) =>
+        page
+          .getByRole('switch', { name, exact: true })
+          .or(page.getByRole('checkbox', { name, exact: true }));
+      await expect(page.getByRole('heading', { name: 'Descanso', exact: true })).toBeVisible();
+      await expect(basic()).toHaveValue('180');
+      await expect(iso()).toHaveValue('120');
+      await expect(sw('Sonido al acabar el descanso')).toBeChecked();
+      await expect(sw('Vibración')).not.toBeChecked();
+      await expect(page.getByText('No funciona en iPhone.', { exact: true })).toBeVisible();
+
       await basic().fill('200');
       await basic().blur();
+      await iso().fill('90');
+      await iso().blur();
+      await sw('Sonido al acabar el descanso').click();
+      await sw('Vibración').click();
+      await expect(sw('Sonido al acabar el descanso')).not.toBeChecked();
+      await expect(sw('Vibración')).toBeChecked();
+      // The times are written to the database when a field is left, and nothing on screen says
+      // when that is done: wait for the stored value before reloading (a reload aborts a write
+      // in flight, and WebKit is slower than Chromium while the built-in data is being created).
       await expectStoredRest(page, { compound: 200, isolation: 90 });
-    }
-    await page.reload();
-    await expect(h1(page, 'Ajustes')).toBeVisible();
-    await expect(basic()).toHaveValue('200');
+      await page.reload();
+      await expect(h1(page, 'Ajustes')).toBeVisible();
+      await expect(basic()).toHaveValue('200');
+      await expect(iso()).toHaveValue('90');
+      await expect(sw('Sonido al acabar el descanso')).not.toBeChecked();
+      await expect(sw('Vibración')).toBeChecked();
 
-    // The new basic rest is used: top row = 200 + 30 s.
-    await backToToday(page);
-    await startRoutine(page, 'Push');
-    const banca = await exCard(page, BENCH);
-    await logSet(banca, 0, '60', '8');
-    await expect(closeRest(page)).toBeVisible();
-    await expectSecs(page, 225, 230);
-  });
+      // Out of range (below 15, above 900): the spec allows the field to show the closest allowed
+      // value, so after a reload the value is the previous one or 15 / 900, never the typed one.
+      for (const [bad, closest] of [
+        ['10', '15'],
+        ['901', '900'],
+      ] as const) {
+        await basic().fill(bad);
+        await basic().blur();
+        await expectStoredRest(page, { compound: Number(closest), isolation: 90 });
+        await page.reload();
+        await expect(h1(page, 'Ajustes')).toBeVisible();
+        await expect(basic(), `${bad} s is not accepted`).toHaveValue(
+          new RegExp(`^(200|${closest})$`),
+        );
+        test.info().annotations.push({
+          type: 'out of range',
+          description: `${bad} -> ${await basic().inputValue()}`,
+        });
+        await basic().fill('200');
+        await basic().blur();
+        await expectStoredRest(page, { compound: 200, isolation: 90 });
+      }
+      await page.reload();
+      await expect(h1(page, 'Ajustes')).toBeVisible();
+      await expect(basic()).toHaveValue('200');
+
+      // The new basic rest is used: top row = 200 + 30 s.
+      await backToToday(page);
+      await startRoutine(page, 'Push');
+      const banca = await exCard(page, BENCH);
+      await logSet(banca, 0, '60', '8');
+      await expect(closeRest(page)).toBeVisible();
+      await expectSecs(page, 225, 230);
+    },
+  );
 
   test('AC-SESSION-35 · a set saved on another device shows with the notice; unsaved typing is kept; Cerrar and a new change bring it back', async ({
     page,
@@ -1046,46 +1054,47 @@ test.describe('session tools', { tag: '@all-engines' }, () => {
     await expect(sheet).toBeHidden();
   });
 
-  test('AC-SESSION-31 · Descargar JSON gives certavi-session-<date>-<id>.json with saved data only, also offline', async ({
-    page,
-    context,
-  }, testInfo) => {
-    await openToday(page);
-    await startRoutine(page, 'Push');
-    const inc = await exCard(page, INCLINE);
-    await logSet(inc, 0, '40', '10');
-    await logSet(inc, 1, '45', '8');
-    await button(inc, 'Nota').click();
-    await inc.getByLabel('Nota del ejercicio', { exact: true }).fill('Nota E2E descarga');
-    const banca = await exCard(page, BENCH);
-    await rows(banca).kg(0).fill('73.25'); // typed, never saved
-    await page.clock.runFor(DEBOUNCE);
-    await expect(button(inc, 'Nota ✎')).toBeVisible();
+  test(
+    'AC-SESSION-31 · Descargar JSON gives certavi-session-<date>-<id>.json with saved data only, also offline',
+    { tag: '@all-engines' },
+    async ({ page, context }, testInfo) => {
+      await openToday(page);
+      await startRoutine(page, 'Push');
+      const inc = await exCard(page, INCLINE);
+      await logSet(inc, 0, '40', '10');
+      await logSet(inc, 1, '45', '8');
+      await button(inc, 'Nota').click();
+      await inc.getByLabel('Nota del ejercicio', { exact: true }).fill('Nota E2E descarga');
+      const banca = await exCard(page, BENCH);
+      await rows(banca).kg(0).fill('73.25'); // typed, never saved
+      await page.clock.runFor(DEBOUNCE);
+      await expect(button(inc, 'Nota ✎')).toBeVisible();
 
-    const download = async (tag: string) => {
-      const pending = page.waitForEvent('download');
-      await button(page, 'Descargar JSON').click();
-      const dl = await pending;
-      const file = testInfo.outputPath(`${tag}-${dl.suggestedFilename()}`);
-      await dl.saveAs(file);
-      return { name: dl.suggestedFilename(), text: readFileSync(file, 'utf8') };
-    };
-    const first = await download('online');
-    expect(first.name).toMatch(/^certavi-session-2026-11-02-.+\.json$/);
-    const id = /^certavi-session-2026-11-02-(.+)\.json$/.exec(first.name)?.[1] ?? '';
-    expect(id.length).toBeGreaterThan(3);
-    expect(() => JSON.parse(first.text) as unknown).not.toThrow();
-    expect(first.text).toContain(id);
-    expect(first.text).toContain('Nota E2E descarga');
-    expect(first.text).not.toContain('73.25');
-    expect(new Set(first.text.match(/set_[0-9a-z]+/g) ?? []).size).toBe(2);
+      const download = async (tag: string) => {
+        const pending = page.waitForEvent('download');
+        await button(page, 'Descargar JSON').click();
+        const dl = await pending;
+        const file = testInfo.outputPath(`${tag}-${dl.suggestedFilename()}`);
+        await dl.saveAs(file);
+        return { name: dl.suggestedFilename(), text: readFileSync(file, 'utf8') };
+      };
+      const first = await download('online');
+      expect(first.name).toMatch(/^certavi-session-2026-11-02-.+\.json$/);
+      const id = /^certavi-session-2026-11-02-(.+)\.json$/.exec(first.name)?.[1] ?? '';
+      expect(id.length).toBeGreaterThan(3);
+      expect(() => JSON.parse(first.text) as unknown).not.toThrow();
+      expect(first.text).toContain(id);
+      expect(first.text).toContain('Nota E2E descarga');
+      expect(first.text).not.toContain('73.25');
+      expect(new Set(first.text.match(/set_[0-9a-z]+/g) ?? []).size).toBe(2);
 
-    await context.setOffline(true);
-    const offline = await download('offline');
-    expect(offline.name).toBe(first.name);
-    expect(offline.text).toContain('Nota E2E descarga');
-    await context.setOffline(false);
-  });
+      await context.setOffline(true);
+      const offline = await download('offline');
+      expect(offline.name).toBe(first.name);
+      expect(offline.text).toContain('Nota E2E descarga');
+      await context.setOffline(false);
+    },
+  );
 
   test('AC-SESSION-36 · English, dark and 390 px: sheets, rest bar and notifications are translated, fit the screen and have no serious axe issues', async ({
     page,

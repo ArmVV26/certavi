@@ -356,85 +356,87 @@ test.describe('calendar (navigation and languages)', () => {
   });
 });
 
-test.describe('calendar (data and layout)', { tag: '@all-engines' }, () => {
-  test('AC-CAL-03 / 04 / 06 / 08 / 09 · log a session and an activity on past days: marks, summary, the same session again, reload', async ({
-    page,
-  }) => {
-    await openCalendarAt(page, WED);
-    await expect(page.getByText('Nada registrado este mes', { exact: true })).toBeVisible();
+test.describe('calendar (data and layout)', () => {
+  test(
+    'AC-CAL-03 / 04 / 06 / 08 / 09 · log a session and an activity on past days: marks, summary, the same session again, reload',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await openCalendarAt(page, WED);
+      await expect(page.getByText('Nada registrado este mes', { exact: true })).toBeVisible();
 
-    // AC-08: Push on Monday 2 November (a past day).
-    await dayCell(page, 'lunes, 2 de noviembre').click();
-    await expect(page.getByText('Sin sesiones', { exact: true })).toBeVisible();
-    await button(page, 'Push').click();
-    const pushUrl = await expectSessionScreen(page, 'Push');
-    await expect(page.getByRole('main')).toContainText(/lunes, 2 de noviembre/);
-    await expect(page.getByRole('main').getByText('Terminada', { exact: true })).toBeVisible();
+      // AC-08: Push on Monday 2 November (a past day).
+      await dayCell(page, 'lunes, 2 de noviembre').click();
+      await expect(page.getByText('Sin sesiones', { exact: true })).toBeVisible();
+      await button(page, 'Push').click();
+      const pushUrl = await expectSessionScreen(page, 'Push');
+      await expect(page.getByRole('main')).toContainText(/lunes, 2 de noviembre/);
+      await expect(page.getByRole('main').getByText('Terminada', { exact: true })).toBeVisible();
 
-    // Back to the calendar: the day is marked and lists the session.
-    await toCalendar(page);
-    await expect(dayCell(page, 'lunes, 2 de noviembre')).toHaveAccessibleName(
-      'lunes, 2 de noviembre, 1 sesión',
-    );
-    await dayCell(page, 'lunes, 2 de noviembre').click();
-    const link = page.getByRole('link', { name: /^Push[\s·]*Terminada[\s·]*\d+ series?$/ });
-    await expect(link).toBeVisible();
-    await expect(link).toHaveAttribute('href', /\/session\/[^/]+$/);
+      // Back to the calendar: the day is marked and lists the session.
+      await toCalendar(page);
+      await expect(dayCell(page, 'lunes, 2 de noviembre')).toHaveAccessibleName(
+        'lunes, 2 de noviembre, 1 sesión',
+      );
+      await dayCell(page, 'lunes, 2 de noviembre').click();
+      const link = page.getByRole('link', { name: /^Push[\s·]*Terminada[\s·]*\d+ series?$/ });
+      await expect(link).toBeVisible();
+      await expect(link).toHaveAttribute('href', /\/session\/[^/]+$/);
 
-    // Pressing "Push" again opens the same session with the toast.
-    await button(page, 'Push').click();
-    await expect(toast(page, 'Ya había una sesión «Push» ese día: la abro.')).toBeVisible();
-    expect(await expectSessionScreen(page, 'Push'), 'the existing session').toBe(pushUrl);
+      // Pressing "Push" again opens the same session with the toast.
+      await button(page, 'Push').click();
+      await expect(toast(page, 'Ya había una sesión «Push» ese día: la abro.')).toBeVisible();
+      expect(await expectSessionScreen(page, 'Push'), 'the existing session').toBe(pushUrl);
 
-    // AC-09: Swimming for 45 minutes on Tuesday 3 November.
-    await toCalendar(page);
-    await dayCell(page, 'martes, 3 de noviembre').click();
-    const types = group(page, 'Tipo de actividad');
-    await option(types, 'Natación').click();
-    await expect(selected(types, 'Natación')).toBeVisible();
-    await field(page, 'Minutos').fill('45');
-    await field(page, 'Nota').fill('Piscina E2E');
-    await button(page, 'Guardar actividad').click();
-    await expect(toast(page, 'Actividad guardada: Natación')).toBeVisible();
-    await expect(field(page, 'Minutos')).toHaveValue('');
-    await expect(field(page, 'Nota')).toHaveValue('');
-    const main = page.getByRole('main');
-    await expect(main).toContainText('Natación 45 min');
-    await expect(main).toContainText('Piscina E2E');
-    await expect(dayCell(page, 'martes, 3 de noviembre')).toHaveAccessibleName(
-      'martes, 3 de noviembre, 1 actividad',
-    );
+      // AC-09: Swimming for 45 minutes on Tuesday 3 November.
+      await toCalendar(page);
+      await dayCell(page, 'martes, 3 de noviembre').click();
+      const types = group(page, 'Tipo de actividad');
+      await option(types, 'Natación').click();
+      await expect(selected(types, 'Natación')).toBeVisible();
+      await field(page, 'Minutos').fill('45');
+      await field(page, 'Nota').fill('Piscina E2E');
+      await button(page, 'Guardar actividad').click();
+      await expect(toast(page, 'Actividad guardada: Natación')).toBeVisible();
+      await expect(field(page, 'Minutos')).toHaveValue('');
+      await expect(field(page, 'Nota')).toHaveValue('');
+      const main = page.getByRole('main');
+      await expect(main).toContainText('Natación 45 min');
+      await expect(main).toContainText('Piscina E2E');
+      await expect(dayCell(page, 'martes, 3 de noviembre')).toHaveAccessibleName(
+        'martes, 3 de noviembre, 1 actividad',
+      );
 
-    // A football match today, without minutes: shown without minutes (edge: 0 minutes).
-    await dayCell(page, 'miércoles, 4 de noviembre').click();
-    await option(group(page, 'Tipo de actividad'), 'Fútbol').click();
-    await button(page, 'Guardar actividad').click();
-    await expect(toast(page, 'Actividad guardada: Fútbol')).toBeVisible();
-    await expect(dayCell(page, 'miércoles, 4 de noviembre')).toHaveAccessibleName(
-      'miércoles, 4 de noviembre, 1 actividad',
-    );
-    await expect(main).not.toContainText('Fútbol 0 min');
+      // A football match today, without minutes: shown without minutes (edge: 0 minutes).
+      await dayCell(page, 'miércoles, 4 de noviembre').click();
+      await option(group(page, 'Tipo de actividad'), 'Fútbol').click();
+      await button(page, 'Guardar actividad').click();
+      await expect(toast(page, 'Actividad guardada: Fútbol')).toBeVisible();
+      await expect(dayCell(page, 'miércoles, 4 de noviembre')).toHaveAccessibleName(
+        'miércoles, 4 de noviembre, 1 actividad',
+      );
+      await expect(main).not.toContainText('Fútbol 0 min');
 
-    // AC-04: the summary counts the whole month, singular and plural.
-    await expect(page.getByText('1 sesión · 2 actividades', { exact: true })).toBeVisible();
+      // AC-04: the summary counts the whole month, singular and plural.
+      await expect(page.getByText('1 sesión · 2 actividades', { exact: true })).toBeVisible();
 
-    // Reload in the middle: everything is still there, and the page opens on the current month.
-    await page.reload();
-    await expect(h1(page, 'Calendario')).toBeVisible();
-    await expect(monthHeading(page, 'noviembre de 2026')).toBeVisible();
-    await expect(page.getByText('1 sesión · 2 actividades', { exact: true })).toBeVisible();
-    await expect(dayCell(page, 'lunes, 2 de noviembre')).toHaveAccessibleName(
-      'lunes, 2 de noviembre, 1 sesión',
-    );
-    await expect(dayCell(page, 'martes, 3 de noviembre')).toHaveAccessibleName(
-      'martes, 3 de noviembre, 1 actividad',
-    );
+      // Reload in the middle: everything is still there, and the page opens on the current month.
+      await page.reload();
+      await expect(h1(page, 'Calendario')).toBeVisible();
+      await expect(monthHeading(page, 'noviembre de 2026')).toBeVisible();
+      await expect(page.getByText('1 sesión · 2 actividades', { exact: true })).toBeVisible();
+      await expect(dayCell(page, 'lunes, 2 de noviembre')).toHaveAccessibleName(
+        'lunes, 2 de noviembre, 1 sesión',
+      );
+      await expect(dayCell(page, 'martes, 3 de noviembre')).toHaveAccessibleName(
+        'martes, 3 de noviembre, 1 actividad',
+      );
 
-    // AC-06: the session link opens the session.
-    await dayCell(page, 'lunes, 2 de noviembre').click();
-    await page.getByRole('link', { name: /^Push[\s·]*Terminada/ }).click();
-    expect(await expectSessionScreen(page, 'Push')).toBe(pushUrl);
-  });
+      // AC-06: the session link opens the session.
+      await dayCell(page, 'lunes, 2 de noviembre').click();
+      await page.getByRole('link', { name: /^Push[\s·]*Terminada/ }).click();
+      expect(await expectSessionScreen(page, 'Push')).toBe(pushUrl);
+    },
+  );
 
   test('AC-CAL-05 / 11 / 12 / 13 · week options from the week panel, special week buttons, closing of finished weeks (read-only), current and future weeks never closed', async ({
     page,
@@ -697,120 +699,123 @@ test.describe('calendar (data and layout)', { tag: '@all-engines' }, () => {
     expect(text).not.toContain(E2E_SYNC_KEY);
   });
 
-  test('AC-CAL-17 · offline: an activity on a past day and the weight of a week survive a reload, wait as pending and sync later', async ({
-    page,
-    context,
-  }) => {
-    const server = createFakeSyncServer();
-    await server.attach(context);
-    await page.clock.setFixedTime(WED);
-    await gotoReady(page, '/settings', 'Ajustes');
-    await page.getByLabel('Clave de sincronización', { exact: true }).fill(E2E_SYNC_KEY);
-    await button(page, 'Guardar clave').click();
-    await expect(toast(page, 'Clave guardada.')).toBeVisible();
-    await expect
-      .poll(() => server.requestCount('/api/v1/sync'), { timeout: WAIT })
-      .toBeGreaterThan(0);
-    await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sincronizado', {
-      timeout: WAIT,
-    });
-    await toCalendar(page);
-    const onServer = (await server.records()).length;
+  test(
+    'AC-CAL-17 · offline: an activity on a past day and the weight of a week survive a reload, wait as pending and sync later',
+    { tag: '@all-engines' },
+    async ({ page, context }) => {
+      const server = createFakeSyncServer();
+      await server.attach(context);
+      await page.clock.setFixedTime(WED);
+      await gotoReady(page, '/settings', 'Ajustes');
+      await page.getByLabel('Clave de sincronización', { exact: true }).fill(E2E_SYNC_KEY);
+      await button(page, 'Guardar clave').click();
+      await expect(toast(page, 'Clave guardada.')).toBeVisible();
+      await expect
+        .poll(() => server.requestCount('/api/v1/sync'), { timeout: WAIT })
+        .toBeGreaterThan(0);
+      await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sincronizado', {
+        timeout: WAIT,
+      });
+      await toCalendar(page);
+      const onServer = (await server.records()).length;
 
-    await context.setOffline(true);
-    await expect(indicator(page)).toHaveAccessibleName(/^Sincronización: Sin conexión/, {
-      timeout: WAIT,
-    });
-    const before = server.requestCount();
+      await context.setOffline(true);
+      await expect(indicator(page)).toHaveAccessibleName(/^Sincronización: Sin conexión/, {
+        timeout: WAIT,
+      });
+      const before = server.requestCount();
 
-    await dayCell(page, 'martes, 3 de noviembre').click();
-    await option(group(page, 'Tipo de actividad'), 'Natación').click();
-    await field(page, 'Minutos').fill('45');
-    await button(page, 'Guardar actividad').click();
-    await expect(toast(page, 'Actividad guardada: Natación')).toBeVisible();
-    await weekButton(page, '26 oct – 1 nov').click();
-    await field(page, /^Peso medio/).fill('77');
-    await button(page, 'Guardar peso').click();
-    await expect(toast(page, /^Peso guardado · 26 oct\.?\s*–\s*1 nov$/)).toBeVisible();
-    await expect(indicator(page)).toHaveAccessibleName(
-      /^Sincronización: Sin conexión · \d+ pendientes?$/,
-      { timeout: WAIT },
-    );
-    expect(server.requestCount(), 'no request while offline').toBe(before);
-
-    // The page itself needs the network to reload (no service worker yet), so only /api/v1/
-    // stays cut during the reload.
-    const unreachable = (route: Route) => route.abort('internetdisconnected');
-    await context.route('**/api/v1/**', unreachable);
-    await context.setOffline(false);
-    await page.reload();
-    await expect(h1(page, 'Calendario')).toBeVisible();
-    await expect(dayCell(page, 'martes, 3 de noviembre')).toHaveAccessibleName(
-      'martes, 3 de noviembre, 1 actividad',
-    );
-    await weekButton(page, '26 oct – 1 nov').click();
-    await expect(field(page, /^Peso medio/)).toHaveValue('77');
-    await expect(indicator(page)).toHaveAccessibleName(/ · \d+ pendientes?$/, { timeout: WAIT });
-    expect((await server.records()).length, 'nothing reached the server').toBe(onServer);
-
-    // The network comes back: everything is sent.
-    const beforeSync = server.requestCount('/api/v1/sync');
-    await context.unroute('**/api/v1/**', unreachable);
-    await context.setOffline(true);
-    await context.setOffline(false);
-    await expect
-      .poll(() => server.requestCount('/api/v1/sync'), { timeout: WAIT })
-      .toBeGreaterThan(beforeSync);
-    await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sincronizado', {
-      timeout: WAIT,
-    });
-    expect((await server.records()).length).toBeGreaterThan(onServer);
-  });
-
-  test('390 px · the month grid (week button + 7 days) fits one row per week with no horizontal scroll, cells are at least 44 px high, 6-row and 4-row months render', async ({
-    page,
-  }) => {
-    await openCalendarAt(page, WED);
-    const width = viewportOf(page).width;
-    expect(width).toBe(390);
-    expect(await hasHorizontalScroll(page), 'horizontal scroll with no panel').toBe(false);
-
-    const weeks = page.getByRole('button', { name: /^Semana \d/ });
-    const days = page.getByRole('button', {
-      name: /^(lunes|martes|miércoles|jueves|viernes|sábado|domingo), \d+ de /,
-    });
-    // November 2026 touches six weeks (26 Oct – 6 Dec): 6 week buttons and 42 cells.
-    await expect(weeks).toHaveCount(6);
-    await expect(days).toHaveCount(42);
-    const items = [...(await weeks.all()), ...(await days.all())];
-    const rows = new Map<number, number>();
-    for (const item of items) {
-      const box = await boxOf(item);
-      expect(box.height, 'every cell and button is at least 44 px high').toBeGreaterThanOrEqual(
-        43.9,
+      await dayCell(page, 'martes, 3 de noviembre').click();
+      await option(group(page, 'Tipo de actividad'), 'Natación').click();
+      await field(page, 'Minutos').fill('45');
+      await button(page, 'Guardar actividad').click();
+      await expect(toast(page, 'Actividad guardada: Natación')).toBeVisible();
+      await weekButton(page, '26 oct – 1 nov').click();
+      await field(page, /^Peso medio/).fill('77');
+      await button(page, 'Guardar peso').click();
+      await expect(toast(page, /^Peso guardado · 26 oct\.?\s*–\s*1 nov$/)).toBeVisible();
+      await expect(indicator(page)).toHaveAccessibleName(
+        /^Sincronización: Sin conexión · \d+ pendientes?$/,
+        { timeout: WAIT },
       );
-      expect(box.x, 'inside the screen (left)').toBeGreaterThanOrEqual(0);
-      expect(box.x + box.width, 'inside the screen (right)').toBeLessThanOrEqual(width + 0.5);
-      const row = Math.round(box.y / 4);
-      rows.set(row, (rows.get(row) ?? 0) + 1);
-    }
-    expect(rows.size, 'six rows in November 2026').toBe(6);
-    for (const count of rows.values()) expect(count, 'week button + 7 days per row').toBe(8);
+      expect(server.requestCount(), 'no request while offline').toBe(before);
 
-    // The panels do not make the page scroll sideways either.
-    await dayCell(page, 'martes, 3 de noviembre').click();
-    await expect(field(page, 'Minutos')).toBeVisible();
-    expect(await hasHorizontalScroll(page), 'horizontal scroll with the day panel').toBe(false);
-    await weekButton(page, '2–8 nov').click();
-    await expect(button(page, 'Descargar JSON de la semana')).toBeVisible();
-    expect(await hasHorizontalScroll(page), 'horizontal scroll with the week panel').toBe(false);
+      // The page itself needs the network to reload (no service worker yet), so only /api/v1/
+      // stays cut during the reload.
+      const unreachable = (route: Route) => route.abort('internetdisconnected');
+      await context.route('**/api/v1/**', unreachable);
+      await context.setOffline(false);
+      await page.reload();
+      await expect(h1(page, 'Calendario')).toBeVisible();
+      await expect(dayCell(page, 'martes, 3 de noviembre')).toHaveAccessibleName(
+        'martes, 3 de noviembre, 1 actividad',
+      );
+      await weekButton(page, '26 oct – 1 nov').click();
+      await expect(field(page, /^Peso medio/)).toHaveValue('77');
+      await expect(indicator(page)).toHaveAccessibleName(/ · \d+ pendientes?$/, { timeout: WAIT });
+      expect((await server.records()).length, 'nothing reached the server').toBe(onServer);
 
-    // February 2027 starts on a Monday and has 28 days: four rows.
-    for (let i = 0; i < 3; i++) await button(page, 'Mes siguiente').click();
-    await expect(monthHeading(page, 'febrero de 2027')).toBeVisible();
-    await expect(weeks).toHaveCount(4);
-    await expect(days).toHaveCount(28);
-    await expect(page.getByText('Nada registrado este mes', { exact: true })).toBeVisible();
-    expect(await hasHorizontalScroll(page), 'horizontal scroll in February 2027').toBe(false);
-  });
+      // The network comes back: everything is sent.
+      const beforeSync = server.requestCount('/api/v1/sync');
+      await context.unroute('**/api/v1/**', unreachable);
+      await context.setOffline(true);
+      await context.setOffline(false);
+      await expect
+        .poll(() => server.requestCount('/api/v1/sync'), { timeout: WAIT })
+        .toBeGreaterThan(beforeSync);
+      await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sincronizado', {
+        timeout: WAIT,
+      });
+      expect((await server.records()).length).toBeGreaterThan(onServer);
+    },
+  );
+
+  test(
+    '390 px · the month grid (week button + 7 days) fits one row per week with no horizontal scroll, cells are at least 44 px high, 6-row and 4-row months render',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await openCalendarAt(page, WED);
+      const width = viewportOf(page).width;
+      expect(width).toBe(390);
+      expect(await hasHorizontalScroll(page), 'horizontal scroll with no panel').toBe(false);
+
+      const weeks = page.getByRole('button', { name: /^Semana \d/ });
+      const days = page.getByRole('button', {
+        name: /^(lunes|martes|miércoles|jueves|viernes|sábado|domingo), \d+ de /,
+      });
+      // November 2026 touches six weeks (26 Oct – 6 Dec): 6 week buttons and 42 cells.
+      await expect(weeks).toHaveCount(6);
+      await expect(days).toHaveCount(42);
+      const items = [...(await weeks.all()), ...(await days.all())];
+      const rows = new Map<number, number>();
+      for (const item of items) {
+        const box = await boxOf(item);
+        expect(box.height, 'every cell and button is at least 44 px high').toBeGreaterThanOrEqual(
+          43.9,
+        );
+        expect(box.x, 'inside the screen (left)').toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width, 'inside the screen (right)').toBeLessThanOrEqual(width + 0.5);
+        const row = Math.round(box.y / 4);
+        rows.set(row, (rows.get(row) ?? 0) + 1);
+      }
+      expect(rows.size, 'six rows in November 2026').toBe(6);
+      for (const count of rows.values()) expect(count, 'week button + 7 days per row').toBe(8);
+
+      // The panels do not make the page scroll sideways either.
+      await dayCell(page, 'martes, 3 de noviembre').click();
+      await expect(field(page, 'Minutos')).toBeVisible();
+      expect(await hasHorizontalScroll(page), 'horizontal scroll with the day panel').toBe(false);
+      await weekButton(page, '2–8 nov').click();
+      await expect(button(page, 'Descargar JSON de la semana')).toBeVisible();
+      expect(await hasHorizontalScroll(page), 'horizontal scroll with the week panel').toBe(false);
+
+      // February 2027 starts on a Monday and has 28 days: four rows.
+      for (let i = 0; i < 3; i++) await button(page, 'Mes siguiente').click();
+      await expect(monthHeading(page, 'febrero de 2027')).toBeVisible();
+      await expect(weeks).toHaveCount(4);
+      await expect(days).toHaveCount(28);
+      await expect(page.getByText('Nada registrado este mes', { exact: true })).toBeVisible();
+      expect(await hasHorizontalScroll(page), 'horizontal scroll in February 2027').toBe(false);
+    },
+  );
 });

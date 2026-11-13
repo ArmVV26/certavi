@@ -183,7 +183,7 @@ const EDITED = (page: Page): Locator => main(page).getByText('Editada', { exact:
 // List, viewer, unknown routine
 // ---------------------------------------------------------------------------------------------
 
-test.describe('routines · list and viewer', { tag: '@all-engines' }, () => {
+test.describe('routines · list and viewer', () => {
   test('AC-ROUTINES-01 / 02 / 03 / 20 · the six routines in order, the viewer creates nothing, a link to the exercise, an unknown id', async ({
     page,
   }) => {
@@ -282,7 +282,7 @@ test.describe('routines · list and viewer', { tag: '@all-engines' }, () => {
 // Editor
 // ---------------------------------------------------------------------------------------------
 
-test.describe('routines · editor structure', { tag: '@all-engines' }, () => {
+test.describe('routines · editor structure', () => {
   test('AC-ROUTINES-04 / 05 / 06 / 07 · add an exercise, one already in, remove and undo, reorder, save', async ({
     page,
   }) => {
@@ -383,72 +383,76 @@ test.describe('routines · editor structure', { tag: '@all-engines' }, () => {
     await expect(summaryText(page, base.text)).toBeVisible();
   });
 
-  test('AC-ROUTINES-22 · jump chips: all seven visible at 390 px, the last one focuses its heading below the header without changing anything, and they follow move / remove / undo / add', async ({
-    page,
-  }) => {
-    await openEditor(page, 'Push');
-    const names = await editorNames(page);
-    expect(names).toHaveLength(7);
-    const chips = jumpChips(page);
-    await expect(chips).toHaveCount(7);
-    await expect.poll(() => chipTexts(page)).toEqual(numbered(names));
+  test(
+    'AC-ROUTINES-22 · jump chips: all seven visible at 390 px, the last one focuses its heading below the header without changing anything, and they follow move / remove / undo / add',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await openEditor(page, 'Push');
+      const names = await editorNames(page);
+      expect(names).toHaveLength(7);
+      const chips = jumpChips(page);
+      await expect(chips).toHaveCount(7);
+      await expect.poll(() => chipTexts(page)).toEqual(numbered(names));
 
-    // All chips are on the screen: no sideways scroll, each one inside the 390 px width.
-    const { width, height } = viewportOf(page);
-    expect(width).toBe(390);
-    expect(await hasHorizontalScroll(page), 'horizontal scroll with the chips').toBe(false);
-    for (const chip of await chips.all()) {
-      const box = await boxOf(chip);
-      expect(box.x, 'chip inside the screen (left)').toBeGreaterThanOrEqual(0);
-      expect(box.x + box.width, 'chip inside the screen (right)').toBeLessThanOrEqual(width + 0.5);
-    }
+      // All chips are on the screen: no sideways scroll, each one inside the 390 px width.
+      const { width, height } = viewportOf(page);
+      expect(width).toBe(390);
+      expect(await hasHorizontalScroll(page), 'horizontal scroll with the chips').toBe(false);
+      for (const chip of await chips.all()) {
+        const box = await boxOf(chip);
+        expect(box.x, 'chip inside the screen (left)').toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width, 'chip inside the screen (right)').toBeLessThanOrEqual(
+          width + 0.5,
+        );
+      }
 
-    // The last chip: the card comes into view, not under the header, and its heading has focus.
-    const lastName = names[6] ?? '';
-    await chips.last().click();
-    const heading = page.getByRole('heading', { level: 3, name: lastName, exact: true });
-    await expect(heading).toBeFocused();
-    // In view and not covered by anything (the sticky header): polled, the scroll may be smooth.
-    await expect
-      .poll(
-        () =>
-          heading.evaluate((el, viewHeight) => {
-            const r = el.getBoundingClientRect();
-            const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-            const uncovered = top !== null && (top === el || el.contains(top));
-            return uncovered && r.top >= 0 && r.bottom <= viewHeight;
-          }, height),
-        { message: 'the heading is in view and not under the header' },
-      )
-      .toBe(true);
+      // The last chip: the card comes into view, not under the header, and its heading has focus.
+      const lastName = names[6] ?? '';
+      await chips.last().click();
+      const heading = page.getByRole('heading', { level: 3, name: lastName, exact: true });
+      await expect(heading).toBeFocused();
+      // In view and not covered by anything (the sticky header): polled, the scroll may be smooth.
+      await expect
+        .poll(
+          () =>
+            heading.evaluate((el, viewHeight) => {
+              const r = el.getBoundingClientRect();
+              const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+              const uncovered = top !== null && (top === el || el.contains(top));
+              return uncovered && r.top >= 0 && r.bottom <= viewHeight;
+            }, height),
+          { message: 'the heading is in view and not under the header' },
+        )
+        .toBe(true);
 
-    // Tapping a chip changed nothing: "Descartar" leaves without asking.
-    await button(page, 'Descartar').click();
-    await expect(h1(page, 'Rutina')).toBeVisible();
-    await expect(dialogOf(page, '¿Descartar los cambios?')).toHaveCount(0);
-    await page.getByRole('link', { name: 'Editar', exact: true }).click();
-    await expect(h1(page, 'Editar rutina')).toBeVisible();
+      // Tapping a chip changed nothing: "Descartar" leaves without asking.
+      await button(page, 'Descartar').click();
+      await expect(h1(page, 'Rutina')).toBeVisible();
+      await expect(dialogOf(page, '¿Descartar los cambios?')).toHaveCount(0);
+      await page.getByRole('link', { name: 'Editar', exact: true }).click();
+      await expect(h1(page, 'Editar rutina')).toBeVisible();
 
-    // Moving an exercise changes the order and the numbers.
-    await button(page, 'Bajar Press inclinado con mancuernas').click();
-    await expect
-      .poll(async () => (await chipTexts(page)).slice(0, 2))
-      .toEqual(['1 Press de pecho en máquina vertical', '2 Press inclinado con mancuernas']);
-    const moved = await editorNames(page);
-    await expect.poll(() => chipTexts(page)).toEqual(numbered(moved));
+      // Moving an exercise changes the order and the numbers.
+      await button(page, 'Bajar Press inclinado con mancuernas').click();
+      await expect
+        .poll(async () => (await chipTexts(page)).slice(0, 2))
+        .toEqual(['1 Press de pecho en máquina vertical', '2 Press inclinado con mancuernas']);
+      const moved = await editorNames(page);
+      await expect.poll(() => chipTexts(page)).toEqual(numbered(moved));
 
-    // Removing one takes its chip out and renumbers; "Deshacer" puts it back in its place.
-    await button(page, 'Quitar Aperturas en máquina').click();
-    const without = moved.filter((n) => n !== 'Aperturas en máquina');
-    expect(without).toHaveLength(6);
-    await expect.poll(() => chipTexts(page)).toEqual(numbered(without));
-    await button(page, 'Deshacer').click();
-    await expect.poll(() => chipTexts(page)).toEqual(numbered(moved));
+      // Removing one takes its chip out and renumbers; "Deshacer" puts it back in its place.
+      await button(page, 'Quitar Aperturas en máquina').click();
+      const without = moved.filter((n) => n !== 'Aperturas en máquina');
+      expect(without).toHaveLength(6);
+      await expect.poll(() => chipTexts(page)).toEqual(numbered(without));
+      await button(page, 'Deshacer').click();
+      await expect.poll(() => chipTexts(page)).toEqual(numbered(moved));
 
-    // Adding one appends its chip.
-    await addToRoutine(page, 'remo', 'Remo en T');
-    await expect.poll(() => chipTexts(page)).toEqual(numbered([...moved, 'Remo en T']));
-  });
+      // Adding one appends its chip.
+      await addToRoutine(page, 'remo', 'Remo en T');
+      await expect.poll(() => chipTexts(page)).toEqual(numbered([...moved, 'Remo en T']));
+    },
+  );
 
   test('AC-ROUTINES-09 / 10 · type, reps, RIR, optional and note', async ({ page }) => {
     // AC-09
@@ -547,140 +551,143 @@ test.describe('routines · editor structure', { tag: '@all-engines' }, () => {
 // Leaving, reload, persistence
 // ---------------------------------------------------------------------------------------------
 
-test.describe('routines · leaving and persistence', { tag: '@all-engines' }, () => {
-  test('AC-ROUTINES-12 / 13 / 14 · discard asks only with changes; tabs ask too; a reload loses the unsaved change', async ({
-    page,
-  }) => {
-    await openEditor(page, 'Push');
-    const editUrl = page.url();
-    const base = await readSummary(page);
-    const asked = dialogOf(page, '¿Descartar los cambios?');
+test.describe('routines · leaving and persistence', () => {
+  test(
+    'AC-ROUTINES-12 / 13 / 14 · discard asks only with changes; tabs ask too; a reload loses the unsaved change',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await openEditor(page, 'Push');
+      const editUrl = page.url();
+      const base = await readSummary(page);
+      const asked = dialogOf(page, '¿Descartar los cambios?');
 
-    // No changes: "Descartar" goes to the viewer at once.
-    await button(page, 'Descartar').click();
-    await expect(h1(page, 'Rutina')).toBeVisible();
-    await expect(asked).toHaveCount(0);
+      // No changes: "Descartar" goes to the viewer at once.
+      await button(page, 'Descartar').click();
+      await expect(h1(page, 'Rutina')).toBeVisible();
+      await expect(asked).toHaveCount(0);
 
-    // AC-12
-    await page.getByRole('link', { name: 'Editar', exact: true }).click();
-    await expect(h1(page, 'Editar rutina')).toBeVisible();
-    await button(page, 'Quitar Aperturas en máquina').click();
-    await button(page, 'Descartar').click();
-    await expect(asked).toBeVisible();
-    await expect(asked).toContainText('Tienes cambios sin guardar en esta rutina.');
-    await expect(button(asked, 'Seguir editando')).toBeFocused();
-    await button(asked, 'Seguir editando').click();
-    await expect(asked).toBeHidden();
-    await expect(h1(page, 'Editar rutina')).toBeVisible();
-    await expect(page.getByRole('heading', { level: 3, name: 'Aperturas en máquina' })).toHaveCount(
-      0,
-    );
-    await button(page, 'Descartar').click();
-    await button(asked, 'Descartar cambios').click();
-    await expect(h1(page, 'Rutina')).toBeVisible();
-    await expect(summaryText(page, base.text)).toBeVisible();
-    expect(await viewerNames(page)).toContain('Aperturas en máquina');
+      // AC-12
+      await page.getByRole('link', { name: 'Editar', exact: true }).click();
+      await expect(h1(page, 'Editar rutina')).toBeVisible();
+      await button(page, 'Quitar Aperturas en máquina').click();
+      await button(page, 'Descartar').click();
+      await expect(asked).toBeVisible();
+      await expect(asked).toContainText('Tienes cambios sin guardar en esta rutina.');
+      await expect(button(asked, 'Seguir editando')).toBeFocused();
+      await button(asked, 'Seguir editando').click();
+      await expect(asked).toBeHidden();
+      await expect(h1(page, 'Editar rutina')).toBeVisible();
+      await expect(
+        page.getByRole('heading', { level: 3, name: 'Aperturas en máquina' }),
+      ).toHaveCount(0);
+      await button(page, 'Descartar').click();
+      await button(asked, 'Descartar cambios').click();
+      await expect(h1(page, 'Rutina')).toBeVisible();
+      await expect(summaryText(page, base.text)).toBeVisible();
+      expect(await viewerNames(page)).toContain('Aperturas en máquina');
 
-    // AC-13: another tab of the bottom navigation.
-    await page.getByRole('link', { name: 'Editar', exact: true }).click();
-    await expect(h1(page, 'Editar rutina')).toBeVisible();
-    await button(page, 'Quitar Aperturas en máquina').click();
-    await mainNav(page).getByRole('link', { name: 'Calendario', exact: true }).click();
-    await expect(asked).toBeVisible();
-    await button(asked, 'Seguir editando').click();
-    await expect(asked).toBeHidden();
-    await expect(page).toHaveURL(editUrl);
-    await expect(page.getByRole('heading', { level: 3, name: 'Aperturas en máquina' })).toHaveCount(
-      0,
-    );
-    await mainNav(page).getByRole('link', { name: 'Calendario', exact: true }).click();
-    await button(asked, 'Descartar cambios').click();
-    await expect(h1(page, 'Calendario')).toBeVisible();
+      // AC-13: another tab of the bottom navigation.
+      await page.getByRole('link', { name: 'Editar', exact: true }).click();
+      await expect(h1(page, 'Editar rutina')).toBeVisible();
+      await button(page, 'Quitar Aperturas en máquina').click();
+      await mainNav(page).getByRole('link', { name: 'Calendario', exact: true }).click();
+      await expect(asked).toBeVisible();
+      await button(asked, 'Seguir editando').click();
+      await expect(asked).toBeHidden();
+      await expect(page).toHaveURL(editUrl);
+      await expect(
+        page.getByRole('heading', { level: 3, name: 'Aperturas en máquina' }),
+      ).toHaveCount(0);
+      await mainNav(page).getByRole('link', { name: 'Calendario', exact: true }).click();
+      await button(asked, 'Descartar cambios').click();
+      await expect(h1(page, 'Calendario')).toBeVisible();
 
-    // AC-14: reload in the middle (the browser's own warning is accepted).
-    await page.goto(editUrl);
-    await expect(h1(page, 'Editar rutina')).toBeVisible();
-    await button(page, 'Quitar Aperturas en máquina').click();
-    await expect(page.getByRole('heading', { level: 3, name: 'Aperturas en máquina' })).toHaveCount(
-      0,
-    );
-    page.on('dialog', (d) => void d.accept());
-    await page.reload();
-    await expect(h1(page, 'Editar rutina')).toBeVisible();
-    await expect(
-      page.getByRole('heading', { level: 3, name: 'Aperturas en máquina' }),
-    ).toBeVisible();
-    expect((await readSummary(page)).text).toBe(base.text);
-  });
+      // AC-14: reload in the middle (the browser's own warning is accepted).
+      await page.goto(editUrl);
+      await expect(h1(page, 'Editar rutina')).toBeVisible();
+      await button(page, 'Quitar Aperturas en máquina').click();
+      await expect(
+        page.getByRole('heading', { level: 3, name: 'Aperturas en máquina' }),
+      ).toHaveCount(0);
+      page.on('dialog', (d) => void d.accept());
+      await page.reload();
+      await expect(h1(page, 'Editar rutina')).toBeVisible();
+      await expect(
+        page.getByRole('heading', { level: 3, name: 'Aperturas en máquina' }),
+      ).toBeVisible();
+      expect((await readSummary(page)).text).toBe(base.text);
+    },
+  );
 
-  test('AC-ROUTINES-15 / 16 / 17 · a saved edit survives a reload without connection, new sessions use it, started ones keep theirs, the week follows', async ({
-    page,
-    context,
-  }) => {
-    await page.clock.install({ time: MON });
-    await gotoReady(page, '/', 'Hoy');
-    const todayCard = page
-      .getByRole('heading', { name: /^Esta semana/ })
-      .locator('xpath=ancestor::*[count(.//h2) = 1][last()]');
-    await expect(todayCard).toContainText('0 / 104');
+  test(
+    'AC-ROUTINES-15 / 16 / 17 · a saved edit survives a reload without connection, new sessions use it, started ones keep theirs, the week follows',
+    { tag: '@all-engines' },
+    async ({ page, context }) => {
+      await page.clock.install({ time: MON });
+      await gotoReady(page, '/', 'Hoy');
+      const todayCard = page
+        .getByRole('heading', { name: /^Esta semana/ })
+        .locator('xpath=ancestor::*[count(.//h2) = 1][last()]');
+      await expect(todayCard).toContainText('0 / 104');
 
-    // A Push session started before the edit.
-    await button(page, 'Empezar Push').click();
-    await expect(page).toHaveURL(/\/session\/[^/]+$/);
-    await expect(main(page).getByText('7 ejercicios · 19 series', { exact: true })).toBeVisible();
+      // A Push session started before the edit.
+      await button(page, 'Empezar Push').click();
+      await expect(page).toHaveURL(/\/session\/[^/]+$/);
+      await expect(main(page).getByText('7 ejercicios · 19 series', { exact: true })).toBeVisible();
 
-    // AC-15: remove "Aperturas en máquina" and save.
-    await openEditor(page, 'Push');
-    await button(page, 'Quitar Aperturas en máquina').click();
-    await save(page);
-    await expect(EDITED(page)).toBeVisible();
-    await expect(summaryText(page, '6 ejercicios · 16 series')).toBeVisible();
-    await expect(button(page, 'Restaurar original')).toBeVisible();
-    await page.getByRole('link', { name: 'Volver a Rutinas', exact: true }).click();
-    await expect(routineLink(page, 'Push')).toContainText('Editada');
-    await expect(routineLink(page, 'Push')).toContainText('6 ejercicios · 16 series');
-    await expect(routineLink(page, 'Pull')).not.toContainText('Editada');
+      // AC-15: remove "Aperturas en máquina" and save.
+      await openEditor(page, 'Push');
+      await button(page, 'Quitar Aperturas en máquina').click();
+      await save(page);
+      await expect(EDITED(page)).toBeVisible();
+      await expect(summaryText(page, '6 ejercicios · 16 series')).toBeVisible();
+      await expect(button(page, 'Restaurar original')).toBeVisible();
+      await page.getByRole('link', { name: 'Volver a Rutinas', exact: true }).click();
+      await expect(routineLink(page, 'Push')).toContainText('Editada');
+      await expect(routineLink(page, 'Push')).toContainText('6 ejercicios · 16 series');
+      await expect(routineLink(page, 'Pull')).not.toContainText('Editada');
 
-    // Reload with the network cut: the change is still there (the page has no service worker
-    // yet, so only the API stays unreachable, as in today.spec.ts).
-    const unreachable = (route: Route) => route.abort('internetdisconnected');
-    await context.route('**/api/v1/**', unreachable);
-    await page.reload();
-    await expect(h1(page, 'Rutinas')).toBeVisible();
-    await expect(routineLink(page, 'Push')).toContainText('Editada');
-    await expect(routineLink(page, 'Push')).toContainText('6 ejercicios · 16 series');
+      // Reload with the network cut: the change is still there (the page has no service worker
+      // yet, so only the API stays unreachable, as in today.spec.ts).
+      const unreachable = (route: Route) => route.abort('internetdisconnected');
+      await context.route('**/api/v1/**', unreachable);
+      await page.reload();
+      await expect(h1(page, 'Rutinas')).toBeVisible();
+      await expect(routineLink(page, 'Push')).toContainText('Editada');
+      await expect(routineLink(page, 'Push')).toContainText('6 ejercicios · 16 series');
 
-    // AC-17: the week plans fewer sets.
-    await mainNav(page).getByRole('link', { name: 'Hoy', exact: true }).click();
-    await expect(h1(page, 'Hoy')).toBeVisible();
-    await expect(todayCard).toContainText('Esta semana');
-    await expect(todayCard).not.toContainText('0 / 104');
-    const planned = Number(/\d+ \/ (\d+)/.exec(await todayCard.innerText())?.[1]);
-    expect(planned).toBeLessThan(104);
+      // AC-17: the week plans fewer sets.
+      await mainNav(page).getByRole('link', { name: 'Hoy', exact: true }).click();
+      await expect(h1(page, 'Hoy')).toBeVisible();
+      await expect(todayCard).toContainText('Esta semana');
+      await expect(todayCard).not.toContainText('0 / 104');
+      const planned = Number(/\d+ \/ (\d+)/.exec(await todayCard.innerText())?.[1]);
+      expect(planned).toBeLessThan(104);
 
-    // AC-16: a new session of Push on another date has six exercises.
-    await page.getByLabel('Fecha', { exact: true }).fill('2026-11-01');
-    await button(
-      page
-        .getByRole('heading', { name: 'Otra sesión u otro día', exact: true })
-        .locator('xpath=ancestor::*[count(.//h2) = 1][last()]'),
-      'Push',
-    ).click();
-    await expect(page).toHaveURL(/\/session\/[^/]+$/);
-    await expect(main(page).getByText('6 ejercicios · 16 series', { exact: true })).toBeVisible();
-    await expect(main(page)).not.toContainText('Aperturas en máquina');
+      // AC-16: a new session of Push on another date has six exercises.
+      await page.getByLabel('Fecha', { exact: true }).fill('2026-11-01');
+      await button(
+        page
+          .getByRole('heading', { name: 'Otra sesión u otro día', exact: true })
+          .locator('xpath=ancestor::*[count(.//h2) = 1][last()]'),
+        'Push',
+      ).click();
+      await expect(page).toHaveURL(/\/session\/[^/]+$/);
+      await expect(main(page).getByText('6 ejercicios · 16 series', { exact: true })).toBeVisible();
+      await expect(main(page)).not.toContainText('Aperturas en máquina');
 
-    // The session started before the edit keeps all of its exercises.
-    await mainNav(page).getByRole('link', { name: 'Hoy', exact: true }).click();
-    await expect(h1(page, 'Hoy')).toBeVisible();
-    await page
-      .getByRole('button', { name: 'Continuar Push', exact: true })
-      .or(page.getByRole('link', { name: 'Continuar Push', exact: true }))
-      .click();
-    await expect(page).toHaveURL(/\/session\/[^/]+$/);
-    await expect(main(page).getByText('7 ejercicios · 19 series', { exact: true })).toBeVisible();
-    await expect(main(page)).toContainText('Aperturas en máquina');
-  });
+      // The session started before the edit keeps all of its exercises.
+      await mainNav(page).getByRole('link', { name: 'Hoy', exact: true }).click();
+      await expect(h1(page, 'Hoy')).toBeVisible();
+      await page
+        .getByRole('button', { name: 'Continuar Push', exact: true })
+        .or(page.getByRole('link', { name: 'Continuar Push', exact: true }))
+        .click();
+      await expect(page).toHaveURL(/\/session\/[^/]+$/);
+      await expect(main(page).getByText('7 ejercicios · 19 series', { exact: true })).toBeVisible();
+      await expect(main(page)).toContainText('Aperturas en máquina');
+    },
+  );
 
   test('AC-ROUTINES-18 / 19 · a routine with my own exercise; its exercise cannot be archived; restore the original', async ({
     page,

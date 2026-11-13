@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- e2e: the `@all-engines` tag moved from whole `describe`s to single tests, so WebKit runs the 48 tests that depend on the engine (IndexedDB and `localStorage`, sync, import / export and downloads, page lifecycle, date and time inputs, SVG charts, the 390 px layout) instead of 111. Dropped tests (texts in English, dark mode, axe, validations, rules shown as text) still run in Chromium. The iPhone-only behaviour is checked by hand with `docs/device-checklist.md`. The time saved is measured with the next `npm run e2e:all`.
 - Docs: `docs/audit/consistency-2026-11.md` lists the contradictions between documents and the repo; `docs/backlog.md` is now the only list of ideas and pending work; `context.md` keeps only the current state and the decisions in force, and the superseded text moved to `docs/history.md`.
 
 ## [0.10.1] - 2026-11-13

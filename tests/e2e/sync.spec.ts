@@ -398,60 +398,61 @@ async function syncedWithSample(page: Page, server: FakeSyncServer): Promise<voi
 // Tests
 // ---------------------------------------------------------------------------------------------
 
-test.describe('sync', { tag: '@all-engines' }, () => {
-  test('AC-SYNC-01 · a new device is "Sin configurar", the card comes first with the key form, no request is made', async ({
-    page,
-    context,
-  }) => {
-    const server = createFakeSyncServer();
-    await server.attach(context);
-    await page.clock.install();
+test.describe('sync', () => {
+  test(
+    'AC-SYNC-01 · a new device is "Sin configurar", the card comes first with the key form, no request is made',
+    { tag: '@all-engines' },
+    async ({ page, context }) => {
+      const server = createFakeSyncServer();
+      await server.attach(context);
+      await page.clock.install();
 
-    await gotoReady(page, '/', 'Hoy');
-    const link = indicator(page);
-    await expect(link).toHaveAccessibleName('Sincronización: Sin configurar');
-    // Between the page title and the theme button.
-    const title = await boxOf(h1(page));
-    const ind = await boxOf(link);
-    const theme = await boxOf(themeButton(page));
-    expect(ind.x).toBeGreaterThan(title.x);
-    expect(ind.x).toBeLessThan(theme.x);
+      await gotoReady(page, '/', 'Hoy');
+      const link = indicator(page);
+      await expect(link).toHaveAccessibleName('Sincronización: Sin configurar');
+      // Between the page title and the theme button.
+      const title = await boxOf(h1(page));
+      const ind = await boxOf(link);
+      const theme = await boxOf(themeButton(page));
+      expect(ind.x).toBeGreaterThan(title.x);
+      expect(ind.x).toBeLessThan(theme.x);
 
-    // It is a link to Ajustes.
-    await link.click();
-    await expect(h1(page, 'Ajustes')).toBeVisible();
-    await expect(page).toHaveURL(/\/settings$/);
+      // It is a link to Ajustes.
+      await link.click();
+      await expect(h1(page, 'Ajustes')).toBeVisible();
+      await expect(page).toHaveURL(/\/settings$/);
 
-    // The "Sincronización" card is the first one, before "Apariencia".
-    const card = page.getByRole('heading', { name: ES.card, exact: true });
-    await expect(card).toBeVisible();
-    const cardBox = await boxOf(card);
-    const appearance = await boxOf(page.getByText('Apariencia', { exact: true }).first());
-    expect(cardBox.y).toBeLessThan(appearance.y);
-    await expect(page.getByText(ES.cardText, { exact: true })).toBeVisible();
-    await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.notSetUp);
-    await expect(rowValue(page, ES.lastSync)).toHaveText(ES.never);
-    await expect(rowValue(page, ES.pending)).toHaveText('0');
+      // The "Sincronización" card is the first one, before "Apariencia".
+      const card = page.getByRole('heading', { name: ES.card, exact: true });
+      await expect(card).toBeVisible();
+      const cardBox = await boxOf(card);
+      const appearance = await boxOf(page.getByText('Apariencia', { exact: true }).first());
+      expect(cardBox.y).toBeLessThan(appearance.y);
+      await expect(page.getByText(ES.cardText, { exact: true })).toBeVisible();
+      await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.notSetUp);
+      await expect(rowValue(page, ES.lastSync)).toHaveText(ES.never);
+      await expect(rowValue(page, ES.pending)).toHaveText('0');
 
-    // The key form.
-    await expect(keyField(page)).toBeVisible();
-    await expect(keyField(page)).toHaveAttribute('type', 'password');
-    await expect(page.getByText(ES.keyHint, { exact: true })).toBeVisible();
-    await expect(button(page, ES.showKey)).toBeVisible();
-    await expect(button(page, ES.saveKey)).toBeVisible();
-    await expect(button(page, ES.syncNow)).toHaveCount(0);
+      // The key form.
+      await expect(keyField(page)).toBeVisible();
+      await expect(keyField(page)).toHaveAttribute('type', 'password');
+      await expect(page.getByText(ES.keyHint, { exact: true })).toBeVisible();
+      await expect(button(page, ES.showKey)).toBeVisible();
+      await expect(button(page, ES.saveKey)).toBeVisible();
+      await expect(button(page, ES.syncNow)).toHaveCount(0);
 
-    // /settings/sync without a key.
-    await page.getByRole('link', { name: ES.logLink, exact: true }).click();
-    await expect(h1(page, ES.card)).toBeVisible();
-    await expect(page.getByText(ES.noAttempts, { exact: true })).toBeVisible();
-    await expect(page.getByText(ES.backupsNoKey, { exact: true })).toBeVisible();
+      // /settings/sync without a key.
+      await page.getByRole('link', { name: ES.logLink, exact: true }).click();
+      await expect(h1(page, ES.card)).toBeVisible();
+      await expect(page.getByText(ES.noAttempts, { exact: true })).toBeVisible();
+      await expect(page.getByText(ES.backupsNoKey, { exact: true })).toBeVisible();
 
-    // Past the start sync, the ~2 s wait after a change and the first retry.
-    await page.clock.runFor(10_000);
-    expect(server.requestCount(), 'requests to /api/v1/ without a key').toBe(0);
-    await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sin configurar');
-  });
+      // Past the start sync, the ~2 s wait after a change and the first retry.
+      await page.clock.runFor(10_000);
+      expect(server.requestCount(), 'requests to /api/v1/ without a key').toBe(0);
+      await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sin configurar');
+    },
+  );
 
   test('AC-SYNC-02 · a 31-character key is not saved; "Mostrar clave" toggles; a key with spaces at the ends is trimmed', async ({
     page,
@@ -495,65 +496,68 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     await expectSynced(page, server, 0);
   });
 
-  test('AC-SYNC-03 · saving the right key sends the 29 imported records; log shows one "Correcto" attempt', async ({
-    page,
-    context,
-  }) => {
-    const server = createFakeSyncServer();
-    await server.attach(context);
-    await gotoReady(page, '/settings', 'Ajustes');
-    await importBackup(page, SAMPLE, 29);
-    await expect(rowValue(page, ES.pending)).toHaveText('29');
-    await expect(indicator(page)).toHaveAccessibleName(
-      /^Sincronización: Sin configurar( · 29 pendientes)?$/,
-    );
-    await expect(rowValue(page, ES.lastSync)).toHaveText(ES.never);
+  test(
+    'AC-SYNC-03 · saving the right key sends the 29 imported records; log shows one "Correcto" attempt',
+    { tag: '@all-engines' },
+    async ({ page, context }) => {
+      const server = createFakeSyncServer();
+      await server.attach(context);
+      await gotoReady(page, '/settings', 'Ajustes');
+      await importBackup(page, SAMPLE, 29);
+      await expect(rowValue(page, ES.pending)).toHaveText('29');
+      await expect(indicator(page)).toHaveAccessibleName(
+        /^Sincronización: Sin configurar( · 29 pendientes)?$/,
+      );
+      await expect(rowValue(page, ES.lastSync)).toHaveText(ES.never);
 
-    // The server holds its answer for 2 s: until it answers the state must be "Sincronizando…",
-    // never "Sincronizado" (spec §2.1).
-    const status = rowValue(page, ES.status);
-    const syncingName = /^Sincronización: Sincronizando…( · 29 pendientes)?$/;
-    server.setDelay(2_000);
-    await saveKey(page, E2E_SYNC_KEY);
-    await expect(toast(page, ES.keySaved)).toBeVisible();
-    await expect(status).toHaveText(STATE_ES.syncing);
-    await expect(indicator(page)).toHaveAccessibleName(syncingName);
-    const seen = new Set<string>();
-    await expect
-      .poll(
-        async () => {
-          seen.add((await status.innerText()).trim());
-          return syncCount(server);
-        },
-        { timeout: WAIT, message: 'the first sync reached the server' },
-      )
-      .toBeGreaterThan(0);
-    server.setDelay(0); // only the first request is held
-    // The answer is still held.
-    await expect(status).toHaveText(STATE_ES.syncing);
-    await expect(indicator(page)).toHaveAccessibleName(syncingName);
-    expect([...seen], 'states shown before the server had the request').toEqual([STATE_ES.syncing]);
+      // The server holds its answer for 2 s: until it answers the state must be "Sincronizando…",
+      // never "Sincronizado" (spec §2.1).
+      const status = rowValue(page, ES.status);
+      const syncingName = /^Sincronización: Sincronizando…( · 29 pendientes)?$/;
+      server.setDelay(2_000);
+      await saveKey(page, E2E_SYNC_KEY);
+      await expect(toast(page, ES.keySaved)).toBeVisible();
+      await expect(status).toHaveText(STATE_ES.syncing);
+      await expect(indicator(page)).toHaveAccessibleName(syncingName);
+      const seen = new Set<string>();
+      await expect
+        .poll(
+          async () => {
+            seen.add((await status.innerText()).trim());
+            return syncCount(server);
+          },
+          { timeout: WAIT, message: 'the first sync reached the server' },
+        )
+        .toBeGreaterThan(0);
+      server.setDelay(0); // only the first request is held
+      // The answer is still held.
+      await expect(status).toHaveText(STATE_ES.syncing);
+      await expect(indicator(page)).toHaveAccessibleName(syncingName);
+      expect([...seen], 'states shown before the server had the request').toEqual([
+        STATE_ES.syncing,
+      ]);
 
-    await expectSynced(page, server, 0);
-    await expectCounts(page, dataCounts('after', '0'));
+      await expectSynced(page, server, 0);
+      await expectCounts(page, dataCounts('after', '0'));
 
-    // "Última sincronización" shows today.
-    const last = (await rowValue(page, ES.lastSync).innerText()).trim().toLowerCase();
-    const forms = [...(await todayForms(page, 'es-ES')), 'hoy'];
-    expect(
-      forms.some((f) => last.includes(f)),
-      `"${last}" should show today (${forms.join(' | ')})`,
-    ).toBe(true);
+      // "Última sincronización" shows today.
+      const last = (await rowValue(page, ES.lastSync).innerText()).trim().toLowerCase();
+      const forms = [...(await todayForms(page, 'es-ES')), 'hoy'];
+      expect(
+        forms.some((f) => last.includes(f)),
+        `"${last}" should show today (${forms.join(' | ')})`,
+      ).toBe(true);
 
-    expect(await server.records()).toHaveLength(29);
+      expect(await server.records()).toHaveLength(29);
 
-    await page.getByRole('link', { name: ES.logLink, exact: true }).click();
-    await expect(h1(page, ES.card)).toBeVisible();
-    const items = attemptItems(page);
-    await expect(items).toHaveCount(1);
-    await expect(items.first()).toContainText(ES.ok);
-    await expect(items.first()).toContainText(/Enviados: 29 · Recibidos: 29 · [\d.,]+ s/);
-  });
+      await page.getByRole('link', { name: ES.logLink, exact: true }).click();
+      await expect(h1(page, ES.card)).toBeVisible();
+      const items = attemptItems(page);
+      await expect(items).toHaveCount(1);
+      await expect(items.first()).toContainText(ES.ok);
+      await expect(items.first()).toContainText(/Enviados: 29 · Recibidos: 29 · [\d.,]+ s/);
+    },
+  );
 
   test('AC-SYNC-04 · a wrong key shows "Clave incorrecta", stops retrying and keeps the changes pending', async ({
     page,
@@ -597,180 +601,183 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     expect(await server.records()).toHaveLength(29);
   });
 
-  test('AC-SYNC-05 · offline: "Sin conexión" with pending count, no request; back online it syncs on its own', async ({
-    page,
-    context,
-  }, testInfo) => {
-    const server = createFakeSyncServer();
-    await server.attach(context);
-    await page.clock.install();
-    await syncedWithSample(page, server);
-    const extra = sampleWithExtraActivity(testInfo, 'act_e2e_offline_0001');
+  test(
+    'AC-SYNC-05 · offline: "Sin conexión" with pending count, no request; back online it syncs on its own',
+    { tag: '@all-engines' },
+    async ({ page, context }, testInfo) => {
+      const server = createFakeSyncServer();
+      await server.attach(context);
+      await page.clock.install();
+      await syncedWithSample(page, server);
+      const extra = sampleWithExtraActivity(testInfo, 'act_e2e_offline_0001');
 
-    await context.setOffline(true);
-    await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sin conexión');
-    const before = server.requestCount();
-    await importBackup(page, extra, 1);
-    await expect(indicator(page)).toHaveAccessibleName(
-      'Sincronización: Sin conexión · 1 pendiente',
-    );
-    await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.offline);
-    await expect(rowValue(page, ES.pending)).toHaveText('1');
-    // Past the "couple of seconds after a change" (and the first retry).
-    await page.clock.runFor(5_000);
-    expect(server.requestCount(), 'no request while offline').toBe(before);
-    await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.offline);
-    await expect(rowValue(page, ES.pending)).toHaveText('1');
+      await context.setOffline(true);
+      await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sin conexión');
+      const before = server.requestCount();
+      await importBackup(page, extra, 1);
+      await expect(indicator(page)).toHaveAccessibleName(
+        'Sincronización: Sin conexión · 1 pendiente',
+      );
+      await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.offline);
+      await expect(rowValue(page, ES.pending)).toHaveText('1');
+      // Past the "couple of seconds after a change" (and the first retry).
+      await page.clock.runFor(5_000);
+      expect(server.requestCount(), 'no request while offline').toBe(before);
+      await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.offline);
+      await expect(rowValue(page, ES.pending)).toHaveText('1');
 
-    await context.setOffline(false);
-    await expectSynced(page, server, before);
-    expect(await server.records()).toHaveLength(30);
-    await expectCounts(
-      page,
-      dataCounts('after', '0').map(([l, n]) => [l, l === 'Actividades' ? '3' : n]),
-    );
-  });
+      await context.setOffline(false);
+      await expectSynced(page, server, before);
+      expect(await server.records()).toHaveLength(30);
+      await expectCounts(
+        page,
+        dataCounts('after', '0').map(([l, n]) => [l, l === 'Actividades' ? '3' : n]),
+      );
+    },
+  );
 
-  test('AC-SYNC-06 · a cut connection and a 500 show the reason, keep the changes, and a later attempt sends them', async ({
-    page,
-    context,
-  }, testInfo) => {
-    const server = createFakeSyncServer();
-    await server.attach(context);
-    await page.clock.install();
-    await gotoReady(page, '/settings', 'Ajustes');
-    await saveKey(page, E2E_SYNC_KEY);
-    // The key's first sync (an empty batch) has been answered: the next request is the import's.
-    await expectSynced(page, server, 0);
+  test(
+    'AC-SYNC-06 · a cut connection and a 500 show the reason, keep the changes, and a later attempt sends them',
+    { tag: '@all-engines' },
+    async ({ page, context }, testInfo) => {
+      const server = createFakeSyncServer();
+      await server.attach(context);
+      await page.clock.install();
+      await gotoReady(page, '/settings', 'Ajustes');
+      await saveKey(page, E2E_SYNC_KEY);
+      // The key's first sync (an empty batch) has been answered: the next request is the import's.
+      await expectSynced(page, server, 0);
 
-    // From here the clock is still while failures are checked: the ~2 s wait after a change
-    // and the 4 s retry only run when the test moves the clock, so the failure lands on the
-    // import's sync and the error is seen before any retry can fix it.
-    const still = paused(page);
-    await pauseClock(page);
+      // From here the clock is still while failures are checked: the ~2 s wait after a change
+      // and the 4 s retry only run when the test moves the clock, so the failure lands on the
+      // import's sync and the error is seen before any retry can fix it.
+      const still = paused(page);
+      await pauseClock(page);
 
-    // The connection is cut on the next attempt.
-    let before = syncCount(server);
-    server.failNext('abort');
-    await importBackup(page, SAMPLE, 29, still);
-    await page.clock.runFor(2_500); // past the ~2 s wait after a change
-    await serverGotSync(page, server, before);
-    await still(async (timeout) => {
-      await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.error, { timeout });
-      await expect(page.getByText(ES.unreachable, { exact: true }).first()).toBeVisible({
-        timeout,
+      // The connection is cut on the next attempt.
+      let before = syncCount(server);
+      server.failNext('abort');
+      await importBackup(page, SAMPLE, 29, still);
+      await page.clock.runFor(2_500); // past the ~2 s wait after a change
+      await serverGotSync(page, server, before);
+      await still(async (timeout) => {
+        await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.error, { timeout });
+        await expect(page.getByText(ES.unreachable, { exact: true }).first()).toBeVisible({
+          timeout,
+        });
+        await expect(rowValue(page, ES.pending)).toHaveText('29', { timeout });
       });
-      await expect(rowValue(page, ES.pending)).toHaveText('29', { timeout });
-    });
-    expect(await server.records()).toHaveLength(0);
-    expect(syncCount(server), 'no retry while the clock is still').toBe(before + 1);
+      expect(await server.records()).toHaveLength(0);
+      expect(syncCount(server), 'no retry while the clock is still').toBe(before + 1);
 
-    // The automatic retry, 4 s after the failure, sends them.
-    before = syncCount(server);
-    await page.clock.runFor(4_500);
-    await serverGotSync(page, server, before);
-    await page.clock.resume();
-    await expectSynced(page, server, before);
-    expect(await server.records()).toHaveLength(29);
+      // The automatic retry, 4 s after the failure, sends them.
+      before = syncCount(server);
+      await page.clock.runFor(4_500);
+      await serverGotSync(page, server, before);
+      await page.clock.resume();
+      await expectSynced(page, server, before);
+      expect(await server.records()).toHaveLength(29);
 
-    // The server answers 500 on the next attempt (the previous one was answered: "Sincronizado").
-    await pauseClock(page);
-    before = syncCount(server);
-    server.failNext(500);
-    await importBackup(page, sampleWithExtraActivity(testInfo, 'act_e2e_retry_0001'), 1, still);
-    await page.clock.runFor(2_500); // past the ~2 s wait after a change
-    await serverGotSync(page, server, before);
-    await still(async (timeout) => {
-      await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.error, { timeout });
-      await expect(page.getByText(ES.serverError, { exact: true }).first()).toBeVisible({
-        timeout,
+      // The server answers 500 on the next attempt (the previous one was answered: "Sincronizado").
+      await pauseClock(page);
+      before = syncCount(server);
+      server.failNext(500);
+      await importBackup(page, sampleWithExtraActivity(testInfo, 'act_e2e_retry_0001'), 1, still);
+      await page.clock.runFor(2_500); // past the ~2 s wait after a change
+      await serverGotSync(page, server, before);
+      await still(async (timeout) => {
+        await expect(rowValue(page, ES.status)).toHaveText(STATE_ES.error, { timeout });
+        await expect(page.getByText(ES.serverError, { exact: true }).first()).toBeVisible({
+          timeout,
+        });
+        await expect(rowValue(page, ES.pending)).toHaveText('1', { timeout });
       });
-      await expect(rowValue(page, ES.pending)).toHaveText('1', { timeout });
-    });
-    expect(await server.records()).toHaveLength(29);
-    expect(syncCount(server), 'no retry while the clock is still').toBe(before + 1);
+      expect(await server.records()).toHaveLength(29);
+      expect(syncCount(server), 'no retry while the clock is still').toBe(before + 1);
 
-    // "Sincronizar ahora" sends it.
-    await page.clock.resume();
-    before = syncCount(server);
-    await button(page, ES.syncNow).click();
-    await expect(toast(page, ES.synced)).toBeVisible({ timeout: WAIT });
-    await expectSynced(page, server, before);
-    expect(await server.records()).toHaveLength(30);
-  });
+      // "Sincronizar ahora" sends it.
+      await page.clock.resume();
+      before = syncCount(server);
+      await button(page, ES.syncNow).click();
+      await expect(toast(page, ES.synced)).toBeVisible({ timeout: WAIT });
+      await expectSynced(page, server, before);
+      expect(await server.records()).toHaveLength(30);
+    },
+  );
 
-  test('AC-SYNC-07 · changes waiting offline survive a reload and are sent when the network comes back', async ({
-    page,
-    context,
-  }, testInfo) => {
-    const server = createFakeSyncServer();
-    await server.attach(context);
-    await syncedWithSample(page, server);
+  test(
+    'AC-SYNC-07 · changes waiting offline survive a reload and are sent when the network comes back',
+    { tag: '@all-engines' },
+    async ({ page, context }, testInfo) => {
+      const server = createFakeSyncServer();
+      await server.attach(context);
+      await syncedWithSample(page, server);
 
-    await context.setOffline(true);
-    await importBackup(page, sampleWithExtraActivity(testInfo, 'act_e2e_reload_0001'), 1);
-    await expect(indicator(page)).toHaveAccessibleName(
-      'Sincronización: Sin conexión · 1 pendiente',
-    );
+      await context.setOffline(true);
+      await importBackup(page, sampleWithExtraActivity(testInfo, 'act_e2e_reload_0001'), 1);
+      await expect(indicator(page)).toHaveAccessibleName(
+        'Sincronización: Sin conexión · 1 pendiente',
+      );
 
-    // Reload while the server is still unreachable. The page itself needs the network to load
-    // (no service worker yet in this phase), so only /api/v1/ stays cut during the reload.
-    const unreachable = (route: Route) => route.abort('internetdisconnected');
-    await context.route('**/api/v1/**', unreachable);
-    await context.setOffline(false);
-    await page.reload();
-    await expect(h1(page, 'Ajustes')).toBeVisible();
-    // Starting the app closes the finished weeks that have data and no frozen plan yet
-    // (calendar.md): each one is one more week and one more change waiting to sync, next to the
-    // activity. The exact figure depends on the sample dates, so only the relation is checked.
-    const count = (rows: Rows, label: string) =>
-      Number(rows.find(([term]) => term === label)?.[1] ?? Number.NaN);
-    await expect
-      .poll(
-        async () => {
-          const rows = await readCounts(page);
-          const closed = count(rows, 'Semanas') - 2;
-          return closed > 0 && count(rows, 'Pendientes de sincronizar') >= 1 + closed;
-        },
-        { timeout: WAIT },
-      )
-      .toBe(true);
-    await expect(rowValue(page, ES.pending)).not.toHaveText('0');
-    expect(await server.records()).toHaveLength(29);
+      // Reload while the server is still unreachable. The page itself needs the network to load
+      // (no service worker yet in this phase), so only /api/v1/ stays cut during the reload.
+      const unreachable = (route: Route) => route.abort('internetdisconnected');
+      await context.route('**/api/v1/**', unreachable);
+      await context.setOffline(false);
+      await page.reload();
+      await expect(h1(page, 'Ajustes')).toBeVisible();
+      // Starting the app closes the finished weeks that have data and no frozen plan yet
+      // (calendar.md): each one is one more week and one more change waiting to sync, next to the
+      // activity. The exact figure depends on the sample dates, so only the relation is checked.
+      const count = (rows: Rows, label: string) =>
+        Number(rows.find(([term]) => term === label)?.[1] ?? Number.NaN);
+      await expect
+        .poll(
+          async () => {
+            const rows = await readCounts(page);
+            const closed = count(rows, 'Semanas') - 2;
+            return closed > 0 && count(rows, 'Pendientes de sincronizar') >= 1 + closed;
+          },
+          { timeout: WAIT },
+        )
+        .toBe(true);
+      await expect(rowValue(page, ES.pending)).not.toHaveText('0');
+      expect(await server.records()).toHaveLength(29);
 
-    // The network comes back.
-    const before = syncCount(server);
-    await context.unroute('**/api/v1/**', unreachable);
-    await context.setOffline(true);
-    await context.setOffline(false);
-    await expectSynced(page, server, before);
-    expect((await server.records()).length).toBeGreaterThan(29);
-  });
-
-  test('AC-SYNC-08 · a second, empty device with the same key gets the same data and nothing pending', async ({
-    page,
-    context,
-    browser,
-  }, testInfo) => {
-    const server = createFakeSyncServer();
-    await server.attach(context);
-    await syncedWithSample(page, server);
-    await expectCounts(page, dataCounts('after', '0'));
-    const countsA = await readCounts(page);
-
-    const b = await newDevice(browser, testInfo, server);
-    try {
-      await gotoReady(b.page, '/settings', 'Ajustes');
-      await expectCounts(b.page, dataCounts('new'));
+      // The network comes back.
       const before = syncCount(server);
-      await saveKey(b.page, E2E_SYNC_KEY);
-      await expect(toast(b.page, ES.keySaved)).toBeVisible();
-      await expectSynced(b.page, server, before);
-      await expectCounts(b.page, countsA);
-    } finally {
-      await b.context.close();
-    }
-  });
+      await context.unroute('**/api/v1/**', unreachable);
+      await context.setOffline(true);
+      await context.setOffline(false);
+      await expectSynced(page, server, before);
+      expect((await server.records()).length).toBeGreaterThan(29);
+    },
+  );
+
+  test(
+    'AC-SYNC-08 · a second, empty device with the same key gets the same data and nothing pending',
+    { tag: '@all-engines' },
+    async ({ page, context, browser }, testInfo) => {
+      const server = createFakeSyncServer();
+      await server.attach(context);
+      await syncedWithSample(page, server);
+      await expectCounts(page, dataCounts('after', '0'));
+      const countsA = await readCounts(page);
+
+      const b = await newDevice(browser, testInfo, server);
+      try {
+        await gotoReady(b.page, '/settings', 'Ajustes');
+        await expectCounts(b.page, dataCounts('new'));
+        const before = syncCount(server);
+        await saveKey(b.page, E2E_SYNC_KEY);
+        await expect(toast(b.page, ES.keySaved)).toBeVisible();
+        await expectSynced(b.page, server, before);
+        await expectCounts(b.page, countsA);
+      } finally {
+        await b.context.close();
+      }
+    },
+  );
 
   test('AC-SYNC-09 · the same record changed on two devices: the newer change (B) wins on both', async ({
     page,
@@ -931,59 +938,59 @@ test.describe('sync', { tag: '@all-engines' }, () => {
     await expect(items.nth(2)).toContainText('Enviados: 29');
   });
 
-  test('AC-SYNC-12 · two server backups are listed newest first; "Descargar" gives a file Certavi imports', async ({
-    page,
-    context,
-    browser,
-  }, testInfo) => {
-    const server = createFakeSyncServer();
-    await server.attach(context);
-    await syncedWithSample(page, server);
-    const countsA = await readCounts(page);
-    const all = await server.records();
-    expect(all).toHaveLength(29);
-    await server.addBackup('2026-11-01', all.slice(0, 10));
-    await server.addBackup('2026-11-02', all);
+  test(
+    'AC-SYNC-12 · two server backups are listed newest first; "Descargar" gives a file Certavi imports',
+    { tag: '@all-engines' },
+    async ({ page, context, browser }, testInfo) => {
+      const server = createFakeSyncServer();
+      await server.attach(context);
+      await syncedWithSample(page, server);
+      const countsA = await readCounts(page);
+      const all = await server.records();
+      expect(all).toHaveLength(29);
+      await server.addBackup('2026-11-01', all.slice(0, 10));
+      await server.addBackup('2026-11-02', all);
 
-    await page.getByRole('link', { name: ES.logLink, exact: true }).click();
-    await expect(h1(page, ES.card)).toBeVisible();
-    await expect(
-      page.getByRole('heading', { level: 2, name: ES.backups, exact: true }),
-    ).toBeVisible();
-    await expect(page.getByText(ES.backupsText, { exact: true })).toBeVisible();
-    await expect(button(page, 'Actualizar')).toBeVisible();
-    const items = backupItems(page);
-    await expect(items).toHaveCount(2);
-    await expect(items.nth(0)).toContainText('2 de noviembre de 2026');
-    await expect(items.nth(0)).toContainText('29 registros');
-    await expect(items.nth(1)).toContainText('1 de noviembre de 2026');
-    await expect(items.nth(1)).toContainText('10 registros');
-    await expect(button(page, 'Restaurar la copia del 2 de noviembre de 2026')).toBeVisible();
+      await page.getByRole('link', { name: ES.logLink, exact: true }).click();
+      await expect(h1(page, ES.card)).toBeVisible();
+      await expect(
+        page.getByRole('heading', { level: 2, name: ES.backups, exact: true }),
+      ).toBeVisible();
+      await expect(page.getByText(ES.backupsText, { exact: true })).toBeVisible();
+      await expect(button(page, 'Actualizar')).toBeVisible();
+      const items = backupItems(page);
+      await expect(items).toHaveCount(2);
+      await expect(items.nth(0)).toContainText('2 de noviembre de 2026');
+      await expect(items.nth(0)).toContainText('29 registros');
+      await expect(items.nth(1)).toContainText('1 de noviembre de 2026');
+      await expect(items.nth(1)).toContainText('10 registros');
+      await expect(button(page, 'Restaurar la copia del 2 de noviembre de 2026')).toBeVisible();
 
-    const file = await download(page, 'Descargar la copia del 2 de noviembre de 2026', testInfo);
-    expect(file.name).toBe('certavi-server-backup-2026-11-02.json');
-    expect(() => JSON.parse(readFileSync(file.file, 'utf8')) as unknown).not.toThrow();
+      const file = await download(page, 'Descargar la copia del 2 de noviembre de 2026', testInfo);
+      expect(file.name).toBe('certavi-server-backup-2026-11-02.json');
+      expect(() => JSON.parse(readFileSync(file.file, 'utf8')) as unknown).not.toThrow();
 
-    // A new device without a key accepts it with "Importar copia de Certavi".
-    const other = await newDevice(browser, testInfo, server);
-    try {
-      await gotoReady(other.page, '/settings', 'Ajustes');
-      await expectCounts(other.page, dataCounts('new'));
-      await chooseFile(other.page, ES.importCertavi, file.file);
-      const dialog = dialogOf(other.page, ES.importCertavi);
-      await expect(dialog).toBeVisible();
-      await button(dialog, ES.confirmImport).click();
-      await expect(toast(other.page, /^Registros importados: \d+$/)).toBeVisible();
-      await expect(dialog).toBeHidden();
-      const withoutPending = (rows: Rows) =>
-        rows.filter(([l]) => l !== 'Pendientes de sincronizar');
-      await expect
-        .poll(async () => withoutPending(await readCounts(other.page)))
-        .toEqual(withoutPending(countsA));
-    } finally {
-      await other.context.close();
-    }
-  });
+      // A new device without a key accepts it with "Importar copia de Certavi".
+      const other = await newDevice(browser, testInfo, server);
+      try {
+        await gotoReady(other.page, '/settings', 'Ajustes');
+        await expectCounts(other.page, dataCounts('new'));
+        await chooseFile(other.page, ES.importCertavi, file.file);
+        const dialog = dialogOf(other.page, ES.importCertavi);
+        await expect(dialog).toBeVisible();
+        await button(dialog, ES.confirmImport).click();
+        await expect(toast(other.page, /^Registros importados: \d+$/)).toBeVisible();
+        await expect(dialog).toBeHidden();
+        const withoutPending = (rows: Rows) =>
+          rows.filter(([l]) => l !== 'Pendientes de sincronizar');
+        await expect
+          .poll(async () => withoutPending(await readCounts(other.page)))
+          .toEqual(withoutPending(countsA));
+      } finally {
+        await other.context.close();
+      }
+    },
+  );
 
   test('AC-SYNC-13 · restoring a smaller backup: confirm dialog, toast, counts match it here and on another device', async ({
     page,

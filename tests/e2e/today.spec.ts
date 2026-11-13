@@ -166,84 +166,90 @@ async function axe(page: Page, label: string): Promise<void> {
 // Tests
 // ---------------------------------------------------------------------------------------------
 
-test.describe('today', { tag: '@all-engines' }, () => {
-  test('AC-TODAY-01 / 02 / 19 · the routine or rest day of each weekday; quick activity; the week fits 390 px; an unknown session', async ({
-    page,
-  }) => {
-    await openTodayAt(page, MON);
-    await expect(page.getByText('lunes, 2 de noviembre', { exact: true })).toBeVisible();
-    let today = await card(page, ES.today);
-    await expect(today).toContainText('Push');
-    await expect(today.getByText('7 ejercicios · 19 series', { exact: true })).toBeVisible();
-    await expect(button(today, 'Empezar Push')).toBeVisible();
-    // The exercises can be seen without starting.
-    await today.getByText('Ver los ejercicios', { exact: true }).click();
-    await expect(today).toContainText('Press inclinado con mancuernas · 3 series');
-    await expect(page).toHaveURL(/\/$/);
+test.describe('today', () => {
+  test(
+    'AC-TODAY-01 / 02 / 19 · the routine or rest day of each weekday; quick activity; the week fits 390 px; an unknown session',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await openTodayAt(page, MON);
+      await expect(page.getByText('lunes, 2 de noviembre', { exact: true })).toBeVisible();
+      let today = await card(page, ES.today);
+      await expect(today).toContainText('Push');
+      await expect(today.getByText('7 ejercicios · 19 series', { exact: true })).toBeVisible();
+      await expect(button(today, 'Empezar Push')).toBeVisible();
+      // The exercises can be seen without starting.
+      await today.getByText('Ver los ejercicios', { exact: true }).click();
+      await expect(today).toContainText('Press inclinado con mancuernas · 3 series');
+      await expect(page).toHaveURL(/\/$/);
 
-    // The week at a glance: seven days in one row, Monday first, today marked.
-    const week = await card(page, ES.week);
-    await expect(week).toContainText(/2\s*–\s*8 nov/);
-    await expect(week).toContainText('0 / 104');
-    await expect(week).toContainText('0 de 5');
-    const days: [string, string][] = [
-      ['lunes 2', 'Push'],
-      ['martes 3', 'Pull'],
-      ['miércoles 4', 'Lower B'],
-      ['jueves 5', 'Activo'],
-      ['viernes 6', 'Upper'],
-      ['sábado 7', 'Fútbol'],
-      ['domingo 8', 'Lower A'],
-    ];
-    const tops: number[] = [];
-    let lastX = -1;
-    for (const [d, plan] of days) {
-      const item = dayItem(page, new RegExp(`^${d}: ${plan}`));
-      await expect(item, `${d} reads ${plan}`).toBeVisible();
-      const box = await boxOf(item);
-      tops.push(Math.round(box.y));
-      expect(box.x, `${d} is to the right of the day before`).toBeGreaterThan(lastX);
-      lastX = box.x;
-    }
-    expect(Math.max(...tops) - Math.min(...tops), 'the seven days sit in one row').toBeLessThan(4);
-    await expect(week.locator('[aria-current="date"]')).toHaveCount(1);
-    expect(await hasHorizontalScroll(page), 'horizontal scroll on Today').toBe(false);
+      // The week at a glance: seven days in one row, Monday first, today marked.
+      const week = await card(page, ES.week);
+      await expect(week).toContainText(/2\s*–\s*8 nov/);
+      await expect(week).toContainText('0 / 104');
+      await expect(week).toContainText('0 de 5');
+      const days: [string, string][] = [
+        ['lunes 2', 'Push'],
+        ['martes 3', 'Pull'],
+        ['miércoles 4', 'Lower B'],
+        ['jueves 5', 'Activo'],
+        ['viernes 6', 'Upper'],
+        ['sábado 7', 'Fútbol'],
+        ['domingo 8', 'Lower A'],
+      ];
+      const tops: number[] = [];
+      let lastX = -1;
+      for (const [d, plan] of days) {
+        const item = dayItem(page, new RegExp(`^${d}: ${plan}`));
+        await expect(item, `${d} reads ${plan}`).toBeVisible();
+        const box = await boxOf(item);
+        tops.push(Math.round(box.y));
+        expect(box.x, `${d} is to the right of the day before`).toBeGreaterThan(lastX);
+        lastX = box.x;
+      }
+      expect(Math.max(...tops) - Math.min(...tops), 'the seven days sit in one row').toBeLessThan(
+        4,
+      );
+      await expect(week.locator('[aria-current="date"]')).toHaveCount(1);
+      expect(await hasHorizontalScroll(page), 'horizontal scroll on Today').toBe(false);
 
-    // Wednesday's "Lower B" is checked by AC-06/07 and AC-08/09, which open on Wednesday.
-    await reloadAt(page, TUE);
-    await expect(button(page, 'Empezar Pull')).toBeVisible();
+      // Wednesday's "Lower B" is checked by AC-06/07 and AC-08/09, which open on Wednesday.
+      await reloadAt(page, TUE);
+      await expect(button(page, 'Empezar Pull')).toBeVisible();
 
-    // Thursday: active rest, with its quick activities.
-    await reloadAt(page, THU);
-    today = await card(page, ES.today);
-    await expect(today.getByText('Descanso activo', { exact: true })).toBeVisible();
-    await expect(
-      today.getByText('Natación o movilidad. No correr.', { exact: true }),
-    ).toBeVisible();
-    await expect(today.getByRole('button', { name: /^Empezar / })).toHaveCount(0);
-    await expect(button(today, '+ Natación')).toBeVisible();
-    const types = group(page, 'Tipo de actividad');
-    // On a rest day the first quick activity is selected.
-    await expect(selected(types, 'Natación')).toBeVisible();
-    await button(today, '+ Movilidad').click();
-    await expect(selected(types, 'Movilidad')).toBeVisible();
-    await expect(selected(types, 'Natación')).toHaveCount(0);
-    await expect(field(page, 'Minutos')).toBeFocused();
+      // Thursday: active rest, with its quick activities.
+      await reloadAt(page, THU);
+      today = await card(page, ES.today);
+      await expect(today.getByText('Descanso activo', { exact: true })).toBeVisible();
+      await expect(
+        today.getByText('Natación o movilidad. No correr.', { exact: true }),
+      ).toBeVisible();
+      await expect(today.getByRole('button', { name: /^Empezar / })).toHaveCount(0);
+      await expect(button(today, '+ Natación')).toBeVisible();
+      const types = group(page, 'Tipo de actividad');
+      // On a rest day the first quick activity is selected.
+      await expect(selected(types, 'Natación')).toBeVisible();
+      await button(today, '+ Movilidad').click();
+      await expect(selected(types, 'Movilidad')).toBeVisible();
+      await expect(selected(types, 'Natación')).toHaveCount(0);
+      await expect(field(page, 'Minutos')).toBeFocused();
 
-    await reloadAt(page, SAT);
-    today = await card(page, ES.today);
-    await expect(today.getByText('Fútbol', { exact: true })).toBeVisible();
-    await expect(today.getByText('Partido (+ natación si cuadra).', { exact: true })).toBeVisible();
-    await expect(button(today, '+ Fútbol')).toBeVisible();
-    await expect(button(today, '+ Natación')).toBeVisible();
+      await reloadAt(page, SAT);
+      today = await card(page, ES.today);
+      await expect(today.getByText('Fútbol', { exact: true })).toBeVisible();
+      await expect(
+        today.getByText('Partido (+ natación si cuadra).', { exact: true }),
+      ).toBeVisible();
+      await expect(button(today, '+ Fútbol')).toBeVisible();
+      await expect(button(today, '+ Natación')).toBeVisible();
 
-    // AC-19: an unknown session.
-    await page.goto('/session/does-not-exist');
-    await expect(page.getByText('Sesión no encontrada', { exact: true })).toBeVisible();
-    await page.getByRole('link', { name: 'Volver a Hoy', exact: true }).click();
-    await expect(h1(page, 'Hoy')).toBeVisible();
-    await expect(page).toHaveURL(/\/$/);
-  });
+      // AC-19: an unknown session.
+      await page.goto('/session/does-not-exist');
+      await expect(page.getByText('Sesión no encontrada', { exact: true })).toBeVisible();
+      await page.getByRole('link', { name: 'Volver a Hoy', exact: true }).click();
+      await expect(h1(page, 'Hoy')).toBeVisible();
+      await expect(page).toHaveURL(/\/$/);
+    },
+  );
 
   test('AC-TODAY-03 / 04 / 05 · a free session and Pull today under "También hoy"; then start, continue and reload Push', async ({
     page,
@@ -318,40 +324,42 @@ test.describe('today', { tag: '@all-engines' }, () => {
     await expect(await card(page, ES.week)).toContainText('3 de 5');
   });
 
-  test('AC-TODAY-03 · the hero goes Empezar -> Continuar -> "Sesión hecha · ver o corregir" -> Continuar, also after a reload', async ({
-    page,
-  }) => {
-    await openTodayAt(page, MON);
-    await button(page, 'Empezar Push').click();
-    const url = await expectSessionScreen(page, 'Push');
+  test(
+    'AC-TODAY-03 · the hero goes Empezar -> Continuar -> "Sesión hecha · ver o corregir" -> Continuar, also after a reload',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await openTodayAt(page, MON);
+      await button(page, 'Empezar Push').click();
+      const url = await expectSessionScreen(page, 'Push');
 
-    await backToToday(page);
-    await expect(sessionAction(page, 'Continuar Push')).toBeVisible();
+      await backToToday(page);
+      await expect(sessionAction(page, 'Continuar Push')).toBeVisible();
 
-    // Finish it: the hero says it is done and still opens the same session.
-    await sessionAction(page, 'Continuar Push').click();
-    await expectSessionScreen(page, 'Push');
-    await button(page, 'Terminar sesión').click();
-    await expect(page.getByRole('main').getByText('Terminada', { exact: true })).toBeVisible();
-    await backToToday(page);
-    const done = sessionAction(page, 'Sesión hecha · ver o corregir');
-    await expect(done).toBeVisible();
-    await expect(sessionAction(page, 'Continuar Push')).toHaveCount(0);
-    await expect(button(page, 'Empezar Push')).toHaveCount(0);
-    await page.reload();
-    await expect(h1(page, 'Hoy')).toBeVisible();
-    await expect(done).toBeVisible();
-    await done.click();
-    await expectSessionScreen(page, 'Push');
-    expect(page.url(), 'the same session').toBe(url);
+      // Finish it: the hero says it is done and still opens the same session.
+      await sessionAction(page, 'Continuar Push').click();
+      await expectSessionScreen(page, 'Push');
+      await button(page, 'Terminar sesión').click();
+      await expect(page.getByRole('main').getByText('Terminada', { exact: true })).toBeVisible();
+      await backToToday(page);
+      const done = sessionAction(page, 'Sesión hecha · ver o corregir');
+      await expect(done).toBeVisible();
+      await expect(sessionAction(page, 'Continuar Push')).toHaveCount(0);
+      await expect(button(page, 'Empezar Push')).toHaveCount(0);
+      await page.reload();
+      await expect(h1(page, 'Hoy')).toBeVisible();
+      await expect(done).toBeVisible();
+      await done.click();
+      await expectSessionScreen(page, 'Push');
+      expect(page.url(), 'the same session').toBe(url);
 
-    // Back in progress: the hero is "Continuar" again.
-    await button(page, 'Marcar como en curso').click();
-    await expect(page.getByRole('main').getByText('En curso', { exact: true })).toBeVisible();
-    await backToToday(page);
-    await expect(sessionAction(page, 'Continuar Push')).toBeVisible();
-    await expect(sessionAction(page, 'Sesión hecha · ver o corregir')).toHaveCount(0);
-  });
+      // Back in progress: the hero is "Continuar" again.
+      await button(page, 'Marcar como en curso').click();
+      await expect(page.getByRole('main').getByText('En curso', { exact: true })).toBeVisible();
+      await backToToday(page);
+      await expect(sessionAction(page, 'Continuar Push')).toBeVisible();
+      await expect(sessionAction(page, 'Sesión hecha · ver o corregir')).toHaveCount(0);
+    },
+  );
 
   test('AC-TODAY-06 / 07 · a future date is refused; a past day is logged finished and reopened', async ({
     page,
@@ -537,196 +545,201 @@ test.describe('today', { tag: '@all-engines' }, () => {
     await expect(page.getByRole('main').getByText(text, { exact: true })).toBeVisible();
   });
 
-  test('AC-TODAY-12 / 13 / 14 / 15 · activity, weekly weight and the ankle rehab block are saved and survive one reload', async ({
-    page,
-  }) => {
-    await openTodayAt(page, MON);
+  test(
+    'AC-TODAY-12 / 13 / 14 / 15 · activity, weekly weight and the ankle rehab block are saved and survive one reload',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await openTodayAt(page, MON);
 
-    // AC-12: activity. A routine day: Fútbol is selected by default.
-    const types = group(page, 'Tipo de actividad');
-    await expect(selected(types, 'Fútbol')).toBeVisible();
-    await expect(page.getByLabel('Nota', { exact: true })).toHaveAttribute(
-      'placeholder',
-      'Opcional',
-    );
-    await option(types, 'Natación').click();
-    await expect(selected(types, 'Natación')).toBeVisible();
-    await field(page, 'Minutos').fill('45');
-    await page.getByLabel('Nota', { exact: true }).fill('Piscina E2E');
-    await button(page, 'Guardar actividad de hoy').click();
-    await expect(toast(page, 'Actividad guardada: Natación')).toBeVisible();
-    await expect(page.getByText('Hoy: Natación 45 min', { exact: true })).toBeVisible();
-    await expect(field(page, 'Minutos')).toHaveValue('');
-    await expect(page.getByLabel('Nota', { exact: true })).toHaveValue('');
-    // No session that day, an activity → the day's label is the activity's name.
-    await expect(dayItem(page, /^lunes 2: Natación, hecho$/)).toBeVisible();
-    // Without minutes: saved and shown without minutes, after the first one.
-    await option(types, 'Fútbol').click();
-    await button(page, 'Guardar actividad de hoy').click();
-    await expect(toast(page, 'Actividad guardada: Fútbol')).toBeVisible();
-    const activities = page.getByText('Hoy: Natación 45 min · Fútbol', { exact: true });
-    await expect(activities).toBeVisible();
+      // AC-12: activity. A routine day: Fútbol is selected by default.
+      const types = group(page, 'Tipo de actividad');
+      await expect(selected(types, 'Fútbol')).toBeVisible();
+      await expect(page.getByLabel('Nota', { exact: true })).toHaveAttribute(
+        'placeholder',
+        'Opcional',
+      );
+      await option(types, 'Natación').click();
+      await expect(selected(types, 'Natación')).toBeVisible();
+      await field(page, 'Minutos').fill('45');
+      await page.getByLabel('Nota', { exact: true }).fill('Piscina E2E');
+      await button(page, 'Guardar actividad de hoy').click();
+      await expect(toast(page, 'Actividad guardada: Natación')).toBeVisible();
+      await expect(page.getByText('Hoy: Natación 45 min', { exact: true })).toBeVisible();
+      await expect(field(page, 'Minutos')).toHaveValue('');
+      await expect(page.getByLabel('Nota', { exact: true })).toHaveValue('');
+      // No session that day, an activity → the day's label is the activity's name.
+      await expect(dayItem(page, /^lunes 2: Natación, hecho$/)).toBeVisible();
+      // Without minutes: saved and shown without minutes, after the first one.
+      await option(types, 'Fútbol').click();
+      await button(page, 'Guardar actividad de hoy').click();
+      await expect(toast(page, 'Actividad guardada: Fútbol')).toBeVisible();
+      const activities = page.getByText('Hoy: Natación 45 min · Fútbol', { exact: true });
+      await expect(activities).toBeVisible();
 
-    // AC-14: 12 kg is refused.
-    const weeks = group(page, 'Semana');
-    const thisWeek = /^Esta semana · 2\s*–\s*8 nov$/;
-    const lastWeek = /^Semana pasada · 26 oct\.?\s*–\s*1 nov$/;
-    await expect(selected(weeks, thisWeek)).toBeVisible();
-    const kg = field(page, /^Peso medio/);
-    const save = button(page, 'Guardar peso');
-    await kg.fill('12');
-    await save.click();
-    const invalid = page.getByText('Escribe un peso entre 20 y 300 kg.', { exact: true });
-    await expect(invalid).toBeVisible();
-    await expect(page.getByText(/^Peso guardado/)).toHaveCount(0);
+      // AC-14: 12 kg is refused.
+      const weeks = group(page, 'Semana');
+      const thisWeek = /^Esta semana · 2\s*–\s*8 nov$/;
+      const lastWeek = /^Semana pasada · 26 oct\.?\s*–\s*1 nov$/;
+      await expect(selected(weeks, thisWeek)).toBeVisible();
+      const kg = field(page, /^Peso medio/);
+      const save = button(page, 'Guardar peso');
+      await kg.fill('12');
+      await save.click();
+      const invalid = page.getByText('Escribe un peso entre 20 y 300 kg.', { exact: true });
+      await expect(invalid).toBeVisible();
+      await expect(page.getByText(/^Peso guardado/)).toHaveCount(0);
 
-    // AC-13: this week, then last week.
-    await kg.fill('76,4');
-    await save.click();
-    await expect(toast(page, /^Peso guardado · 2\s*–\s*8 nov$/)).toBeVisible();
-    await expect(kg).toHaveValue('76,4');
-    await expect(invalid).toHaveCount(0);
-    await option(weeks, lastWeek).click();
-    await expect(selected(weeks, lastWeek)).toBeVisible();
-    await expect(kg).toHaveValue('');
-    expect((await kg.getAttribute('placeholder')) ?? '').not.toMatch(/\d/);
-    await kg.fill('77');
-    await save.click();
-    await expect(toast(page, /^Peso guardado · 26 oct\.?\s*–\s*1 nov$/)).toBeVisible();
-    await option(weeks, thisWeek).click();
-    await expect(kg).toHaveValue('76,4');
-    const previous = page.getByText(/^Último dato anterior \(26 oct\.?\s*–\s*1 nov\): 77 kg$/);
-    await expect(previous).toBeVisible();
+      // AC-13: this week, then last week.
+      await kg.fill('76,4');
+      await save.click();
+      await expect(toast(page, /^Peso guardado · 2\s*–\s*8 nov$/)).toBeVisible();
+      await expect(kg).toHaveValue('76,4');
+      await expect(invalid).toHaveCount(0);
+      await option(weeks, lastWeek).click();
+      await expect(selected(weeks, lastWeek)).toBeVisible();
+      await expect(kg).toHaveValue('');
+      expect((await kg.getAttribute('placeholder')) ?? '').not.toMatch(/\d/);
+      await kg.fill('77');
+      await save.click();
+      await expect(toast(page, /^Peso guardado · 26 oct\.?\s*–\s*1 nov$/)).toBeVisible();
+      await option(weeks, thisWeek).click();
+      await expect(kg).toHaveValue('76,4');
+      const previous = page.getByText(/^Último dato anterior \(26 oct\.?\s*–\s*1 nov\): 77 kg$/);
+      await expect(previous).toBeVisible();
 
-    // AC-15: the ankle rehab block.
-    const block = await card(page, ES.rehab);
-    await expect(page.getByRole('heading', { name: 'Estiramientos', exact: true })).toHaveCount(0);
-    await expect(block).toContainText('Ejercicios · 0/8');
-    await expect(block.getByRole('checkbox')).toHaveCount(8);
-    for (const metric of [ES.stairs, 'Dolor máximo en los ejercicios', 'Dolor en pogos']) {
-      await expect(group(block, metric).getByRole('button'), metric).toHaveCount(11);
-    }
-    await expect(block).toContainText('2 × 30 s por pierna');
-    const roller = block.getByRole('checkbox', { name: /^Rodillo en gemelo/ });
-    const stairs = group(block, ES.stairs);
-    // The tick follows the saved record, a moment after the tap: wait for it (check() would
-    // read the state straight after the click).
-    await roller.click();
-    await expect(roller).toBeChecked();
-    await expect(block).toContainText('Ejercicios · 1/8');
-    await scaleValue(stairs, 4).click();
-    await expect(scaleValue(stairs, 4)).toHaveAttribute('aria-pressed', 'true');
-    await expect(stairs.getByRole('button', { pressed: true })).toHaveCount(1);
-    await expect(block.getByText(ES.warning, { exact: true })).toBeVisible();
-    const note = block.getByLabel('Nota del día', { exact: true });
-    await note.fill('Tobillo E2E');
-    await note.blur();
-    await expect(toast(page, 'Nota guardada')).toBeVisible();
+      // AC-15: the ankle rehab block.
+      const block = await card(page, ES.rehab);
+      await expect(page.getByRole('heading', { name: 'Estiramientos', exact: true })).toHaveCount(
+        0,
+      );
+      await expect(block).toContainText('Ejercicios · 0/8');
+      await expect(block.getByRole('checkbox')).toHaveCount(8);
+      for (const metric of [ES.stairs, 'Dolor máximo en los ejercicios', 'Dolor en pogos']) {
+        await expect(group(block, metric).getByRole('button'), metric).toHaveCount(11);
+      }
+      await expect(block).toContainText('2 × 30 s por pierna');
+      const roller = block.getByRole('checkbox', { name: /^Rodillo en gemelo/ });
+      const stairs = group(block, ES.stairs);
+      // The tick follows the saved record, a moment after the tap: wait for it (check() would
+      // read the state straight after the click).
+      await roller.click();
+      await expect(roller).toBeChecked();
+      await expect(block).toContainText('Ejercicios · 1/8');
+      await scaleValue(stairs, 4).click();
+      await expect(scaleValue(stairs, 4)).toHaveAttribute('aria-pressed', 'true');
+      await expect(stairs.getByRole('button', { pressed: true })).toHaveCount(1);
+      await expect(block.getByText(ES.warning, { exact: true })).toBeVisible();
+      const note = block.getByLabel('Nota del día', { exact: true });
+      await note.fill('Tobillo E2E');
+      await note.blur();
+      await expect(toast(page, 'Nota guardada')).toBeVisible();
 
-    // One reload for all three cards.
-    await page.reload();
-    await expect(h1(page, 'Hoy')).toBeVisible();
-    await expect(activities).toBeVisible();
-    await expect(field(page, /^Peso medio/)).toHaveValue('76,4');
-    await expect(previous).toBeVisible();
-    const again = await card(page, ES.rehab);
-    const stairsAgain = group(again, ES.stairs);
-    await expect(again.getByRole('checkbox', { name: /^Rodillo en gemelo/ })).toBeChecked();
-    await expect(again).toContainText('Ejercicios · 1/8');
-    await expect(scaleValue(stairsAgain, 4)).toHaveAttribute('aria-pressed', 'true');
-    await expect(again.getByText(ES.warning, { exact: true })).toBeVisible();
-    await expect(again.getByLabel('Nota del día', { exact: true })).toHaveValue('Tobillo E2E');
+      // One reload for all three cards.
+      await page.reload();
+      await expect(h1(page, 'Hoy')).toBeVisible();
+      await expect(activities).toBeVisible();
+      await expect(field(page, /^Peso medio/)).toHaveValue('76,4');
+      await expect(previous).toBeVisible();
+      const again = await card(page, ES.rehab);
+      const stairsAgain = group(again, ES.stairs);
+      await expect(again.getByRole('checkbox', { name: /^Rodillo en gemelo/ })).toBeChecked();
+      await expect(again).toContainText('Ejercicios · 1/8');
+      await expect(scaleValue(stairsAgain, 4)).toHaveAttribute('aria-pressed', 'true');
+      await expect(again.getByText(ES.warning, { exact: true })).toBeVisible();
+      await expect(again.getByLabel('Nota del día', { exact: true })).toHaveValue('Tobillo E2E');
 
-    // A second tap clears the value.
-    await scaleValue(stairsAgain, 4).click();
-    await expect(stairsAgain.getByRole('button', { pressed: true })).toHaveCount(0);
-    await expect(again.getByText(ES.warning, { exact: true })).toHaveCount(0);
-    // 3 is the threshold itself: no warning.
-    await scaleValue(stairsAgain, 3).click();
-    await expect(scaleValue(stairsAgain, 3)).toHaveAttribute('aria-pressed', 'true');
-    await expect(again.getByText(ES.warning, { exact: true })).toHaveCount(0);
-  });
+      // A second tap clears the value.
+      await scaleValue(stairsAgain, 4).click();
+      await expect(stairsAgain.getByRole('button', { pressed: true })).toHaveCount(0);
+      await expect(again.getByText(ES.warning, { exact: true })).toHaveCount(0);
+      // 3 is the threshold itself: no warning.
+      await scaleValue(stairsAgain, 3).click();
+      await expect(scaleValue(stairsAgain, 3)).toHaveAttribute('aria-pressed', 'true');
+      await expect(again.getByText(ES.warning, { exact: true })).toHaveCount(0);
+    },
+  );
 
-  test('AC-TODAY-18 / 16 · the no-key notice leads to Settings; then offline, session, activity and weight survive a reload, wait as pending and sync later', async ({
-    page,
-    context,
-  }) => {
-    const server = createFakeSyncServer();
-    await server.attach(context);
-    await openTodayAt(page, MON);
+  test(
+    'AC-TODAY-18 / 16 · the no-key notice leads to Settings; then offline, session, activity and weight survive a reload, wait as pending and sync later',
+    { tag: '@all-engines' },
+    async ({ page, context }) => {
+      const server = createFakeSyncServer();
+      await server.attach(context);
+      await openTodayAt(page, MON);
 
-    // AC-18: the notice comes first, above "La sesión de hoy", and links to Settings.
-    const notice = page.getByText(ES.noKey, { exact: true });
-    await expect(notice).toBeVisible();
-    const noticeBox = await boxOf(notice);
-    const todayBox = await boxOf(page.getByRole('heading', { name: ES.today, exact: true }));
-    expect(noticeBox.y).toBeLessThan(todayBox.y);
-    await page.getByRole('link', { name: 'Ponerla en Ajustes', exact: true }).click();
-    await expect(h1(page, 'Ajustes')).toBeVisible();
-    await expect(page).toHaveURL(/\/settings$/);
-    await page.getByLabel('Clave de sincronización', { exact: true }).fill(E2E_SYNC_KEY);
-    await button(page, 'Guardar clave').click();
-    await expect(toast(page, 'Clave guardada.')).toBeVisible();
-    await expect
-      .poll(() => server.requestCount('/api/v1/sync'), { timeout: WAIT })
-      .toBeGreaterThan(0);
-    await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sincronizado', {
-      timeout: WAIT,
-    });
-    await backToToday(page);
-    await expect(page.getByRole('heading', { name: ES.today, exact: true })).toBeVisible();
-    await expect(page.getByText(ES.noKey, { exact: true })).toHaveCount(0);
-    const onServer = (await server.records()).length;
+      // AC-18: the notice comes first, above "La sesión de hoy", and links to Settings.
+      const notice = page.getByText(ES.noKey, { exact: true });
+      await expect(notice).toBeVisible();
+      const noticeBox = await boxOf(notice);
+      const todayBox = await boxOf(page.getByRole('heading', { name: ES.today, exact: true }));
+      expect(noticeBox.y).toBeLessThan(todayBox.y);
+      await page.getByRole('link', { name: 'Ponerla en Ajustes', exact: true }).click();
+      await expect(h1(page, 'Ajustes')).toBeVisible();
+      await expect(page).toHaveURL(/\/settings$/);
+      await page.getByLabel('Clave de sincronización', { exact: true }).fill(E2E_SYNC_KEY);
+      await button(page, 'Guardar clave').click();
+      await expect(toast(page, 'Clave guardada.')).toBeVisible();
+      await expect
+        .poll(() => server.requestCount('/api/v1/sync'), { timeout: WAIT })
+        .toBeGreaterThan(0);
+      await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sincronizado', {
+        timeout: WAIT,
+      });
+      await backToToday(page);
+      await expect(page.getByRole('heading', { name: ES.today, exact: true })).toBeVisible();
+      await expect(page.getByText(ES.noKey, { exact: true })).toHaveCount(0);
+      const onServer = (await server.records()).length;
 
-    // AC-16: offline.
-    await context.setOffline(true);
-    await expect(indicator(page)).toHaveAccessibleName(/^Sincronización: Sin conexión/, {
-      timeout: WAIT,
-    });
-    const before = server.requestCount();
+      // AC-16: offline.
+      await context.setOffline(true);
+      await expect(indicator(page)).toHaveAccessibleName(/^Sincronización: Sin conexión/, {
+        timeout: WAIT,
+      });
+      const before = server.requestCount();
 
-    await button(page, 'Empezar Push').click();
-    await expectSessionScreen(page, 'Push');
-    await backToToday(page);
-    await option(group(page, 'Tipo de actividad'), 'Natación').click();
-    await field(page, 'Minutos').fill('45');
-    await button(page, 'Guardar actividad de hoy').click();
-    await expect(toast(page, 'Actividad guardada: Natación')).toBeVisible();
-    await field(page, /^Peso medio/).fill('76,4');
-    await button(page, 'Guardar peso').click();
-    await expect(toast(page, /^Peso guardado · /)).toBeVisible();
-    await expect(indicator(page)).toHaveAccessibleName(
-      /^Sincronización: Sin conexión · \d+ pendientes$/,
-      { timeout: WAIT },
-    );
-    expect(server.requestCount(), 'no request while offline').toBe(before);
+      await button(page, 'Empezar Push').click();
+      await expectSessionScreen(page, 'Push');
+      await backToToday(page);
+      await option(group(page, 'Tipo de actividad'), 'Natación').click();
+      await field(page, 'Minutos').fill('45');
+      await button(page, 'Guardar actividad de hoy').click();
+      await expect(toast(page, 'Actividad guardada: Natación')).toBeVisible();
+      await field(page, /^Peso medio/).fill('76,4');
+      await button(page, 'Guardar peso').click();
+      await expect(toast(page, /^Peso guardado · /)).toBeVisible();
+      await expect(indicator(page)).toHaveAccessibleName(
+        /^Sincronización: Sin conexión · \d+ pendientes$/,
+        { timeout: WAIT },
+      );
+      expect(server.requestCount(), 'no request while offline').toBe(before);
 
-    // The page itself needs the network to reload (no service worker until Phase 8), so only
-    // /api/v1/ stays cut during the reload.
-    const unreachable = (route: Route) => route.abort('internetdisconnected');
-    await context.route('**/api/v1/**', unreachable);
-    await context.setOffline(false);
-    await page.reload();
-    await expect(h1(page, 'Hoy')).toBeVisible();
-    await expect(sessionAction(page, 'Continuar Push')).toBeVisible();
-    await expect(page.getByText('Hoy: Natación 45 min', { exact: true })).toBeVisible();
-    await expect(field(page, /^Peso medio/)).toHaveValue('76,4');
-    await expect(indicator(page)).toHaveAccessibleName(/ · \d+ pendientes$/, { timeout: WAIT });
-    expect((await server.records()).length, 'nothing reached the server').toBe(onServer);
+      // The page itself needs the network to reload (no service worker until Phase 8), so only
+      // /api/v1/ stays cut during the reload.
+      const unreachable = (route: Route) => route.abort('internetdisconnected');
+      await context.route('**/api/v1/**', unreachable);
+      await context.setOffline(false);
+      await page.reload();
+      await expect(h1(page, 'Hoy')).toBeVisible();
+      await expect(sessionAction(page, 'Continuar Push')).toBeVisible();
+      await expect(page.getByText('Hoy: Natación 45 min', { exact: true })).toBeVisible();
+      await expect(field(page, /^Peso medio/)).toHaveValue('76,4');
+      await expect(indicator(page)).toHaveAccessibleName(/ · \d+ pendientes$/, { timeout: WAIT });
+      expect((await server.records()).length, 'nothing reached the server').toBe(onServer);
 
-    // The network comes back: everything is sent.
-    const beforeSync = server.requestCount('/api/v1/sync');
-    await context.unroute('**/api/v1/**', unreachable);
-    await context.setOffline(true);
-    await context.setOffline(false);
-    await expect
-      .poll(() => server.requestCount('/api/v1/sync'), { timeout: WAIT })
-      .toBeGreaterThan(beforeSync);
-    await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sincronizado', {
-      timeout: WAIT,
-    });
-    expect((await server.records()).length).toBeGreaterThan(onServer);
-  });
+      // The network comes back: everything is sent.
+      const beforeSync = server.requestCount('/api/v1/sync');
+      await context.unroute('**/api/v1/**', unreachable);
+      await context.setOffline(true);
+      await context.setOffline(false);
+      await expect
+        .poll(() => server.requestCount('/api/v1/sync'), { timeout: WAIT })
+        .toBeGreaterThan(beforeSync);
+      await expect(indicator(page)).toHaveAccessibleName('Sincronización: Sincronizado', {
+        timeout: WAIT,
+      });
+      expect((await server.records()).length).toBeGreaterThan(onServer);
+    },
+  );
 
   test('AC-TODAY-17 · English, dark and light: texts, decimal point, no Spanish left, no serious axe issues on Today and the session', async ({
     page,

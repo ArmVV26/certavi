@@ -41,7 +41,11 @@ These rules keep it from happening again.
   2; never `channel: 'chrome'`.
 - Tagging for WebKit: do not tag engine-independent UI logic (theme, language, navigation,
   components): WebKit in CI has one worker and is the scarce resource. Keep the tagged set small:
-  a new spec file gets a tag on its `describe` only if all of it qualifies.
+  **tag single tests**, and a `describe` only when every test in it qualifies. The Phase 10
+  review (2026-11-13) moved the tags from whole `describe`s to the tests that depend on the
+  engine: 48 tests run in WebKit (they were 111). The checklist `docs/device-checklist.md` covers
+  what WebKit cannot show (the phone's storage, lock screen, audio, network switching). A test
+  that fails only in Safari gets its tag back.
 - When a browser genuinely behaves differently (e.g. WebKit does not Tab to links), skip that
   check in that browser with `test.skip(condition, 'reason')` and keep it in the others.
 - Do not add `test.slow` because WebKit is slow; if a test gets close to 60 s in WebKit, split it
