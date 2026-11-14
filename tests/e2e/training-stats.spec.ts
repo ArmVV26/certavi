@@ -508,74 +508,77 @@ test.describe('training statistics', () => {
     await expect(page.getByRole('main')).toContainText(/Racha\s*0(?!\d)/);
   });
 
-  test('AC-STA-08 · English, dark then light at 390 px: every text in English, no horizontal scroll (also with the table open), no serious axe issue in Progress and Today', async ({
-    page,
-    browserName,
-  }) => {
-    await page.emulateMedia({ colorScheme: 'dark' });
-    await page.clock.install({ time: TODAY });
-    // Streak: 26 Oct and 2 Nov are active, 19 Oct is not -> 2 weeks, best 2.
-    await importBackup(page, gymBackup(FIGURES));
-    await setLanguage(page, 'en');
-    await toProgress(page, 'en');
-    await expectTheme(page, 'dark');
-    expect(page.viewportSize()?.width).toBe(390);
+  test(
+    'AC-STA-08 · English, dark then light at 390 px: every text in English, no horizontal scroll (also with the table open), no serious axe issue in Progress and Today',
+    { tag: '@all-engines' },
+    async ({ page, browserName }) => {
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await page.clock.install({ time: TODAY });
+      // Streak: 26 Oct and 2 Nov are active, 19 Oct is not -> 2 weeks, best 2.
+      await importBackup(page, gymBackup(FIGURES));
+      await setLanguage(page, 'en');
+      await toProgress(page, 'en');
+      await expectTheme(page, 'dark');
+      expect(page.viewportSize()?.width).toBe(390);
 
-    const card = statsCard(page, 'en');
-    await expect(card.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
-    await expect(card).toContainText(/Streak\s*2 weeks/);
-    await expect(card.getByText('Best streak: 2 weeks', { exact: true })).toBeVisible();
-    await expect(
-      card
-        .getByRole('radiogroup', { name: 'Summary by', exact: true })
-        .or(card.getByRole('group', { name: 'Summary by', exact: true })),
-    ).toBeVisible();
-    await expect(selected(card, 'Week')).toBeVisible();
-    await expect(card.getByText(/^Week\s*2\s*–\s*8 Nov$/)).toBeVisible();
-    await expectFigures(card, ['Weight lifted', 'Exercises', 'Sets'], ['2,400 kg', '2', '5']);
-    await expect(card.getByRole('img', { name: /12 weeks/ })).toBeVisible();
-    await expect(card).toContainText(/2\s*–\s*8 Nov: 2,400 kg, 2 exercises, 5 sets/);
+      const card = statsCard(page, 'en');
+      await expect(card.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+      await expect(card).toContainText(/Streak\s*2 weeks/);
+      await expect(card.getByText('Best streak: 2 weeks', { exact: true })).toBeVisible();
+      await expect(
+        card
+          .getByRole('radiogroup', { name: 'Summary by', exact: true })
+          .or(card.getByRole('group', { name: 'Summary by', exact: true })),
+      ).toBeVisible();
+      await expect(selected(card, 'Week')).toBeVisible();
+      await expect(card.getByText(/^Week\s*2\s*–\s*8 Nov$/)).toBeVisible();
+      await expectFigures(card, ['Weight lifted', 'Exercises', 'Sets'], ['2,400 kg', '2', '5']);
+      await expect(card.getByRole('img', { name: /12 weeks/ })).toBeVisible();
+      await expect(card).toContainText(/2\s*–\s*8 Nov: 2,400 kg, 2 exercises, 5 sets/);
 
-    const table = await openData(card, 'en');
-    await expect(dataRows(table)).toHaveCount(12);
-    expect(await hasHorizontalScroll(page), 'horizontal scroll (Progress, table open)').toBe(false);
+      const table = await openData(card, 'en');
+      await expect(dataRows(table)).toHaveCount(12);
+      expect(await hasHorizontalScroll(page), 'horizontal scroll (Progress, table open)').toBe(
+        false,
+      );
 
-    await option(card, 'Month').click();
-    await expect(card.getByText('November 2026', { exact: true })).toBeVisible();
-    await expectFigures(card, ['Weight lifted', 'Exercises', 'Sets'], ['3,800 kg', '3', '7']);
-    await expect(card.getByRole('img', { name: /6 months/ })).toBeVisible();
-    expect(await hasHorizontalScroll(page), 'horizontal scroll (Progress, month)').toBe(false);
+      await option(card, 'Month').click();
+      await expect(card.getByText('November 2026', { exact: true })).toBeVisible();
+      await expectFigures(card, ['Weight lifted', 'Exercises', 'Sets'], ['3,800 kg', '3', '7']);
+      await expect(card.getByRole('img', { name: /6 months/ })).toBeVisible();
+      expect(await hasHorizontalScroll(page), 'horizontal scroll (Progress, month)').toBe(false);
 
-    // No Spanish left in the card.
-    const text =
-      (await card.evaluate((el) => (el as HTMLElement).innerText)) +
-      '\n' +
-      (await card.evaluate((el) =>
-        Array.from(el.querySelectorAll('[aria-label],[title]'))
-          .map((e) => `${e.getAttribute('aria-label') ?? ''} ${e.getAttribute('title') ?? ''}`)
-          .join('\n'),
-      ));
-    expect(text).not.toMatch(
-      /\b(Racha|Entrenamiento|Peso levantado|Ejercicios|Series|Resumen|Semana|Ver datos|Mejor|semanas|noviembre)\b/,
-    );
+      // No Spanish left in the card.
+      const text =
+        (await card.evaluate((el) => (el as HTMLElement).innerText)) +
+        '\n' +
+        (await card.evaluate((el) =>
+          Array.from(el.querySelectorAll('[aria-label],[title]'))
+            .map((e) => `${e.getAttribute('aria-label') ?? ''} ${e.getAttribute('title') ?? ''}`)
+            .join('\n'),
+        ));
+      expect(text).not.toMatch(
+        /\b(Racha|Entrenamiento|Peso levantado|Ejercicios|Series|Resumen|Semana|Ver datos|Mejor|semanas|noviembre)\b/,
+      );
 
-    if (browserName === 'chromium') await axe(page, 'Progress (en, dark)');
+      if (browserName === 'chromium') await axe(page, 'Progress (en, dark)');
 
-    // Today, English, dark.
-    await toToday(page, 'en');
-    await expect(page.getByRole('main')).toContainText(/Streak\s*2 weeks/);
-    expect(await hasHorizontalScroll(page), 'horizontal scroll (Today, dark)').toBe(false);
-    expect(await page.getByRole('main').innerText()).not.toMatch(/\bRacha\b/);
-    if (browserName === 'chromium') await axe(page, 'Today (en, dark)');
+      // Today, English, dark.
+      await toToday(page, 'en');
+      await expect(page.getByRole('main')).toContainText(/Streak\s*2 weeks/);
+      expect(await hasHorizontalScroll(page), 'horizontal scroll (Today, dark)').toBe(false);
+      expect(await page.getByRole('main').innerText()).not.toMatch(/\bRacha\b/);
+      if (browserName === 'chromium') await axe(page, 'Today (en, dark)');
 
-    // Light theme, both screens.
-    await page.emulateMedia({ colorScheme: 'light' });
-    await expectTheme(page, 'light');
-    expect(await hasHorizontalScroll(page), 'horizontal scroll (Today, light)').toBe(false);
-    if (browserName === 'chromium') await axe(page, 'Today (en, light)');
-    await toProgress(page, 'en');
-    await expect(statsCard(page, 'en')).toContainText(/Streak\s*2 weeks/);
-    expect(await hasHorizontalScroll(page), 'horizontal scroll (Progress, light)').toBe(false);
-    if (browserName === 'chromium') await axe(page, 'Progress (en, light)');
-  });
+      // Light theme, both screens.
+      await page.emulateMedia({ colorScheme: 'light' });
+      await expectTheme(page, 'light');
+      expect(await hasHorizontalScroll(page), 'horizontal scroll (Today, light)').toBe(false);
+      if (browserName === 'chromium') await axe(page, 'Today (en, light)');
+      await toProgress(page, 'en');
+      await expect(statsCard(page, 'en')).toContainText(/Streak\s*2 weeks/);
+      expect(await hasHorizontalScroll(page), 'horizontal scroll (Progress, light)').toBe(false);
+      if (browserName === 'chromium') await axe(page, 'Progress (en, light)');
+    },
+  );
 });

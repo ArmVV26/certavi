@@ -180,46 +180,47 @@ test.describe('data card', () => {
 
   // Axe once per theme on /settings. Its results do not depend on the engine, so Chromium only.
   for (const scheme of ['light', 'dark'] as const) {
-    test(`AC-DATA-05 · /settings with the card: no serious axe issues, no horizontal scroll (${scheme})`, async ({
-      page,
-      browserName,
-    }) => {
-      await page.emulateMedia({ colorScheme: scheme });
-      await gotoReady(page, '/settings', 'Ajustes');
-      await expectTheme(page, scheme);
-      await expectNewDeviceCounts(page, 'es');
-      await storageValue(page, STORAGE_ES.term);
+    test(
+      `AC-DATA-05 · /settings with the card: no serious axe issues, no horizontal scroll (${scheme})`,
+      { tag: '@all-engines' },
+      async ({ page, browserName }) => {
+        await page.emulateMedia({ colorScheme: scheme });
+        await gotoReady(page, '/settings', 'Ajustes');
+        await expectTheme(page, scheme);
+        await expectNewDeviceCounts(page, 'es');
+        await storageValue(page, STORAGE_ES.term);
 
-      // Readable at 390×844: nothing sticks out sideways.
-      expect(page.viewportSize()).toEqual({ width: 390, height: 844 });
-      expect(await hasHorizontalScroll(page)).toBe(false);
-      const list = countsList(page, 'es');
-      await list.scrollIntoViewIfNeeded();
-      const box = await boxOf(list);
-      expect(box.x).toBeGreaterThanOrEqual(0);
-      expect(box.x + box.width).toBeLessThanOrEqual(390);
-      // The longest label and its number fit on screen.
-      const longest = await boxOf(
-        list.getByRole('term').filter({ hasText: /^Pendientes de sincronizar$/ }),
-      );
-      expect(longest.x + longest.width).toBeLessThanOrEqual(390);
+        // Readable at 390×844: nothing sticks out sideways.
+        expect(page.viewportSize()).toEqual({ width: 390, height: 844 });
+        expect(await hasHorizontalScroll(page)).toBe(false);
+        const list = countsList(page, 'es');
+        await list.scrollIntoViewIfNeeded();
+        const box = await boxOf(list);
+        expect(box.x).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width).toBeLessThanOrEqual(390);
+        // The longest label and its number fit on screen.
+        const longest = await boxOf(
+          list.getByRole('term').filter({ hasText: /^Pendientes de sincronizar$/ }),
+        );
+        expect(longest.x + longest.width).toBeLessThanOrEqual(390);
 
-      // axe runs once, in Chromium (WebKit still checks the layout above).
-      if (browserName !== 'chromium') return;
-      const results = await new AxeBuilder({ page }).analyze();
-      const serious = results.violations.filter(
-        (v) => v.impact === 'serious' || v.impact === 'critical',
-      );
-      const summary = serious.map(
-        (v) =>
-          `${v.id} [${String(v.impact)}]: ${v.help}\n` +
-          v.nodes
-            .slice(0, 5)
-            .map((n) => `   - ${n.target.join(' ')} :: ${n.failureSummary ?? ''}`)
-            .join('\n'),
-      );
-      expect(serious, `/settings (${scheme})\n${summary.join('\n')}`).toEqual([]);
-    });
+        // axe runs once, in Chromium (WebKit still checks the layout above).
+        if (browserName !== 'chromium') return;
+        const results = await new AxeBuilder({ page }).analyze();
+        const serious = results.violations.filter(
+          (v) => v.impact === 'serious' || v.impact === 'critical',
+        );
+        const summary = serious.map(
+          (v) =>
+            `${v.id} [${String(v.impact)}]: ${v.help}\n` +
+            v.nodes
+              .slice(0, 5)
+              .map((n) => `   - ${n.target.join(' ')} :: ${n.failureSummary ?? ''}`)
+              .join('\n'),
+        );
+        expect(serious, `/settings (${scheme})\n${summary.join('\n')}`).toEqual([]);
+      },
+    );
   }
 
   test(

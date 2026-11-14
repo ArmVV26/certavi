@@ -1015,73 +1015,76 @@ test.describe('progress', () => {
     }
   });
 
-  test('AC-PRO-15 · English and dark at 390 px: English texts, decimal point, no horizontal scroll with every table open, no serious axe issues in dark and light', async ({
-    page,
-    browserName,
-  }) => {
-    await page.emulateMedia({ colorScheme: 'dark' });
-    await page.clock.setFixedTime(TODAY);
-    await importBackup(page, gymBackup(SESSIONS));
-    await setLanguage(page, 'en');
-    await toProgress(page, 'en');
-    await expectTheme(page, 'dark');
-    expect(page.viewportSize()?.width).toBe(390);
-    const main = page.getByRole('main');
+  test(
+    'AC-PRO-15 · English and dark at 390 px: English texts, decimal point, no horizontal scroll with every table open, no serious axe issues in dark and light',
+    { tag: '@all-engines' },
+    async ({ page, browserName }) => {
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await page.clock.setFixedTime(TODAY);
+      await importBackup(page, gymBackup(SESSIONS));
+      await setLanguage(page, 'en');
+      await toProgress(page, 'en');
+      await expectTheme(page, 'dark');
+      expect(page.viewportSize()?.width).toBe(390);
+      const main = page.getByRole('main');
 
-    // Summary and headings in English.
-    await expect(main).toContainText(/Week\s*5\s*2\s*–\s*8 Nov/);
-    await expect(main).toContainText(/Sets\s*15\s*\/\s*104\s*this week/);
-    await expect(main).toContainText(/Sessions\s*6\s*in total/);
-    await expect(main).toContainText(/Records\s*1\s*this month/);
-    for (const heading of HEADINGS.en) {
+      // Summary and headings in English.
+      await expect(main).toContainText(/Week\s*5\s*2\s*–\s*8 Nov/);
+      await expect(main).toContainText(/Sets\s*15\s*\/\s*104\s*this week/);
+      await expect(main).toContainText(/Sessions\s*6\s*in total/);
+      await expect(main).toContainText(/Records\s*1\s*this month/);
+      for (const heading of HEADINGS.en) {
+        await expect(
+          page.getByRole('heading', { name: new RegExp(`^${heading}`) }).first(),
+          heading,
+        ).toBeVisible();
+      }
+
+      // Groups, weekly chart, arrival and body weight in English, with a decimal point.
+      const groups = card(page, 'Sets per muscle group', 'en');
+      await expect(group(groups, 'Period')).toBeVisible();
+      await expect(row(groups, /Chest: 12 of 13 sets/)).toBeVisible();
+      await expect(groups.getByText(/^Week 2\s*–\s*8 Nov$/)).toBeVisible();
+      await groups.getByRole('radio', { name: '4-week average', exact: true }).check();
+      await expect(groups.getByText(/^4 weeks: 5 Oct\s*–\s*1 Nov$/)).toBeVisible();
+      await expect(row(groups, /Back: 2\.5 of \d+(\.\d)? sets/)).toBeVisible();
       await expect(
-        page.getByRole('heading', { name: new RegExp(`^${heading}`) }).first(),
-        heading,
+        chart(card(page, 'Sets per week', 'en'), /^Sets per week: .*12 weeks/),
       ).toBeVisible();
-    }
+      await expect(chart(card(page, 'How you feel', 'en'), /^How you feel: /)).toBeVisible();
+      await expect(
+        chart(card(page, 'Body weight', 'en'), /^Body weight: .*3 points/),
+      ).toBeVisible();
+      const review = card(page, 'Cycle review', 'en');
+      await expect(review).toContainText(
+        /12 days to go\. Meanwhile, this compares your first 2 weeks with the last one:/,
+      );
+      await expect.soft(review).toContainText(/\+5\.0\s*%/);
+      await expect(review).toContainText(/1 lift going up\s*·\s*0 flat or going down/);
+      await expect(card(page, 'Latest records', 'en')).toContainText(/max weight/);
 
-    // Groups, weekly chart, arrival and body weight in English, with a decimal point.
-    const groups = card(page, 'Sets per muscle group', 'en');
-    await expect(group(groups, 'Period')).toBeVisible();
-    await expect(row(groups, /Chest: 12 of 13 sets/)).toBeVisible();
-    await expect(groups.getByText(/^Week 2\s*–\s*8 Nov$/)).toBeVisible();
-    await groups.getByRole('radio', { name: '4-week average', exact: true }).check();
-    await expect(groups.getByText(/^4 weeks: 5 Oct\s*–\s*1 Nov$/)).toBeVisible();
-    await expect(row(groups, /Back: 2\.5 of \d+(\.\d)? sets/)).toBeVisible();
-    await expect(
-      chart(card(page, 'Sets per week', 'en'), /^Sets per week: .*12 weeks/),
-    ).toBeVisible();
-    await expect(chart(card(page, 'How you feel', 'en'), /^How you feel: /)).toBeVisible();
-    await expect(chart(card(page, 'Body weight', 'en'), /^Body weight: .*3 points/)).toBeVisible();
-    const review = card(page, 'Cycle review', 'en');
-    await expect(review).toContainText(
-      /12 days to go\. Meanwhile, this compares your first 2 weeks with the last one:/,
-    );
-    await expect.soft(review).toContainText(/\+5\.0\s*%/);
-    await expect(review).toContainText(/1 lift going up\s*·\s*0 flat or going down/);
-    await expect(card(page, 'Latest records', 'en')).toContainText(/max weight/);
+      // Dark theme: no serious axe issue (once per theme).
+      if (browserName === 'chromium') await axe(page, 'Progress (en, dark)');
 
-    // Dark theme: no serious axe issue (once per theme).
-    if (browserName === 'chromium') await axe(page, 'Progress (en, dark)');
+      // 390 px: nothing scrolls sideways, not even with every "Show data" table open.
+      expect(await hasHorizontalScroll(page), 'horizontal scroll (closed tables)').toBe(false);
+      const toggles = await page.getByText('Show data', { exact: true }).all();
+      expect(toggles.length).toBeGreaterThanOrEqual(4);
+      for (const toggle of toggles) await toggle.click();
+      await expect(page.getByRole('table').first()).toBeVisible();
+      await expect(card(page, 'Body weight', 'en').getByRole('table')).toContainText(/80\.5/);
+      await expect(card(page, 'How you feel', 'en').getByRole('table')).toContainText(/3\.5/);
+      expect(await hasHorizontalScroll(page), 'horizontal scroll (open tables)').toBe(false);
 
-    // 390 px: nothing scrolls sideways, not even with every "Show data" table open.
-    expect(await hasHorizontalScroll(page), 'horizontal scroll (closed tables)').toBe(false);
-    const toggles = await page.getByText('Show data', { exact: true }).all();
-    expect(toggles.length).toBeGreaterThanOrEqual(4);
-    for (const toggle of toggles) await toggle.click();
-    await expect(page.getByRole('table').first()).toBeVisible();
-    await expect(card(page, 'Body weight', 'en').getByRole('table')).toContainText(/80\.5/);
-    await expect(card(page, 'How you feel', 'en').getByRole('table')).toContainText(/3\.5/);
-    expect(await hasHorizontalScroll(page), 'horizontal scroll (open tables)').toBe(false);
+      // No Spanish left on screen.
+      const leftovers = findSpanishWords(await allUiText(page));
+      expect(leftovers, `Spanish text left on Progress: ${leftovers.join(', ')}`).toEqual([]);
 
-    // No Spanish left on screen.
-    const leftovers = findSpanishWords(await allUiText(page));
-    expect(leftovers, `Spanish text left on Progress: ${leftovers.join(', ')}`).toEqual([]);
-
-    // Light theme.
-    await page.emulateMedia({ colorScheme: 'light' });
-    await expectTheme(page, 'light');
-    if (browserName === 'chromium') await axe(page, 'Progress (en, light)');
-    expect(await hasHorizontalScroll(page), 'horizontal scroll (light)').toBe(false);
-  });
+      // Light theme.
+      await page.emulateMedia({ colorScheme: 'light' });
+      await expectTheme(page, 'light');
+      if (browserName === 'chromium') await axe(page, 'Progress (en, light)');
+      expect(await hasHorizontalScroll(page), 'horizontal scroll (light)').toBe(false);
+    },
+  );
 });
