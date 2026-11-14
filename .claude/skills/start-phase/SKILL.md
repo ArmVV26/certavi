@@ -8,8 +8,9 @@ disable-model-invocation: true
 We are starting **Phase $ARGUMENTS** of Certavi. Write the plan in **Spanish**.
 
 1. **Read little.** Never read `context.md` whole. Use Grep and offset/limit to read only:
-   the index of `context.md`, the "Fase $ARGUMENTS" section of §10 (roadmap) and its decisions
-   subsection in §2, and the relevant spec in `docs/spec/`. Read from `CLAUDE.md` only what the
+   the index of `context.md`, the "Fase $ARGUMENTS" section of §10 (roadmap), the «Decisiones
+   vigentes» of §2 that apply and the relevant items of `docs/backlog.md`, and the relevant spec
+   in `docs/spec/`. Read from `CLAUDE.md` only what the
    phase needs (it is already in context).
 2. Check the branch and working tree with `git status` and `git branch --show-current`
    (read-only git only).

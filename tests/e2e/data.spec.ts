@@ -98,54 +98,61 @@ async function storageValue(page: Page, term: string): Promise<string> {
   return (await dd.innerText()).trim();
 }
 
-test.describe('data card', { tag: '@all-engines' }, () => {
-  test('AC-DATA-01 · a new device shows the built-in data, in order, between Apariencia and Desarrollo', async ({
-    page,
-  }) => {
-    await gotoReady(page, '/settings', 'Ajustes');
-    const heading = page.getByRole('heading', { name: 'Datos', exact: true });
-    await expect(heading).toBeVisible();
-    await expect(
-      page.getByText('Todo se guarda primero en este dispositivo.', { exact: true }),
-    ).toBeVisible();
+test.describe('data card', () => {
+  test(
+    'AC-DATA-01 · a new device shows the built-in data, in order, between Apariencia and Desarrollo',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await gotoReady(page, '/settings', 'Ajustes');
+      const heading = page.getByRole('heading', { name: 'Datos', exact: true });
+      await expect(heading).toBeVisible();
+      await expect(
+        page.getByText('Todo se guarda primero en este dispositivo.', { exact: true }),
+      ).toBeVisible();
 
-    await expectNewDeviceCounts(page, 'es');
+      await expectNewDeviceCounts(page, 'es');
 
-    // Placed after "Apariencia" and before "Desarrollo".
-    const appearance = await boxOf(page.getByText('Apariencia', { exact: true }).first());
-    const data = await boxOf(heading);
-    const developer = await boxOf(page.getByText('Desarrollo', { exact: true }).first());
-    expect(data.y).toBeGreaterThan(appearance.y);
-    expect(data.y).toBeLessThan(developer.y);
-  });
+      // Placed after "Apariencia" and before "Desarrollo".
+      const appearance = await boxOf(page.getByText('Apariencia', { exact: true }).first());
+      const data = await boxOf(heading);
+      const developer = await boxOf(page.getByText('Desarrollo', { exact: true }).first());
+      expect(data.y).toBeGreaterThan(appearance.y);
+      expect(data.y).toBeLessThan(developer.y);
+    },
+  );
 
-  test('AC-DATA-02 · reloading and reopening keeps the counts (no duplicated built-in data)', async ({
-    page,
-    context,
-  }) => {
-    await gotoReady(page, '/settings', 'Ajustes');
-    await expectNewDeviceCounts(page, 'es');
+  test(
+    'AC-DATA-02 · reloading and reopening keeps the counts (no duplicated built-in data)',
+    { tag: '@all-engines' },
+    async ({ page, context }) => {
+      await gotoReady(page, '/settings', 'Ajustes');
+      await expectNewDeviceCounts(page, 'es');
 
-    await page.reload();
-    await expect(h1(page, 'Ajustes')).toBeVisible();
-    await expectNewDeviceCounts(page, 'es');
+      await page.reload();
+      await expect(h1(page, 'Ajustes')).toBeVisible();
+      await expectNewDeviceCounts(page, 'es');
 
-    // Close the tab and open the app again (same browser profile).
-    await page.close();
-    const again = await context.newPage();
-    await gotoReady(again, '/', 'Hoy');
-    await mainNav(again).getByRole('link', { name: 'Ajustes', exact: true }).click();
-    await expect(h1(again, 'Ajustes')).toBeVisible();
-    await expectNewDeviceCounts(again, 'es');
-  });
+      // Close the tab and open the app again (same browser profile).
+      await page.close();
+      const again = await context.newPage();
+      await gotoReady(again, '/', 'Hoy');
+      await mainNav(again).getByRole('link', { name: 'Ajustes', exact: true }).click();
+      await expect(h1(again, 'Ajustes')).toBeVisible();
+      await expectNewDeviceCounts(again, 'es');
+    },
+  );
 
-  test('AC-DATA-03 · the storage row shows one of the three texts', async ({ page }) => {
-    await gotoReady(page, '/settings', 'Ajustes');
-    await expectNewDeviceCounts(page, 'es');
-    await expect
-      .poll(() => storageValue(page, STORAGE_ES.term))
-      .toMatch(new RegExp(`^(${STORAGE_ES.values.join('|')})$`));
-  });
+  test(
+    'AC-DATA-03 · the storage row shows one of the three texts',
+    { tag: '@all-engines' },
+    async ({ page }) => {
+      await gotoReady(page, '/settings', 'Ajustes');
+      await expectNewDeviceCounts(page, 'es');
+      await expect
+        .poll(() => storageValue(page, STORAGE_ES.term))
+        .toMatch(new RegExp(`^(${STORAGE_ES.values.join('|')})$`));
+    },
+  );
 
   test('AC-DATA-04 · in English the card is "Data" with the English labels', async ({ page }) => {
     await setLanguage(page, 'en');
@@ -173,66 +180,68 @@ test.describe('data card', { tag: '@all-engines' }, () => {
 
   // Axe once per theme on /settings. Its results do not depend on the engine, so Chromium only.
   for (const scheme of ['light', 'dark'] as const) {
-    test(`AC-DATA-05 · /settings with the card: no serious axe issues, no horizontal scroll (${scheme})`, async ({
-      page,
-      browserName,
-    }) => {
-      await page.emulateMedia({ colorScheme: scheme });
-      await gotoReady(page, '/settings', 'Ajustes');
-      await expectTheme(page, scheme);
-      await expectNewDeviceCounts(page, 'es');
-      await storageValue(page, STORAGE_ES.term);
+    test(
+      `AC-DATA-05 · /settings with the card: no serious axe issues, no horizontal scroll (${scheme})`,
+      { tag: '@all-engines' },
+      async ({ page, browserName }) => {
+        await page.emulateMedia({ colorScheme: scheme });
+        await gotoReady(page, '/settings', 'Ajustes');
+        await expectTheme(page, scheme);
+        await expectNewDeviceCounts(page, 'es');
+        await storageValue(page, STORAGE_ES.term);
 
-      // Readable at 390×844: nothing sticks out sideways.
-      expect(page.viewportSize()).toEqual({ width: 390, height: 844 });
-      expect(await hasHorizontalScroll(page)).toBe(false);
-      const list = countsList(page, 'es');
-      await list.scrollIntoViewIfNeeded();
-      const box = await boxOf(list);
-      expect(box.x).toBeGreaterThanOrEqual(0);
-      expect(box.x + box.width).toBeLessThanOrEqual(390);
-      // The longest label and its number fit on screen.
-      const longest = await boxOf(
-        list.getByRole('term').filter({ hasText: /^Pendientes de sincronizar$/ }),
-      );
-      expect(longest.x + longest.width).toBeLessThanOrEqual(390);
+        // Readable at 390×844: nothing sticks out sideways.
+        expect(page.viewportSize()).toEqual({ width: 390, height: 844 });
+        expect(await hasHorizontalScroll(page)).toBe(false);
+        const list = countsList(page, 'es');
+        await list.scrollIntoViewIfNeeded();
+        const box = await boxOf(list);
+        expect(box.x).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width).toBeLessThanOrEqual(390);
+        // The longest label and its number fit on screen.
+        const longest = await boxOf(
+          list.getByRole('term').filter({ hasText: /^Pendientes de sincronizar$/ }),
+        );
+        expect(longest.x + longest.width).toBeLessThanOrEqual(390);
 
-      // axe runs once, in Chromium (WebKit still checks the layout above).
-      if (browserName !== 'chromium') return;
-      const results = await new AxeBuilder({ page }).analyze();
-      const serious = results.violations.filter(
-        (v) => v.impact === 'serious' || v.impact === 'critical',
-      );
-      const summary = serious.map(
-        (v) =>
-          `${v.id} [${String(v.impact)}]: ${v.help}\n` +
-          v.nodes
-            .slice(0, 5)
-            .map((n) => `   - ${n.target.join(' ')} :: ${n.failureSummary ?? ''}`)
-            .join('\n'),
-      );
-      expect(serious, `/settings (${scheme})\n${summary.join('\n')}`).toEqual([]);
-    });
+        // axe runs once, in Chromium (WebKit still checks the layout above).
+        if (browserName !== 'chromium') return;
+        const results = await new AxeBuilder({ page }).analyze();
+        const serious = results.violations.filter(
+          (v) => v.impact === 'serious' || v.impact === 'critical',
+        );
+        const summary = serious.map(
+          (v) =>
+            `${v.id} [${String(v.impact)}]: ${v.help}\n` +
+            v.nodes
+              .slice(0, 5)
+              .map((n) => `   - ${n.target.join(' ')} :: ${n.failureSummary ?? ''}`)
+              .join('\n'),
+        );
+        expect(serious, `/settings (${scheme})\n${summary.join('\n')}`).toEqual([]);
+      },
+    );
   }
 
-  test('edge · two tabs show the same counts, and the card still works offline', async ({
-    page,
-    context,
-  }) => {
-    await gotoReady(page, '/settings', 'Ajustes');
-    const second = await context.newPage();
-    await gotoReady(second, '/settings', 'Ajustes');
-    await expectNewDeviceCounts(page, 'es');
-    await expectNewDeviceCounts(second, 'es');
-    await second.close();
+  test(
+    'edge · two tabs show the same counts, and the card still works offline',
+    { tag: '@all-engines' },
+    async ({ page, context }) => {
+      await gotoReady(page, '/settings', 'Ajustes');
+      const second = await context.newPage();
+      await gotoReady(second, '/settings', 'Ajustes');
+      await expectNewDeviceCounts(page, 'es');
+      await expectNewDeviceCounts(second, 'es');
+      await second.close();
 
-    // Offline: nothing comes from the network, so leaving and coming back shows the same card.
-    await context.setOffline(true);
-    await mainNav(page).getByRole('link', { name: 'Hoy', exact: true }).click();
-    await expect(h1(page, 'Hoy')).toBeVisible();
-    await mainNav(page).getByRole('link', { name: 'Ajustes', exact: true }).click();
-    await expect(h1(page, 'Ajustes')).toBeVisible();
-    await expectNewDeviceCounts(page, 'es');
-    await context.setOffline(false);
-  });
+      // Offline: nothing comes from the network, so leaving and coming back shows the same card.
+      await context.setOffline(true);
+      await mainNav(page).getByRole('link', { name: 'Hoy', exact: true }).click();
+      await expect(h1(page, 'Hoy')).toBeVisible();
+      await mainNav(page).getByRole('link', { name: 'Ajustes', exact: true }).click();
+      await expect(h1(page, 'Ajustes')).toBeVisible();
+      await expectNewDeviceCounts(page, 'es');
+      await context.setOffline(false);
+    },
+  );
 });

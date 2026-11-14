@@ -456,118 +456,114 @@ async function axe(page: Page, label: string): Promise<void> {
 // ---------------------------------------------------------------------------------------------
 
 test.describe('progress', () => {
-  test(
-    'AC-PRO-01 · empty page in both languages; with only a body weight the empty state stays and the weight card shows',
-    { tag: '@all-engines' },
-    async ({ page }) => {
-      await page.clock.setFixedTime(TODAY);
-      await gotoReady(page, '/progress', 'Progreso');
-      const main = page.getByRole('main');
-      await expect(page.getByText('Todavía no hay datos', { exact: true })).toBeVisible();
-      await expect(
-        page.getByText('Cuando registres tu primera sesión, aquí verás tu progreso.', {
-          exact: true,
-        }),
-      ).toBeVisible();
-      // No chart, no summary figure, no section card.
-      await expect(page.getByRole('figure')).toHaveCount(0);
-      await expect(main.getByText('Sesiones', { exact: true })).toHaveCount(0);
-      for (const heading of HEADINGS.es) {
-        await expect(page.getByRole('heading', { name: new RegExp(`^${heading}`) })).toHaveCount(0);
-      }
+  test('AC-PRO-01 · empty page in both languages; with only a body weight the empty state stays and the weight card shows', async ({
+    page,
+  }) => {
+    await page.clock.setFixedTime(TODAY);
+    await gotoReady(page, '/progress', 'Progreso');
+    const main = page.getByRole('main');
+    await expect(page.getByText('Todavía no hay datos', { exact: true })).toBeVisible();
+    await expect(
+      page.getByText('Cuando registres tu primera sesión, aquí verás tu progreso.', {
+        exact: true,
+      }),
+    ).toBeVisible();
+    // No chart, no summary figure, no section card.
+    await expect(page.getByRole('figure')).toHaveCount(0);
+    await expect(main.getByText('Sesiones', { exact: true })).toHaveCount(0);
+    for (const heading of HEADINGS.es) {
+      await expect(page.getByRole('heading', { name: new RegExp(`^${heading}`) })).toHaveCount(0);
+    }
 
-      // English.
-      await setLanguage(page, 'en');
-      await toProgress(page, 'en');
-      await expect(page.getByText('No data yet', { exact: true })).toBeVisible();
-      await expect(
-        page.getByText('Once you log your first session, your progress will show up here.', {
-          exact: true,
-        }),
-      ).toBeVisible();
-      await setLanguage(page, 'es');
+    // English.
+    await setLanguage(page, 'en');
+    await toProgress(page, 'en');
+    await expect(page.getByText('No data yet', { exact: true })).toBeVisible();
+    await expect(
+      page.getByText('Once you log your first session, your progress will show up here.', {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await setLanguage(page, 'es');
 
-      // Edge: only body weights on the device (no session at all).
-      await importBackup(page, gymBackup([]));
-      await toProgress(page);
-      await expect(page.getByText('Todavía no hay datos', { exact: true })).toBeVisible();
-      const body = card(page, 'Peso corporal');
-      await expect(body).toBeVisible();
-      await expect(chart(body, /^Peso corporal: gráfica de líneas, 3 puntos/)).toBeVisible();
-      await expect(page.getByRole('heading', { name: /^Series por semana/ })).toHaveCount(0);
-      await expect(page.getByRole('heading', { name: /^Revisión del ciclo/ })).toHaveCount(0);
+    // Edge: only body weights on the device (no session at all).
+    await importBackup(page, gymBackup([]));
+    await toProgress(page);
+    await expect(page.getByText('Todavía no hay datos', { exact: true })).toBeVisible();
+    const body = card(page, 'Peso corporal');
+    await expect(body).toBeVisible();
+    await expect(chart(body, /^Peso corporal: gráfica de líneas, 3 puntos/)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^Series por semana/ })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: /^Revisión del ciclo/ })).toHaveCount(0);
 
-      // Reload: the page only reads the device.
-      await page.reload();
-      await expect(h1(page, 'Progreso')).toBeVisible();
-      await expect(card(page, 'Peso corporal')).toBeVisible();
-    },
-  );
+    // Reload: the page only reads the device.
+    await page.reload();
+    await expect(h1(page, 'Progreso')).toBeVisible();
+    await expect(card(page, 'Peso corporal')).toBeVisible();
+  });
 
-  test(
-    'AC-PRO-02 / 03 / 04 / 05 / 06 / 13 · summary, sets per group (this week, last week with its frozen plan, 4-week average) and the 12 weekly columns with "Ver datos"',
-    { tag: '@all-engines' },
-    async ({ page }) => {
-      await seedAndOpen(page, SESSIONS);
-      const main = page.getByRole('main');
+  test('AC-PRO-02 / 03 / 04 / 05 / 06 / 13 · summary, sets per group (this week, last week with its frozen plan, 4-week average) and the 12 weekly columns with "Ver datos"', async ({
+    page,
+  }) => {
+    await seedAndOpen(page, SESSIONS);
+    const main = page.getByRole('main');
 
-      // AC-PRO-02 · summary.
-      await expect(main).toContainText(/Semana\s*5\s*2\s*–\s*8 nov/);
-      await expect(main).toContainText(/Series\s*15\s*\/\s*104\s*esta semana/);
-      await expect(main).toContainText(/Sesiones\s*6\s*en total/);
-      await expect(main).toContainText(/Récords\s*1\s*este mes/);
+    // AC-PRO-02 · summary.
+    await expect(main).toContainText(/Semana\s*5\s*2\s*–\s*8 nov/);
+    await expect(main).toContainText(/Series\s*15\s*\/\s*104\s*esta semana/);
+    await expect(main).toContainText(/Sesiones\s*6\s*en total/);
+    await expect(main).toContainText(/Récords\s*1\s*este mes/);
 
-      // AC-PRO-03 · sets per group, this week (default).
-      const groups = card(page, 'Series por grupo muscular');
-      await expect(group(groups, 'Periodo')).toBeVisible();
-      await expect(groups.getByRole('radio', { name: 'Esta semana', exact: true })).toBeChecked();
-      await expect(groups.getByText(/^Semana 2\s*–\s*8 nov$/)).toBeVisible();
-      await expect(row(groups, /Pecho: 12 de 13 series/)).toBeVisible();
-      await expect(row(groups, /Espalda: 3 de 14 series/)).toBeVisible();
-      await expect(row(groups, /series.*plan cumplido/i)).toHaveCount(0);
-      for (const legend of ['Series hechas', 'Plan cumplido', 'Plan']) {
-        await expect(groups.getByText(legend, { exact: true })).toBeVisible();
-      }
+    // AC-PRO-03 · sets per group, this week (default).
+    const groups = card(page, 'Series por grupo muscular');
+    await expect(group(groups, 'Periodo')).toBeVisible();
+    await expect(groups.getByRole('radio', { name: 'Esta semana', exact: true })).toBeChecked();
+    await expect(groups.getByText(/^Semana 2\s*–\s*8 nov$/)).toBeVisible();
+    await expect(row(groups, /Pecho: 12 de 13 series/)).toBeVisible();
+    await expect(row(groups, /Espalda: 3 de 14 series/)).toBeVisible();
+    await expect(row(groups, /series.*plan cumplido/i)).toHaveCount(0);
+    for (const legend of ['Series hechas', 'Plan cumplido', 'Plan']) {
+      await expect(groups.getByText(legend, { exact: true })).toBeVisible();
+    }
 
-      // AC-PRO-04 / 05 · last week: its range, its sets and the plan frozen when it closed.
-      await groups.getByRole('radio', { name: 'Semana pasada', exact: true }).check();
-      await expect(groups.getByText(/^Semana 26 oct\.?\s*–\s*1 nov · descarga$/)).toBeVisible();
-      await expect(row(groups, /Pecho: 0 de 5 series/)).toBeVisible();
-      await expect(row(groups, /Espalda: 2 de 2 series.*plan cumplido/i)).toBeVisible();
+    // AC-PRO-04 / 05 · last week: its range, its sets and the plan frozen when it closed.
+    await groups.getByRole('radio', { name: 'Semana pasada', exact: true }).check();
+    await expect(groups.getByText(/^Semana 26 oct\.?\s*–\s*1 nov · descarga$/)).toBeVisible();
+    await expect(row(groups, /Pecho: 0 de 5 series/)).toBeVisible();
+    await expect(row(groups, /Espalda: 2 de 2 series.*plan cumplido/i)).toBeVisible();
 
-      // AC-PRO-04 · average of the four weeks before the current one, one decimal.
-      await groups.getByRole('radio', { name: 'Media de 4 semanas', exact: true }).check();
-      await expect(groups.getByText(/^4 semanas: 5 oct\.?\s*–\s*1 nov$/)).toBeVisible();
-      await expect(row(groups, /Espalda: 2,5 de \d+(,\d)? series/)).toBeVisible();
+    // AC-PRO-04 · average of the four weeks before the current one, one decimal.
+    await groups.getByRole('radio', { name: 'Media de 4 semanas', exact: true }).check();
+    await expect(groups.getByText(/^4 semanas: 5 oct\.?\s*–\s*1 nov$/)).toBeVisible();
+    await expect(row(groups, /Espalda: 2,5 de \d+(,\d)? series/)).toBeVisible();
 
-      // AC-PRO-06 · twelve columns, oldest first (labels "17/8" … "2/11"); the description says
-      // so and gives the scale up to the largest plan.
-      const weekly = card(page, 'Series por semana');
-      await expect(
-        chart(weekly, /^Series por semana: gráfica de columnas, 12 semanas, de 0 a 104 series$/),
-      ).toBeVisible();
-      await expect(weekly).toContainText('2/11');
-      for (const legend of ['Series hechas', 'Plan de esa semana']) {
-        await expect(weekly.getByText(legend, { exact: true })).toBeVisible();
-      }
+    // AC-PRO-06 · twelve columns, oldest first (labels "17/8" … "2/11"); the description says
+    // so and gives the scale up to the largest plan.
+    const weekly = card(page, 'Series por semana');
+    await expect(
+      chart(weekly, /^Series por semana: gráfica de columnas, 12 semanas, de 0 a 104 series$/),
+    ).toBeVisible();
+    await expect(weekly).toContainText('2/11');
+    for (const legend of ['Series hechas', 'Plan de esa semana']) {
+      await expect(weekly.getByText(legend, { exact: true })).toBeVisible();
+    }
 
-      // AC-PRO-06 / 13 · the table has one row per week with the values of the column names
-      // "<range>: <done> de <plan> series, <n> sesiones" (plan only from the start of the cycle).
-      const table = await showData(weekly);
-      await expect(dataRows(table)).toHaveCount(12);
-      // The row header is the week; the cells are done, plan, sessions and minutes of activity.
-      const cells = (text: RegExp) => dataRows(table).filter({ hasText: text }).getByRole('cell');
-      await expect(cells(/2\s*–\s*8 nov/)).toHaveText(['15', '104', '2', '0']);
-      await expect(cells(/26 oct\.?\s*–\s*1 nov/)).toHaveText(['2', '15', '1', '0']);
-      // Before the cycle starts there is no plan (28 sep – 4 oct: 0 series, 0 sessions).
-      await expect(cells(/28 sept?\.?\s*–\s*4 oct/)).toHaveText(['0', /^\D*$/, '0', '0']);
+    // AC-PRO-06 / 13 · the table has one row per week with the values of the column names
+    // "<range>: <done> de <plan> series, <n> sesiones" (plan only from the start of the cycle).
+    const table = await showData(weekly);
+    await expect(dataRows(table)).toHaveCount(12);
+    // The row header is the week; the cells are done, plan, sessions and minutes of activity.
+    const cells = (text: RegExp) => dataRows(table).filter({ hasText: text }).getByRole('cell');
+    await expect(cells(/2\s*–\s*8 nov/)).toHaveText(['15', '104', '2', '0']);
+    await expect(cells(/26 oct\.?\s*–\s*1 nov/)).toHaveText(['2', '15', '1', '0']);
+    // Before the cycle starts there is no plan (28 sep – 4 oct: 0 series, 0 sessions).
+    await expect(cells(/28 sept?\.?\s*–\s*4 oct/)).toHaveText(['0', /^\D*$/, '0', '0']);
 
-      // Reload mid-session: everything is computed again from the device.
-      await page.reload();
-      await expect(h1(page, 'Progreso')).toBeVisible();
-      await expect(page.getByRole('main')).toContainText(/Series\s*15\s*\/\s*104\s*esta semana/);
-    },
-  );
+    // Reload mid-session: everything is computed again from the device.
+    await page.reload();
+    await expect(h1(page, 'Progreso')).toBeVisible();
+    await expect(page.getByRole('main')).toContainText(/Series\s*15\s*\/\s*104\s*esta semana/);
+  });
 
   test(
     'AC-PRO-07 / 11 · exercise evolution (3 points, deload not drawn, pick remembered after reload) and the latest records',

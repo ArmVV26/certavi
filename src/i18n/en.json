@@ -409,6 +409,32 @@
       "vibration": "Vibration",
       "vibrationHint": "Does not work on iPhone.",
       "failed": "The rest time could not be saved. Try again."
+    },
+    "diagnostics": {
+      "title": "Diagnostics",
+      "switch": "Measure performance",
+      "switchHint": "Saves on this device how long four actions take. It is not synced or sent anywhere.",
+      "empty": "There are no measurements yet. Switch it on and use the app as usual.",
+      "reference": "Reference: under 300 ms is fine; over 1 s is a problem.",
+      "listLabel": "Measurements",
+      "metrics": {
+        "dbOpen": "Opening the database",
+        "todayLoad": "Loading Today",
+        "setVisible": "From ✓ to set shown",
+        "progressLoad": "Loading Progress"
+      },
+      "ratings": {
+        "good": "Good",
+        "fair": "Fair",
+        "problem": "Problem"
+      },
+      "summary_one": "Last: {{last}} ms · Median: {{median}} ms · Max: {{max}} ms · {{count}} measurement",
+      "summary_other": "Last: {{last}} ms · Median: {{median}} ms · Max: {{max}} ms · {{count}} measurements",
+      "copy": "Copy measurements",
+      "clear": "Clear measurements",
+      "copied": "Measurements copied",
+      "copyFailed": "Could not copy. Select the text below and copy it by hand.",
+      "copyText": "Measurements text"
     }
   },
   "sync": {

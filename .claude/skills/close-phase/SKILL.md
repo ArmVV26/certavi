@@ -58,7 +58,8 @@ After step 3 and before step 4, also:
   phase (files, decisions, tests passed). It updates `context.md`, `docs/history.md`,
   `CHANGELOG.md` and, if needed, `CLAUDE.md`. Skip step 4 (it replaces it).
 - **Release plan** — append to the commit plan: PR `dev → main`, version X.Y.Z in
-  `package.json` (commit `chore(release): vX.Y.Z`), `git tag -a vX.Y.Z -m "…"`,
+  `package.json` and the `## [X.Y.Z] - YYYY-MM-DD` heading of `CHANGELOG.md` (both in the commit
+  `chore(release): vX.Y.Z`), `git tag -a vX.Y.Z -m "…"`,
   `git push origin vX.Y.Z`.
 
 ## Last

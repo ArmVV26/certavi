@@ -110,7 +110,7 @@ describe('DataCard', () => {
 });
 
 describe('Settings page', () => {
-  it('shows the sync card first, then Appearance, Rest, Blocks, Data, Developer and About', async () => {
+  it('shows the sync card first, then Appearance, Rest, Blocks, Data, Diagnostics, Developer and About', async () => {
     renderApp('/settings', { db: await seededDb() });
     await screen.findByLabelText('Datos guardados en este dispositivo');
     // Some cards appear after reading the database: wait for the whole list.
@@ -122,6 +122,7 @@ describe('Settings page', () => {
         'Descanso',
         'Bloques opcionales',
         'Datos',
+        'Diagnóstico',
         'Desarrollo',
         'Acerca de',
       ]);

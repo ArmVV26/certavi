@@ -149,8 +149,19 @@ describe('records', () => {
     expect('theme' in syncedSettingsSchema.shape).toBe(false);
     expect('syncKey' in syncedSettingsSchema.shape).toBe(false);
     expect('mono' in syncedSettingsSchema.shape).toBe(false);
-    const device = { theme: 'system', mono: false, locale: 'es', sound: true, vibration: false };
+    expect('diagnostics' in syncedSettingsSchema.shape).toBe(false);
+    const device = {
+      theme: 'system',
+      mono: false,
+      locale: 'es',
+      sound: true,
+      vibration: false,
+      diagnostics: false,
+    };
     expect(deviceSettingsSchema.safeParse(device).success).toBe(true);
+    expect(deviceSettingsSchema.safeParse({ ...device, diagnostics: undefined }).success).toBe(
+      false,
+    );
   });
 });
 

@@ -18,8 +18,8 @@ These rules keep it from happening again.
 - Playwright (390×844) builds the app, starts `vite preview` on **4173** and stops it itself
   (`reuseExistingServer: false`, `strictPort`, webServer timeout 60 s). A busy port fails the
   run on purpose.
-- **E2E limits** (after the 2026-11-02 resource-starvation incident, see `context.md` §2.2 and
-  §12): `npm run e2e` runs **Chromium only** (every test); `npm run e2e:all` (and CI, on PRs to
+- **E2E limits** (after the 2026-11-02 resource-starvation incident, see `docs/history.md`, decision 2.2 and
+  §12, now archived in `docs/history.md`): `npm run e2e` runs **Chromium only** (every test); `npm run e2e:all` (and CI, on PRs to
   `main`) runs Chromium (every test) + WebKit, where the `webkit` project only runs tests tagged
   **`@all-engines`** (`grep` in `playwright.config.ts`). Tag (`{ tag: '@all-engines' }`, on a
   test or a `describe`) what depends on the engine: IndexedDB / local data, sync, import and
@@ -41,7 +41,11 @@ These rules keep it from happening again.
   2; never `channel: 'chrome'`.
 - Tagging for WebKit: do not tag engine-independent UI logic (theme, language, navigation,
   components): WebKit in CI has one worker and is the scarce resource. Keep the tagged set small:
-  a new spec file gets a tag on its `describe` only if all of it qualifies.
+  **tag single tests**, and a `describe` only when every test in it qualifies. The Phase 10
+  review (2026-11-13) moved the tags from whole `describe`s to the tests that depend on the
+  engine (including the tests that check the 390 px layout): 55 tests run in WebKit (they were 111). The checklist `docs/device-checklist.md` covers
+  what WebKit cannot show (the phone's storage, lock screen, audio, network switching). A test
+  that fails only in Safari gets its tag back.
 - When a browser genuinely behaves differently (e.g. WebKit does not Tab to links), skip that
   check in that browser with `test.skip(condition, 'reason')` and keep it in the others.
 - Do not add `test.slow` because WebKit is slow; if a test gets close to 60 s in WebKit, split it
@@ -90,8 +94,8 @@ These rules keep it from happening again.
 
 ## Measuring the time of every test (phase 9, branch 6)
 
-A full `npm run e2e:all` (Chromium + WebKit) takes 10-15 min: longer than Claude's shell allows
-(10 min) and the rule above forbids background runs. That is why the slow tests could not be
+A full `npm run e2e:all` (Chromium + WebKit) takes 10-15 min with 2 workers and about 19 min of
+WebKit alone with one worker (as in CI): longer than Claude's shell allows (10 min) and the rule above forbids background runs. That is why the slow tests could not be
 measured or split in `chore/e2e-speed`: `reportSlowTests` names slow files only, and `dot` prints
 no times. So the **user** runs it, in their own terminal, and Claude only reads the result:
 

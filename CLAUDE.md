@@ -8,8 +8,12 @@ Guidance for Claude Code working in this repository.
   `design-tokens`, `domain`, `sync`. Git workflow, branches, commits and versions: `rules/git.md`.
 - **Project status, decisions, roadmap and phase prompts:** `context.md` (Spanish). It is the
   single source of truth for _what is done and what comes next_. At the start of a phase read
-  only its index and the phase section (Grep + ranges, never the whole file). Closed phases and
-  the progress log live in `docs/history.md`. This file describes _how the project is built_.
+  only its index and the phase section (Grep + ranges, never the whole file). Closed phases,
+  superseded decisions and the progress log live in `docs/history.md`. This file describes _how
+  the project is built_.
+- **Ideas, suggestions and pending work live only in `docs/backlog.md`.** A phase is closed when
+  its exit criteria (in `context.md` §10) are met; anything new that comes up goes to the backlog,
+  not into the phase, and no other document keeps a list of pending items.
 
 ---
 
@@ -38,22 +42,22 @@ Native App Store app, multi-user, social features.
 
 ## 2. Stack
 
-| Layer      | Tool                                                                                                      |
-| ---------- | --------------------------------------------------------------------------------------------------------- |
-| Build      | Vite                                                                                                      |
-| UI         | React 19, React Router 8 (`RouterProvider` from `react-router/dom`)                                       |
-| State      | Dexie as source of truth (`useLiveQuery` from `dexie-react-hooks`) + local UI state. No Redux             |
-| Validation | zod — schemas shared by client and function (sync contract, importer)                                     |
-| Styles     | Design tokens as CSS custom properties + CSS Modules. Light/dark via `data-theme`                         |
-| Fonts      | Self-hosted with `@fontsource-variable/archivo` (nothing loaded from third parties)                       |
-| i18n       | `i18next` + `react-i18next` (`es` default, `en` optional)                                                 |
-| PWA        | `vite-plugin-pwa` (Workbox): precache, "new version" prompt                                               |
-| Charts     | Hand-written SVG (no chart library)                                                                       |
-| Backend    | Netlify Functions (TypeScript) + `@netlify/blobs`                                                         |
-| Tests      | Vitest + RTL + jsdom; Playwright (Chromium locally; Chromium + WebKit in `e2e:all` and CI)                |
-| Quality    | ESLint (flat, type-checked) + Prettier + `tsc`; husky + commitlint                                        |
-| CI         | GitHub Actions: lint, typecheck, knip, audit, test:coverage, build on PRs to dev/main; e2e on PRs to main |
-| Deps       | Dependabot (`.github/dependabot.yml`): weekly PRs to `dev`; rules in `rules/dependencies.md`              |
+| Layer      | Tool                                                                                                                 |
+| ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| Build      | Vite                                                                                                                 |
+| UI         | React 19, React Router 8 (`RouterProvider` from `react-router/dom`)                                                  |
+| State      | Dexie as source of truth (`useLiveQuery` from `dexie-react-hooks`) + local UI state. No Redux                        |
+| Validation | zod — schemas shared by client and function (sync contract, importer)                                                |
+| Styles     | Design tokens as CSS custom properties + CSS Modules. Light/dark via `data-theme`                                    |
+| Fonts      | Self-hosted with `@fontsource-variable/archivo` (nothing loaded from third parties)                                  |
+| i18n       | `i18next` + `react-i18next` (`es` default, `en` optional)                                                            |
+| PWA        | `vite-plugin-pwa` (Workbox): precache, "new version" prompt                                                          |
+| Charts     | Hand-written SVG (no chart library)                                                                                  |
+| Backend    | Netlify Functions (TypeScript) + `@netlify/blobs`                                                                    |
+| Tests      | Vitest + RTL + jsdom; Playwright (Chromium locally; Chromium + WebKit in `e2e:all` and CI)                           |
+| Quality    | ESLint (flat, type-checked) + Prettier + `tsc`; husky + commitlint                                                   |
+| CI         | GitHub Actions: lint, typecheck, knip, audit, test:coverage, build on PRs to dev/main; e2e on PRs to main            |
+| Deps       | Dependabot (`.github/dependabot.yml`): weekly npm PRs to `dev` (monthly for GitHub Actions); `rules/dependencies.md` |
 
 **Version constraints (pinned exact in `package.json`):** TypeScript stays on **6.0.x**
 (typescript-eslint supports `<6.1`) and ESLint on **9.x** (eslint-plugin-react and jsx-a11y do
@@ -99,10 +103,13 @@ React UI ─► hooks ─► Domain (pure TS) ─► Repositories ─► Dexie (
 .claude/            rules/, skills/, agents/, settings.json (permissions), BASE_VERSION
 .github/            workflows/ci.yml + e2e.yml, dependabot.yml
 docs/               spec/ (functional spec — the ONLY thing the blind-tester reads), api/sync-v1.md,
-                    adr/, design/, deploy-netlify.md, migration.md, history.md
+                    adr/, design/, audit/ (consistency and audit reports), deploy-netlify.md,
+                    migration.md, device-checklist.md (manual checks on the iPhone), backlog.md
+                    (the only list of pending work), history.md
 netlify/functions/  sync.ts — thin adapter over server/sync
 public/             icons, robots.txt, manifest (icon.svg is the source; `npm run icons`)
-scripts/            ports-check.mjs, lib/ports.mjs, hooks/ (format-file.mjs, ports-warn.mjs)
+scripts/            ports-check.mjs, lib/ports.mjs, e2e-timings.mjs, build-selector.mjs (design
+                    selector), hooks/ (format-file.mjs, ports-warn.mjs)
 server/sync/        sync v1 server: handler, stores (memory, Netlify Blobs), auth, backups
 src/                app/ (shell, routes, pwa/) · domain/ · data/ · features/ · ui/ · i18n/ · theme/ · test/
 tests/              e2e/ (Playwright specs) · fixtures/ (synthetic inputs) · mocks/
@@ -142,18 +149,19 @@ All are `npm run <name>`:
 - `lint` — ESLint (type-checked) · `typecheck` — `tsc -b` · `knip` — unused files, exports,
   dependencies and i18n keys; CI step · `format` / `format:check` — Prettier write / check
 - `test` — Vitest, single run · `test:watch` — Vitest in watch mode (user only — never leave it
-  running) · `test:coverage` — Vitest single run with v8 coverage; fails if `src/domain` or
-  `src/data` < 90 % (CI)
+  running) · `test:coverage` — Vitest single run with v8 coverage; fails if `src/domain`,
+  `src/data` or `server` < 90 % (CI)
 - `e2e` — Playwright, **Chromium only** (builds with `--mode e2e --outDir dist-e2e`, serves,
-  tests, stops the server) · `e2e:all` — Chromium + WebKit (`@all-engines` only); 20 min cap;
-  CI runs it on PRs to main
+  tests, stops the server) · `e2e:all` — Chromium + WebKit (`@all-engines` only); ~27 min cap
+  (`--global-timeout=1600000`); CI runs it on PRs to main, in shards · `e2e:timings` — reads
+  `e2e-timings/last-run.json` and lists the slowest tests (`rules/e2e.md`)
 - `ports:check` — lists which of 5173 / 4173 / 8888 / 8787 / 9323 are busy and by whom; exit 1
   if any · `ports:kill` — frees those ports
 
 **Before running `npm run e2e` or `npm run e2e:all` (yourself or through an agent), read
 `.claude/rules/e2e.md`.**
 
-Note: `typecheck` is `tsc -b`, not `tsc --noEmit -p .` as first drafted in `context.md` §8.5.
+Note: `typecheck` is `tsc -b`, not `tsc --noEmit -p .` as first drafted (`docs/history.md` §8.5).
 The root `tsconfig.json` only holds project references (`tsconfig.app.json` for `src`,
 `tsconfig.node.json` for tool configs, `tsconfig.e2e.json` for `tests/` with Node + DOM types
 so `page.evaluate` callbacks type-check, `tsconfig.server.json` for `server/` and `netlify/`),
