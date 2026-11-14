@@ -2,7 +2,7 @@
 
 > Estado actual y decisiones vigentes de **Certavi**, la reescritura de la app de registro de gimnasio `gym_app`. Es la **fuente de verdad de qué está hecho y qué viene**; cómo está construido el proyecto está en `CLAUDE.md`. Lo cerrado y lo superado vive en `docs/history.md`; las ideas y los pendientes, solo en `docs/backlog.md`. Lo mantiene al día el agente de contexto.
 >
-> Última actualización: 13 nov 2026 · Estado: **Fases 0 a 9 cerradas (`v0.1.0` a `v0.10.1`; todo lo fusionado en `main` se despliega en Netlify) · Fase 10 🚧 (consistencia y dispositivo, `v0.11.0`; rama 1 `docs/consistency` en curso)**
+> Última actualización: 14 nov 2026 · Estado: **Fases 0 a 10 cerradas (`v0.1.0` a `v0.10.1`; Fase 10 con `v0.11.0` pendiente de release; todo lo fusionado en `main` se despliega en Netlify) · Siguiente: Fase 11 (`v0.12.0`)**
 
 ---
 
@@ -91,7 +91,7 @@ Una línea por decisión. El detalle, los motivos y las decisiones ya superadas 
 - Cliente (ADR-0004): transporte HTTP genérico, un intento a la vez, lotes de 300, backoff, envío final con `keepalive`. El estado «Sincronizado» solo aparece tras un intento que salió bien. La clave de sync vive en `localStorage` del dispositivo.
 - Clave nueva: `since` vuelve a 0 y se encolan los registros con `updatedAt > 0`. Restaurar una copia del servidor encola las diferencias como ediciones nuevas (la semilla vuelve a su versión semilla).
 - Importar (gym_app o copia de Certavi) escribe un registro solo si es nuevo o estrictamente más reciente (empate: gana lo local), en una transacción. Copias de Certavi: `{ app: 'certavi', format: 1, kind, exportedAt, records }`, sin borrados ni `serverSeq`. CSV siempre en formato Excel en español.
-- Ajustes: `rest` y `planStart` se sincronizan; tema, idioma, sonido, vibración, sin color y `syncKey`, no. Ids de registros creados en el dispositivo con `newId(prefix)`; ids derivados (`week_<lunes>`, `bw_<lunes>`…) y fechas ISO locales con semanas desde el lunes.
+- Ajustes: `rest` y `planStart` se sincronizan; tema, idioma, sonido, vibración, sin color, diagnóstico y `syncKey`, no. El diagnóstico (mediciones con `performance.now()`, últimas 20 de cada una en `localStorage`) nunca se sincroniza. Ids de registros creados en el dispositivo con `newId(prefix)`; ids derivados (`week_<lunes>`, `bw_<lunes>`…) y fechas ISO locales con semanas desde el lunes.
 
 **Dominio y reglas** (tabla completa en §4 y `.claude/rules/domain.md`)
 - La serie de aproximación cuenta como serie efectiva en el recuento semanal, no en el 1RM ni en los récords; el dropset cuenta como efectiva y volumen. «No cuenta» es por ejercicio y sesión.
@@ -102,7 +102,7 @@ Una línea por decisión. El detalle, los motivos y las decisiones ya superadas 
 
 **Tests y e2e** (reglas en `.claude/rules/testing.md` y `.claude/rules/e2e.md`)
 - Cobertura v8 ≥ 90 % en `src/domain/**`, `src/data/**` y `server/**` (`npm run test:coverage`, la que ejecuta CI).
-- `npm run e2e` solo Chromium; `npm run e2e:all` (Chromium + WebKit con `@all-engines`) lo ejecuta el blind-tester una vez en la última rama de cada fase y CI en los PR a `main`. Sin esperas de tiempo real (`page.clock`). Los datos de e2e salen de `tests/fixtures/certavi-backup-sample.json`, sintético; el servidor falso usa el manejador real vía `context.route` (el puerto 8787 queda reservado sin uso).
+- `npm run e2e` solo Chromium; `npm run e2e:all` (Chromium + WebKit; `@all-engines` marca solo los tests que dependen del motor, decisión del 2026-11-14; lo del iPhone se comprueba a mano con `docs/device-checklist.md`) lo ejecuta el blind-tester una vez en la última rama de cada fase y CI en los PR a `main`. Sin esperas de tiempo real (`page.clock`). Los datos de e2e salen de `tests/fixtures/certavi-backup-sample.json`, sintético; el servidor falso usa el manejador real vía `context.route` (el puerto 8787 queda reservado sin uso).
 - Los datos de prueba son siempre sintéticos; nunca se leen exportaciones reales de gym_app.
 
 ---
@@ -146,7 +146,7 @@ interface SyncEnvelope {
 | **OptionalBlock** | `id`, `name`, `type` (`mobility` · `stretching` · `rehab`), `items[]: { id, name, dose, description }`, `days[]` (días de la semana), `metrics[]` (por ejemplo, «dolor al bajar escaleras 0-10», «pogos 0-10»), `active`, `startDate?`, `reviewDate?` (fechas ISO, Fase 3, 2.4) | Generaliza la recuperación del tobillo: movilidad, estiramientos y rehabilitación configurables |
 | **BlockLog** | `date`, `blockId`, `done: { itemId: boolean }`, `metrics: { metricId: number }`, `note` | Checklist del día y métricas |
 | **WeeklyMetric** | `week`, `metricId`, `values` (por ejemplo, test de la pared izquierda/derecha en cm) | — |
-| **Settings** | Sincronizados: `rest` (básicos/aislamientos, s), `planStart`. Solo del dispositivo: `theme` (`system` · `light` · `dark`), `locale` (`es` · `en`), sonido, vibración, `syncKey` | Lo que es de este dispositivo no se sincroniza. Paleta y fuente ya no son ajustes (`docs/history.md`, 2.3) |
+| **Settings** | Sincronizados: `rest` (básicos/aislamientos, s), `planStart`. Solo del dispositivo: `theme` (`system` · `light` · `dark`), `locale` (`es` · `en`), sonido, vibración, diagnóstico, `syncKey` | Lo que es de este dispositivo no se sincroniza. Paleta y fuente ya no son ajustes (`docs/history.md`, 2.3) |
 
 ### 4.2 Reglas de dominio (todas con tests)
 
@@ -290,55 +290,12 @@ El detalle de las fases cerradas (entregables, decisiones, registro) está en `d
 | 7 | Calendario, progreso y bloques | `v0.8.0` | ✅ 2026-11-07 | `feature/calendar`, `feature/progress`, `feature/training-stats`, `feature/optional-blocks` |
 | 8 | Pulido PWA, accesibilidad y rendimiento | `v0.9.0` | ✅ 2026-11-08 | `feature/pwa`, `chore/polish` |
 | 9 | Ajustes tras el uso real | `v0.10.1` | ✅ 2026-11-13 (PR #53 la última rama, PR de release #54; también existe el tag `v0.10.0`) | `docs/phase-9-polish`, `chore/dependabot`, `fix/ui-polish`, `feature/routine-week-edits`, `feature/machine-setup`, `chore/e2e-speed`, `fix/gym-feedback`, `fix/explicit-state` |
-| 10 | Consistencia y dispositivo | `v0.11.0` | 🚧 rama 1 en curso | `docs/consistency`, `feature/diagnostics` |
+| 10 | Consistencia y dispositivo | `v0.11.0` | ✅ 2026-11-14 (cerrada; checklist del iPhone apuntada, D-5 sonido no bloquea: `docs/backlog.md` §5; release pendiente) | `docs/consistency`, `feature/diagnostics`, `chore/e2e-engines`, `docs/device-run`, `chore/e2e-engines-2` |
 | 11 | Auditoría con Fable | `v0.12.0` | ⏳ | `docs/audit-fable` y las `fix/*` que salgan |
 | 12 | Diseño con Fable | `v0.13.0` | ⏳ | `feature/design-refresh` |
 | 13 | QA final, migración real y v1.0.0 | **`v1.0.0`** | ⏳ | `release/1.0.0` o PR `dev → main` |
 
-**Estado de la Fase 10 (2026-11-13)**:
-- Hecho (rama 1, `docs/consistency`, cerrada pendiente de PR): informe `docs/audit/consistency-2026-11.md` con las decisiones del usuario; `docs/backlog.md` como único sitio de pendientes; `context.md` reducido y lo superado archivado en `docs/history.md`; correcciones de los hechos del informe en `CLAUDE.md`, `.claude/`, `CHANGELOG.md`, `README.md` y el índice de specs; regla de cierre de fase.
-- Falta (rama 2, `feature/diagnostics`): `docs/spec/diagnostics.md`, tarjeta «Diagnóstico» en Ajustes, `docs/device-checklist.md` y la propuesta de `@all-engines` (sin aplicar sin OK).
-- Siguiente: PR de la rama 1 a `dev`; después crear `feature/diagnostics` y `/start-phase 10` para la sesión 3.
-
----
-
-
-### Fase 10 · Consistencia y dispositivo → `v0.11.0` 🚧
-
-**Ramas**: `docs/consistency` → `feature/diagnostics`.
-
-**Objetivo**: una sola verdad en la documentación y comprobar con datos que la app funciona en el iPhone.
-
-**Entregables**:
-- Informe `docs/audit/consistency-2026-11.md` y documentación corregida.
-- `docs/backlog.md`: ÚNICO sitio de sugerencias, ideas y pendientes (deuda técnica, comprobaciones manuales, mejoras v1.x, producto v2), sacados de todos los documentos, sin duplicados ni lo ya hecho.
-- `context.md` con solo el estado actual y las decisiones vigentes; lo superado, a `docs/history.md`.
-- Regla en `CLAUDE.md`: una fase se cierra al cumplir sus criterios de salida; lo nuevo va a `docs/backlog.md`.
-- Tarjeta «Diagnóstico» en Ajustes (interruptor, ajuste del dispositivo): mide con `performance.now()` la apertura de la base de datos, la primera carga de Hoy, de ✓ a serie visible y la carga de Progreso; guarda las últimas 20 mediciones de cada una; botón para copiarlas.
-- `docs/device-checklist.md`: pruebas manuales en el iPhone (sin conexión con cierre forzado, borradores, sync al recuperar la red, sonido con pantalla bloqueada, instalación y actualización de la PWA) y una tabla de resultados por fecha y versión.
-- Propuesta (sin aplicar sin OK del usuario) de qué tests mantienen `@all-engines`: WebKit de Playwright no es Safari de iOS; solo sirve para diferencias del motor.
-
-**Criterios de salida**: informe sin contradicciones abiertas; checklist del iPhone superada y apuntada; mediciones de Diagnóstico registradas (referencia: < 300 ms bien, > 1 s problema).
-
-**Prompt**:
-
-```text
-Lee context.md, CLAUDE.md y docs/history.md. FASE 10: consistencia y dispositivo.
-Rama 1, docs/consistency (solo lectura hasta mi OK):
-1. Busca contradicciones entre documentos y con el repo real (package.json, playwright.config.ts,
-   vite.config.ts, .github/workflows, netlify.toml, .claude/**, docs/adr, tests/fixtures, `git tag`,
-   `git log --oneline main`): estados de fases y ramas, versiones y tags, timeouts y jobs de CI, reglas de e2e,
-   flujo de /close-phase, estructura, ADRs, stack, pendientes ya hechos, preguntas abiertas caducadas,
-   decisiones superadas que siguen como vigentes.
-2. Informe en docs/audit/consistency-2026-11.md: id, qué dice A (archivo:línea), qué dice B, verdad y motivo,
-   y tipo «hecho» (manda el repo) o «decisión» (decido yo).
-3. Pregúntame solo las «decisión», de 3 en 3 como mucho, con opciones y tu recomendación. Espera.
-4. Propón la reorganización (context.md corto, history.md histórico, docs/backlog.md único, regla de cierre
-   en CLAUDE.md) y espera mi OK. Aplícala. /close-phase.
-Rama 2, feature/diagnostics: spec primero (docs/spec/diagnostics.md), después la tarjeta Diagnóstico y
-docs/device-checklist.md según los entregables de la Fase 10; propón los cambios de @all-engines sin
-aplicarlos. Tests unitarios y de componente. /close-phase final.
-```
+**Siguiente**: Fase 11 (`docs/audit-fable`, `v0.12.0`), con su prompt en su sección. La Fase 10 está archivada en [`docs/history.md`](docs/history.md#fase10).
 
 ---
 

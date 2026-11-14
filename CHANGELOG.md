@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Settings > Diagnostics: a device-only card with the «Medir el rendimiento» switch. It measures how long the database takes to open, the first load of Today, the time from ✓ to the set being visible, and the load of Progress. It keeps the last 20 measurements of each, rates them, and can copy them (JSON with app version, date and user agent) or clear them. Spec: `docs/spec/diagnostics.md`.
+- `docs/device-checklist.md`: manual checks on the iPhone (offline with forced close, drafts, sync on reconnect, rest sound, install and update of the PWA) with a results table by date and version. The run of 2026-11-13 is recorded there.
+
 ### Changed
 
-- e2e: the `@all-engines` tag moved from whole `describe`s to single tests, so WebKit runs the 55 tests that depend on the engine (IndexedDB and `localStorage`, sync, import / export and downloads, page lifecycle, date and time inputs, SVG charts, the 390 px layout) instead of 111. Dropped tests (texts in English, dark mode, axe, validations, rules shown as text) still run in Chromium. The iPhone-only behaviour is checked by hand with `docs/device-checklist.md`. The time saved is measured with the next `npm run e2e:all`.
+- e2e: the `@all-engines` tag moved from whole `describe`s to single tests, so WebKit runs the 55 tests that depend on the engine (IndexedDB and `localStorage`, sync, import / export and downloads, page lifecycle, date and time inputs, SVG charts, the 390 px layout) instead of 111. Dropped tests (texts in English, dark mode, axe, validations, rules shown as text) still run in Chromium. The iPhone-only behaviour is checked by hand with `docs/device-checklist.md`.
 - Docs: `docs/audit/consistency-2026-11.md` lists the contradictions between documents and the repo; `docs/backlog.md` is now the only list of ideas and pending work; `context.md` keeps only the current state and the decisions in force, and the superseded text moved to `docs/history.md`.
 
 ## [0.10.1] - 2026-11-13

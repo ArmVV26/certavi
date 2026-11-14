@@ -104,7 +104,8 @@ React UI ─► hooks ─► Domain (pure TS) ─► Repositories ─► Dexie (
 .github/            workflows/ci.yml + e2e.yml, dependabot.yml
 docs/               spec/ (functional spec — the ONLY thing the blind-tester reads), api/sync-v1.md,
                     adr/, design/, audit/ (consistency and audit reports), deploy-netlify.md,
-                    migration.md, backlog.md (the only list of pending work), history.md
+                    migration.md, device-checklist.md (manual checks on the iPhone), backlog.md
+                    (the only list of pending work), history.md
 netlify/functions/  sync.ts — thin adapter over server/sync
 public/             icons, robots.txt, manifest (icon.svg is the source; `npm run icons`)
 scripts/            ports-check.mjs, lib/ports.mjs, e2e-timings.mjs, build-selector.mjs (design
