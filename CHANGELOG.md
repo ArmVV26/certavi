@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-14
+
 ### Added
 
 - Settings > Diagnostics: a device-only card with the «Medir el rendimiento» switch. It measures how long the database takes to open, the first load of Today, the time from ✓ to the set being visible, and the load of Progress. It keeps the last 20 measurements of each, rates them, and can copy them (JSON with app version, date and user agent) or clear them. Spec: `docs/spec/diagnostics.md`.
