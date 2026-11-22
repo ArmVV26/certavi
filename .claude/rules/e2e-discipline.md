@@ -7,8 +7,8 @@ paths:
 
 # End-to-end tests (Playwright)
 
-Single source of truth for e2e. CLAUDE.md, the `blind-tester` agent and the `close-phase` skill
-only point here.
+Single source of truth for e2e. CLAUDE.md, the `armando-base:qa-tester` agent and
+`/armando-base:close-phase` only point here.
 
 An e2e run once saturated the user's PC (2026-11-02: 8 parallel browsers, three runs in a row).
 These rules keep it from happening again.
@@ -69,13 +69,21 @@ These rules keep it from happening again.
   per browser.
 - Target: `npm run e2e` takes **under 2 minutes**. Keep the suite small enough for that.
 
+## For the qa-tester (Certavi)
+
+- Write **at most 8 new tests** per pass; pick the flows that cover the acceptance criteria.
+- Besides `docs/spec/**`, `README.md` and `tests/e2e/**`, you may read `tests/mocks/**`,
+  `playwright.config.ts` and this file. Never read `src/**` or `netlify/**`.
+- Edge cases a real user hits here: offline, reload mid-session, 0 kg, undo, wrong input, the
+  390×844 iPhone viewport, dark mode, Spanish and English.
+
 ## How to run them (mandatory — an e2e run once froze the user's PC)
 
 - Run e2e **only** with `npm run e2e` (Chromium, 2 workers, 5 min cap, stops after 3 failures),
   optionally followed by spec paths: `npm run e2e -- tests/e2e/today.spec.ts` — and nothing else.
   When an agent runs it, pass just the specs of the current branch that the main agent gave it.
 - `npm run e2e:all` (Chromium + WebKit) only when the user asks for it (for an agent: only if the
-  main agent says the user asked for it), or in `/close-phase final` on the last branch of a
+  main agent says the user asked for it), or in `/armando-base:close-phase final` on the last branch of a
   phase (before the PR `dev → main`; CI runs it again there). WebKit was never run before the
   Phase 4 PR and CI caught it (2026-11-04).
 - Never call `npx playwright test` directly. The only thing allowed after `--` is spec paths:

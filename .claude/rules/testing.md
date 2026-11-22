@@ -10,7 +10,7 @@ paths:
 
 # Unit and component testing
 
-End-to-end tests have their own rules: `.claude/rules/e2e.md`.
+End-to-end tests have their own rules: `.claude/rules/e2e-discipline.md`.
 
 - Query by role, label and visible text (`getByRole`, `getByLabelText`), as a user would.
 - Component tests that need the app providers use `renderWithProviders` from

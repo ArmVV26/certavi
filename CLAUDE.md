@@ -2,18 +2,22 @@
 
 Guidance for Claude Code working in this repository.
 
-- **Working rules (mandatory):** `.claude/rules/*.md`. Rules without `paths:` (git, dependencies,
-  processes-windows, context-economy, data-and-secrets, quality-and-scope) always load; the
-  rest load when you work on matching files: `e2e`, `testing`, `code-style`, `i18n`,
-  `design-tokens`, `domain`, `sync`. Git workflow, branches, commits and versions: `rules/git.md`.
+- **Working rules (mandatory):** `.claude/rules/*.md`. Rules without `paths:` (git-workflow,
+  dependencies, processes-windows, context-economy, data-and-secrets, quality-and-scope) always
+  load; the rest load when you work on matching files: `e2e-discipline`, `testing`, `code-style`,
+  `i18n`, `design-tokens`, `domain`, `sync`. Git workflow, commit plan, branches, commits and
+  versions: `rules/git-workflow.md`.
 - **Project status, decisions, roadmap and phase prompts:** `context.md` (Spanish). It is the
   single source of truth for _what is done and what comes next_. At the start of a phase read
-  only its index and the phase section (Grep + ranges, never the whole file). Closed phases,
+  only its index, the phase section and the items of `docs/backlog.md` for that phase (Grep +
+  ranges, never the whole file). Closed phases,
   superseded decisions and the progress log live in `docs/history.md`. This file describes _how
   the project is built_.
 - **Ideas, suggestions and pending work live only in `docs/backlog.md`.** A phase is closed when
   its exit criteria (in `context.md` §10) are met; anything new that comes up goes to the backlog,
   not into the phase, and no other document keeps a list of pending items.
+- **Design source:** `docs/design/README.md` (palette and fonts in `decision.md`, tokens in
+  `tokens.md`). Visual source of truth: read the section that applies before touching the UI.
 
 ---
 
@@ -100,9 +104,9 @@ React UI ─► hooks ─► Domain (pure TS) ─► Repositories ─► Dexie (
 ## 4. Repository layout
 
 ```
-.claude/            rules/, skills/, agents/, settings.json (permissions), BASE_VERSION
+.claude/            rules/, settings.json (permissions, armando-base plugin), BASE_VERSION
 .github/            workflows/ci.yml + e2e.yml, dependabot.yml
-docs/               spec/ (functional spec — the ONLY thing the blind-tester reads), api/sync-v1.md,
+docs/               spec/ (functional spec — the ONLY thing the qa-tester reads), api/sync-v1.md,
                     adr/, design/, audit/ (consistency and audit reports), deploy-netlify.md,
                     migration.md, device-checklist.md (manual checks on the iPhone), backlog.md
                     (the only list of pending work), history.md
@@ -121,25 +125,33 @@ Empty folders hold a `.gitkeep` until they get real files.
 
 ---
 
-## 5. Language, code and tests
+## 5. Commands
 
-- Code, comments, commits and docs are in **English**. The app UI is Spanish by default.
-- Conventions: `rules/code-style.md` · i18n: `rules/i18n.md` · tokens: `rules/design-tokens.md`.
+Single source: skills and agents read the commands from this table. All scripts are in
+`package.json`.
 
-| Kind                            | Tool                                           | Where                 | Who writes it |
-| ------------------------------- | ---------------------------------------------- | --------------------- | ------------- |
-| Unit (domain rules, data, sync) | Vitest                                         | `src/**/*.test.ts`    | main agent    |
-| Component                       | Vitest + RTL + jsdom                           | `src/**/*.test.tsx`   | main agent    |
-| End-to-end                      | Playwright (390×844; limits in `rules/e2e.md`) | `tests/e2e/*.spec.ts` | blind-tester  |
+| Role      | Command                                                                       | Notes                                                       |
+| --------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| install   | `npm install`                                                                 | needs user approval (`rules/dependencies.md`)               |
+| dev       | `npm run dev`                                                                 | long-running: user only                                     |
+| lint      | `npm run lint`                                                                |                                                             |
+| typecheck | `npm run typecheck`                                                           |                                                             |
+| test      | `npm run test`                                                                | single run, never watch mode                                |
+| test-full | `npm run test:coverage`                                                       | **gate** in `/armando-base:close-phase` and CI              |
+| build     | `npm run build`                                                               |                                                             |
+| e2e       | `npm run e2e`                                                                 | Chromium only; read `.claude/rules/e2e-discipline.md` first |
+| e2e-all   | `npm run e2e:all`                                                             | all engines; only when that rule allows it                  |
+| format    | `npm run format`                                                              |                                                             |
+| audit     | `npm audit --audit-level=high`                                                | dependency vulnerability check                              |
+| **check** | `npm run lint` → `npm run typecheck` → `npm run test` → `npm run ports:check` | sequence that must pass before "done"                       |
 
-- Domain, data and server code need thorough tests: v8 coverage of `src/domain/**`,
-  `src/data/**` and `server/**` must each stay **≥ 90 %** (lines, functions, branches,
-  statements; per-glob thresholds in `vite.config.ts`; `src/data/**/testing.ts` and
-  `server/**/testing.ts` are excluded). Enforced by `npm run test:coverage`, which CI runs
-  instead of `npm run test`.
-- Unit and component testing: `rules/testing.md`. End-to-end: `rules/e2e.md`.
-
-## 6. Commands
+- **Build-affecting files** (run `build` when a branch touches them): `vite.config.ts`,
+  `package.json`, `netlify.toml`, `netlify/`, `server/`.
+- **Security-sensitive paths** (trigger the security review): `server/`, `src/data/sync/`,
+  `package.json`, `netlify.toml`. There, check that the sync key stays device-only and is never
+  logged, that boundary input (legacy importer, sync handler, `JSON.parse`, request bodies) is
+  validated with zod, that the key is compared in constant time, and that no CSP or header in
+  `netlify.toml` is loosened.
 
 All are `npm run <name>`:
 
@@ -154,12 +166,12 @@ All are `npm run <name>`:
 - `e2e` — Playwright, **Chromium only** (builds with `--mode e2e --outDir dist-e2e`, serves,
   tests, stops the server) · `e2e:all` — Chromium + WebKit (`@all-engines` only); ~27 min cap
   (`--global-timeout=1600000`); CI runs it on PRs to main, in shards · `e2e:timings` — reads
-  `e2e-timings/last-run.json` and lists the slowest tests (`rules/e2e.md`)
+  `e2e-timings/last-run.json` and lists the slowest tests (`rules/e2e-discipline.md`)
 - `ports:check` — lists which of 5173 / 4173 / 8888 / 8787 / 9323 are busy and by whom; exit 1
   if any · `ports:kill` — frees those ports
 
 **Before running `npm run e2e` or `npm run e2e:all` (yourself or through an agent), read
-`.claude/rules/e2e.md`.**
+`.claude/rules/e2e-discipline.md`.**
 
 Note: `typecheck` is `tsc -b`, not `tsc --noEmit -p .` as first drafted (`docs/history.md` §8.5).
 The root `tsconfig.json` only holds project references (`tsconfig.app.json` for `src`,
@@ -167,30 +179,71 @@ The root `tsconfig.json` only holds project references (`tsconfig.app.json` for 
 so `page.evaluate` callbacks type-check, `tsconfig.server.json` for `server/` and `netlify/`),
 so `-p .` would check no files at all.
 
+## 6. Conventions (language, code and tests)
+
+- Code, comments, commits and docs are in **English**. The app UI is Spanish by default. Chat,
+  plans and agent reports addressed to the user: Spanish.
+- Conventions: `rules/code-style.md` · i18n: `rules/i18n.md` · tokens: `rules/design-tokens.md`.
+
+| Kind                            | Tool                                                      | Where                 | Who writes it |
+| ------------------------------- | --------------------------------------------------------- | --------------------- | ------------- |
+| Unit (domain rules, data, sync) | Vitest                                                    | `src/**/*.test.ts`    | main agent    |
+| Component                       | Vitest + RTL + jsdom                                      | `src/**/*.test.tsx`   | main agent    |
+| End-to-end                      | Playwright (390×844; limits in `rules/e2e-discipline.md`) | `tests/e2e/*.spec.ts` | qa-tester     |
+
+- Domain, data and server code need thorough tests: v8 coverage of `src/domain/**`,
+  `src/data/**` and `server/**` must each stay **≥ 90 %** (lines, functions, branches,
+  statements; per-glob thresholds in `vite.config.ts`; `src/data/**/testing.ts` and
+  `server/**/testing.ts` are excluded). Enforced by `npm run test:coverage`, which CI runs
+  instead of `npm run test`.
+- Unit and component testing: `rules/testing.md`. End-to-end: `rules/e2e-discipline.md`.
+
 ---
 
-## 7. Who does what
+## 7. Git
 
-| Who                      | Does                                                                                                                                                              |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **User**                 | Creates branches, reviews code, tests on the phone, **makes every commit**, opens and merges PRs, creates tags, deploys, installs packages                        |
-| **Claude Code**          | Writes code, tests and docs; runs lint, typecheck, tests and build; at the end of each phase proposes the commits (files + messages), branch, PR, version and tag |
-| **context-keeper** agent | Updates `context.md`, `CHANGELOG.md` and (if structure changed) this file                                                                                         |
-| **blind-tester** agent   | Tests the app as a user from `docs/spec/` with Playwright. **Never reads `src/`**                                                                                 |
+- **Base branch:** `dev`. Work branches: `feature/*`, `fix/*`, `chore/*`, `docs/*`, off `dev` and
+  back to `dev`. Release: `dev → main` + annotated tag `vX.Y.Z` on `main`.
+- **Integración:** `pr` — CI on GitHub Actions; merge through a pull request (merge commit, no
+  squash).
+- **Commits:** Conventional Commits, English, small, one idea each; types, scopes and versions in
+  `.claude/rules/git-workflow.md`.
+- The user makes every commit, PR and tag. Claude only proposes the commit plan, in the format
+  of `.claude/rules/git-workflow.md`.
 
-Git write commands and global installs are **denied** in `.claude/settings.json`;
-`npm install` asks first. Verify with `/permissions`.
+## 8. Who does what
 
-- **Skills** (`.claude/skills/`, user-invoked): `/start-phase N` and `/close-phase [final]`. Their
-  steps live in each `SKILL.md`.
-- **Agents** (`.claude/agents/`): each file holds its own limits and output format.
-  code-reviewer and security-reviewer are read-only and fix nothing.
-- **blind-tester:** give it the phase's acceptance criteria. It writes and runs
-  `tests/e2e/*.spec.ts` and reports failures with steps, expected vs actual and screenshots.
-  It does not fix app code. Write the spec in `docs/spec/` **before** implementing a feature
-  so the tester has something to test against.
+The `armando-base` plugin installs every agent, but this project uses **only the ones listed
+here**: skills and agents read this table to know which to launch.
+
+| Who                                    | Does                                                                                                                                                              |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **User**                               | Creates branches, reviews code, tests on the phone, **makes every commit**, opens and merges PRs, creates tags, deploys, installs packages                        |
+| **Claude Code**                        | Writes code, tests and docs; runs lint, typecheck, tests and build; at the end of each phase proposes the commits (files + messages), branch, PR, version and tag |
+| `armando-base:code-reviewer` agent     | Read-only review of the branch diff                                                                                                                               |
+| `armando-base:security-reviewer` agent | Read-only security review + `npm audit`                                                                                                                           |
+| `armando-base:context-keeper` agent    | Updates `context.md`, `docs/history.md`, `CHANGELOG.md` and (if structure changed) this file                                                                      |
+| `armando-base:qa-tester` agent         | Tests the app as a user from `docs/spec/` with Playwright. **Never reads `src/`**                                                                                 |
+
+Skills (user-invoked): `/armando-base:start-phase <n>`, `/armando-base:close-phase [final]`,
+`/armando-base:upgrade-base`.
+
+Git write commands and global installs are **denied** in `.claude/settings.json`, and the
+plugin's `git-guard` hook blocks any git or gh command that writes; `npm install` asks first.
+Verify with `/permissions`.
+
+- **Agents:** each one holds its own limits and output format. code-reviewer and
+  security-reviewer are read-only and fix nothing.
+- **Review priority:** `src/domain` (purity) → `src/data` (`updatedAt` and enqueue in the same
+  transaction, soft deletes) → new features in `src/features`. Reviewers read the rules whose
+  `paths:` match the changed files.
+- **qa-tester:** give it the phase's acceptance criteria. It writes and runs
+  `tests/e2e/*.spec.ts` under `.claude/rules/e2e-discipline.md` and reports failures with steps,
+  expected vs actual and screenshots. It does not fix app code. Write the spec in `docs/spec/`
+  **before** implementing a feature so the tester has something to test against.
 - **context-keeper:** give it a factual summary of what changed and the test results. It never
-  marks something done unless tests passed.
+  marks something done unless tests passed. Pending work goes to `docs/backlog.md`; it removes
+  from there what the phase finished.
 - **Hooks** (`.claude/settings.json`): `PostToolUse` on `Edit|Write` formats the file with
   Prettier (`scripts/hooks/format-file.mjs`); `Stop` warns the user of busy ports other than
   5173 (`scripts/hooks/ports-warn.mjs`, exit 0 always).
