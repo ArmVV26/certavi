@@ -629,7 +629,8 @@ test.describe('optional blocks', () => {
   );
 });
 
-// Language, theme and axe do not depend on the engine: Chromium only (.claude/rules/e2e.md).
+// Language, theme and axe do not depend on the engine: Chromium only
+// (.claude/rules/e2e-discipline.md).
 test.describe('optional blocks · language and theme', () => {
   test('AC-BLK-11 · English and dark mode; axe on the list, tracking and editor in light and dark', async ({
     page,
