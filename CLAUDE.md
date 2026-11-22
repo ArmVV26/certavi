@@ -16,6 +16,12 @@ Guidance for Claude Code working in this repository.
 - **Ideas, suggestions and pending work live only in `docs/backlog.md`.** A phase is closed when
   its exit criteria (in `context.md` §10) are met; anything new that comes up goes to the backlog,
   not into the phase, and no other document keeps a list of pending items.
+- **Names in docs:** living docs (`CLAUDE.md`, `context.md`, `docs/spec/`, `docs/backlog.md`,
+  code comments, lint messages) use the current names of agents, skills and rules
+  (`armando-base:qa-tester`, `/armando-base:close-phase`, `rules/e2e-discipline.md`…). When the
+  plugin renames something, update them in the same branch as the upgrade. Historical records
+  (`docs/history.md`, `CHANGELOG.md`, `docs/audit/`) keep the names of their time and are not
+  rewritten; `context.md` §8 maps old names to new ones.
 - **Design source:** `docs/design/README.md` (palette and fonts in `decision.md`, tokens in
   `tokens.md`). Visual source of truth: read the section that applies before touching the UI.
 

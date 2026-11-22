@@ -62,7 +62,7 @@ Cada cambio cuesta más que el anterior. Certavi se rehace desde cero en un repo
 | Ramas | `main` (producción) · `dev` (integración) · `feature/*`, `fix/*`, `chore/*`, `docs/*` | — |
 | Commits | **Conventional Commits.** **Los commits y las ramas los hace el usuario a mano**; Claude los propone al final de cada fase | Control total del historial |
 | Versiones | SemVer: `0.x` durante el desarrollo, **`1.0.0`** al igualar la app actual | — |
-| Agentes | Claude Code (VS Code) orquesta cuatro subagentes: **context-keeper**, **blind-tester**, **code-reviewer** y **security-reviewer** | Ver sección 8 |
+| Agentes | Claude Code (VS Code) orquesta cuatro subagentes del plugin `armando-base`: **context-keeper**, **qa-tester**, **code-reviewer** y **security-reviewer** | Ver sección 8 |
 | SO de trabajo | **Windows** + VS Code | Afecta a finales de línea, puertos y scripts |
 | Imágenes de máquinas | **v2** (fotos propias desde el móvil) | Las imágenes de internet dan problemas de licencia y no coinciden con tu gimnasio |
 
@@ -75,7 +75,7 @@ Una línea por decisión. El detalle, los motivos y las decisiones ya superadas 
 - Licencia: «All rights reserved» mientras el repo sea privado; **MIT** al hacerlo público (Fase 13).
 - Versiones exactas en `package.json`; **TypeScript 6.0.x** y **ESLint 9.x** (límites en `CLAUDE.md` §2). **Node 22** en el proyecto (`.nvmrc`, CI, `@types/node` 22, `engines` `>=22.22.2`); en local se usa Node 26 y está aceptado.
 - `typecheck` es `tsc -b`. husky solo con `commit-msg` (commitlint), sin `pre-commit`. Los documentos de diseño usan el ámbito de commit `theme`.
-- Claude Code: reglas, agentes, skills y permisos en `.claude/` y `CLAUDE.md` §7. El cierre es en dos niveles: `/close-phase` por rama y `/close-phase final` en la última de la fase.
+- Claude Code: reglas, agentes, skills y permisos en `.claude/`, el plugin `armando-base` y `CLAUDE.md` §8. El cierre es en dos niveles: `/armando-base:close-phase` por rama y `/armando-base:close-phase final` en la última de la fase.
 
 **Diseño, interfaz y PWA**
 - Paleta «Hierro» y fuente «Archivo» autoalojada; tokens CSS en `src/theme/tokens.css` (`docs/design/`). Tema `system | light | dark` y modo sin color («0 dopamina»): ajustes **solo del dispositivo**, nunca se sincronizan.
@@ -100,9 +100,9 @@ Una línea por decisión. El detalle, los motivos y las decisiones ya superadas 
 - Cada ejercicio de la sesión es una lista de filas (`SetEntry.slot` y `kind`); los borradores sin ✓ se guardan en `localStorage` del dispositivo.
 - Ejercicios propios con id `exe_`: se archivan, nunca se borran. Solo se editan las seis rutinas semilla; «Restaurar original» escribe la semilla con `updatedAt` actual.
 
-**Tests y e2e** (reglas en `.claude/rules/testing.md` y `.claude/rules/e2e.md`)
+**Tests y e2e** (reglas en `.claude/rules/testing.md` y `.claude/rules/e2e-discipline.md`)
 - Cobertura v8 ≥ 90 % en `src/domain/**`, `src/data/**` y `server/**` (`npm run test:coverage`, la que ejecuta CI).
-- `npm run e2e` solo Chromium; `npm run e2e:all` (Chromium + WebKit; `@all-engines` marca solo los tests que dependen del motor, decisión del 2026-11-14; lo del iPhone se comprueba a mano con `docs/device-checklist.md`) lo ejecuta el blind-tester una vez en la última rama de cada fase y CI en los PR a `main`. Sin esperas de tiempo real (`page.clock`). Los datos de e2e salen de `tests/fixtures/certavi-backup-sample.json`, sintético; el servidor falso usa el manejador real vía `context.route` (el puerto 8787 queda reservado sin uso).
+- `npm run e2e` solo Chromium; `npm run e2e:all` (Chromium + WebKit; `@all-engines` marca solo los tests que dependen del motor, decisión del 2026-11-14; lo del iPhone se comprueba a mano con `docs/device-checklist.md`) lo ejecuta el qa-tester una vez en la última rama de cada fase y CI en los PR a `main`. Sin esperas de tiempo real (`page.clock`). Los datos de e2e salen de `tests/fixtures/certavi-backup-sample.json`, sintético; el servidor falso usa el manejador real vía `context.route` (el puerto 8787 queda reservado sin uso).
 - Los datos de prueba son siempre sintéticos; nunca se leen exportaciones reales de gym_app.
 
 ---
@@ -244,13 +244,15 @@ Mapeo de registros y pasos: `docs/migration.md`. Se retira en la Fase 13, tras l
 
 ## 7. Flujo de trabajo
 
-Ramas, Conventional Commits, versiones, tags y changelog: `.claude/rules/git.md`. Reparto de papeles: `CLAUDE.md` §7. Versión de cada fase: tabla de la sección 10.
+Ramas, Conventional Commits, versiones, tags y changelog: `.claude/rules/git-workflow.md`. Reparto de papeles: `CLAUDE.md` §8. Versión de cada fase: tabla de la sección 10.
 
 ---
 
 ## 8. Claude Code: reglas, agentes y comandos
 
-Ver `CLAUDE.md` §7 y `.claude/` (el borrador original, superado, está en `docs/history.md#seccion8`).
+Ver `CLAUDE.md` §8 y `.claude/` (el borrador original, superado, está en `docs/history.md#seccion8`).
+
+Nombres anteriores, que siguen en `docs/history.md`, `CHANGELOG.md` y `docs/audit/` (registros que no se reescriben): `blind-tester` → `armando-base:qa-tester`; `.claude/rules/e2e.md` → `e2e-discipline.md`; `.claude/rules/git.md` → `git-workflow.md`; `/start-phase` y `/close-phase` → `/armando-base:start-phase` y `/armando-base:close-phase`; el reparto de papeles de `CLAUDE.md` pasó de §7 a §8.
 
 ---
 
@@ -266,9 +268,9 @@ Hecha. Ver `docs/history.md#seccion9`.
 Cada fase sigue el mismo ciclo:
 
 1. **Tú** creas la rama desde `dev`.
-2. Lanzas `/start-phase N` o pegas el prompt.
+2. Lanzas `/armando-base:start-phase N` o pegas el prompt.
 3. Claude Code implementa.
-4. Ejecutas `/close-phase`.
+4. Ejecutas `/armando-base:close-phase`.
 5. **Tú** revisas, pruebas en el móvil, haces los commits propuestos, abres el PR a `dev` y lo mergeas.
 6. Al cerrar la fase: PR de `dev` a `main` y tag.
 
@@ -325,8 +327,8 @@ sync (transacciones, cola, LWW, concurrencia, pérdida de datos), seguridad (ser
 exportados), accesibilidad, rendimiento, calidad de los tests (no la cobertura), mantenibilidad y documentación.
 Informe en docs/audit/fable-2026-11.md: id, área, archivo:línea, problema, por qué importa, propuesta y
 severidad según la Fase 11. Después pídeme que valide la clasificación, propón ramas fix/* agrupadas por
-tema y espera mi OK. Lo de severidad backlog va a docs/backlog.md. Cada rama fix/*: /close-phase; la última,
-/close-phase final.
+tema y espera mi OK. Lo de severidad backlog va a docs/backlog.md. Cada rama fix/*: /armando-base:close-phase; la
+última, /armando-base:close-phase final.
 ```
 
 ---
@@ -356,8 +358,8 @@ referencias (capturas y qué me gusta de cada una). Propón 2-3 direcciones en u
 (docs/design/selector-v2.html) sobre Hoy, sesión activa y Progreso, en claro, oscuro y 0 dopamina, con
 interruptores y contraste AA visible. Espera mi elección y apúntala en docs/design/decision.md. Después:
 tokens, movimiento y componentes de src/ui, y pantalla a pantalla, dividiendo en ramas si hace falta (dime
-cuáles crear). Sin colores ni tamaños sueltos, i18n en todo y reduced motion. /close-phase en cada rama; la
-última, /close-phase final.
+cuáles crear). Sin colores ni tamaños sueltos, i18n en todo y reduced motion. /armando-base:close-phase en cada
+rama; la última, /armando-base:close-phase final.
 ```
 
 ---
@@ -367,7 +369,7 @@ cuáles crear). Sin colores ni tamaños sueltos, i18n en todo y reduced motion. 
 **Rama**: `release/1.0.0`, o directamente un PR de `dev` a `main`.
 
 **Pasos**:
-1. El blind-tester hace una regresión completa, en español y en inglés, claro y oscuro, sin conexión. Incluye el logo, las transiciones, la edición de semanas cerradas, las tarjetas de rutina, los chips del editor y los ajustes de la máquina (todo de la Fase 9).
+1. El qa-tester hace una regresión completa, en español y en inglés, claro y oscuro, sin conexión. Incluye el logo, las transiciones, la edición de semanas cerradas, las tarjetas de rutina, los chips del editor y los ajustes de la máquina (todo de la Fase 9).
 2. Tú usas Certavi en paralelo con gym_app durante 1 semana.
 3. Exportas por última vez desde gym_app, importas en Certavi y compruebas los recuentos.
 4. **Quitar el rastro de gym_app** (añadido el 2026-11-06), solo **después** de la migración real del paso 3, porque hasta entonces hace falta el importador: eliminar «Importar desde la app anterior» (`ImportExport.tsx`, claves i18n `importLegacy`/`notLegacy`…), `src/data/legacy/`, `src/domain/seed/legacyAliases.ts` (los alias solo sirven para datos de gym_app), `docs/migration.md`, la sección 6 de este archivo y las menciones en README, spec y ADR. Decidir si `context.md` y `docs/history.md` (que cuentan el origen del proyecto) se quedan en el repo público o se resumen. Motivo: la intención es que lo usen tú y gente de tu entorno, no que sea «la v2 de otra app». Importar datos de otras apps (Hevy, Strong…) queda en el backlog (`docs/backlog.md`). Requisito previo (añadido el 2026-11-10): la Fase 9 (`chore/e2e-speed`) hace que los e2e carguen sus datos con un fixture sintético de Certavi y no con el importador, para que borrarlo aquí no rompa la suite.
@@ -388,7 +390,7 @@ cuáles crear). Sin colores ni tamaños sueltos, i18n en todo y reduced motion. 
 **Prompt**:
 
 ```text
-Lee context.md. FASE 13: preparación de la v1.0.0. Lanza al blind-tester para una regresión completa
+Lee context.md. FASE 13: preparación de la v1.0.0. Lanza al qa-tester para una regresión completa
 (es/en, claro/oscuro, offline, 390x844). Prepara una checklist de migración real para que la ejecute yo
 (exportar de gym_app, importar, verificar recuentos por tipo de registro). Después, quita el rastro de gym_app
 (importador, alias, migración) y deja README en español e inglés con banner, capturas reales que yo te pase e

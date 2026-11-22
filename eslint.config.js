@@ -70,8 +70,9 @@ export default defineConfig([
     },
   },
 
-  // No fixed waits in e2e tests (.claude/rules/e2e.md): use web-first assertions, `expect.poll`,
-  // `page.clock` for app timers and `settle()` from tests/e2e/helpers.ts for "nothing happens".
+  // No fixed waits in e2e tests (.claude/rules/e2e-discipline.md): use web-first assertions,
+  // `expect.poll`, `page.clock` for app timers and `settle()` from tests/e2e/helpers.ts for
+  // "nothing happens".
   {
     files: ['tests/**/*.ts'],
     rules: {
@@ -79,7 +80,7 @@ export default defineConfig([
         'error',
         {
           selector: "CallExpression[callee.property.name='waitForTimeout']",
-          message: 'No real-time waits in e2e tests: see .claude/rules/e2e.md.',
+          message: 'No real-time waits in e2e tests: see .claude/rules/e2e-discipline.md.',
         },
       ],
     },
