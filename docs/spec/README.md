@@ -2,7 +2,7 @@
 
 What Certavi does, described from the **user's point of view**.
 
-> This folder is the **only** source the `blind-tester` agent reads (together with the README
+> This folder is the **only** source the `armando-base:qa-tester` agent reads (together with the README
 > and the e2e tests). It must be enough to test a feature without seeing the code: describe
 > screens, visible texts, user actions and expected results — not components or functions.
 
