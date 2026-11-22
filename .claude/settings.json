@@ -133,6 +133,7 @@
     ]
   },
   "enabledPlugins": {
-    "armando-base@armando": true
+    "armando-base@armando": true,
+    "modern-web-guidance@claude-plugins-official": true
   }
 }
